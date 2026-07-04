@@ -50,7 +50,7 @@ mo:TimePeriod a owl:Class ;
     rdfs:label "TimePeriod"@en ;
     rdfs:comment "Any in-universe span of time with distinct beginning and end."@en .
 
-##  Agent subclasses ##
+## 1: Agent subclasses ##
 
 mo:Person a owl:Class ;
     rdfs:subClassOf mo:Agent ;
@@ -68,7 +68,39 @@ mo:Deity a owl:Class ;
     rdfs:label "Deity"@en ;
     rdfs:comment "A god-tier agent. Immortal or quasi-immortal, often associated with supernatural powers."@en .
 
-##  Concept subclasses ##
+## 1: Location subclasses ##
+
+mo:World a owl:Class ;
+    rdfs:subClassOf mo:Location ;
+    rdfs:label "World"@en ;
+    rdfs:comment "A planetary-scale location."@en .
+
+mo:Region a owl:Class ;
+    rdfs:subClassOf mo:Location ;
+    rdfs:label "Region"@en ;
+    rdfs:comment "A sub-world location: a country, state, or province."@en .
+
+mo:GeoFeature a owl:Class ;
+    rdfs:subClassOf mo:Location ;
+    rdfs:label "Geographic Feature"@en ;
+    rdfs:comment "Any natural geographic feature: a mountain, river, lake, cave, etc."@en .
+
+mo:Settlement a owl:Class ;
+    rdfs:subClassOf mo:Location ;
+    rdfs:label "Settlement"@en ;
+    rdfs:comment "Any inhabited location or area: a city, town, etc."@en .
+
+mo:Structure a owl:Class ;s
+    rdfs:subClassOf mo:Location ;
+    rdfs:label "Structure"@en ;
+    rdfs:comment "Any constructed location, typically with a defined enclosed shape or form: a building, monument, etc."@en .
+
+mo:Route a owl:Class ;
+    rdfs:subClassOf mo:Location ;
+    rdfs:label "Route"@en ;
+    rdfs:comment "Any path or route between locations."@en .
+
+##  1: Concept subclasses ##
 
 mo:Taxon a owl:Class ;
     rdfs:subClassOf mo:Concept ;
