@@ -6,7 +6,7 @@
 
 <https://muon.dev/ns/core> a owl:Ontology ;
     owl:versionInfo "0.1.0" ;
-    rdfs:comment "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph. Per-universe extensions owl:imports this file and subclass freely into it."@en .
+    skos:definition "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph. Per-universe extensions owl:imports this file and subclass freely into it."@en .
 
 #################################################################
 #  0: Diegetic plane
@@ -14,119 +14,119 @@
 
 mo:Entity a owl:Class ;
     rdfs:label "Entity"@en ;
-    rdfs:comment "Root of the diegetic hierarchy: anything that exists inside a fictional universe."@en .
+    skos:definition "Root of the diegetic hierarchy: anything that exists inside a fictional universe."@en .
 
 mo:Agent a owl:Class ;
     rdfs:subClassOf mo:Entity ;
     rdfs:label "Agent"@en ;
-    rdfs:comment "An entity with agency: it can act, perceive, hold intent."@en .
+    skos:definition "An entity with agency: it can act, perceive, hold intent."@en .
 
 mo:Location a owl:Class ;
     rdfs:subClassOf mo:Entity ;
     rdfs:label "Location"@en ;
-    rdfs:comment "Any in-universe locale, region or container where entities exist or act."@en .
+    skos:definition "Any in-universe locale, region or container where entities exist or act."@en .
 
 mo:Group a owl:Class ;
     rdfs:subClassOf mo:Entity ;
     rdfs:label "Group"@en ;
-    rdfs:comment "A in-universe social collective."@en .
+    skos:definition "A in-universe social collective."@en .
 
 mo:Object a owl:Class ;
     rdfs:subClassOf mo:Entity ;
     rdfs:label "Object"@en ;
-    rdfs:comment "A physical tangible object."@en .
+    skos:definition "A physical tangible object."@en .
 
 mo:Event a owl:Class ;
     rdfs:subClassOf mo:Entity ;
     rdfs:label "Event"@en ;
-    rdfs:comment "Any distinct event, process or action that happens in-universe."@en .
+    skos:definition "Any distinct event, process or action that happens in-universe."@en .
 
 mo:Concept a owl:Class ;
     rdfs:subClassOf mo:Entity ;
     rdfs:label "Concept"@en ;
-    rdfs:comment "Top-level category for in-world abstract entities or concepts: a system, classification, language, attribute, ability, or taxon."@en .
+    skos:definition "Top-level category for in-world abstract entities or concepts: a system, classification, language, attribute, ability, or taxon."@en .
 
 mo:TimePeriod a owl:Class ;
     rdfs:subClassOf mo:Entity ;
     rdfs:label "TimePeriod"@en ;
-    rdfs:comment "Any in-universe span of time with distinct beginning and end."@en .
+    skos:definition "Any in-universe span of time with distinct beginning and end."@en .
 
 ## 1: Agent subclasses ##
 
 mo:Person a owl:Class ;
     rdfs:subClassOf mo:Agent ;
     rdfs:label "Person"@en ;
-    rdfs:comment "An individual with sapience, moral agency, culture and sufficient reasoning capacity. Can include humans, humanoids or non-human sapient beings."@en .
+    skos:definition "An individual with sapience, moral agency, culture and sufficient reasoning capacity. Can include humans, humanoids or non-human sapient beings."@en .
 
 mo:Creature a owl:Class ;
     rdfs:subClassOf mo:Agent ;
     owl:disjointWith mo:Person ;
     rdfs:label "Creature"@en ;
-    rdfs:comment "A living agent with limited sapience or cognition, often bounded by instinct. Typically non-human."@en .
+    skos:definition "A living agent with limited sapience or cognition, often bounded by instinct. Typically non-human."@en .
 
 mo:Deity a owl:Class ;
     rdfs:subClassOf mo:Agent ;
     rdfs:label "Deity"@en ;
-    rdfs:comment "A god-tier agent. Immortal or quasi-immortal, often associated with supernatural powers."@en .
+    skos:definition "A god-tier agent. Immortal or quasi-immortal, often associated with supernatural powers."@en .
 
 ## 1: Location subclasses ##
 
 mo:World a owl:Class ;
     rdfs:subClassOf mo:Location ;
     rdfs:label "World"@en ;
-    rdfs:comment "A planetary-scale location."@en .
+    skos:definition "A planetary-scale location."@en .
 
 mo:Region a owl:Class ;
     rdfs:subClassOf mo:Location ;
     rdfs:label "Region"@en ;
-    rdfs:comment "A sub-world location: a country, state, or province."@en .
+    skos:definition "A sub-world location: a country, state, or province."@en .
 
 mo:GeoFeature a owl:Class ;
     rdfs:subClassOf mo:Location ;
     rdfs:label "Geographic Feature"@en ;
-    rdfs:comment "Any natural geographic feature: a mountain, river, lake, cave, etc."@en .
+    skos:definition "Any natural geographic feature: a mountain, river, lake, cave, etc."@en .
 
 mo:Settlement a owl:Class ;
     rdfs:subClassOf mo:Location ;
     rdfs:label "Settlement"@en ;
-    rdfs:comment "Any inhabited location or area: a city, town, etc."@en .
+    skos:definition "Any inhabited location or area: a city, town, etc."@en .
 
 mo:Structure a owl:Class ;s
     rdfs:subClassOf mo:Location ;
     rdfs:label "Structure"@en ;
-    rdfs:comment "Any constructed location, typically with a defined enclosed shape or form: a building, monument, etc."@en .
+    skos:definition "Any constructed location, typically with a defined enclosed shape or form: a building, monument, etc."@en .
 
 mo:Route a owl:Class ;
     rdfs:subClassOf mo:Location ;
     rdfs:label "Route"@en ;
-    rdfs:comment "Any path or route between locations."@en .
+    skos:definition "Any path or route between locations."@en .
 
 ## 1: Group subclasses ##
 
 mo:Organization a owl:Class ;
     rdfs:subClassOf mo:Group ;
     rdfs:label "Organization"@en ;
-    rdfs:comment "A formalized group or institution with a defined structure and purpose."@en .
+    skos:definition "A formalized group or institution with a defined structure and purpose."@en .
 
 mo:Kin a owl:Class ;
     rdfs:subClassOf mo:Group ;
     rdfs:label "Kin"@en ;
-    rdfs:comment "A family or clan."@en .
+    skos:definition "A family or clan."@en .
 
 mo:Community a owl:Class ;
     rdfs:subClassOf mo:Group ;
     rdfs:label "Community"@en ;
-    rdfs:comment "A whole people or population with a shared identity or interests."@en .
+    skos:definition "A whole people or population with a shared identity or interests."@en .
 
 mo:Party a owl:Class ;
     rdfs:subClassOf mo:Group ;
     rdfs:label "Party"@en ;
-    rdfs:comment "A small ad-hoc band with a shared goal or purpose."@en .
+    skos:definition "A small ad-hoc band with a shared goal or purpose."@en .
 
 mo:Collective a owl:Class ;
     rdfs:subClassOf mo:Group ;
     rdfs:label "Collective"@en ;
-    rdfs:comment "A named group of individuals with minimal or zero formal structure."@en .
+    skos:definition "A named group of individuals with minimal or zero formal structure."@en .
 
 ## 1: Concept subclasses ##
 
@@ -159,15 +159,15 @@ mo:System a owl:Class ;
 
 mo:Universe a owl:Class ;
     rdfs:label   "Universe"@en ;
-    rdfs:comment "A fictional universe / canon. Bibliographic plane — not a diegetic Entity."@en .
+    skos:definition "A fictional universe / canon. Bibliographic plane — not a diegetic Entity."@en .
 
 mo:Work a owl:Class ;
     rdfs:label   "Work"@en ;
-    rdfs:comment "A source work (book, film, game) that establishes canon."@en .
+    skos:definition "A source work (book, film, game) that establishes canon."@en .
 
 mo:TextChunk a owl:Class ;
     rdfs:label   "TextChunk"@en ;
-    rdfs:comment "A retrieval-sized unit of source text. The universal retrieval unit; subclassed by a universe ONLY when the subclass adds a genuine structural constraint."@en .
+    skos:definition "A retrieval-sized unit of source text. The universal retrieval unit; subclassed by a universe ONLY when the subclass adds a genuine structural constraint."@en .
 
 #################################################################
 #  Core properties
@@ -176,16 +176,16 @@ mo:TextChunk a owl:Class ;
 mo:inUniverse a owl:ObjectProperty ;
     rdfs:range   mo:Universe ;
     rdfs:label   "inUniverse"@en ;
-    rdfs:comment "Associates an entity (or meta item) with the universe it belongs to. In the Neo4j realization this is ALSO injected as a lowercase namespace label (e.g. :pkmn) for query performance."@en .
+    skos:definition "Associates an entity (or meta item) with the universe it belongs to. In the Neo4j realization this is ALSO injected as a lowercase namespace label (e.g. :pkmn) for query performance."@en .
 
 mo:text a owl:DatatypeProperty ;
     rdfs:domain  mo:TextChunk ;
     rdfs:range   xsd:string ;
     rdfs:label   "text"@en ;
-    rdfs:comment "Verbatim text content of a chunk."@en .
+    skos:definition "Verbatim text content of a chunk."@en .
 
 mo:fromWork a owl:ObjectProperty ;
     rdfs:domain  mo:TextChunk ;
     rdfs:range   mo:Work ;
     rdfs:label   "fromWork"@en ;
-    rdfs:comment "The work a chunk of text was sourced from."@en .
+    skos:definition "The work a chunk of text was sourced from."@en .
