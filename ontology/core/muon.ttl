@@ -2,6 +2,7 @@
 @prefix owl:     <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
 
 <https://muon.dev/ns/core> a owl:Ontology ;
     owl:versionInfo "0.1.0" ;
@@ -100,15 +101,60 @@ mo:Route a owl:Class ;
     rdfs:label "Route"@en ;
     rdfs:comment "Any path or route between locations."@en .
 
-##  1: Concept subclasses ##
+## 1: Group subclasses ##
+
+mo:Organization a owl:Class ;
+    rdfs:subClassOf mo:Group ;
+    rdfs:label "Organization"@en ;
+    rdfs:comment "A formalized group or institution with a defined structure and purpose."@en .
+
+mo:Kin a owl:Class ;
+    rdfs:subClassOf mo:Group ;
+    rdfs:label "Kin"@en ;
+    rdfs:comment "A family or clan."@en .
+
+mo:Community a owl:Class ;
+    rdfs:subClassOf mo:Group ;
+    rdfs:label "Community"@en ;
+    rdfs:comment "A whole people or population with a shared identity or interests."@en .
+
+mo:Party a owl:Class ;
+    rdfs:subClassOf mo:Group ;
+    rdfs:label "Party"@en ;
+    rdfs:comment "A small ad-hoc band with a shared goal or purpose."@en .
+
+mo:Collective a owl:Class ;
+    rdfs:subClassOf mo:Group ;
+    rdfs:label "Collective"@en ;
+    rdfs:comment "A named group of individuals with minimal or zero formal structure."@en .
+
+## 1: Concept subclasses ##
 
 mo:Taxon a owl:Class ;
     rdfs:subClassOf mo:Concept ;
-    rdfs:label   "Taxon"@en ;
-    rdfs:comment "A node in a biological / in-world classification hierarchy."@en .
+    rdfs:label "Taxon"@en ;
+    skos:definition "Any in-universe classification of being that an agent instantiates, whether biological or constructed."@en .
+
+mo:Language a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "Language"@en ;
+    skos:definition "Any in-universe system of communication, spoken, written or signed, used by agents."@en .
+
+mo:Power a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "Power"@en ;
+    skos:definition "Any discrete, invocable capability or supernatural act."@en .
+
+mo:System a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "System"@en ;
+    skos:definition "An organized in-world framework of interrelated rules, principles, or mechanisms governing a domain; most often a power framework."@en .
+
+## 1: Object subclasses ##
+
 
 #################################################################
-#  Meta / bibliographic plane  (outside the Entity tree)
+#  0: Non-diegetic (Meta) plane
 #################################################################
 
 mo:Universe a owl:Class ;
