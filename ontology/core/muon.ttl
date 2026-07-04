@@ -6,7 +6,7 @@
 
 <https://muon.dev/ns/core> a owl:Ontology ;
     owl:versionInfo "0.1.0" ;
-    skos:definition "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph. Per-universe extensions owl:imports this file and subclass freely into it."@en .
+    skos:definition "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph."@en .
 
 #################################################################
 #  0: Diegetic plane
@@ -116,7 +116,7 @@ mo:Kin a owl:Class ;
 mo:Community a owl:Class ;
     rdfs:subClassOf mo:Group ;
     rdfs:label "Community"@en ;
-    skos:definition "A whole people or population with a shared identity or interests."@en .
+    skos:definition "A whole people or population with shared identity or interests."@en .
 
 mo:Party a owl:Class ;
     rdfs:subClassOf mo:Group ;
@@ -150,24 +150,32 @@ mo:System a owl:Class ;
     rdfs:label "System"@en ;
     skos:definition "An organized in-world framework of interrelated rules, principles, or mechanisms governing a domain; most often a power framework."@en .
 
-## 1: Object subclasses ##
-
-
 #################################################################
 #  0: Non-diegetic (Meta) plane
 #################################################################
 
 mo:Universe a owl:Class ;
-    rdfs:label   "Universe"@en ;
-    skos:definition "A fictional universe / canon. Bibliographic plane — not a diegetic Entity."@en .
+    rdfs:label "Universe"@en ;
+    skos:definition "A fictional universe or canon."@en ;
+    rdfs:comment "Represents a fictional universe as a set of real-word works, not the Universe as diegetic entity."@en .
 
 mo:Work a owl:Class ;
-    rdfs:label   "Work"@en ;
-    skos:definition "A source work (book, film, game) that establishes canon."@en .
+    rdfs:label "Work"@en ;
+    skos:definition "A source work that establishes canon: a book, film, game, etc."@en .
+
+mo:Chapter a owl:Class ;
+    rdfs:label "Chapter"@en ;
+    skos:definition "A structural subdivision of a Work: a book chapter, episode, etc."@en ;
+    rdfs:comment "Distinct from TextChunk; Chapter is a stable, citable unit recognizable by the audience and creators."@en .
 
 mo:TextChunk a owl:Class ;
-    rdfs:label   "TextChunk"@en ;
-    skos:definition "A retrieval-sized unit of source text. The universal retrieval unit; subclassed by a universe ONLY when the subclass adds a genuine structural constraint."@en .
+    rdfs:label "TextChunk"@en ;
+    skos:definition "A retrieval-sized unit of source text."@en ;
+    rdfs:comment "The minimum unit of text that may describe in-universe entities."@en .
+
+mo:Creator a owl:Class ;
+    rdfs:label "Creator"@en ;
+    skos:definition "A real-world person or collective that creates works."@en .
 
 #################################################################
 #  Core properties
