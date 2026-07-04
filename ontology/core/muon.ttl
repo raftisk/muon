@@ -1,0 +1,113 @@
+@prefix mo:      <https://muon.dev/ns/core#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+<https://muon.dev/ns/core> a owl:Ontology ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:comment "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph. Per-universe extensions owl:imports this file and subclass freely into it."@en .
+
+#################################################################
+#  0: Diegetic plane
+#################################################################
+
+mo:Entity a owl:Class ;
+    rdfs:label "Entity"@en ;
+    rdfs:comment "Root of the diegetic hierarchy: anything that exists inside a fictional universe."@en .
+
+mo:Agent a owl:Class ;
+    rdfs:subClassOf mo:Entity ;
+    rdfs:label "Agent"@en ;
+    rdfs:comment "An entity with agency: it can act, perceive, hold intent."@en .
+
+mo:Location a owl:Class ;
+    rdfs:subClassOf mo:Entity ;
+    rdfs:label "Location"@en ;
+    rdfs:comment "Any in-universe locale, region or container where entities exist or act."@en .
+
+mo:Group a owl:Class ;
+    rdfs:subClassOf mo:Entity ;
+    rdfs:label "Group"@en ;
+    rdfs:comment "A in-universe social collective."@en .
+
+mo:Object a owl:Class ;
+    rdfs:subClassOf mo:Entity ;
+    rdfs:label "Object"@en ;
+    rdfs:comment "A physical tangible object."@en .
+
+mo:Event a owl:Class ;
+    rdfs:subClassOf mo:Entity ;
+    rdfs:label "Event"@en ;
+    rdfs:comment "Any distinct event, process or action that happens in-universe."@en .
+
+mo:Concept a owl:Class ;
+    rdfs:subClassOf mo:Entity ;
+    rdfs:label "Concept"@en ;
+    rdfs:comment "Top-level category for in-world abstract entities or concepts: a system, classification, language, attribute, ability, or taxon."@en .
+
+mo:TimePeriod a owl:Class ;
+    rdfs:subClassOf mo:Entity ;
+    rdfs:label "TimePeriod"@en ;
+    rdfs:comment "Any in-universe span of time with distinct beginning and end."@en .
+
+##  Agent subclasses ##
+
+mo:Person a owl:Class ;
+    rdfs:subClassOf mo:Agent ;
+    rdfs:label "Person"@en ;
+    rdfs:comment "An individual with sapience, moral agency, culture and sufficient reasoning capacity. Can include humans, humanoids or non-human sapient beings."@en .
+
+mo:Creature a owl:Class ;
+    rdfs:subClassOf mo:Agent ;
+    owl:disjointWith mo:Person ;
+    rdfs:label "Creature"@en ;
+    rdfs:comment "A living agent with limited sapience or cognition, often bounded by instinct. Typically non-human."@en .
+
+mo:Deity a owl:Class ;
+    rdfs:subClassOf mo:Agent ;
+    rdfs:label "Deity"@en ;
+    rdfs:comment "A god-tier agent. Immortal or quasi-immortal, often associated with supernatural powers."@en .
+
+##  Concept subclasses ##
+
+mo:Taxon a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label   "Taxon"@en ;
+    rdfs:comment "A node in a biological / in-world classification hierarchy."@en .
+
+#################################################################
+#  Meta / bibliographic plane  (outside the Entity tree)
+#################################################################
+
+mo:Universe a owl:Class ;
+    rdfs:label   "Universe"@en ;
+    rdfs:comment "A fictional universe / canon. Bibliographic plane — not a diegetic Entity."@en .
+
+mo:Work a owl:Class ;
+    rdfs:label   "Work"@en ;
+    rdfs:comment "A source work (book, film, game) that establishes canon."@en .
+
+mo:TextChunk a owl:Class ;
+    rdfs:label   "TextChunk"@en ;
+    rdfs:comment "A retrieval-sized unit of source text. The universal retrieval unit; subclassed by a universe ONLY when the subclass adds a genuine structural constraint."@en .
+
+#################################################################
+#  Core properties
+#################################################################
+
+mo:inUniverse a owl:ObjectProperty ;
+    rdfs:range   mo:Universe ;
+    rdfs:label   "inUniverse"@en ;
+    rdfs:comment "Associates an entity (or meta item) with the universe it belongs to. In the Neo4j realization this is ALSO injected as a lowercase namespace label (e.g. :pkmn) for query performance."@en .
+
+mo:text a owl:DatatypeProperty ;
+    rdfs:domain  mo:TextChunk ;
+    rdfs:range   xsd:string ;
+    rdfs:label   "text"@en ;
+    rdfs:comment "Verbatim text content of a chunk."@en .
+
+mo:fromWork a owl:ObjectProperty ;
+    rdfs:domain  mo:TextChunk ;
+    rdfs:range   mo:Work ;
+    rdfs:label   "fromWork"@en ;
+    rdfs:comment "The work a chunk of text was sourced from."@en .
