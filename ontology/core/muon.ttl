@@ -130,9 +130,9 @@ mo:Collective a owl:Class ;
 
 ## 1: Concept subclasses ##
 
-mo:Taxon a owl:Class ;
+mo:Species a owl:Class ;
     rdfs:subClassOf mo:Concept ;
-    rdfs:label "Taxon"@en ;
+    rdfs:label "Species"@en ;
     skos:definition "Any in-universe classification of being that an agent instantiates, whether biological or constructed."@en .
 
 mo:Language a owl:Class ;
@@ -270,7 +270,7 @@ mo:participatesIn a owl:ObjectProperty ;
 
 mo:hasSpecies a owl:ObjectProperty ;
     rdfs:domain mo:Agent ;
-    rdfs:range  mo:Taxon ;
+    rdfs:range  mo:Species ;
     rdfs:label "hasSpecies"@en ;
     skos:definition "Species of an agent."@en .
 
