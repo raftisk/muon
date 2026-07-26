@@ -26,6 +26,24 @@ pkmn:nationalDexNumber a owl:DatatypeProperty ;
     rdfs:label   "nationalDexNumber"@en ;
     skos:definition "National Pokédex number. Exactly-one."@en .
 
+## Species datatype properties ##
+pkmn:baseHp        a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseHp"@en .
+pkmn:baseAttack    a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseAttack"@en .
+pkmn:baseDefense   a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseDefense"@en .
+pkmn:baseSpAttack  a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseSpAttack"@en .
+pkmn:baseSpDefense a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseSpDefense"@en .
+pkmn:baseSpeed     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseSpeed"@en .
+pkmn:height        a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:decimal ; rdfs:label "height"@en .
+pkmn:weight        a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:decimal ; rdfs:label "weight"@en .
+pkmn:genderRatio   a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "genderRatio"@en .
+pkmn:catchRate     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "catchRate"@en .
+pkmn:baseExpYield  a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseExpYield"@en .
+pkmn:shape         a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "shape"@en .
+pkmn:isLegendary   a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isLegendary"@en .
+pkmn:isMythical    a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isMythical"@en .
+pkmn:isStarter     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isStarter"@en .
+pkmn:isDefaultForm a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isDefaultForm"@en .
+
 ## Moves and types ##
 
 pkmn:Type a owl:Class ;
@@ -42,13 +60,40 @@ pkmn:hasType a owl:ObjectProperty ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:PokemonSpecies pkmn:Move ) ] ;
     rdfs:range pkmn:Type ;
     rdfs:label "hasType"@en ;
-    rdfs:comment "A PokemonsSpecies has one or two types. A Move has exactly one type."@en .
+    rdfs:comment "A species has one or two types; a move has exactly one."@en .
 
-pkmn:effectivenessAgainst a owl:ObjectProperty ;
-    rdfs:domain  pkmn:Type ;
-    rdfs:range   pkmn:Type ;
-    rdfs:label   "effectivenessAgainst"@en ;
-    skos:definition "Attacking-type -> defending-type effectiveness. The multiplier (0, 0.25, 0.5, 2, 4) is an edge property in Neo4j, e.g. (:Fire)-[:EFFECTIVENESS_AGAINST {multiplier: 2.0}]->(:Grass) — it is pair-specific, so per the reification ladder it stays on the edge."@en .
+pkmn:primaryType a owl:ObjectProperty ;
+    rdfs:subPropertyOf pkmn:hasType ;
+    rdfs:domain pkmn:PokemonSpecies ;
+    rdfs:range  pkmn:Type ;
+    rdfs:label  "primaryType"@en .
+
+pkmn:secondaryType a owl:ObjectProperty ;
+    rdfs:subPropertyOf pkmn:hasType ;
+    rdfs:domain pkmn:PokemonSpecies ;
+    rdfs:range  pkmn:Type ;
+    rdfs:label  "secondaryType"@en .
+
+pkmn:effectiveAgainst a owl:ObjectProperty ;
+    rdfs:domain pkmn:Type ;
+    rdfs:range  pkmn:Type ;
+    rdfs:label  "effectiveAgainst"@en ;
+    skos:definition "Attacking-type effectiveness on a defending type. Multiplier is encoded in the sub-property, not on the edge."@en .
+
+pkmn:superEffectiveAgainst a owl:ObjectProperty ;
+    rdfs:subPropertyOf pkmn:effectiveAgainst ;
+    rdfs:label "superEffectiveAgainst"@en ;
+    skos:definition "x2."@en .
+
+pkmn:notVeryEffectiveAgainst a owl:ObjectProperty ;
+    rdfs:subPropertyOf pkmn:effectiveAgainst ;
+    rdfs:label "notVeryEffectiveAgainst"@en ;
+    skos:definition "x0.5."@en .
+
+pkmn:noEffectAgainst a owl:ObjectProperty ;
+    rdfs:subPropertyOf pkmn:effectiveAgainst ;
+    rdfs:label "noEffectAgainst"@en ;
+    skos:definition "x0 (immunity)."@en .
 
 ##  The 18 types  ##
 pkmn:Normal   a pkmn:Type ; rdfs:label "Normal"@en .
@@ -86,6 +131,58 @@ pkmn:defense        a pkmn:Stat ; rdfs:label "Defense"@en .
 pkmn:specialAttack  a pkmn:Stat ; rdfs:label "Special Attack"@en .
 pkmn:specialDefense a pkmn:Stat ; rdfs:label "Special Defense"@en .
 pkmn:speed          a pkmn:Stat ; rdfs:label "Speed"@en .
+
+pkmn:affectsStat a owl:ObjectProperty ;
+    rdfs:range pkmn:Stat ;
+    rdfs:label "affectsStat"@en ;
+    skos:definition "Parent of the stat-modifier sub-properties."@en .
+
+#################################################################
+#  Natures
+#################################################################
+
+pkmn:Nature a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "Nature"@en ;
+    skos:definition "A nature: raises one stat 10% and lowers another (5 are neutral)."@en .
+
+pkmn:boostsStat a owl:ObjectProperty ;
+    rdfs:subPropertyOf pkmn:affectsStat ;
+    rdfs:domain pkmn:Nature ;
+    rdfs:range  pkmn:Stat ;
+    rdfs:label  "boostsStat"@en .
+
+pkmn:reducesStat a owl:ObjectProperty ;
+    rdfs:subPropertyOf pkmn:affectsStat ;
+    rdfs:domain pkmn:Nature ;
+    rdfs:range  pkmn:Stat ;
+    rdfs:label  "reducesStat"@en .
+
+pkmn:hardy   a pkmn:Nature ; rdfs:label "Hardy"@en .
+pkmn:lonely  a pkmn:Nature ; rdfs:label "Lonely"@en .
+pkmn:brave   a pkmn:Nature ; rdfs:label "Brave"@en .
+pkmn:adamant a pkmn:Nature ; rdfs:label "Adamant"@en .
+pkmn:naughty a pkmn:Nature ; rdfs:label "Naughty"@en .
+pkmn:bold    a pkmn:Nature ; rdfs:label "Bold"@en .
+pkmn:docile  a pkmn:Nature ; rdfs:label "Docile"@en .
+pkmn:relaxed a pkmn:Nature ; rdfs:label "Relaxed"@en .
+pkmn:impish  a pkmn:Nature ; rdfs:label "Impish"@en .
+pkmn:lax     a pkmn:Nature ; rdfs:label "Lax"@en .
+pkmn:timid   a pkmn:Nature ; rdfs:label "Timid"@en .
+pkmn:hasty   a pkmn:Nature ; rdfs:label "Hasty"@en .
+pkmn:serious a pkmn:Nature ; rdfs:label "Serious"@en .
+pkmn:jolly   a pkmn:Nature ; rdfs:label "Jolly"@en .
+pkmn:naive   a pkmn:Nature ; rdfs:label "Naive"@en .
+pkmn:modest  a pkmn:Nature ; rdfs:label "Modest"@en .
+pkmn:mild    a pkmn:Nature ; rdfs:label "Mild"@en .
+pkmn:quiet   a pkmn:Nature ; rdfs:label "Quiet"@en .
+pkmn:bashful a pkmn:Nature ; rdfs:label "Bashful"@en .
+pkmn:rash    a pkmn:Nature ; rdfs:label "Rash"@en .
+pkmn:calm    a pkmn:Nature ; rdfs:label "Calm"@en .
+pkmn:gentle  a pkmn:Nature ; rdfs:label "Gentle"@en .
+pkmn:sassy   a pkmn:Nature ; rdfs:label "Sassy"@en .
+pkmn:careful a pkmn:Nature ; rdfs:label "Careful"@en .
+pkmn:quirky  a pkmn:Nature ; rdfs:label "Quirky"@en .
 
 #################################################################
 #  Abilities (passive)
