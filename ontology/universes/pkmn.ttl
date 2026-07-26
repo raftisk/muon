@@ -1,0 +1,195 @@
+@prefix pkmn: <https://muon.dev/ns/pkmn#> .
+@prefix mo: <https://muon.dev/ns/core#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+<https://muon.dev/ns/pkmn> a owl:Ontology ;
+    dcterms:title   "muon: Pokémon extension"@en ;
+    owl:versionInfo "0.1.0" ;
+    owl:imports     <https://muon.dev/ns/core> ;
+    skos:definition    "Pokémon-universe extension of the muon core ontology."@en .
+
+## Main Pokémon species class ##
+
+pkmn:PokemonSpecies a owl:Class ;
+    rdfs:subClassOf mo:Species ;
+    rdfs:label "Pokémon species"@en ;
+    skos:definition "A Pokémon species as registered in the National Pokédex."@en ;
+    rdfs:comment "Not to be confused with an individual Pokémon, which is a mo:Creature. Individual Pokémon are instances of their species via mo:hasSpecies."@en .
+
+pkmn:nationalDexNumber a owl:DatatypeProperty ;
+    rdfs:domain  pkmn:PokemonSpecies ;
+    rdfs:range   xsd:integer ;
+    rdfs:label   "nationalDexNumber"@en ;
+    skos:definition "National Pokédex number. Exactly-one."@en .
+
+## Moves and types ##
+
+pkmn:Type a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "Type"@en ;
+    skos:definition "Any of the elemental types applied to Pokémon and their moves, which affect the power and effectiveness of moves in battles."@en .
+
+pkmn:Move a owl:Class ;
+    rdfs:subClassOf mo:Power ;
+    rdfs:label "Move"@en ;
+    skos:definition "An active, learnable battle move (Thunderbolt, Tackle)."@en .
+
+pkmn:hasType a owl:ObjectProperty ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:PokemonSpecies pkmn:Move ) ] ;
+    rdfs:range pkmn:Type ;
+    rdfs:label "hasType"@en ;
+    rdfs:comment "A PokemonsSpecies has one or two types. A Move has exactly one type."@en .
+
+pkmn:effectivenessAgainst a owl:ObjectProperty ;
+    rdfs:domain  pkmn:Type ;
+    rdfs:range   pkmn:Type ;
+    rdfs:label   "effectivenessAgainst"@en ;
+    skos:definition "Attacking-type -> defending-type effectiveness. The multiplier (0, 0.25, 0.5, 2, 4) is an edge property in Neo4j, e.g. (:Fire)-[:EFFECTIVENESS_AGAINST {multiplier: 2.0}]->(:Grass) — it is pair-specific, so per the reification ladder it stays on the edge."@en .
+
+##  The 18 types  ##
+pkmn:Normal   a pkmn:Type ; rdfs:label "Normal"@en .
+pkmn:Fire     a pkmn:Type ; rdfs:label "Fire"@en .
+pkmn:Water    a pkmn:Type ; rdfs:label "Water"@en .
+pkmn:Electric a pkmn:Type ; rdfs:label "Electric"@en .
+pkmn:Grass    a pkmn:Type ; rdfs:label "Grass"@en .
+pkmn:Ice      a pkmn:Type ; rdfs:label "Ice"@en .
+pkmn:Fighting a pkmn:Type ; rdfs:label "Fighting"@en .
+pkmn:Poison   a pkmn:Type ; rdfs:label "Poison"@en .
+pkmn:Ground   a pkmn:Type ; rdfs:label "Ground"@en .
+pkmn:Flying   a pkmn:Type ; rdfs:label "Flying"@en .
+pkmn:Psychic  a pkmn:Type ; rdfs:label "Psychic"@en .
+pkmn:Bug      a pkmn:Type ; rdfs:label "Bug"@en .
+pkmn:Rock     a pkmn:Type ; rdfs:label "Rock"@en .
+pkmn:Ghost    a pkmn:Type ; rdfs:label "Ghost"@en .
+pkmn:Dragon   a pkmn:Type ; rdfs:label "Dragon"@en .
+pkmn:Dark     a pkmn:Type ; rdfs:label "Dark"@en .
+pkmn:Steel    a pkmn:Type ; rdfs:label "Steel"@en .
+pkmn:Fairy    a pkmn:Type ; rdfs:label "Fairy"@en .
+
+
+#################################################################
+#  Base stats
+#################################################################
+
+pkmn:Stat a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label   "Stat"@en ;
+    skos:definition "A battle statistic. Kept in pkmn: for now rather than widening mo: mid-ingestion; a candidate for promotion to a core mo:Stat via the schema proposal queue once a second universe needs stats."@en .
+
+pkmn:hp             a pkmn:Stat ; rdfs:label "HP"@en .
+pkmn:attack         a pkmn:Stat ; rdfs:label "Attack"@en .
+pkmn:defense        a pkmn:Stat ; rdfs:label "Defense"@en .
+pkmn:specialAttack  a pkmn:Stat ; rdfs:label "Special Attack"@en .
+pkmn:specialDefense a pkmn:Stat ; rdfs:label "Special Defense"@en .
+pkmn:speed          a pkmn:Stat ; rdfs:label "Speed"@en .
+
+#################################################################
+#  Abilities (passive)
+#################################################################
+
+pkmn:Ability a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label   "Ability"@en ;
+    skos:definition "A passive Pokémon Ability (Static, Levitate, ...)."@en .
+
+pkmn:hasAbility a owl:ObjectProperty ;
+    rdfs:domain  pkmn:PokemonSpecies ;
+    rdfs:range   pkmn:Ability ;
+    rdfs:label   "hasAbility"@en ;
+    skos:definition "A species' possible abilities. Whether a slot is the Hidden Ability is an edge property (isHidden) in the LPG realization."@en .
+
+#################################################################
+#  Moves (active)
+#################################################################
+
+pkmn:MoveDamageClass a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label   "MoveDamageClass"@en ;
+    skos:definition "How a move deals (or does not deal) damage."@en .
+
+pkmn:physical a pkmn:MoveDamageClass ; rdfs:label "Physical"@en .
+pkmn:special  a pkmn:MoveDamageClass ; rdfs:label "Special"@en .
+pkmn:status   a pkmn:MoveDamageClass ; rdfs:label "Status"@en .
+
+pkmn:moveType a owl:ObjectProperty ;
+    rdfs:domain  pkmn:Move ;
+    rdfs:range   pkmn:Type ;
+    rdfs:label   "moveType"@en ;
+    skos:definition "The elemental type of a move (exactly one; enforced by SHACL)."@en .
+
+pkmn:damageClass a owl:ObjectProperty ;
+    rdfs:domain  pkmn:Move ;
+    rdfs:range   pkmn:MoveDamageClass ;
+    rdfs:label   "damageClass"@en .
+
+pkmn:power a owl:DatatypeProperty ;
+    rdfs:domain  pkmn:Move ;
+    rdfs:range   xsd:integer ;
+    rdfs:label   "power"@en ;
+    skos:definition "Base power. Absent for status moves."@en .
+
+pkmn:accuracy a owl:DatatypeProperty ;
+    rdfs:domain  pkmn:Move ;
+    rdfs:range   xsd:integer ;
+    rdfs:label   "accuracy"@en ;
+    skos:definition "Accuracy percentage (1-100). Absent for moves that bypass accuracy checks."@en .
+
+pkmn:pp a owl:DatatypeProperty ;
+    rdfs:domain  pkmn:Move ;
+    rdfs:range   xsd:integer ;
+    rdfs:label   "pp"@en ;
+    skos:definition "Base Power Points (maximum uses)."@en .
+
+pkmn:learnsMove a owl:ObjectProperty ;
+    rdfs:domain  pkmn:PokemonSpecies ;
+    rdfs:range   pkmn:Move ;
+    rdfs:label   "learnsMove"@en ;
+    skos:definition "A species can learn a move. Learn method (level-up / TM / egg / tutor) and level are edge properties in Neo4j — specific to the (species, move) pair."@en .
+
+#################################################################
+#  Egg groups (breeding compatibility)
+#################################################################
+
+pkmn:EggGroup a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label   "EggGroup"@en ;
+    skos:definition "A breeding-compatibility grouping: two species can breed if they share an egg group. Cross-cuts the type/species axis, so it is a Concept — not a Taxon and not a social mo:Group."@en .
+
+pkmn:inEggGroup a owl:ObjectProperty ;
+    rdfs:domain  pkmn:PokemonSpecies ;
+    rdfs:range   pkmn:EggGroup ;
+    rdfs:label   "inEggGroup"@en .
+
+# Individuals are named eggGroup* to avoid local-name collision with the
+# identically-named Type individuals (Bug, Flying, Dragon, Fairy, ...).
+pkmn:eggGroupMonster   a pkmn:EggGroup ; rdfs:label "Monster"@en .
+pkmn:eggGroupWater1    a pkmn:EggGroup ; rdfs:label "Water 1"@en .
+pkmn:eggGroupBug       a pkmn:EggGroup ; rdfs:label "Bug"@en .
+pkmn:eggGroupFlying    a pkmn:EggGroup ; rdfs:label "Flying"@en .
+pkmn:eggGroupField     a pkmn:EggGroup ; rdfs:label "Field"@en .
+pkmn:eggGroupFairy     a pkmn:EggGroup ; rdfs:label "Fairy"@en .
+pkmn:eggGroupGrass     a pkmn:EggGroup ; rdfs:label "Grass"@en .
+pkmn:eggGroupHumanLike a pkmn:EggGroup ; rdfs:label "Human-Like"@en .
+pkmn:eggGroupMineral   a pkmn:EggGroup ; rdfs:label "Mineral"@en .
+pkmn:eggGroupDragon    a pkmn:EggGroup ; rdfs:label "Dragon"@en .
+pkmn:eggGroupDitto     a pkmn:EggGroup ; rdfs:label "Ditto"@en .
+pkmn:eggGroupNoEggs    a pkmn:EggGroup ; rdfs:label "No Eggs Discovered"@en .
+
+#################################################################
+#  Pokédex entries  (structural TextChunk subclass)
+#################################################################
+
+pkmn:PokedexEntry a owl:Class ;
+    rdfs:subClassOf mo:TextChunk ;
+    rdfs:label   "PokedexEntry"@en ;
+    skos:definition "A single Pokédex flavour-text entry: a short description of ONE species from ONE game version. Warrants subclassing mo:TextChunk (vs. the generic chunk) because it adds structure — it is bound to exactly one species (pkmn:describesSpecies) and, via the inherited mo:fromWork, one source game."@en .
+
+pkmn:describesSpecies a owl:ObjectProperty ;
+    rdfs:domain  pkmn:PokedexEntry ;
+    rdfs:range   pkmn:PokemonSpecies ;
+    rdfs:label   "describesSpecies"@en ;
+    skos:definition "The species an entry describes. The verbatim text is on the inherited mo:text; the version game on the inherited mo:fromWork."@en .
