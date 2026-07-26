@@ -95,26 +95,6 @@ pkmn:noEffectAgainst a owl:ObjectProperty ;
     rdfs:label "noEffectAgainst"@en ;
     skos:definition "x0 (immunity)."@en .
 
-##  The 18 types  ##
-pkmn:Normal   a pkmn:Type ; rdfs:label "Normal"@en .
-pkmn:Fire     a pkmn:Type ; rdfs:label "Fire"@en .
-pkmn:Water    a pkmn:Type ; rdfs:label "Water"@en .
-pkmn:Electric a pkmn:Type ; rdfs:label "Electric"@en .
-pkmn:Grass    a pkmn:Type ; rdfs:label "Grass"@en .
-pkmn:Ice      a pkmn:Type ; rdfs:label "Ice"@en .
-pkmn:Fighting a pkmn:Type ; rdfs:label "Fighting"@en .
-pkmn:Poison   a pkmn:Type ; rdfs:label "Poison"@en .
-pkmn:Ground   a pkmn:Type ; rdfs:label "Ground"@en .
-pkmn:Flying   a pkmn:Type ; rdfs:label "Flying"@en .
-pkmn:Psychic  a pkmn:Type ; rdfs:label "Psychic"@en .
-pkmn:Bug      a pkmn:Type ; rdfs:label "Bug"@en .
-pkmn:Rock     a pkmn:Type ; rdfs:label "Rock"@en .
-pkmn:Ghost    a pkmn:Type ; rdfs:label "Ghost"@en .
-pkmn:Dragon   a pkmn:Type ; rdfs:label "Dragon"@en .
-pkmn:Dark     a pkmn:Type ; rdfs:label "Dark"@en .
-pkmn:Steel    a pkmn:Type ; rdfs:label "Steel"@en .
-pkmn:Fairy    a pkmn:Type ; rdfs:label "Fairy"@en .
-
 
 #################################################################
 #  Base stats
@@ -125,12 +105,6 @@ pkmn:Stat a owl:Class ;
     rdfs:label   "Stat"@en ;
     skos:definition "A battle statistic. Kept in pkmn: for now rather than widening mo: mid-ingestion; a candidate for promotion to a core mo:Stat via the schema proposal queue once a second universe needs stats."@en .
 
-pkmn:hp             a pkmn:Stat ; rdfs:label "HP"@en .
-pkmn:attack         a pkmn:Stat ; rdfs:label "Attack"@en .
-pkmn:defense        a pkmn:Stat ; rdfs:label "Defense"@en .
-pkmn:specialAttack  a pkmn:Stat ; rdfs:label "Special Attack"@en .
-pkmn:specialDefense a pkmn:Stat ; rdfs:label "Special Defense"@en .
-pkmn:speed          a pkmn:Stat ; rdfs:label "Speed"@en .
 
 pkmn:affectsStat a owl:ObjectProperty ;
     rdfs:range pkmn:Stat ;
@@ -158,31 +132,6 @@ pkmn:reducesStat a owl:ObjectProperty ;
     rdfs:range  pkmn:Stat ;
     rdfs:label  "reducesStat"@en .
 
-pkmn:hardy   a pkmn:Nature ; rdfs:label "Hardy"@en .
-pkmn:lonely  a pkmn:Nature ; rdfs:label "Lonely"@en .
-pkmn:brave   a pkmn:Nature ; rdfs:label "Brave"@en .
-pkmn:adamant a pkmn:Nature ; rdfs:label "Adamant"@en .
-pkmn:naughty a pkmn:Nature ; rdfs:label "Naughty"@en .
-pkmn:bold    a pkmn:Nature ; rdfs:label "Bold"@en .
-pkmn:docile  a pkmn:Nature ; rdfs:label "Docile"@en .
-pkmn:relaxed a pkmn:Nature ; rdfs:label "Relaxed"@en .
-pkmn:impish  a pkmn:Nature ; rdfs:label "Impish"@en .
-pkmn:lax     a pkmn:Nature ; rdfs:label "Lax"@en .
-pkmn:timid   a pkmn:Nature ; rdfs:label "Timid"@en .
-pkmn:hasty   a pkmn:Nature ; rdfs:label "Hasty"@en .
-pkmn:serious a pkmn:Nature ; rdfs:label "Serious"@en .
-pkmn:jolly   a pkmn:Nature ; rdfs:label "Jolly"@en .
-pkmn:naive   a pkmn:Nature ; rdfs:label "Naive"@en .
-pkmn:modest  a pkmn:Nature ; rdfs:label "Modest"@en .
-pkmn:mild    a pkmn:Nature ; rdfs:label "Mild"@en .
-pkmn:quiet   a pkmn:Nature ; rdfs:label "Quiet"@en .
-pkmn:bashful a pkmn:Nature ; rdfs:label "Bashful"@en .
-pkmn:rash    a pkmn:Nature ; rdfs:label "Rash"@en .
-pkmn:calm    a pkmn:Nature ; rdfs:label "Calm"@en .
-pkmn:gentle  a pkmn:Nature ; rdfs:label "Gentle"@en .
-pkmn:sassy   a pkmn:Nature ; rdfs:label "Sassy"@en .
-pkmn:careful a pkmn:Nature ; rdfs:label "Careful"@en .
-pkmn:quirky  a pkmn:Nature ; rdfs:label "Quirky"@en .
 
 #################################################################
 #  Abilities (passive)
@@ -208,20 +157,11 @@ pkmn:MoveDamageClass a owl:Class ;
     rdfs:label   "MoveDamageClass"@en ;
     skos:definition "How a move deals (or does not deal) damage."@en .
 
-pkmn:physical a pkmn:MoveDamageClass ; rdfs:label "Physical"@en .
-pkmn:special  a pkmn:MoveDamageClass ; rdfs:label "Special"@en .
-pkmn:status   a pkmn:MoveDamageClass ; rdfs:label "Status"@en .
 
-pkmn:moveType a owl:ObjectProperty ;
-    rdfs:domain  pkmn:Move ;
-    rdfs:range   pkmn:Type ;
-    rdfs:label   "moveType"@en ;
-    skos:definition "The elemental type of a move (exactly one; enforced by SHACL)."@en .
-
-pkmn:damageClass a owl:ObjectProperty ;
+pkmn:hasDamageClass a owl:ObjectProperty ;
     rdfs:domain  pkmn:Move ;
     rdfs:range   pkmn:MoveDamageClass ;
-    rdfs:label   "damageClass"@en .
+    rdfs:label   "hasDamageClass"@en .
 
 pkmn:power a owl:DatatypeProperty ;
     rdfs:domain  pkmn:Move ;
@@ -241,12 +181,6 @@ pkmn:pp a owl:DatatypeProperty ;
     rdfs:label   "pp"@en ;
     skos:definition "Base Power Points (maximum uses)."@en .
 
-pkmn:learnsMove a owl:ObjectProperty ;
-    rdfs:domain  pkmn:PokemonSpecies ;
-    rdfs:range   pkmn:Move ;
-    rdfs:label   "learnsMove"@en ;
-    skos:definition "A species can learn a move. Learn method (level-up / TM / egg / tutor) and level are edge properties in Neo4j — specific to the (species, move) pair."@en .
-
 #################################################################
 #  Egg groups (breeding compatibility)
 #################################################################
@@ -261,20 +195,7 @@ pkmn:inEggGroup a owl:ObjectProperty ;
     rdfs:range   pkmn:EggGroup ;
     rdfs:label   "inEggGroup"@en .
 
-# Individuals are named eggGroup* to avoid local-name collision with the
 # identically-named Type individuals (Bug, Flying, Dragon, Fairy, ...).
-pkmn:eggGroupMonster   a pkmn:EggGroup ; rdfs:label "Monster"@en .
-pkmn:eggGroupWater1    a pkmn:EggGroup ; rdfs:label "Water 1"@en .
-pkmn:eggGroupBug       a pkmn:EggGroup ; rdfs:label "Bug"@en .
-pkmn:eggGroupFlying    a pkmn:EggGroup ; rdfs:label "Flying"@en .
-pkmn:eggGroupField     a pkmn:EggGroup ; rdfs:label "Field"@en .
-pkmn:eggGroupFairy     a pkmn:EggGroup ; rdfs:label "Fairy"@en .
-pkmn:eggGroupGrass     a pkmn:EggGroup ; rdfs:label "Grass"@en .
-pkmn:eggGroupHumanLike a pkmn:EggGroup ; rdfs:label "Human-Like"@en .
-pkmn:eggGroupMineral   a pkmn:EggGroup ; rdfs:label "Mineral"@en .
-pkmn:eggGroupDragon    a pkmn:EggGroup ; rdfs:label "Dragon"@en .
-pkmn:eggGroupDitto     a pkmn:EggGroup ; rdfs:label "Ditto"@en .
-pkmn:eggGroupNoEggs    a pkmn:EggGroup ; rdfs:label "No Eggs Discovered"@en .
 
 #################################################################
 #  Pokédex entries  (structural TextChunk subclass)
@@ -353,65 +274,192 @@ pkmn:immuneTo a owl:ObjectProperty ;
     rdfs:label  "immuneTo"@en ;
     skos:definition "A type's inherent status immunity (Fire to Burn, Ice to Freeze, ...)."@en .
 
-## Status conditions (prefixed: 'Poison' collides with the Type) ##
-pkmn:statusBurn          a pkmn:StatusCondition ; rdfs:label "Burn"@en .
-pkmn:statusFreeze        a pkmn:StatusCondition ; rdfs:label "Freeze"@en .
-pkmn:statusParalysis     a pkmn:StatusCondition ; rdfs:label "Paralysis"@en .
-pkmn:statusPoison        a pkmn:StatusCondition ; rdfs:label "Poison"@en .
-pkmn:statusBadlyPoisoned a pkmn:StatusCondition ; rdfs:label "Badly Poisoned"@en .
-pkmn:statusSleep         a pkmn:StatusCondition ; rdfs:label "Sleep"@en .
+#################################################################
+#  Items
+#################################################################
 
-## Volatile conditions ##
-pkmn:confusion       a pkmn:VolatileCondition ; rdfs:label "Confusion"@en .
-pkmn:flinch          a pkmn:VolatileCondition ; rdfs:label "Flinch"@en .
-pkmn:taunt           a pkmn:VolatileCondition ; rdfs:label "Taunt"@en .
-pkmn:encore          a pkmn:VolatileCondition ; rdfs:label "Encore"@en .
-pkmn:leechSeed       a pkmn:VolatileCondition ; rdfs:label "Leech Seed"@en .
-pkmn:infatuation     a pkmn:VolatileCondition ; rdfs:label "Infatuation"@en .
-pkmn:trapped         a pkmn:VolatileCondition ; rdfs:label "Trapped"@en .
-pkmn:substitute      a pkmn:VolatileCondition ; rdfs:label "Substitute"@en .
-pkmn:semiInvulnerable a pkmn:VolatileCondition ; rdfs:label "Semi-Invulnerable"@en .
-pkmn:curse           a pkmn:VolatileCondition ; rdfs:label "Curse"@en .
-pkmn:nightmare       a pkmn:VolatileCondition ; rdfs:label "Nightmare"@en .
-pkmn:disable         a pkmn:VolatileCondition ; rdfs:label "Disable"@en .
-pkmn:torment         a pkmn:VolatileCondition ; rdfs:label "Torment"@en .
-pkmn:yawn            a pkmn:VolatileCondition ; rdfs:label "Yawn"@en .
-pkmn:aquaRing        a pkmn:VolatileCondition ; rdfs:label "Aqua Ring"@en .
-pkmn:ingrain         a pkmn:VolatileCondition ; rdfs:label "Ingrain"@en .
-pkmn:magnetRise      a pkmn:VolatileCondition ; rdfs:label "Magnet Rise"@en .
-pkmn:telekinesis     a pkmn:VolatileCondition ; rdfs:label "Telekinesis"@en .
-pkmn:embargo         a pkmn:VolatileCondition ; rdfs:label "Embargo"@en .
-pkmn:healBlock       a pkmn:VolatileCondition ; rdfs:label "Heal Block"@en .
+pkmn:Item a owl:Class ;
+    rdfs:subClassOf mo:Object ;
+    rdfs:label "Item"@en ;
+    skos:definition "An in-game item."@en .
 
-## Weather ##
-pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en .
-pkmn:harshSunlight          a pkmn:Weather ; rdfs:label "Harsh Sunlight"@en .
-pkmn:sandstorm              a pkmn:Weather ; rdfs:label "Sandstorm"@en .
-pkmn:hail                   a pkmn:Weather ; rdfs:label "Hail"@en .
-pkmn:snow                   a pkmn:Weather ; rdfs:label "Snow"@en .
-pkmn:fog                    a pkmn:Weather ; rdfs:label "Fog"@en .
-pkmn:extremelyHarshSunlight a pkmn:Weather ; rdfs:label "Extremely Harsh Sunlight"@en .
-pkmn:heavyRain              a pkmn:Weather ; rdfs:label "Heavy Rain"@en .
-pkmn:strongWinds            a pkmn:Weather ; rdfs:label "Strong Winds"@en .
+pkmn:Berry    a owl:Class ; rdfs:subClassOf pkmn:Item ; rdfs:label "Berry"@en .
+pkmn:Machine  a owl:Class ; rdfs:subClassOf pkmn:Item ; rdfs:label "Machine"@en ;
+    skos:definition "A TM, HM, or TR that teaches a move."@en .
+pkmn:HeldItem a owl:Class ; rdfs:subClassOf pkmn:Item ; rdfs:label "HeldItem"@en .
 
-## Terrain ##
-pkmn:electricTerrain a pkmn:Terrain ; rdfs:label "Electric Terrain"@en .
-pkmn:grassyTerrain   a pkmn:Terrain ; rdfs:label "Grassy Terrain"@en .
-pkmn:mistyTerrain    a pkmn:Terrain ; rdfs:label "Misty Terrain"@en .
-pkmn:psychicTerrain  a pkmn:Terrain ; rdfs:label "Psychic Terrain"@en .
+pkmn:teachesMove a owl:ObjectProperty ;
+    rdfs:range pkmn:Move ;
+    rdfs:label "teachesMove"@en ;
+    skos:definition "The move a machine or learnset entry grants."@en .
 
-## Entry hazards ##
-pkmn:stealthRock a pkmn:EntryHazard ; rdfs:label "Stealth Rock"@en .
-pkmn:spikes      a pkmn:EntryHazard ; rdfs:label "Spikes"@en .
-pkmn:toxicSpikes a pkmn:EntryHazard ; rdfs:label "Toxic Spikes"@en .
-pkmn:stickyWeb   a pkmn:EntryHazard ; rdfs:label "Sticky Web"@en .
+pkmn:cures a owl:ObjectProperty ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:StatusCondition pkmn:VolatileCondition ) ] ;
+    rdfs:label "cures"@en .
 
-## Field effects ##
-pkmn:trickRoom   a pkmn:FieldEffect ; rdfs:label "Trick Room"@en .
-pkmn:gravity     a pkmn:FieldEffect ; rdfs:label "Gravity"@en .
-pkmn:magicRoom   a pkmn:FieldEffect ; rdfs:label "Magic Room"@en .
-pkmn:wonderRoom  a pkmn:FieldEffect ; rdfs:label "Wonder Room"@en .
-pkmn:tailwind    a pkmn:FieldEffect ; rdfs:label "Tailwind"@en .
-pkmn:lightScreen a pkmn:FieldEffect ; rdfs:label "Light Screen"@en .
-pkmn:reflect     a pkmn:FieldEffect ; rdfs:label "Reflect"@en .
-pkmn:auroraVeil  a pkmn:FieldEffect ; rdfs:label "Aurora Veil"@en .
+pkmn:restoresStat a owl:ObjectProperty ;
+    rdfs:range pkmn:Stat ;
+    rdfs:label "restoresStat"@en .
+
+pkmn:category         a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:string  ; rdfs:label "category"@en .
+pkmn:price            a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "price"@en .
+pkmn:isConsumable     a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:boolean ; rdfs:label "isConsumable"@en .
+pkmn:machineNumber    a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:integer ; rdfs:label "machineNumber"@en .
+pkmn:machineKind      a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:string ; rdfs:label "machineKind"@en ; skos:definition "TM, HM, or TR."@en .
+pkmn:isReusable       a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:boolean ; rdfs:label "isReusable"@en .
+pkmn:flavour          a owl:DatatypeProperty ; rdfs:domain pkmn:Berry ; rdfs:range xsd:string ; rdfs:label "flavour"@en .
+pkmn:triggerThreshold a owl:DatatypeProperty ; rdfs:domain pkmn:Berry ; rdfs:range xsd:decimal ; rdfs:label "triggerThreshold"@en .
+pkmn:triggersAt       a owl:DatatypeProperty ; rdfs:domain pkmn:HeldItem ; rdfs:range xsd:string ; rdfs:label "triggersAt"@en .
+
+#################################################################
+#  Meta: generations, versions, mechanics
+#################################################################
+
+pkmn:Generation         a owl:Class ; rdfs:subClassOf mo:Series ; rdfs:label "Generation"@en .
+pkmn:VersionGroup       a owl:Class ; rdfs:subClassOf mo:Work ; rdfs:label "VersionGroup"@en ;
+    skos:definition "A set of games sharing one data set (e.g. Diamond-Pearl)."@en .
+pkmn:Version            a owl:Class ; rdfs:subClassOf mo:Work ; rdfs:label "Version"@en .
+pkmn:GenerationMechanic a owl:Class ; rdfs:subClassOf mo:System ; rdfs:label "GenerationMechanic"@en ;
+    skos:definition "A generation-defining battle mechanic (Mega Evolution, Dynamax, ...)."@en .
+
+pkmn:introducedIn a owl:ObjectProperty ;
+    rdfs:range pkmn:Generation ;
+    rdfs:label "introducedIn"@en ;
+    skos:definition "The generation a species, move, ability, or mechanic debuted in."@en .
+
+pkmn:appliesTo a owl:ObjectProperty ;
+    rdfs:domain pkmn:GenerationMechanic ;
+    rdfs:range  pkmn:PokemonSpecies ;
+    rdfs:label  "appliesTo"@en ;
+    skos:definition "Species eligible for a species-specific mechanic (Mega, Gigantamax)."@en .
+
+#################################################################
+#  Moves: flags, effects, learnset
+#################################################################
+
+pkmn:MoveFlag a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MoveFlag"@en ;
+    skos:definition "A move tag gating interactions (contact, sound, punch, ...)."@en .
+
+pkmn:MoveEffect a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MoveEffect"@en ;
+    skos:definition "A reified secondary effect of a move; carries probability and magnitude."@en .
+
+pkmn:LearnsetEntry a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "LearnsetEntry"@en ;
+    skos:definition "A reified (species, move, version-group, method) learn fact."@en .
+
+pkmn:hasFlag a owl:ObjectProperty ;
+    rdfs:domain pkmn:Move ;
+    rdfs:range  pkmn:MoveFlag ;
+    rdfs:label  "hasFlag"@en .
+
+pkmn:sets a owl:ObjectProperty ;
+    rdfs:range pkmn:FieldCondition ;
+    rdfs:label "sets"@en ;
+    skos:definition "Sets a field condition (weather, terrain, hazard, field effect)."@en .
+
+pkmn:removes a owl:ObjectProperty ;
+    rdfs:range pkmn:FieldCondition ;
+    rdfs:label "removes"@en ;
+    skos:definition "Removes a field condition."@en .
+
+pkmn:hasLearnsetEntry a owl:ObjectProperty ;
+    rdfs:domain pkmn:PokemonSpecies ;
+    rdfs:range  pkmn:LearnsetEntry ;
+    rdfs:label  "hasLearnsetEntry"@en .
+
+pkmn:canLearn a owl:ObjectProperty ;
+    rdfs:domain pkmn:PokemonSpecies ;
+    rdfs:range  pkmn:Move ;
+    rdfs:label  "canLearn"@en ;
+    skos:definition "Shortcut of hasLearnsetEntry + teachesMove for 1-hop traversal."@en .
+
+pkmn:inVersionGroup a owl:ObjectProperty ;
+    rdfs:domain pkmn:LearnsetEntry ;
+    rdfs:range  pkmn:VersionGroup ;
+    rdfs:label  "inVersionGroup"@en .
+
+pkmn:viaMachine a owl:ObjectProperty ;
+    rdfs:domain pkmn:LearnsetEntry ;
+    rdfs:range  pkmn:Machine ;
+    rdfs:label  "viaMachine"@en .
+
+pkmn:viaParent a owl:ObjectProperty ;
+    rdfs:domain pkmn:LearnsetEntry ;
+    rdfs:range  pkmn:PokemonSpecies ;
+    rdfs:label  "viaParent"@en ;
+    skos:definition "The parent species of an egg move."@en .
+
+pkmn:priority   a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "priority"@en .
+pkmn:target     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "target"@en ; skos:definition "Targeting of a move or effect."@en .
+pkmn:effectText a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "effectText"@en ; skos:definition "Residual free-text effect not modelled as edges."@en .
+
+pkmn:probability a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "probability"@en ; skos:definition "Chance (0-100) an effect triggers."@en .
+pkmn:statStages  a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "statStages"@en ; skos:definition "Signed stat-stage change (-6..+6)."@en .
+pkmn:multiplier  a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "multiplier"@en .
+pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "State trigger: switch_in, on_hit, low_hp, passive."@en .
+
+pkmn:method a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "level, machine, egg, tutor, evolution."@en .
+pkmn:level  a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:integer ; rdfs:label "level"@en .
+
+#################################################################
+#  Abilities: effects
+#################################################################
+
+pkmn:AbilityEffect a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "AbilityEffect"@en ;
+    skos:definition "A reified effect of an ability."@en .
+
+pkmn:hasEffect a owl:ObjectProperty ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:MoveEffect pkmn:AbilityEffect ) ] ;
+    rdfs:label "hasEffect"@en ;
+    skos:definition "Links a move or ability to one of its reified effects."@en .
+
+pkmn:gatesOn a owl:ObjectProperty ;
+    rdfs:domain pkmn:AbilityEffect ;
+    rdfs:range  pkmn:MoveFlag ;
+    rdfs:label  "gatesOn"@en ;
+    skos:definition "Conditions an ability effect on a move-flag (Static on contact)."@en .
+
+pkmn:hasOverworldEffect a owl:DatatypeProperty ; rdfs:domain pkmn:Ability ; rdfs:range xsd:boolean ; rdfs:label "hasOverworldEffect"@en .
+
+#################################################################
+#  Evolution and forms
+#################################################################
+
+pkmn:Evolution a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "Evolution"@en ;
+    skos:definition "A reified evolution: from-species, to-species, and its conditions."@en .
+
+pkmn:MegaEvolution a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MegaEvolution"@en ;
+    skos:definition "A reified Mega Evolution linking a base species, its mega form, and the Mega Stone. Not an Evolution: reversible and battle-only."@en .
+
+pkmn:fromSpecies a owl:ObjectProperty ; rdfs:domain pkmn:Evolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "fromSpecies"@en .
+pkmn:toSpecies   a owl:ObjectProperty ; rdfs:domain pkmn:Evolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "toSpecies"@en .
+
+pkmn:requires a owl:ObjectProperty ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Item pkmn:Move mo:Location ) ] ;
+    rdfs:label "requires"@en ;
+    skos:definition "A required object of an evolution or mega evolution."@en .
+
+pkmn:baseSpecies a owl:ObjectProperty ; rdfs:domain pkmn:MegaEvolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "baseSpecies"@en .
+pkmn:megaForm    a owl:ObjectProperty ; rdfs:domain pkmn:MegaEvolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "megaForm"@en .
+
+pkmn:evolvesTo a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "evolvesTo"@en ;
+    skos:definition "Shortcut of the Evolution reification for chain traversal."@en .
+pkmn:hasForm a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "hasForm"@en ;
+    skos:definition "A battle-distinct alternate form (regional, alternate, or battle-only)."@en .
+
+pkmn:evoTrigger a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "evoTrigger"@en ; skos:definition "level, item, trade, friendship, ..."@en .
+pkmn:minLevel   a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:integer ; rdfs:label "minLevel"@en .
+pkmn:timeOfDay  a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "timeOfDay"@en .
+pkmn:gender     a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "gender"@en .
+pkmn:condition  a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "condition"@en ; skos:definition "Residual free-text evolution condition."@en .
+
+#################################################################
+#  Species groups
+#################################################################
+
+pkmn:SpeciesGroup a owl:Class ; rdfs:subClassOf mo:Group ; rdfs:label "SpeciesGroup"@en ;
+    skos:definition "A thematic grouping of species (legendary duo/trio, starter trio)."@en .
+pkmn:LegendaryGroup a owl:Class ; rdfs:subClassOf pkmn:SpeciesGroup ; rdfs:label "LegendaryGroup"@en .
+pkmn:StarterTrio    a owl:Class ; rdfs:subClassOf pkmn:SpeciesGroup ; rdfs:label "StarterTrio"@en .
+
+pkmn:inGroup a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range pkmn:SpeciesGroup ; rdfs:label "inGroup"@en .
+
