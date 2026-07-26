@@ -1,0 +1,179 @@
+@prefix pkmn: <https://muon.dev/ns/pkmn#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Enumerable individuals (A-Box) for the pkmn ontology.
+# The T-Box (classes + properties) lives in ontology/universes/pkmn.ttl.
+
+## Types ##
+pkmn:Normal   a pkmn:Type ; rdfs:label "Normal"@en .
+pkmn:Fire     a pkmn:Type ; rdfs:label "Fire"@en .
+pkmn:Water    a pkmn:Type ; rdfs:label "Water"@en .
+pkmn:Electric a pkmn:Type ; rdfs:label "Electric"@en .
+pkmn:Grass    a pkmn:Type ; rdfs:label "Grass"@en .
+pkmn:Ice      a pkmn:Type ; rdfs:label "Ice"@en .
+pkmn:Fighting a pkmn:Type ; rdfs:label "Fighting"@en .
+pkmn:Poison   a pkmn:Type ; rdfs:label "Poison"@en .
+pkmn:Ground   a pkmn:Type ; rdfs:label "Ground"@en .
+pkmn:Flying   a pkmn:Type ; rdfs:label "Flying"@en .
+pkmn:Psychic  a pkmn:Type ; rdfs:label "Psychic"@en .
+pkmn:Bug      a pkmn:Type ; rdfs:label "Bug"@en .
+pkmn:Rock     a pkmn:Type ; rdfs:label "Rock"@en .
+pkmn:Ghost    a pkmn:Type ; rdfs:label "Ghost"@en .
+pkmn:Dragon   a pkmn:Type ; rdfs:label "Dragon"@en .
+pkmn:Dark     a pkmn:Type ; rdfs:label "Dark"@en .
+pkmn:Steel    a pkmn:Type ; rdfs:label "Steel"@en .
+pkmn:Fairy    a pkmn:Type ; rdfs:label "Fairy"@en .
+
+## Stats ##
+pkmn:hp             a pkmn:Stat ; rdfs:label "HP"@en .
+pkmn:attack         a pkmn:Stat ; rdfs:label "Attack"@en .
+pkmn:defense        a pkmn:Stat ; rdfs:label "Defense"@en .
+pkmn:specialAttack  a pkmn:Stat ; rdfs:label "Special Attack"@en .
+pkmn:specialDefense a pkmn:Stat ; rdfs:label "Special Defense"@en .
+pkmn:speed          a pkmn:Stat ; rdfs:label "Speed"@en .
+
+## Move damage classes ##
+pkmn:physical a pkmn:MoveDamageClass ; rdfs:label "Physical"@en .
+pkmn:special  a pkmn:MoveDamageClass ; rdfs:label "Special"@en .
+pkmn:status   a pkmn:MoveDamageClass ; rdfs:label "Status"@en .
+
+## Egg groups ##
+pkmn:eggGroupMonster   a pkmn:EggGroup ; rdfs:label "Monster"@en .
+pkmn:eggGroupWater1    a pkmn:EggGroup ; rdfs:label "Water 1"@en .
+pkmn:eggGroupBug       a pkmn:EggGroup ; rdfs:label "Bug"@en .
+pkmn:eggGroupFlying    a pkmn:EggGroup ; rdfs:label "Flying"@en .
+pkmn:eggGroupField     a pkmn:EggGroup ; rdfs:label "Field"@en .
+pkmn:eggGroupFairy     a pkmn:EggGroup ; rdfs:label "Fairy"@en .
+pkmn:eggGroupGrass     a pkmn:EggGroup ; rdfs:label "Grass"@en .
+pkmn:eggGroupHumanLike a pkmn:EggGroup ; rdfs:label "Human-Like"@en .
+pkmn:eggGroupMineral   a pkmn:EggGroup ; rdfs:label "Mineral"@en .
+pkmn:eggGroupDragon    a pkmn:EggGroup ; rdfs:label "Dragon"@en .
+pkmn:eggGroupDitto     a pkmn:EggGroup ; rdfs:label "Ditto"@en .
+pkmn:eggGroupNoEggs    a pkmn:EggGroup ; rdfs:label "No Eggs Discovered"@en .
+
+## Natures ##
+pkmn:hardy   a pkmn:Nature ; rdfs:label "Hardy"@en .
+pkmn:lonely  a pkmn:Nature ; rdfs:label "Lonely"@en .
+pkmn:brave   a pkmn:Nature ; rdfs:label "Brave"@en .
+pkmn:adamant a pkmn:Nature ; rdfs:label "Adamant"@en .
+pkmn:naughty a pkmn:Nature ; rdfs:label "Naughty"@en .
+pkmn:bold    a pkmn:Nature ; rdfs:label "Bold"@en .
+pkmn:docile  a pkmn:Nature ; rdfs:label "Docile"@en .
+pkmn:relaxed a pkmn:Nature ; rdfs:label "Relaxed"@en .
+pkmn:impish  a pkmn:Nature ; rdfs:label "Impish"@en .
+pkmn:lax     a pkmn:Nature ; rdfs:label "Lax"@en .
+pkmn:timid   a pkmn:Nature ; rdfs:label "Timid"@en .
+pkmn:hasty   a pkmn:Nature ; rdfs:label "Hasty"@en .
+pkmn:serious a pkmn:Nature ; rdfs:label "Serious"@en .
+pkmn:jolly   a pkmn:Nature ; rdfs:label "Jolly"@en .
+pkmn:naive   a pkmn:Nature ; rdfs:label "Naive"@en .
+pkmn:modest  a pkmn:Nature ; rdfs:label "Modest"@en .
+pkmn:mild    a pkmn:Nature ; rdfs:label "Mild"@en .
+pkmn:quiet   a pkmn:Nature ; rdfs:label "Quiet"@en .
+pkmn:bashful a pkmn:Nature ; rdfs:label "Bashful"@en .
+pkmn:rash    a pkmn:Nature ; rdfs:label "Rash"@en .
+pkmn:calm    a pkmn:Nature ; rdfs:label "Calm"@en .
+pkmn:gentle  a pkmn:Nature ; rdfs:label "Gentle"@en .
+pkmn:sassy   a pkmn:Nature ; rdfs:label "Sassy"@en .
+pkmn:careful a pkmn:Nature ; rdfs:label "Careful"@en .
+pkmn:quirky  a pkmn:Nature ; rdfs:label "Quirky"@en .
+
+## Status conditions ##
+pkmn:statusBurn          a pkmn:StatusCondition ; rdfs:label "Burn"@en .
+pkmn:statusFreeze        a pkmn:StatusCondition ; rdfs:label "Freeze"@en .
+pkmn:statusParalysis     a pkmn:StatusCondition ; rdfs:label "Paralysis"@en .
+pkmn:statusPoison        a pkmn:StatusCondition ; rdfs:label "Poison"@en .
+pkmn:statusBadlyPoisoned a pkmn:StatusCondition ; rdfs:label "Badly Poisoned"@en .
+pkmn:statusSleep         a pkmn:StatusCondition ; rdfs:label "Sleep"@en .
+
+## Volatile conditions ##
+pkmn:confusion       a pkmn:VolatileCondition ; rdfs:label "Confusion"@en .
+pkmn:flinch          a pkmn:VolatileCondition ; rdfs:label "Flinch"@en .
+pkmn:taunt           a pkmn:VolatileCondition ; rdfs:label "Taunt"@en .
+pkmn:encore          a pkmn:VolatileCondition ; rdfs:label "Encore"@en .
+pkmn:leechSeed       a pkmn:VolatileCondition ; rdfs:label "Leech Seed"@en .
+pkmn:infatuation     a pkmn:VolatileCondition ; rdfs:label "Infatuation"@en .
+pkmn:trapped         a pkmn:VolatileCondition ; rdfs:label "Trapped"@en .
+pkmn:substitute      a pkmn:VolatileCondition ; rdfs:label "Substitute"@en .
+pkmn:semiInvulnerable a pkmn:VolatileCondition ; rdfs:label "Semi-Invulnerable"@en .
+pkmn:curse           a pkmn:VolatileCondition ; rdfs:label "Curse"@en .
+pkmn:nightmare       a pkmn:VolatileCondition ; rdfs:label "Nightmare"@en .
+pkmn:disable         a pkmn:VolatileCondition ; rdfs:label "Disable"@en .
+pkmn:torment         a pkmn:VolatileCondition ; rdfs:label "Torment"@en .
+pkmn:yawn            a pkmn:VolatileCondition ; rdfs:label "Yawn"@en .
+pkmn:aquaRing        a pkmn:VolatileCondition ; rdfs:label "Aqua Ring"@en .
+pkmn:ingrain         a pkmn:VolatileCondition ; rdfs:label "Ingrain"@en .
+pkmn:magnetRise      a pkmn:VolatileCondition ; rdfs:label "Magnet Rise"@en .
+pkmn:telekinesis     a pkmn:VolatileCondition ; rdfs:label "Telekinesis"@en .
+pkmn:embargo         a pkmn:VolatileCondition ; rdfs:label "Embargo"@en .
+pkmn:healBlock       a pkmn:VolatileCondition ; rdfs:label "Heal Block"@en .
+
+## Weather ##
+pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en .
+pkmn:harshSunlight          a pkmn:Weather ; rdfs:label "Harsh Sunlight"@en .
+pkmn:sandstorm              a pkmn:Weather ; rdfs:label "Sandstorm"@en .
+pkmn:hail                   a pkmn:Weather ; rdfs:label "Hail"@en .
+pkmn:snow                   a pkmn:Weather ; rdfs:label "Snow"@en .
+pkmn:fog                    a pkmn:Weather ; rdfs:label "Fog"@en .
+pkmn:extremelyHarshSunlight a pkmn:Weather ; rdfs:label "Extremely Harsh Sunlight"@en .
+pkmn:heavyRain              a pkmn:Weather ; rdfs:label "Heavy Rain"@en .
+pkmn:strongWinds            a pkmn:Weather ; rdfs:label "Strong Winds"@en .
+
+## Terrain ##
+pkmn:electricTerrain a pkmn:Terrain ; rdfs:label "Electric Terrain"@en .
+pkmn:grassyTerrain   a pkmn:Terrain ; rdfs:label "Grassy Terrain"@en .
+pkmn:mistyTerrain    a pkmn:Terrain ; rdfs:label "Misty Terrain"@en .
+pkmn:psychicTerrain  a pkmn:Terrain ; rdfs:label "Psychic Terrain"@en .
+
+## Entry hazards ##
+pkmn:stealthRock a pkmn:EntryHazard ; rdfs:label "Stealth Rock"@en .
+pkmn:spikes      a pkmn:EntryHazard ; rdfs:label "Spikes"@en .
+pkmn:toxicSpikes a pkmn:EntryHazard ; rdfs:label "Toxic Spikes"@en .
+pkmn:stickyWeb   a pkmn:EntryHazard ; rdfs:label "Sticky Web"@en .
+
+## Field effects ##
+pkmn:trickRoom   a pkmn:FieldEffect ; rdfs:label "Trick Room"@en .
+pkmn:gravity     a pkmn:FieldEffect ; rdfs:label "Gravity"@en .
+pkmn:magicRoom   a pkmn:FieldEffect ; rdfs:label "Magic Room"@en .
+pkmn:wonderRoom  a pkmn:FieldEffect ; rdfs:label "Wonder Room"@en .
+pkmn:tailwind    a pkmn:FieldEffect ; rdfs:label "Tailwind"@en .
+pkmn:lightScreen a pkmn:FieldEffect ; rdfs:label "Light Screen"@en .
+pkmn:reflect     a pkmn:FieldEffect ; rdfs:label "Reflect"@en .
+pkmn:auroraVeil  a pkmn:FieldEffect ; rdfs:label "Aurora Veil"@en .
+
+## Move flags ##
+pkmn:contact   a pkmn:MoveFlag ; rdfs:label "contact"@en .
+pkmn:sound     a pkmn:MoveFlag ; rdfs:label "sound"@en .
+pkmn:punch     a pkmn:MoveFlag ; rdfs:label "punch"@en .
+pkmn:bite      a pkmn:MoveFlag ; rdfs:label "bite"@en .
+pkmn:ballistic a pkmn:MoveFlag ; rdfs:label "ballistic"@en .
+pkmn:powder    a pkmn:MoveFlag ; rdfs:label "powder"@en .
+pkmn:pulse     a pkmn:MoveFlag ; rdfs:label "pulse"@en .
+pkmn:wind      a pkmn:MoveFlag ; rdfs:label "wind"@en .
+pkmn:slicing   a pkmn:MoveFlag ; rdfs:label "slicing"@en .
+pkmn:dance     a pkmn:MoveFlag ; rdfs:label "dance"@en .
+pkmn:pivot     a pkmn:MoveFlag ; rdfs:label "pivot"@en .
+pkmn:recoil    a pkmn:MoveFlag ; rdfs:label "recoil"@en .
+pkmn:drain     a pkmn:MoveFlag ; rdfs:label "drain"@en .
+pkmn:multihit  a pkmn:MoveFlag ; rdfs:label "multihit"@en .
+pkmn:twoTurn   a pkmn:MoveFlag ; rdfs:label "two-turn"@en .
+pkmn:ohko      a pkmn:MoveFlag ; rdfs:label "ohko"@en .
+pkmn:healing   a pkmn:MoveFlag ; rdfs:label "healing"@en .
+
+## Generations ##
+pkmn:gen1 a pkmn:Generation ; rdfs:label "Generation I"@en .
+pkmn:gen2 a pkmn:Generation ; rdfs:label "Generation II"@en .
+pkmn:gen3 a pkmn:Generation ; rdfs:label "Generation III"@en .
+pkmn:gen4 a pkmn:Generation ; rdfs:label "Generation IV"@en .
+pkmn:gen5 a pkmn:Generation ; rdfs:label "Generation V"@en .
+pkmn:gen6 a pkmn:Generation ; rdfs:label "Generation VI"@en .
+pkmn:gen7 a pkmn:Generation ; rdfs:label "Generation VII"@en .
+pkmn:gen8 a pkmn:Generation ; rdfs:label "Generation VIII"@en .
+pkmn:gen9 a pkmn:Generation ; rdfs:label "Generation IX"@en .
+
+## Generation mechanics (individuals; distinct from the MegaEvolution class) ##
+pkmn:megaEvolution    a pkmn:GenerationMechanic ; rdfs:label "Mega Evolution"@en .
+pkmn:zMove            a pkmn:GenerationMechanic ; rdfs:label "Z-Move"@en .
+pkmn:dynamax          a pkmn:GenerationMechanic ; rdfs:label "Dynamax"@en .
+pkmn:gigantamax       a pkmn:GenerationMechanic ; rdfs:label "Gigantamax"@en .
+pkmn:terastallization a pkmn:GenerationMechanic ; rdfs:label "Terastallization"@en .
