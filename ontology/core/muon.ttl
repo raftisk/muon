@@ -14,7 +14,7 @@
 
 mo:Entity a owl:Class ;
     rdfs:label "Entity"@en ;
-    skos:definition "Root of the diegetic hierarchy: anything that exists inside a fictional universe."@en .
+    skos:definition "Root of the diegetic hierarchy: anything that exists or holds inside a fictional universe, concrete or abstract."@en .
 
 mo:Agent a owl:Class ;
     rdfs:subClassOf mo:Entity ;
@@ -42,8 +42,9 @@ mo:Event a owl:Class ;
     skos:definition "Any distinct event, process or action that happens in-universe."@en .
 
 mo:Concept a owl:Class ;
+    rdfs:subClassOf mo:Entity ;
     rdfs:label "Concept"@en ;
-    skos:definition "Root of the abstract diegetic plane, sibling of mo:Entity: an in-world abstraction such as a system, classification, language, attribute, ability, or taxon."@en .
+    skos:definition "An in-world abstraction such as a system, classification, language, attribute, ability, or taxon."@en .
 
 mo:TimePeriod a owl:Class ;
     rdfs:subClassOf mo:Entity ;
@@ -325,7 +326,7 @@ mo:ofUniverse a owl:ObjectProperty ;
     skos:definition "Associates a source work with the fictional universe it belongs to."@en .
 
 mo:inUniverse a owl:ObjectProperty ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( mo:Entity mo:Concept ) ] ;
+    rdfs:domain mo:Entity ;
     rdfs:range  mo:Universe ;
     rdfs:label "in Universe"@en ;
     skos:definition "Associates a diegetic item with the universe it belongs to."@en ;
@@ -333,7 +334,7 @@ mo:inUniverse a owl:ObjectProperty ;
 
 mo:describes a owl:ObjectProperty ;
     rdfs:domain mo:TextChunk ;
-    rdfs:range  [ a owl:Class ; owl:unionOf ( mo:Entity mo:Concept ) ] ;
+    rdfs:range  mo:Entity ;
     rdfs:label "describes"@en ;
     skos:definition "The diegetic item a chunk of text is about."@en .
 
