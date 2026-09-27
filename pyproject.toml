@@ -35,4 +35,4 @@ plugins = ["pydantic.mypy"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = ["integration: needs a live Neo4j"]
-addopts = "-m 'not integration'"
+addopts = "-m 'not integration' --import-mode=importlib"
