@@ -410,11 +410,11 @@ pkmn:hasEffect a owl:ObjectProperty ;
     rdfs:label "hasEffect"@en ;
     skos:definition "Links a move or ability to one of its reified effects."@en .
 
-pkmn:gatesOn a owl:ObjectProperty ;
+pkmn:triggeredBy a owl:ObjectProperty ;
     rdfs:domain pkmn:AbilityEffect ;
     rdfs:range  pkmn:MoveFlag ;
-    rdfs:label  "gatesOn"@en ;
-    skos:definition "Conditions an ability effect on a move-flag (Static on contact)."@en .
+    rdfs:label  "triggeredBy"@en ;
+    skos:definition "The move flag that activates an ability effect: Static triggers on contact moves. The effect's other edges carry the action."@en .
 
 pkmn:hasOverworldEffect a owl:DatatypeProperty ; rdfs:domain pkmn:Ability ; rdfs:range xsd:boolean ; rdfs:label "hasOverworldEffect"@en .
 
