@@ -20,13 +20,10 @@ pkmn:PokemonSpecies a owl:Class ;
     skos:definition "A Pokémon species as registered in the National Pokédex."@en ;
     rdfs:comment "Not to be confused with an individual Pokémon, which is a mo:Creature. Individual Pokémon are instances of their species via mo:hasSpecies."@en .
 
-pkmn:nationalDexNumber a owl:DatatypeProperty ;
-    rdfs:domain  pkmn:PokemonSpecies ;
-    rdfs:range   xsd:integer ;
-    rdfs:label   "nationalDexNumber"@en ;
-    skos:definition "National Pokédex number. Exactly-one."@en .
 
 ## Species datatype properties ##
+pkmn:pokedexNumber a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "pokedexNumber"@en ;
+    skos:definition "National Pokédex number. Exactly one per species."@en .
 pkmn:baseHp        a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseHp"@en .
 pkmn:baseAttack    a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseAttack"@en .
 pkmn:baseDefense   a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseDefense"@en .
