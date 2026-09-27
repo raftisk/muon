@@ -312,6 +312,12 @@ mo:createdBy a owl:ObjectProperty ;
     rdfs:label "created by"@en ;
     skos:definition "Associates a source work with its creator."@en .
 
+mo:fromWork a owl:ObjectProperty ;
+    rdfs:domain mo:TextChunk ;
+    rdfs:range  mo:Work ;
+    rdfs:label "from work"@en ;
+    skos:definition "The work a chunk of text was sourced from."@en .
+
 mo:ofUniverse a owl:ObjectProperty ;
     rdfs:domain mo:Source ;
     rdfs:range  mo:Universe ;
@@ -330,6 +336,12 @@ mo:describes a owl:ObjectProperty ;
     rdfs:range  [ a owl:Class ; owl:unionOf ( mo:Entity mo:Concept ) ] ;
     rdfs:label "describes"@en ;
     skos:definition "The diegetic item a chunk of text is about."@en .
+
+mo:text a owl:DatatypeProperty ;
+    rdfs:domain mo:TextChunk ;
+    rdfs:range  xsd:string ;
+    rdfs:label "text"@en ;
+    skos:definition "The verbatim text content of a chunk."@en .
 
 mo:aspect a owl:DatatypeProperty ;
     rdfs:domain mo:TextChunk ;
