@@ -131,7 +131,7 @@ pkmn:reducesStat a owl:ObjectProperty ;
 
 
 #################################################################
-#  Abilities (passive)
+#  Abilities
 #################################################################
 
 pkmn:Ability a owl:Class ;
@@ -146,7 +146,7 @@ pkmn:hasAbility a owl:ObjectProperty ;
     skos:definition "A species' possible abilities. Whether a slot is the Hidden Ability is an edge property (isHidden) in the LPG realization."@en .
 
 #################################################################
-#  Moves (active)
+#  Moves
 #################################################################
 
 pkmn:MoveDamageClass a owl:Class ;
