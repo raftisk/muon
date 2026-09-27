@@ -255,15 +255,15 @@ pkmn:dampensType a owl:ObjectProperty ;
     rdfs:label "dampensType"@en ;
     skos:definition "Lowers damage of a type (e.g. x0.5)."@en .
 
-pkmn:inflicts a owl:ObjectProperty ;
+pkmn:inflictsCondition a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:StatusCondition pkmn:VolatileCondition ) ] ;
-    rdfs:label "inflicts"@en ;
-    skos:definition "Applies a condition. Probability lives on the reified effect node."@en .
+    rdfs:label "inflictsCondition"@en ;
+    skos:definition "Applies a status or volatile condition to a Pokémon. Probability lives on the reified effect node."@en .
 
-pkmn:blocks a owl:ObjectProperty ;
+pkmn:blocksCondition a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:StatusCondition pkmn:VolatileCondition pkmn:Weather ) ] ;
-    rdfs:label "blocks"@en ;
-    skos:definition "Prevents a condition from applying."@en .
+    rdfs:label "blocksCondition"@en ;
+    skos:definition "Prevents a battle condition from applying."@en .
 
 pkmn:immuneTo a owl:ObjectProperty ;
     rdfs:domain pkmn:Type ;
@@ -290,9 +290,10 @@ pkmn:teachesMove a owl:ObjectProperty ;
     rdfs:label "teachesMove"@en ;
     skos:definition "The move a machine or learnset entry grants."@en .
 
-pkmn:cures a owl:ObjectProperty ;
+pkmn:curesCondition a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:StatusCondition pkmn:VolatileCondition ) ] ;
-    rdfs:label "cures"@en .
+    rdfs:label "curesCondition"@en ;
+    skos:definition "Removes a status or volatile condition from a Pokémon."@en .
 
 pkmn:restoresStat a owl:ObjectProperty ;
     rdfs:range pkmn:Stat ;
@@ -348,14 +349,14 @@ pkmn:hasFlag a owl:ObjectProperty ;
     rdfs:range  pkmn:MoveFlag ;
     rdfs:label  "hasFlag"@en .
 
-pkmn:sets a owl:ObjectProperty ;
+pkmn:setsField a owl:ObjectProperty ;
     rdfs:range pkmn:FieldCondition ;
-    rdfs:label "sets"@en ;
+    rdfs:label "setsField"@en ;
     skos:definition "Sets a field condition (weather, terrain, hazard, field effect)."@en .
 
-pkmn:removes a owl:ObjectProperty ;
+pkmn:removesField a owl:ObjectProperty ;
     rdfs:range pkmn:FieldCondition ;
-    rdfs:label "removes"@en ;
+    rdfs:label "removesField"@en ;
     skos:definition "Removes a field condition."@en .
 
 pkmn:hasLearnsetEntry a owl:ObjectProperty ;
