@@ -279,7 +279,7 @@ mo:speaks a owl:ObjectProperty ;
     rdfs:label "speaks"@en ;
     skos:definition "Language spoken by an agent."@en .
 
-mo: hasPower a owl:ObjectProperty ;
+mo:hasPower a owl:ObjectProperty ;
     rdfs:domain mo:Agent ;
     rdfs:range  mo:Power ;
     rdfs:label "has Power"@en ;
