@@ -210,11 +210,11 @@ mo:locatedIn a owl:ObjectProperty, owl:TransitiveProperty ;
     rdfs:comment "Transitive property: if A is located in B, and B is located in C, then A is located in C."@en .
 
 mo:foundIn a owl:ObjectProperty ;
-    rdfs:domain [ a owl:Class ; owl:unionOf ( mo:Agent mo:Object ) ] ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( mo:Agent mo:Object mo:Species ) ] ;
     rdfs:range  mo:Location ;
     owl:propertyChainAxiom ( mo:foundIn mo:locatedIn ) ;
     rdfs:label "found in"@en ;
-    skos:definition "Position of an agent or object at a location in-universe."@en ;
+    skos:definition "Position of an agent, object or species at a location in-universe."@en ;
     rdfs:comment "Not transitive; inherits geographic reach via locatedIn."@en .
 
 mo:occursAt a owl:ObjectProperty ;
