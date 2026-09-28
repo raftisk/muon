@@ -348,4 +348,11 @@ mo:aspect a owl:DatatypeProperty ;
     rdfs:domain mo:TextChunk ;
     rdfs:range  xsd:string ;
     rdfs:label "aspect"@en ;
-    skos:definition "The facet a chunk covers: biology, behavior, origin, competitive, ..."@en .
+    skos:definition "The facet a chunk covers: biology, behavior, origin, competitive, effect, flavor, ..."@en .
+
+mo:source a owl:DatatypeProperty ;
+    rdfs:domain mo:TextChunk ;
+    rdfs:range  xsd:string ;
+    rdfs:label "source"@en ;
+    skos:definition "The non-canon origin a chunk's text was fetched from (pokeapi, bulbapedia). Canon origins use mo:fromWork."@en ;
+    rdfs:comment "Distinct from the class mo:Source. Holds the name of a chunk's non-canon origin."@en .
