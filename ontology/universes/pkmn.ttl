@@ -441,9 +441,10 @@ pkmn:fromSpecies a owl:ObjectProperty ; rdfs:domain pkmn:Evolution ; rdfs:range 
 pkmn:toSpecies   a owl:ObjectProperty ; rdfs:domain pkmn:Evolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "toSpecies"@en .
 
 pkmn:requires a owl:ObjectProperty ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Item pkmn:Move mo:Location ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Item pkmn:Move mo:Location pkmn:PokemonSpecies pkmn:Type ) ] ;
     rdfs:label "requires"@en ;
-    skos:definition "A required object of an evolution or mega evolution."@en .
+    skos:definition "A required object of an evolution or mega evolution."@en ;
+    rdfs:comment "In Neo4j every REQUIRES edge carries role: use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor."@en .
 
 pkmn:baseSpecies a owl:ObjectProperty ; rdfs:domain pkmn:MegaEvolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "baseSpecies"@en .
 pkmn:megaForm    a owl:ObjectProperty ; rdfs:domain pkmn:MegaEvolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "megaForm"@en .
