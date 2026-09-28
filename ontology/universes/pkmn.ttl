@@ -201,13 +201,13 @@ pkmn:inEggGroup a owl:ObjectProperty ;
 pkmn:PokedexEntry a owl:Class ;
     rdfs:subClassOf mo:TextChunk ;
     rdfs:label   "PokedexEntry"@en ;
-    skos:definition "A single Pokédex flavour-text entry: a short description of ONE species from ONE game version. Warrants subclassing mo:TextChunk (vs. the generic chunk) because it adds structure — it is bound to exactly one species (pkmn:describesSpecies) and, via the inherited mo:fromWork, one source game."@en .
+    skos:definition "A Pokédex flavour text for one species, shown by 1 or more game versions with identical text. Bound to exactly one species (pkmn:describesSpecies) and to each version through mo:fromWork."@en .
 
 pkmn:describesSpecies a owl:ObjectProperty ;
     rdfs:domain  pkmn:PokedexEntry ;
     rdfs:range   pkmn:PokemonSpecies ;
     rdfs:label   "describesSpecies"@en ;
-    skos:definition "The species an entry describes. The verbatim text is on the inherited mo:text; the version game on the inherited mo:fromWork."@en .
+    skos:definition "The species an entry describes. The verbatim text is on the inherited mo:text; the versions on the inherited mo:fromWork."@en .
 
 #################################################################
 #  Battle conditions
