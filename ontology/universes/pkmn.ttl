@@ -323,7 +323,7 @@ pkmn:GenerationMechanic a owl:Class ; rdfs:subClassOf mo:System ; rdfs:label "Ge
 pkmn:introducedIn a owl:ObjectProperty ;
     rdfs:range pkmn:Generation ;
     rdfs:label "introducedIn"@en ;
-    skos:definition "The generation a species, move, ability, or mechanic debuted in."@en .
+    skos:definition "The generation a species, move, ability, mechanic or region debuted in."@en .
 
 pkmn:appliesTo a owl:ObjectProperty ;
     rdfs:domain pkmn:GenerationMechanic ;
@@ -395,7 +395,7 @@ pkmn:statStages  a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "s
 pkmn:multiplier  a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "multiplier"@en .
 pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "State trigger: switch_in, on_hit, low_hp, passive."@en .
 
-pkmn:method a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "level, machine, egg, tutor, evolution."@en .
+pkmn:method a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "Learnset method (level, machine, egg, tutor, evolution) or PokeAPI encounter method (walk, surf, old-rod, headbutt, gift, ...)."@en .
 pkmn:level  a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:integer ; rdfs:label "level"@en .
 
 #################################################################
@@ -445,7 +445,7 @@ pkmn:hasForm a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range
     skos:definition "A battle-distinct alternate form (regional, alternate, or battle-only)."@en .
 
 pkmn:evoTrigger a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "evoTrigger"@en ; skos:definition "level, item, trade, friendship, ..."@en .
-pkmn:minLevel   a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:integer ; rdfs:label "minLevel"@en .
+pkmn:minLevel   a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "minLevel"@en ; skos:definition "Minimum level of an evolution or an encounter."@en .
 pkmn:timeOfDay  a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "timeOfDay"@en .
 pkmn:gender     a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "gender"@en .
 pkmn:condition  a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "condition"@en ; skos:definition "Residual free-text evolution condition."@en .
@@ -461,3 +461,26 @@ pkmn:StarterTrio    a owl:Class ; rdfs:subClassOf pkmn:SpeciesGroup ; rdfs:label
 
 pkmn:inGroup a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range pkmn:SpeciesGroup ; rdfs:label "inGroup"@en .
 
+
+#################################################################
+#  Encounters and locations
+#################################################################
+
+pkmn:LocationArea a owl:Class ; rdfs:subClassOf mo:Location ; rdfs:label "LocationArea"@en ;
+    skos:definition "A data-only subdivision of a location (a floor, an exterior, a Safari Zone sector) with no identity outside its parent."@en .
+
+pkmn:Encounter a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "Encounter"@en ;
+    skos:definition "A reified wild-encounter fact: a species at a location in a version, with method, conditions, level range and chance."@en .
+
+pkmn:hasEncounter a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range pkmn:Encounter ; rdfs:label "hasEncounter"@en ;
+    skos:definition "Links a species to one of its wild encounters."@en .
+pkmn:atLocation   a owl:ObjectProperty ; rdfs:domain pkmn:Encounter ; rdfs:range mo:Location ; rdfs:label "atLocation"@en ;
+    skos:definition "Where an encounter happens: the location area when one exists, else the location."@en .
+pkmn:inVersion    a owl:ObjectProperty ; rdfs:domain pkmn:Encounter ; rdfs:range pkmn:Version ; rdfs:label "inVersion"@en ;
+    skos:definition "The game version an encounter belongs to."@en .
+
+pkmn:conditions a owl:DatatypeProperty ; rdfs:domain pkmn:Encounter ; rdfs:range xsd:string ; rdfs:label "conditions"@en ;
+    skos:definition "PokeAPI encounter condition value (time-night, season-spring, swarm-yes). Repeated; absent when unconditional."@en .
+pkmn:maxLevel   a owl:DatatypeProperty ; rdfs:domain pkmn:Encounter ; rdfs:range xsd:integer ; rdfs:label "maxLevel"@en .
+pkmn:chance     a owl:DatatypeProperty ; rdfs:domain pkmn:Encounter ; rdfs:range xsd:integer ; rdfs:label "chance"@en ;
+    skos:definition "Encounter slot rate in %."@en .
