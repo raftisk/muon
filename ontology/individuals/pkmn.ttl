@@ -1,4 +1,5 @@
 @prefix pkmn: <https://muon.dev/ns/pkmn#> .
+@prefix mo: <https://muon.dev/ns/core#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 # Enumerable individuals (A-Box) for the pkmn ontology.
@@ -170,6 +171,19 @@ pkmn:gen6 a pkmn:Generation ; rdfs:label "Generation VI"@en .
 pkmn:gen7 a pkmn:Generation ; rdfs:label "Generation VII"@en .
 pkmn:gen8 a pkmn:Generation ; rdfs:label "Generation VIII"@en .
 pkmn:gen9 a pkmn:Generation ; rdfs:label "Generation IX"@en .
+
+## Regions ##
+pkmn:kanto  a mo:Region ; rdfs:label "Kanto"@en  ; pkmn:introducedIn pkmn:gen1 .
+pkmn:johto  a mo:Region ; rdfs:label "Johto"@en  ; pkmn:introducedIn pkmn:gen2 .
+pkmn:hoenn  a mo:Region ; rdfs:label "Hoenn"@en  ; pkmn:introducedIn pkmn:gen3 .
+pkmn:orre   a mo:Region ; rdfs:label "Orre"@en   ; pkmn:introducedIn pkmn:gen3 .
+pkmn:sinnoh a mo:Region ; rdfs:label "Sinnoh"@en ; pkmn:introducedIn pkmn:gen4 .
+pkmn:unova  a mo:Region ; rdfs:label "Unova"@en  ; pkmn:introducedIn pkmn:gen5 .
+pkmn:kalos  a mo:Region ; rdfs:label "Kalos"@en  ; pkmn:introducedIn pkmn:gen6 .
+pkmn:alola  a mo:Region ; rdfs:label "Alola"@en  ; pkmn:introducedIn pkmn:gen7 .
+pkmn:galar  a mo:Region ; rdfs:label "Galar"@en  ; pkmn:introducedIn pkmn:gen8 .
+pkmn:hisui  a mo:Region ; rdfs:label "Hisui"@en  ; pkmn:introducedIn pkmn:gen8 .
+pkmn:paldea a mo:Region ; rdfs:label "Paldea"@en ; pkmn:introducedIn pkmn:gen9 .
 
 ## Generation mechanics (individuals; distinct from the MegaEvolution class) ##
 pkmn:megaEvolution    a pkmn:GenerationMechanic ; rdfs:label "Mega Evolution"@en .
