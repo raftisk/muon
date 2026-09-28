@@ -297,7 +297,15 @@ pkmn:curesCondition a owl:ObjectProperty ;
 
 pkmn:restoresStat a owl:ObjectProperty ;
     rdfs:range pkmn:Stat ;
-    rdfs:label "restoresStat"@en .
+    rdfs:label "restoresStat"@en ;
+    skos:definition "Restores HP or PP. The amount lives on the reified effect node."@en .
+
+## Item effects ##
+
+pkmn:ItemEffect a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "ItemEffect"@en ;
+    skos:definition "A reified battle effect of an item, carrying its trigger and magnitude."@en .
 
 pkmn:category         a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:string  ; rdfs:label "category"@en .
 pkmn:price            a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "price"@en .
@@ -306,8 +314,10 @@ pkmn:machineNumber    a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:r
 pkmn:machineKind      a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:string ; rdfs:label "machineKind"@en ; skos:definition "TM, HM, or TR."@en .
 pkmn:isReusable       a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:boolean ; rdfs:label "isReusable"@en .
 pkmn:flavour          a owl:DatatypeProperty ; rdfs:domain pkmn:Berry ; rdfs:range xsd:string ; rdfs:label "flavour"@en .
-pkmn:triggerThreshold a owl:DatatypeProperty ; rdfs:domain pkmn:Berry ; rdfs:range xsd:decimal ; rdfs:label "triggerThreshold"@en .
-pkmn:triggersAt       a owl:DatatypeProperty ; rdfs:domain pkmn:HeldItem ; rdfs:range xsd:string ; rdfs:label "triggersAt"@en .
+pkmn:hpThreshold      a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "hpThreshold"@en ;
+    skos:definition "Fraction of max HP (0 to 1). With trigger low_hp the effect fires at it; otherwise the effect applies only at or below it."@en .
+pkmn:amount           a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "amount"@en ;
+    skos:definition "Fixed number of HP or PP points restored."@en .
 
 #################################################################
 #  Meta: generations, versions, mechanics
@@ -388,12 +398,12 @@ pkmn:viaParent a owl:ObjectProperty ;
 
 pkmn:priority   a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "priority"@en .
 pkmn:target     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "target"@en ; skos:definition "Targeting of a move or effect."@en .
-pkmn:effectText a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "effectText"@en ; skos:definition "Residual free-text effect not modelled as edges."@en .
+pkmn:effectText a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "effectText"@en ; skos:definition "The PokeAPI English short effect of a move, ability or item. Effect nodes do not carry it."@en .
 
 pkmn:probability a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "probability"@en ; skos:definition "Chance (0-100) an effect triggers."@en .
 pkmn:statStages  a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "statStages"@en ; skos:definition "Signed stat-stage change (-6..+6)."@en .
 pkmn:multiplier  a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "multiplier"@en .
-pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "State trigger: switch_in, on_hit, low_hp, passive."@en .
+pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect fires: switch_in, on_attack (holder uses a move), on_hit (holder is hit), low_hp, end_of_turn, passive."@en .
 
 pkmn:method a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "Learnset method (level, machine, egg, tutor, evolution) or PokeAPI encounter method (walk, surf, old-rod, headbutt, gift, ...)."@en .
 pkmn:level  a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:integer ; rdfs:label "level"@en .
@@ -406,15 +416,14 @@ pkmn:AbilityEffect a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "Abilit
     skos:definition "A reified effect of an ability."@en .
 
 pkmn:hasEffect a owl:ObjectProperty ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:MoveEffect pkmn:AbilityEffect ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:MoveEffect pkmn:AbilityEffect pkmn:ItemEffect ) ] ;
     rdfs:label "hasEffect"@en ;
-    skos:definition "Links a move or ability to one of its reified effects."@en .
+    skos:definition "Links a move, ability or item to one of its reified effects."@en .
 
 pkmn:triggeredBy a owl:ObjectProperty ;
-    rdfs:domain pkmn:AbilityEffect ;
-    rdfs:range  pkmn:MoveFlag ;
-    rdfs:label  "triggeredBy"@en ;
-    skos:definition "The move flag that activates an ability effect: Static triggers on contact moves. The effect's other edges carry the action."@en .
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:MoveFlag pkmn:MoveDamageClass pkmn:Type pkmn:FieldCondition ) ] ;
+    rdfs:label "triggeredBy"@en ;
+    skos:definition "What activates an effect. A move flag, damage class or type filters the move involved, and trigger gives the direction (Static: on_hit + contact). A field condition fires the effect while it is active (Electric Seed)."@en .
 
 pkmn:hasOverworldEffect a owl:DatatypeProperty ; rdfs:domain pkmn:Ability ; rdfs:range xsd:boolean ; rdfs:label "hasOverworldEffect"@en .
 
