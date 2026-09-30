@@ -160,6 +160,8 @@ pkmn:multihit  a pkmn:MoveFlag ; rdfs:label "multihit"@en .
 pkmn:twoTurn   a pkmn:MoveFlag ; rdfs:label "two-turn"@en .
 pkmn:ohko      a pkmn:MoveFlag ; rdfs:label "ohko"@en .
 pkmn:healing   a pkmn:MoveFlag ; rdfs:label "healing"@en .
+pkmn:reflectable a pkmn:MoveFlag ; rdfs:label "reflectable"@en .
+pkmn:snatchable  a pkmn:MoveFlag ; rdfs:label "snatchable"@en .
 
 ## Generations ##
 pkmn:gen1 a pkmn:Generation ; rdfs:label "Generation I"@en .

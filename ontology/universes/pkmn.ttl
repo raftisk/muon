@@ -405,15 +405,15 @@ pkmn:viaParent a owl:ObjectProperty ;
     skos:definition "The parent species of an egg move."@en .
 
 pkmn:priority   a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "priority"@en .
-pkmn:target     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "target"@en ; skos:definition "Targeting of a move or effect."@en .
+pkmn:target     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "target"@en ; skos:definition "On a move, the source targeting code in snake_case (any_adjacent, ...); on an effect, the recipient (self, foe, field)."@en .
 pkmn:effectText a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "effectText"@en ; skos:definition "The PokeAPI English short effect of a move, ability or item. Effect nodes do not carry it."@en .
 
 pkmn:probability a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "probability"@en ; skos:definition "Chance (0-100) an effect triggers."@en .
 pkmn:statStages  a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "statStages"@en ; skos:definition "Signed stat-stage change (-6..+6)."@en .
 pkmn:multiplier  a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "multiplier"@en .
-pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect fires: switch_in, on_attack (holder uses a move), on_hit (holder is hit), low_hp, end_of_turn, passive."@en .
+pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect fires: switch_in, switch_out (holder leaves battle), on_attack (holder uses a move), on_hit (holder is hit), low_hp, end_of_turn, passive."@en .
 
-pkmn:method a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "Learnset method (level, machine, egg, tutor, evolution) or PokeAPI encounter method (walk, surf, old-rod, headbutt, gift, ...)."@en .
+pkmn:method a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "Learnset method (level, machine, egg, tutor, evolution, special (event and Wild Tera moves)) or PokeAPI encounter method (walk, surf, old-rod, headbutt, gift, ...)."@en .
 pkmn:level  a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:integer ; rdfs:label "level"@en .
 
 #################################################################
