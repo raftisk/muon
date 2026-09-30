@@ -5,7 +5,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://muon.dev/ns/core> a owl:Ontology ;
-    owl:versionInfo "0.1.0" ;
+    owl:versionInfo "0.2.0" ;
     skos:definition "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph."@en .
 
 #################################################################
@@ -336,7 +336,7 @@ mo:describes a owl:ObjectProperty ;
     rdfs:domain mo:TextChunk ;
     rdfs:range  mo:Entity ;
     rdfs:label "describes"@en ;
-    skos:definition "The diegetic item a chunk of text is about."@en .
+    skos:definition "The diegetic item a chunk of text is about. A chunk describes exactly 1 entity; other entities it names link to it through mo:mentionedIn."@en .
 
 mo:text a owl:DatatypeProperty ;
     rdfs:domain mo:TextChunk ;
@@ -348,7 +348,7 @@ mo:aspect a owl:DatatypeProperty ;
     rdfs:domain mo:TextChunk ;
     rdfs:range  xsd:string ;
     rdfs:label "aspect"@en ;
-    skos:definition "The facet a chunk covers: biology, behavior, origin, competitive, effect, flavor, ..."@en .
+    skos:definition "The kind of content a chunk holds: biology, effect, flavor, trivia, origin, profile, anime, manga, side_game. A universe adds its own values in its SHACL shape (pkmn: pokedex)."@en .
 
 mo:source a owl:DatatypeProperty ;
     rdfs:domain mo:TextChunk ;
@@ -356,3 +356,24 @@ mo:source a owl:DatatypeProperty ;
     rdfs:label "source"@en ;
     skos:definition "The non-canon origin a chunk's text was fetched from (pokeapi, bulbapedia). Canon origins use mo:fromWork."@en ;
     rdfs:comment "Distinct from the class mo:Source. Holds the name of a chunk's non-canon origin."@en .
+
+mo:section a owl:DatatypeProperty ;
+    rdfs:domain mo:TextChunk ;
+    rdfs:range  xsd:string ;
+    rdfs:label "section"@en ;
+    skos:definition "Heading path of a chunk inside its source page, e.g. 'Biology > Forms'."@en .
+
+mo:sourceUrl a owl:DatatypeProperty ;
+    rdfs:domain mo:TextChunk ;
+    rdfs:range  xsd:string ;
+    rdfs:label "source URL"@en ;
+    skos:definition "Permalink to the source page revision a chunk was parsed from."@en .
+
+## Entity names ##
+
+mo:aliases a owl:DatatypeProperty ;
+    rdfs:domain mo:Entity ;
+    rdfs:range  xsd:string ;
+    rdfs:label "aliases"@en ;
+    skos:definition "Other names of an entity: other languages, trademark and beta names. Repeated; LIST<STRING> in Neo4j."@en ;
+    rdfs:comment "Neo4j properties cannot hold maps, so all languages share 1 flat list. RDF may keep language tags on the literals."@en .
