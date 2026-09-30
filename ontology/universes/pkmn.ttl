@@ -290,7 +290,7 @@ pkmn:Item a owl:Class ;
 
 pkmn:Berry    a owl:Class ; rdfs:subClassOf pkmn:Item ; rdfs:label "Berry"@en .
 pkmn:Machine  a owl:Class ; rdfs:subClassOf pkmn:Item ; rdfs:label "Machine"@en ;
-    skos:definition "A TM, HM, or TR that teaches a move."@en .
+    skos:definition "A TM, HM or TR in 1 version group. The same number in another version group is another node."@en .
 pkmn:HeldItem a owl:Class ; rdfs:subClassOf pkmn:Item ; rdfs:label "HeldItem"@en .
 
 pkmn:teachesMove a owl:ObjectProperty ;
@@ -360,7 +360,7 @@ pkmn:MoveEffect a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MoveEffec
     skos:definition "A reified secondary effect of a move; carries probability and magnitude."@en .
 
 pkmn:LearnsetEntry a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "LearnsetEntry"@en ;
-    skos:definition "A reified (species, move, version-group, method) learn fact."@en .
+    skos:definition "A reified (species, move, version group, method, level) learn fact."@en .
 
 pkmn:hasFlag a owl:ObjectProperty ;
     rdfs:domain pkmn:Move ;
@@ -386,12 +386,12 @@ pkmn:canLearn a owl:ObjectProperty ;
     rdfs:domain pkmn:PokemonSpecies ;
     rdfs:range  pkmn:Move ;
     rdfs:label  "canLearn"@en ;
-    skos:definition "Shortcut of hasLearnsetEntry + teachesMove for 1-hop traversal."@en .
+    skos:definition "Shortcut of hasLearnsetEntry + teachesMove over entries in the snapshot version group (Scarlet/Violet). Learnability in other version groups goes through LearnsetEntry."@en .
 
 pkmn:inVersionGroup a owl:ObjectProperty ;
-    rdfs:domain pkmn:LearnsetEntry ;
     rdfs:range  pkmn:VersionGroup ;
-    rdfs:label  "inVersionGroup"@en .
+    rdfs:label  "inVersionGroup"@en ;
+    skos:definition "The version group a learnset entry or a machine belongs to."@en .
 
 pkmn:viaMachine a owl:ObjectProperty ;
     rdfs:domain pkmn:LearnsetEntry ;
