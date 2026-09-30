@@ -30,9 +30,11 @@ pkmn:baseDefense   a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rd
 pkmn:baseSpAttack  a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseSpAttack"@en .
 pkmn:baseSpDefense a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseSpDefense"@en .
 pkmn:baseSpeed     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseSpeed"@en .
-pkmn:height        a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:decimal ; rdfs:label "height"@en .
-pkmn:weight        a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:decimal ; rdfs:label "weight"@en .
-pkmn:genderRatio   a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "genderRatio"@en .
+pkmn:height        a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:decimal ; rdfs:label "height"@en ; skos:definition "Height in metres."@en .
+pkmn:weight        a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:decimal ; rdfs:label "weight"@en ; skos:definition "Weight in kilograms."@en .
+pkmn:femaleRate    a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:decimal ; rdfs:label "femaleRate"@en ;
+    skos:definition "Share of females, 0 to 1. Absent when the species is genderless."@en .
+pkmn:isGenderless  a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isGenderless"@en ; skos:definition "True when the species has no gender."@en .
 pkmn:catchRate     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "catchRate"@en .
 pkmn:baseExpYield  a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseExpYield"@en .
 pkmn:shape         a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "shape"@en .
@@ -40,6 +42,27 @@ pkmn:isLegendary   a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rd
 pkmn:isMythical    a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isMythical"@en .
 pkmn:isStarter     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isStarter"@en .
 pkmn:isDefaultForm a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isDefaultForm"@en .
+pkmn:genus          a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "genus"@en ;
+    skos:definition "Pokédex category without the word Pokémon ('Mole' for Diglett)."@en .
+pkmn:eggCycles      a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "eggCycles"@en ; skos:definition "Egg cycles to hatch."@en .
+pkmn:baseFriendship a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseFriendship"@en ; skos:definition "Friendship on capture."@en .
+pkmn:growthRate     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "growthRate"@en ;
+    skos:definition "Experience curve: erratic, fast, medium_fast, medium_slow, slow, fluctuating."@en .
+pkmn:color          a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "color"@en ; skos:definition "Pokédex colour."@en .
+
+## Species object properties ##
+
+pkmn:yieldsEv a owl:ObjectProperty ;
+    rdfs:domain pkmn:PokemonSpecies ;
+    rdfs:range  pkmn:Stat ;
+    rdfs:label  "yieldsEv"@en ;
+    skos:definition "A stat that defeating this species trains. The amount is the Neo4j edge property amount (rung 1b)."@en .
+
+pkmn:designedBy a owl:ObjectProperty ;
+    rdfs:domain pkmn:PokemonSpecies ;
+    rdfs:range  mo:Creator ;
+    rdfs:label  "designedBy"@en ;
+    skos:definition "The real-world person who designed a species."@en .
 
 ## Moves and types ##
 
