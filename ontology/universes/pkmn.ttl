@@ -8,7 +8,7 @@
 
 <https://muon.dev/ns/pkmn> a owl:Ontology ;
     dcterms:title   "muon: Pokémon extension"@en ;
-    owl:versionInfo "0.1.0" ;
+    owl:versionInfo "0.2.0" ;
     owl:imports     <https://muon.dev/ns/core> ;
     skos:definition    "Pokémon-universe extension of the muon core ontology."@en .
 
@@ -193,21 +193,6 @@ pkmn:inEggGroup a owl:ObjectProperty ;
     rdfs:label   "inEggGroup"@en .
 
 # identically-named Type individuals (Bug, Flying, Dragon, Fairy, ...).
-
-#################################################################
-#  Pokédex entries  (structural TextChunk subclass)
-#################################################################
-
-pkmn:PokedexEntry a owl:Class ;
-    rdfs:subClassOf mo:TextChunk ;
-    rdfs:label   "PokedexEntry"@en ;
-    skos:definition "A Pokédex flavour text for one species, shown by 1 or more game versions with identical text. Bound to exactly one species (pkmn:describesSpecies) and to each version through mo:fromWork."@en .
-
-pkmn:describesSpecies a owl:ObjectProperty ;
-    rdfs:domain  pkmn:PokedexEntry ;
-    rdfs:range   pkmn:PokemonSpecies ;
-    rdfs:label   "describesSpecies"@en ;
-    skos:definition "The species an entry describes. The verbatim text is on the inherited mo:text; the versions on the inherited mo:fromWork."@en .
 
 #################################################################
 #  Battle conditions
