@@ -8,7 +8,7 @@
 
 <https://muon.dev/ns/pkmn> a owl:Ontology ;
     dcterms:title   "muon: Pokémon extension"@en ;
-    owl:versionInfo "0.2.0" ;
+    owl:versionInfo "0.3.0" ;
     owl:imports     <https://muon.dev/ns/core> ;
     skos:definition    "Pokémon-universe extension of the muon core ontology."@en .
 
@@ -126,10 +126,21 @@ pkmn:Stat a owl:Class ;
     skos:definition "A battle statistic. Kept in pkmn: for now rather than widening mo: mid-ingestion; a candidate for promotion to a core mo:Stat via the schema proposal queue once a second universe needs stats."@en .
 
 
+## Battle stats ##
+pkmn:BattleStat a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "BattleStat"@en ;
+    skos:definition "A quantity that exists only during battle and changes in stages: accuracy, evasion and critical-hit ratio. No species has a base value for it. Sand Attack lowers accuracy; Focus Energy raises the critical-hit ratio."@en .
+
 pkmn:affectsStat a owl:ObjectProperty ;
-    rdfs:range pkmn:Stat ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Stat pkmn:BattleStat ) ] ;
     rdfs:label "affectsStat"@en ;
-    skos:definition "Parent of the stat-modifier sub-properties."@en .
+    skos:definition "Parent of the nature sub-properties. From an effect node it changes a stat or battle stat by statStages (Swords Dance) or statMultiplier (Choice Band)."@en .
+
+pkmn:blocksStatDrop a owl:ObjectProperty ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Stat pkmn:BattleStat ) ] ;
+    rdfs:label "blocksStatDrop"@en ;
+    skos:definition "Other Pokémon cannot lower this stat or battle stat of the holder (Hyper Cutter: Attack). Drops the holder causes itself (Close Combat) still apply."@en .
 
 #################################################################
 #  Natures
@@ -200,6 +211,14 @@ pkmn:pp a owl:DatatypeProperty ;
     rdfs:range   xsd:integer ;
     rdfs:label   "pp"@en ;
     skos:definition "Base Power Points (maximum uses)."@en .
+
+## Move numbers ##
+pkmn:critStage a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "critStage"@en ;
+    skos:definition "Critical-hit stages the move adds to the user's stage while it is used: 1 for a high critical-hit ratio (Stone Edge), 3 for a guaranteed critical hit (Frost Breath). Absent means 0."@en .
+pkmn:minHits a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "minHits"@en ;
+    skos:definition "Fewest hits of a move that strikes several times in 1 turn (Bullet Seed: 2)."@en .
+pkmn:maxHits a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "maxHits"@en ;
+    skos:definition "Most hits of a move that strikes several times in 1 turn (Bullet Seed: 5)."@en .
 
 #################################################################
 #  Egg groups (breeding compatibility)

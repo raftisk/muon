@@ -33,6 +33,11 @@ pkmn:specialAttack  a pkmn:Stat ; rdfs:label "Special Attack"@en .
 pkmn:specialDefense a pkmn:Stat ; rdfs:label "Special Defense"@en .
 pkmn:speed          a pkmn:Stat ; rdfs:label "Speed"@en .
 
+## Battle stats ##
+pkmn:battleStatAccuracy a pkmn:BattleStat ; rdfs:label "Accuracy"@en .
+pkmn:evasion            a pkmn:BattleStat ; rdfs:label "Evasion"@en .
+pkmn:criticalHitRatio   a pkmn:BattleStat ; rdfs:label "Critical Hit Ratio"@en .
+
 ## Move damage classes ##
 pkmn:physical a pkmn:MoveDamageClass ; rdfs:label "Physical"@en .
 pkmn:special  a pkmn:MoveDamageClass ; rdfs:label "Special"@en .
