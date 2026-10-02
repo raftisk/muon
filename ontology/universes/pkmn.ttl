@@ -270,7 +270,7 @@ pkmn:FieldEffect a owl:Class ; rdfs:subClassOf pkmn:FieldCondition ; rdfs:label 
 pkmn:modifiesType a owl:ObjectProperty ;
     rdfs:range pkmn:Type ;
     rdfs:label "modifiesType"@en ;
-    skos:definition "Parent of the type-multiplier sub-properties."@en .
+    skos:definition "Parent of amplifiesType and dampensType, written from weather and terrain (Rain amplifies Water). Effect nodes filter types with triggeredBy."@en .
 
 pkmn:amplifiesType a owl:ObjectProperty ;
     rdfs:subPropertyOf pkmn:modifiesType ;
@@ -293,10 +293,15 @@ pkmn:blocksCondition a owl:ObjectProperty ;
     skos:definition "Prevents a battle condition from applying."@en .
 
 pkmn:immuneTo a owl:ObjectProperty ;
-    rdfs:domain pkmn:Type ;
-    rdfs:range  pkmn:StatusCondition ;
-    rdfs:label  "immuneTo"@en ;
-    skos:definition "A type's inherent status immunity (Fire to Burn, Ice to Freeze, ...)."@en .
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:StatusCondition pkmn:Type pkmn:MoveFlag ) ] ;
+    rdfs:label "immuneTo"@en ;
+    skos:definition "The holder is not affected by a status condition, or by moves of a type or with a flag. From a type: a status condition (Fire to Burn) or a flag (Grass to powder). From an ability or item effect: a type (Levitate to Ground) or a flag (Soundproof to sound)."@en ;
+    rdfs:comment "Type against type immunity is noEffectAgainst. A condition blocked by an ability or item effect uses blocksCondition (Limber)."@en .
+
+pkmn:setsType a owl:ObjectProperty ;
+    rdfs:range pkmn:Type ;
+    rdfs:label "setsType"@en ;
+    skos:definition "Replaces the type of the effect's recipient (target): the move its owner uses (move: Pixilate), the holder (self: Mimicry) or the Pokémon it acts on (foe: Soak)."@en .
 
 #################################################################
 #  Items
@@ -333,6 +338,12 @@ pkmn:ItemEffect a owl:Class ;
     rdfs:subClassOf mo:Concept ;
     rdfs:label "ItemEffect"@en ;
     skos:definition "A reified battle effect of an item, carrying its trigger and magnitude."@en .
+
+pkmn:restrictedTo a owl:ObjectProperty ;
+    rdfs:domain pkmn:ItemEffect ;
+    rdfs:range  pkmn:PokemonSpecies ;
+    rdfs:label  "restrictedTo"@en ;
+    skos:definition "The item effect applies only when the holder is this species or form (Light Ball: Pikachu). Several edges mean any of them."@en .
 
 pkmn:category         a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:string  ; rdfs:label "category"@en .
 pkmn:price            a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "price"@en .
@@ -430,7 +441,7 @@ pkmn:viaParent a owl:ObjectProperty ;
     skos:definition "The parent species of an egg move."@en .
 
 pkmn:priority   a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "priority"@en .
-pkmn:target     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "target"@en ; skos:definition "On a move, the source targeting code in snake_case (any_adjacent, ...); on an effect, the recipient (self, foe, field)."@en .
+pkmn:target     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "target"@en ; skos:definition "On a move, the targeting code in snake_case (any_adjacent, ...). On an effect, the recipient: self, ally, foe, field or move (the move the effect's owner uses)."@en .
 pkmn:effectText a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "effectText"@en ; skos:definition "The PokeAPI English short effect of a move, ability or item. Effect nodes do not carry it."@en .
 
 pkmn:probability a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "probability"@en ; skos:definition "Chance (0-100) an effect triggers."@en .
