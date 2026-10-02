@@ -435,7 +435,15 @@ pkmn:effectText a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "eff
 
 pkmn:probability a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "probability"@en ; skos:definition "Chance (0-100) an effect triggers."@en .
 pkmn:statStages  a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "statStages"@en ; skos:definition "Signed stat-stage change (-6..+6)."@en .
-pkmn:multiplier  a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "multiplier"@en .
+
+## Multipliers ##
+pkmn:statMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "statMultiplier"@en ;
+    skos:definition "Factor on the stat or battle stat that affectsStat points at (Choice Band: Attack x1.5; Compound Eyes: accuracy x1.3)."@en .
+pkmn:powerMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "powerMultiplier"@en ;
+    skos:definition "Factor on the base power of the moves that pass the effect's filters (Charcoal: Fire moves x1.2; Iron Fist: punch moves x1.2; Weather Ball in rain: x2)."@en .
+pkmn:damageMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "damageMultiplier"@en ;
+    skos:definition "Factor on the final damage of the moves that pass the effect's filters (Life Orb: the holder's moves x1.3; Fluffy: contact moves that hit the holder x0.5)."@en .
+
 pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect fires: switch_in, switch_out (holder leaves battle), on_attack (holder uses a move), on_hit (holder is hit), low_hp, end_of_turn, passive."@en .
 
 pkmn:method a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "Learnset method (level, machine, egg, tutor, evolution, special (event and Wild Tera moves)) or PokeAPI encounter method (walk, surf, old-rod, headbutt, gift, ...)."@en .
