@@ -43,7 +43,7 @@ pkmn:isMythical    a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rd
 pkmn:isStarter     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isStarter"@en .
 pkmn:isDefaultForm a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:boolean ; rdfs:label "isDefaultForm"@en .
 pkmn:genus          a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "genus"@en ;
-    skos:definition "Pokédex category without the word Pokémon ('Mole' for Diglett)."@en .
+    skos:definition "Pokédex category without the word Pokémon."@en .
 pkmn:eggCycles      a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "eggCycles"@en ; skos:definition "Egg cycles to hatch."@en .
 pkmn:baseFriendship a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:integer ; rdfs:label "baseFriendship"@en ; skos:definition "Friendship on capture."@en .
 pkmn:growthRate     a owl:DatatypeProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range xsd:string  ; rdfs:label "growthRate"@en ;
@@ -56,7 +56,7 @@ pkmn:yieldsEv a owl:ObjectProperty ;
     rdfs:domain pkmn:PokemonSpecies ;
     rdfs:range  pkmn:Stat ;
     rdfs:label  "yieldsEv"@en ;
-    skos:definition "A stat that defeating this species trains. The amount is the Neo4j edge property amount (rung 1b)."@en .
+    skos:definition "A stat that defeating this species trains. The amount is the Neo4j edge property amount."@en .
 
 pkmn:designedBy a owl:ObjectProperty ;
     rdfs:domain pkmn:PokemonSpecies ;
@@ -123,24 +123,24 @@ pkmn:noEffectAgainst a owl:ObjectProperty ;
 pkmn:Stat a owl:Class ;
     rdfs:subClassOf mo:Concept ;
     rdfs:label   "Stat"@en ;
-    skos:definition "A battle statistic. Kept in pkmn: for now rather than widening mo: mid-ingestion; a candidate for promotion to a core mo:Stat via the schema proposal queue once a second universe needs stats."@en .
+    skos:definition "A battle statistic with a base value per species."@en .
 
 
 ## Battle stats ##
 pkmn:BattleStat a owl:Class ;
     rdfs:subClassOf mo:Concept ;
     rdfs:label "BattleStat"@en ;
-    skos:definition "A quantity that exists only during battle and changes in stages: accuracy, evasion and critical-hit ratio. No species has a base value for it. Sand Attack lowers accuracy; Focus Energy raises the critical-hit ratio."@en .
+    skos:definition "A quantity that exists only during battle and changes in stages: accuracy, evasion and critical-hit ratio. No species has a base value for it."@en .
 
 pkmn:affectsStat a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Stat pkmn:BattleStat ) ] ;
     rdfs:label "affectsStat"@en ;
-    skos:definition "Parent of the nature sub-properties. From an effect node it changes a stat or battle stat by statStages (Swords Dance) or statMultiplier (Choice Band)."@en .
+    skos:definition "Parent of the nature sub-properties. From an effect node it changes a stat or battle stat by statStages or statMultiplier."@en .
 
 pkmn:blocksStatDrop a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Stat pkmn:BattleStat ) ] ;
     rdfs:label "blocksStatDrop"@en ;
-    skos:definition "Other Pokémon cannot lower this stat or battle stat of the holder (Hyper Cutter: Attack). Drops the holder causes itself (Close Combat) still apply."@en .
+    skos:definition "Other Pokémon cannot lower this stat or battle stat of the holder. Drops the holder causes itself still apply."@en .
 
 #################################################################
 #  Natures
@@ -214,11 +214,11 @@ pkmn:pp a owl:DatatypeProperty ;
 
 ## Move numbers ##
 pkmn:critStage a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "critStage"@en ;
-    skos:definition "Critical-hit stages the move adds to the user's stage while it is used: 1 for a high critical-hit ratio (Stone Edge), 3 for a guaranteed critical hit (Frost Breath). Absent means 0."@en .
+    skos:definition "Critical-hit stages the move adds to the user's stage while it is used: 1 for a high critical-hit ratio, 3 for a guaranteed critical hit. Absent means 0."@en .
 pkmn:minHits a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "minHits"@en ;
-    skos:definition "Fewest hits of a move that strikes several times in 1 turn (Bullet Seed: 2)."@en .
+    skos:definition "Fewest hits of a move that strikes several times in 1 turn."@en .
 pkmn:maxHits a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "maxHits"@en ;
-    skos:definition "Most hits of a move that strikes several times in 1 turn (Bullet Seed: 5)."@en .
+    skos:definition "Most hits of a move that strikes several times in 1 turn."@en .
 
 #################################################################
 #  Egg groups (breeding compatibility)
@@ -227,7 +227,7 @@ pkmn:maxHits a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:int
 pkmn:EggGroup a owl:Class ;
     rdfs:subClassOf mo:Concept ;
     rdfs:label   "EggGroup"@en ;
-    skos:definition "A breeding-compatibility grouping: two species can breed if they share an egg group. Cross-cuts the type/species axis, so it is a Concept — not a Taxon and not a social mo:Group."@en .
+    skos:definition "A breeding category: 2 species can breed if they share one. It classifies species, not individuals, so it is a Concept."@en .
 
 pkmn:inEggGroup a owl:ObjectProperty ;
     rdfs:domain  pkmn:PokemonSpecies ;
@@ -270,7 +270,7 @@ pkmn:FieldEffect a owl:Class ; rdfs:subClassOf pkmn:FieldCondition ; rdfs:label 
 pkmn:modifiesType a owl:ObjectProperty ;
     rdfs:range pkmn:Type ;
     rdfs:label "modifiesType"@en ;
-    skos:definition "Parent of amplifiesType and dampensType, written from weather and terrain (Rain amplifies Water). Effect nodes filter types with triggeredBy."@en .
+    skos:definition "Parent of amplifiesType and dampensType, written from weather and terrain. Effect nodes filter types with triggeredBy."@en .
 
 pkmn:amplifiesType a owl:ObjectProperty ;
     rdfs:subPropertyOf pkmn:modifiesType ;
@@ -285,7 +285,7 @@ pkmn:dampensType a owl:ObjectProperty ;
 pkmn:inflictsCondition a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:StatusCondition pkmn:VolatileCondition ) ] ;
     rdfs:label "inflictsCondition"@en ;
-    skos:definition "Applies a status or volatile condition to a Pokémon. Probability lives on the reified effect node."@en .
+    skos:definition "Applies a status or volatile condition to a Pokémon, with the effect's probability."@en .
 
 pkmn:blocksCondition a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:StatusCondition pkmn:VolatileCondition pkmn:Weather ) ] ;
@@ -295,13 +295,13 @@ pkmn:blocksCondition a owl:ObjectProperty ;
 pkmn:immuneTo a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:StatusCondition pkmn:Type pkmn:MoveFlag ) ] ;
     rdfs:label "immuneTo"@en ;
-    skos:definition "The holder is not affected by a status condition, or by moves of a type or with a flag. From a type: a status condition (Fire to Burn) or a flag (Grass to powder). From an ability or item effect: a type (Levitate to Ground) or a flag (Soundproof to sound)."@en ;
-    rdfs:comment "Type against type immunity is noEffectAgainst. A condition blocked by an ability or item effect uses blocksCondition (Limber)."@en .
+    skos:definition "The holder is not affected by a status condition, or by moves of a type or with a flag. From a type: a status condition or a flag. From an ability or item effect: a type or a flag."@en ;
+    rdfs:comment "Type against type immunity is noEffectAgainst. A condition blocked by an ability or item effect uses blocksCondition."@en .
 
 pkmn:setsType a owl:ObjectProperty ;
     rdfs:range pkmn:Type ;
     rdfs:label "setsType"@en ;
-    skos:definition "Replaces the type of the effect's recipient (target): the move its owner uses (move: Pixilate), the holder (self: Mimicry) or the Pokémon it acts on (foe: Soak)."@en .
+    skos:definition "Replaces the type of the effect's recipient (target): the move its owner uses (move), the holder (self) or the Pokémon it acts on (foe)."@en .
 
 #################################################################
 #  Items
@@ -330,7 +330,7 @@ pkmn:curesCondition a owl:ObjectProperty ;
 pkmn:restoresStat a owl:ObjectProperty ;
     rdfs:range pkmn:Stat ;
     rdfs:label "restoresStat"@en ;
-    skos:definition "Restores HP or PP of the effect's recipient. The size is amount (fixed points: Potion) or hpChange (a share: Leftovers) on the same effect node."@en .
+    skos:definition "Restores HP or PP of the effect's recipient, by amount (fixed points) or hpChange (a share)."@en .
 
 ## Item effects ##
 
@@ -343,7 +343,7 @@ pkmn:restrictedTo a owl:ObjectProperty ;
     rdfs:domain pkmn:ItemEffect ;
     rdfs:range  pkmn:PokemonSpecies ;
     rdfs:label  "restrictedTo"@en ;
-    skos:definition "The item effect applies only when the holder is this species or form (Light Ball: Pikachu). Several edges mean any of them."@en .
+    skos:definition "The item effect applies only when the holder is this species or form. Several edges mean any of them."@en .
 
 pkmn:category         a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:string  ; rdfs:label "category"@en .
 pkmn:price            a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "price"@en .
@@ -359,9 +359,9 @@ pkmn:amount           a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:lab
 
 ## HP ##
 pkmn:hpChange a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "hpChange"@en ;
-    skos:definition "Signed share of HP the recipient (target) gains or loses, as a fraction of hpBasis: 0.25 heals a quarter (Sitrus Berry), -0.1667 removes a sixth (Rocky Helmet). A positive value comes with restoresStat to HP on the same effect node."@en .
+    skos:definition "Signed share of HP the recipient (target) gains or loses, as a fraction of hpBasis. A positive value comes with restoresStat to HP on the same effect node."@en .
 pkmn:hpBasis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "hpBasis"@en ;
-    skos:definition "What hpChange is a share of: max_hp (the recipient's maximum HP: Leftovers), current_hp (the recipient's current HP: Super Fang) or damage_dealt (the damage the move or holder just dealt: Giga Drain, Brave Bird)."@en .
+    skos:definition "What hpChange is a share of: max_hp (the recipient's maximum HP), current_hp (the recipient's current HP) or damage_dealt (the damage the move or holder just dealt)."@en .
 
 #################################################################
 #  Meta: generations, versions, mechanics
@@ -449,11 +449,11 @@ pkmn:statStages  a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "s
 
 ## Multipliers ##
 pkmn:statMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "statMultiplier"@en ;
-    skos:definition "Factor on the stat or battle stat that affectsStat points at (Choice Band: Attack x1.5; Compound Eyes: accuracy x1.3)."@en .
+    skos:definition "Factor on the stat or battle stat that affectsStat points at."@en .
 pkmn:powerMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "powerMultiplier"@en ;
-    skos:definition "Factor on the base power of the moves that pass the effect's filters (Charcoal: Fire moves x1.2; Iron Fist: punch moves x1.2; Weather Ball in rain: x2)."@en .
+    skos:definition "Factor on the base power of the moves that pass the effect's filters."@en .
 pkmn:damageMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "damageMultiplier"@en ;
-    skos:definition "Factor on the final damage of the moves that pass the effect's filters (Life Orb: the holder's moves x1.3; Fluffy: contact moves that hit the holder x0.5)."@en .
+    skos:definition "Factor on the final damage of the moves that pass the effect's filters."@en .
 
 pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect or a form change fires: switch_in, switch_out (holder leaves battle), on_attack (holder uses a move), on_hit (holder is hit), on_knock_out (holder knocks out a Pokémon with a move), low_hp, end_of_turn, passive. A form change with no trigger happens outside battle."@en .
 
@@ -475,7 +475,7 @@ pkmn:hasEffect a owl:ObjectProperty ;
 pkmn:triggeredBy a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:MoveFlag pkmn:MoveDamageClass pkmn:Type pkmn:FieldCondition pkmn:Ability ) ] ;
     rdfs:label "triggeredBy"@en ;
-    skos:definition "What activates an effect or form change: a move type, flag or damage class filters the move involved, and trigger gives the direction (Static: on_hit + contact); a field condition fires it while active (Electric Seed); an ability causes a form change (Zen Mode). Edges to the same label mean any of them (Thick Fat: Fire or Ice); edges to different labels must all match (Stance Change: the ability and a Physical or Special move)."@en .
+    skos:definition "What activates an effect or form change: a move type, flag or damage class filters the move involved, and trigger gives the direction; a field condition fires it while active; an ability causes a form change. Edges to the same label mean any of them; edges to different labels must all match."@en .
 
 pkmn:hasOverworldEffect a owl:DatatypeProperty ; rdfs:domain pkmn:Ability ; rdfs:range xsd:boolean ; rdfs:label "hasOverworldEffect"@en .
 
@@ -492,7 +492,7 @@ pkmn:MegaEvolution a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MegaEv
 pkmn:FormChange a owl:Class ;
     rdfs:subClassOf mo:Concept ;
     rdfs:label "FormChange"@en ;
-    skos:definition "A reified change from a species to one of its form nodes, with its trigger and the ability that causes it or the items it requires (Zen Mode: Darmanitan to Zen Mode; Gracidea: Shaymin to Sky Forme). Mega Evolution uses MegaEvolution instead."@en .
+    skos:definition "A reified change from a species to one of its form nodes, with its trigger and the ability that causes it or the items it requires. Mega Evolution uses MegaEvolution instead."@en .
 
 pkmn:fromSpecies a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Evolution pkmn:FormChange ) ] ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "fromSpecies"@en .
 pkmn:toSpecies   a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Evolution pkmn:FormChange ) ] ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "toSpecies"@en .
