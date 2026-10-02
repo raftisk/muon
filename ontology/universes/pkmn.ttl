@@ -325,7 +325,7 @@ pkmn:curesCondition a owl:ObjectProperty ;
 pkmn:restoresStat a owl:ObjectProperty ;
     rdfs:range pkmn:Stat ;
     rdfs:label "restoresStat"@en ;
-    skos:definition "Restores HP or PP. The amount lives on the reified effect node."@en .
+    skos:definition "Restores HP or PP of the effect's recipient. The size is amount (fixed points: Potion) or hpChange (a share: Leftovers) on the same effect node."@en .
 
 ## Item effects ##
 
@@ -345,6 +345,12 @@ pkmn:hpThreshold      a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:lab
     skos:definition "Fraction of max HP (0 to 1). With trigger low_hp the effect fires at it; otherwise the effect applies only at or below it."@en .
 pkmn:amount           a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "amount"@en ;
     skos:definition "Fixed number of HP or PP points restored."@en .
+
+## HP ##
+pkmn:hpChange a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "hpChange"@en ;
+    skos:definition "Signed share of HP the recipient (target) gains or loses, as a fraction of hpBasis: 0.25 heals a quarter (Sitrus Berry), -0.1667 removes a sixth (Rocky Helmet). A positive value comes with restoresStat to HP on the same effect node."@en .
+pkmn:hpBasis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "hpBasis"@en ;
+    skos:definition "What hpChange is a share of: max_hp (the recipient's maximum HP: Leftovers), current_hp (the recipient's current HP: Super Fang) or damage_dealt (the damage the move or holder just dealt: Giga Drain, Brave Bird)."@en .
 
 #################################################################
 #  Meta: generations, versions, mechanics
