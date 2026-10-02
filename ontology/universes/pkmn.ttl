@@ -455,7 +455,7 @@ pkmn:powerMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:labe
 pkmn:damageMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "damageMultiplier"@en ;
     skos:definition "Factor on the final damage of the moves that pass the effect's filters (Life Orb: the holder's moves x1.3; Fluffy: contact moves that hit the holder x0.5)."@en .
 
-pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect fires: switch_in, switch_out (holder leaves battle), on_attack (holder uses a move), on_hit (holder is hit), low_hp, end_of_turn, passive."@en .
+pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect or a form change fires: switch_in, switch_out (holder leaves battle), on_attack (holder uses a move), on_hit (holder is hit), on_knock_out (holder knocks out a Pokémon with a move), low_hp, end_of_turn, passive. A form change with no trigger happens outside battle."@en .
 
 pkmn:method a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "Learnset method (level, machine, egg, tutor, evolution, special (event and Wild Tera moves)) or PokeAPI encounter method (walk, surf, old-rod, headbutt, gift, ...)."@en .
 pkmn:level  a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:integer ; rdfs:label "level"@en .
@@ -473,9 +473,9 @@ pkmn:hasEffect a owl:ObjectProperty ;
     skos:definition "Links a move, ability or item to one of its reified effects."@en .
 
 pkmn:triggeredBy a owl:ObjectProperty ;
-    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:MoveFlag pkmn:MoveDamageClass pkmn:Type pkmn:FieldCondition ) ] ;
+    rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:MoveFlag pkmn:MoveDamageClass pkmn:Type pkmn:FieldCondition pkmn:Ability ) ] ;
     rdfs:label "triggeredBy"@en ;
-    skos:definition "What activates an effect. A move flag, damage class or type filters the move involved, and trigger gives the direction (Static: on_hit + contact). A field condition fires the effect while it is active (Electric Seed)."@en .
+    skos:definition "What activates an effect or form change: a move type, flag or damage class filters the move involved, and trigger gives the direction (Static: on_hit + contact); a field condition fires it while active (Electric Seed); an ability causes a form change (Zen Mode). Edges to the same label mean any of them (Thick Fat: Fire or Ice); edges to different labels must all match (Stance Change: the ability and a Physical or Special move)."@en .
 
 pkmn:hasOverworldEffect a owl:DatatypeProperty ; rdfs:domain pkmn:Ability ; rdfs:range xsd:boolean ; rdfs:label "hasOverworldEffect"@en .
 
@@ -489,14 +489,19 @@ pkmn:Evolution a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "Evolution"
 pkmn:MegaEvolution a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MegaEvolution"@en ;
     skos:definition "A reified Mega Evolution linking a base species, its mega form, and the Mega Stone. Not an Evolution: reversible and battle-only."@en .
 
-pkmn:fromSpecies a owl:ObjectProperty ; rdfs:domain pkmn:Evolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "fromSpecies"@en .
-pkmn:toSpecies   a owl:ObjectProperty ; rdfs:domain pkmn:Evolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "toSpecies"@en .
+pkmn:FormChange a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "FormChange"@en ;
+    skos:definition "A reified change from a species to one of its form nodes, with its trigger and the ability that causes it or the items it requires (Zen Mode: Darmanitan to Zen Mode; Gracidea: Shaymin to Sky Forme). Mega Evolution uses MegaEvolution instead."@en .
+
+pkmn:fromSpecies a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Evolution pkmn:FormChange ) ] ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "fromSpecies"@en .
+pkmn:toSpecies   a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Evolution pkmn:FormChange ) ] ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "toSpecies"@en .
 
 pkmn:requires a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Item pkmn:Move mo:Location pkmn:PokemonSpecies pkmn:Type ) ] ;
     rdfs:label "requires"@en ;
-    skos:definition "A required object of an evolution or mega evolution."@en ;
-    rdfs:comment "In Neo4j every REQUIRES edge carries role: use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor."@en .
+    skos:definition "A required object of an evolution, mega evolution or form change."@en ;
+    rdfs:comment "In Neo4j every REQUIRES edge carries role: use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor, fusesWith."@en .
 
 pkmn:baseSpecies a owl:ObjectProperty ; rdfs:domain pkmn:MegaEvolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "baseSpecies"@en .
 pkmn:megaForm    a owl:ObjectProperty ; rdfs:domain pkmn:MegaEvolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "megaForm"@en .
