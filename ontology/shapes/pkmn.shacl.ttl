@@ -257,6 +257,57 @@ pkmn-shape:C2_MachineLinks a sh:NodeShape ;
 #  Meta and text
 #################################################################
 
+# Text chunks. `aspect` takes the core values plus `pokedex`, which only a
+# universe can describe. A canon chunk names its work with fromWork; every other
+# chunk names its origin with source.
+pkmn-shape:X1_TextChunk a sh:NodeShape ;
+    sh:name "X1" ;
+    sh:message "A text chunk needs 1 describes, 1 aspect from the vocabulary and exactly 1 of source or fromWork."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass mo:TextChunk ;
+    sh:property [
+        sh:path mo:describes ;
+        sh:name "X1" ;
+        sh:message "A text chunk needs exactly 1 describes."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1
+    ] ;
+    sh:property [
+        sh:path mo:aspect ;
+        sh:name "X1" ;
+        sh:message "A text chunk needs exactly 1 aspect: biology, effect, flavor, trivia, origin, profile, anime, manga, side_game or pokedex."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "biology" "effect" "flavor" "trivia" "origin" "profile" "anime" "manga" "side_game" "pokedex" )
+    ] ;
+    sh:xone (
+        [ sh:property [ sh:path mo:source ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path mo:fromWork ; sh:minCount 1 ] ]
+    ) .
+
+pkmn-shape:X2_FromWorkByAspect a sh:NodeShape ;
+    sh:name "X2" ;
+    sh:message "fromWork depends on the aspect: pokedex needs Versions, flavor needs VersionGroups, any other aspect has none."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass mo:TextChunk ;
+    sh:or (
+        [
+            sh:property [ sh:path mo:aspect ; sh:hasValue "pokedex" ] ;
+            sh:property [ sh:path mo:fromWork ; sh:minCount 1 ; sh:class pkmn:Version ] ;
+            sh:property [ sh:path mo:describes ; sh:class pkmn:PokemonSpecies ]
+        ]
+        [
+            sh:property [ sh:path mo:aspect ; sh:hasValue "flavor" ] ;
+            sh:property [ sh:path mo:fromWork ; sh:minCount 1 ; sh:class pkmn:VersionGroup ]
+        ]
+        [
+            sh:property [ sh:path mo:aspect ; sh:not [ sh:in ( "pokedex" "flavor" ) ] ] ;
+            sh:property [ sh:path mo:fromWork ; sh:maxCount 0 ]
+        ]
+    ) .
+
 #################################################################
 #  Moves: flags, effects, learnset
 #################################################################
