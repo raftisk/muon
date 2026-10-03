@@ -1,0 +1,129 @@
+"""Neo4j implementation of `GraphClient`, built on the async driver."""
+
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from types import TracebackType
+from typing import Any, LiteralString, Self
+
+from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncManagedTransaction
+from neo4j.exceptions import (
+    ConfigurationError,
+    Neo4jError,
+    ServiceUnavailable,
+    SessionExpired,
+)
+
+from muon.config import Neo4jSettings
+from muon.graph.errors import GraphConnectionError, GraphQueryError
+from muon.graph.protocol import WriteSummary
+
+READ_OPERATION = "read"
+WRITE_OPERATION = "write"
+
+
+class Neo4jGraphClient:
+    """Owns one driver for the lifetime of an `async with` block.
+
+    Entering the block creates the driver and verifies connectivity; leaving it
+    closes the driver. Queries run in managed transactions, so the driver retries
+    transient failures such as deadlocks.
+    """
+
+    def __init__(self, settings: Neo4jSettings) -> None:
+        self.settings = settings
+        self.driver: AsyncDriver | None = None
+
+    async def __aenter__(self) -> Self:
+        target = f"uri={self.settings.uri!r} database={self.settings.database!r}"
+        try:
+            driver = AsyncGraphDatabase.driver(
+                self.settings.uri,
+                auth=(self.settings.username, self.settings.password.get_secret_value()),
+                connection_timeout=self.settings.connection_timeout,
+                max_connection_pool_size=self.settings.max_connection_pool_size,
+            )
+        except ConfigurationError as error:
+            raise GraphConnectionError(f"Failed to create Neo4j driver for {target}") from error
+
+        try:
+            await driver.verify_connectivity(database=self.settings.database)
+        except (ServiceUnavailable, Neo4jError) as error:
+            await driver.close()
+            raise GraphConnectionError(f"Failed to connect to Neo4j at {target}") from error
+
+        self.driver = driver
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        if self.driver is not None:
+            await self.driver.close()
+            self.driver = None
+
+    async def execute_read(
+        self, query: LiteralString, parameters: Mapping[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
+        driver = self.require_driver()
+        query_parameters = dict(parameters or {})
+        with wrap_driver_errors(READ_OPERATION, self.settings.database, query, query_parameters):
+            async with driver.session(database=self.settings.database) as session:
+                return await session.execute_read(fetch_records, query, query_parameters)
+
+    async def execute_write(
+        self, query: LiteralString, parameters: Mapping[str, Any] | None = None
+    ) -> WriteSummary:
+        driver = self.require_driver()
+        query_parameters = dict(parameters or {})
+        with wrap_driver_errors(WRITE_OPERATION, self.settings.database, query, query_parameters):
+            async with driver.session(database=self.settings.database) as session:
+                return await session.execute_write(consume_counters, query, query_parameters)
+
+    def require_driver(self) -> AsyncDriver:
+        if self.driver is None:
+            raise RuntimeError("Neo4jGraphClient used outside 'async with'")
+        return self.driver
+
+
+@contextmanager
+def wrap_driver_errors(
+    operation: str, database: str, query: str, parameters: Mapping[str, Any]
+) -> Iterator[None]:
+    """Translate driver errors into graph errors.
+
+    Messages carry parameter names only, because parameter values can hold
+    arbitrary ingested data.
+    """
+    context = f"{operation} on database={database!r} query={query!r} params={sorted(parameters)}"
+    try:
+        yield
+    except (ServiceUnavailable, SessionExpired) as error:
+        raise GraphConnectionError(f"Lost connection during {context}") from error
+    except Neo4jError as error:
+        raise GraphQueryError(f"Neo4j rejected {context}") from error
+
+
+async def fetch_records(
+    tx: AsyncManagedTransaction, query: LiteralString, parameters: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Read every record inside the transaction; results are unusable after it ends."""
+    result = await tx.run(query, parameters)
+    return [record.data() async for record in result]
+
+
+async def consume_counters(
+    tx: AsyncManagedTransaction, query: LiteralString, parameters: dict[str, Any]
+) -> WriteSummary:
+    result = await tx.run(query, parameters)
+    summary = await result.consume()
+    counters = summary.counters
+    return WriteSummary(
+        nodes_created=counters.nodes_created,
+        nodes_deleted=counters.nodes_deleted,
+        relationships_created=counters.relationships_created,
+        relationships_deleted=counters.relationships_deleted,
+        properties_set=counters.properties_set,
+    )
