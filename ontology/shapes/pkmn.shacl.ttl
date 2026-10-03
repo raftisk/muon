@@ -404,6 +404,107 @@ pkmn-shape:X3_EffectTextOwner a sh:NodeShape ;
 #  Evolution and forms
 #################################################################
 
+pkmn-shape:V1_FromAndToSpecies a sh:NodeShape ;
+    sh:name "V1" ;
+    sh:message "An evolution or form change has exactly 1 fromSpecies and 1 toSpecies."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:Evolution , pkmn:FormChange ;
+    sh:property [
+        sh:path pkmn:fromSpecies ;
+        sh:name "V1" ;
+        sh:message "An evolution or form change needs exactly 1 fromSpecies, a PokemonSpecies."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:PokemonSpecies
+    ] ;
+    sh:property [
+        sh:path pkmn:toSpecies ;
+        sh:name "V1" ;
+        sh:message "An evolution or form change needs exactly 1 toSpecies, a PokemonSpecies."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:PokemonSpecies
+    ] .
+
+# isBattleOnly is false if and only if formKind is alternate.
+pkmn-shape:V2_FormKind a sh:NodeShape ;
+    sh:name "V2" ;
+    sh:message "A form change has 1 formKind from the vocabulary and 1 isBattleOnly, false only for alternate."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:FormChange ;
+    sh:property [
+        sh:path pkmn:formKind ;
+        sh:name "V2" ;
+        sh:message "formKind must be exactly 1 of alternate, battle, mega, primal, ultra_burst, gigantamax, terastal."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "alternate" "battle" "mega" "primal" "ultra_burst" "gigantamax" "terastal" )
+    ] ;
+    sh:property [
+        sh:path pkmn:isBattleOnly ;
+        sh:name "V2" ;
+        sh:message "A form change needs exactly 1 isBattleOnly, a boolean."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean
+    ] ;
+    sh:or (
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "alternate" ] ;
+            sh:property [ sh:path pkmn:isBattleOnly ; sh:hasValue false ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:not [ sh:hasValue "alternate" ] ] ;
+            sh:property [ sh:path pkmn:isBattleOnly ; sh:hasValue true ]
+        ]
+    ) .
+
+# A REQUIRES edge carries its role in Neo4j, so it arrives as a reified edge
+# node. Each role pairs with the class its target must have.
+pkmn-shape:R1_RequiresRole a sh:NodeShape ;
+    sh:name "R1" ;
+    sh:message "A REQUIRES edge needs a role from the table, and its target class must match the role."@en ;
+    sh:severity sh:Violation ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select "SELECT ?this WHERE { ?this rdf:predicate pkmn:requires }"
+    ] ;
+    sh:property [
+        sh:path pkmn:role ;
+        sh:name "R1" ;
+        sh:message "A REQUIRES edge needs exactly 1 role: use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor or fusesWith."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1
+    ] ;
+    sh:or (
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "use" "hold" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:Item ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "knownMove" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:Move ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "knownMoveType" "partyType" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:Type ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "atLocation" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class mo:Location ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "partySpecies" "tradedFor" "fusesWith" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:PokemonSpecies ]
+        ]
+    ) .
+
 #################################################################
 #  Encounters and locations
 #################################################################
