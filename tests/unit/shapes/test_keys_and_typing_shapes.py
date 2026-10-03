@@ -48,7 +48,7 @@ def test_edge_from_wrong_class_fails_domain(validate_fixture):
 
 def test_subclass_of_range_class_conforms(validate_fixture):
     data = (
-        'ex:diglett a pkmn:PokemonSpecies ; pkmn:id "diglett" ; mo:foundIn ex:kanto .'
+        'ex:oran a pkmn:Berry ; pkmn:id "oran" ; mo:foundIn ex:kanto .'
         'ex:kanto a mo:Region ; pkmn:id "kanto" .'
     )
     assert validate_fixture(data).conforms

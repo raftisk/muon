@@ -3,9 +3,16 @@ from rdflib.namespace import RDF, SH
 
 
 def list_top_level_shapes(shapes: Graph) -> set:
-    """Node shapes plus the property shapes they declare."""
+    """Node shapes plus the property shapes they declare directly.
+
+    Shapes nested inside `sh:or` branches never appear in a report, so they carry no rule id.
+    """
     node_shapes = set(shapes.subjects(RDF.type, SH.NodeShape))
-    property_shapes = set(shapes.objects(predicate=SH.property))
+    property_shapes = {
+        property_shape
+        for node_shape in node_shapes
+        for property_shape in shapes.objects(node_shape, SH.property)
+    }
     return node_shapes | property_shapes
 
 

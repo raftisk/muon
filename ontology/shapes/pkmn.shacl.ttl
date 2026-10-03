@@ -97,6 +97,106 @@ pkmn-shape:T1_EdgeDomain a sh:NodeShape ;
 #  Species
 #################################################################
 
+# Forms are PokemonSpecies nodes, so every shape here applies to them too.
+pkmn-shape:S1_PokedexNumber a sh:NodeShape ;
+    sh:name "S1" ;
+    sh:message "A species needs exactly 1 pokedexNumber, an integer of at least 1."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:PokemonSpecies ;
+    sh:property [
+        sh:path pkmn:pokedexNumber ;
+        sh:name "S1" ;
+        sh:message "A species needs exactly 1 pokedexNumber, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] .
+
+# In Neo4j both properties are HAS_TYPE edges, slot 1 and slot 2. The
+# projection maps the slots back to these two properties.
+pkmn-shape:S2_SpeciesTypes a sh:NodeShape ;
+    sh:name "S2" ;
+    sh:message "A species has 1 primaryType and at most 1 secondaryType, and they differ."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:PokemonSpecies ;
+    sh:property [
+        sh:path pkmn:primaryType ;
+        sh:name "S2" ;
+        sh:message "A species needs exactly 1 primaryType, a Type, different from its secondaryType."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Type ;
+        sh:disjoint pkmn:secondaryType
+    ] ;
+    sh:property [
+        sh:path pkmn:secondaryType ;
+        sh:name "S2" ;
+        sh:message "A species has at most 1 secondaryType, a Type."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Type
+    ] .
+
+# An absent isGenderless counts as false.
+pkmn-shape:S3_GenderAndGrowth a sh:NodeShape ;
+    sh:name "S3" ;
+    sh:message "femaleRate is absent if and only if isGenderless is true; growthRate comes from the ttl list."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:PokemonSpecies ;
+    sh:property [
+        sh:path pkmn:femaleRate ;
+        sh:name "S3" ;
+        sh:message "femaleRate is a decimal from 0 to 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1
+    ] ;
+    sh:property [
+        sh:path pkmn:growthRate ;
+        sh:name "S3" ;
+        sh:message "growthRate must be one of erratic, fast, medium_fast, medium_slow, slow, fluctuating."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in ( "erratic" "fast" "medium_fast" "medium_slow" "slow" "fluctuating" )
+    ] ;
+    sh:or (
+        [
+            sh:property [ sh:path pkmn:isGenderless ; sh:hasValue true ] ;
+            sh:property [ sh:path pkmn:femaleRate ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:isGenderless ; sh:not [ sh:hasValue true ] ] ;
+            sh:property [ sh:path pkmn:femaleRate ; sh:minCount 1 ]
+        ]
+    ) .
+
+# The amount is a Neo4j edge property, so it arrives on a reified edge node.
+pkmn-shape:S4_YieldsEvAmount a sh:NodeShape ;
+    sh:name "S4" ;
+    sh:message "A YIELDS_EV edge needs exactly 1 amount, an integer from 1 to 3."@en ;
+    sh:severity sh:Violation ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select "SELECT ?this WHERE { ?this rdf:predicate pkmn:yieldsEv }"
+    ] ;
+    sh:property [
+        sh:path pkmn:amount ;
+        sh:name "S4" ;
+        sh:message "A YIELDS_EV edge needs exactly 1 amount, an integer from 1 to 3."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 3
+    ] .
+
 #################################################################
 #  Moves and types
 #################################################################
