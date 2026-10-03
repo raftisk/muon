@@ -276,6 +276,79 @@ pkmn-shape:C2_LearnsetEntryVersionGroup a sh:NodeShape ;
         sh:class pkmn:VersionGroup
     ] .
 
+# Effect values. Shared by the Abilities: effects and Items sections of the ttl,
+# which add no properties of their own. `trigger` applies to ability and item
+# effects; `target` names the recipient on an effect, unlike the targeting code
+# on a Move.
+pkmn-shape:E1_EffectValues a sh:NodeShape ;
+    sh:name "E1" ;
+    sh:message "Effect values are out of range or outside their vocabulary."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:property [
+        sh:path pkmn:probability ;
+        sh:name "E1" ;
+        sh:message "probability is an integer from 0 to 100."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 100
+    ] ;
+    sh:property [
+        sh:path pkmn:statStages ;
+        sh:name "E1" ;
+        sh:message "statStages is an integer from -6 to 6."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive -6 ;
+        sh:maxInclusive 6
+    ] ;
+    sh:property [
+        sh:path pkmn:hpThreshold ;
+        sh:name "E1" ;
+        sh:message "hpThreshold is a decimal from 0 to 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1
+    ] ;
+    sh:property [
+        sh:path pkmn:trigger ;
+        sh:name "E1" ;
+        sh:message "trigger must be one of switch_in, switch_out, on_attack, on_hit, on_knock_out, low_hp, end_of_turn, passive."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in ( "switch_in" "switch_out" "on_attack" "on_hit" "on_knock_out" "low_hp" "end_of_turn" "passive" )
+    ] ;
+    sh:property [
+        sh:path pkmn:target ;
+        sh:name "E1" ;
+        sh:message "An effect target must be one of self, ally, foe, field, move."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in ( "self" "ally" "foe" "field" "move" )
+    ] .
+
+# `embedding` is not in the ttl, so the Validator checks that only a TextChunk
+# carries one.
+pkmn-shape:X3_EffectTextOwner a sh:NodeShape ;
+    sh:name "X3" ;
+    sh:message "effectText belongs only on a Move, an Ability or an Item."@en ;
+    sh:severity sh:Violation ;
+    sh:targetSubjectsOf pkmn:effectText ;
+    sh:or ( [ sh:class pkmn:Move ] [ sh:class pkmn:Ability ] [ sh:class pkmn:Item ] ) ;
+    sh:property [
+        sh:path pkmn:effectText ;
+        sh:name "X3" ;
+        sh:message "A node has at most 1 effectText, a string."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string
+    ] .
+
 #################################################################
 #  Evolution and forms
 #################################################################
