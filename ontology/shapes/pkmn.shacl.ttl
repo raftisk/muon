@@ -508,3 +508,55 @@ pkmn-shape:R1_RequiresRole a sh:NodeShape ;
 #################################################################
 #  Encounters and locations
 #################################################################
+
+# The incoming hasEncounter edge makes the validator project the incoming side
+# of every touched Encounter.
+pkmn-shape:C1_Encounter a sh:NodeShape ;
+    sh:name "C1" ;
+    sh:message "An encounter has 1 atLocation, 1 inVersion and 1 incoming hasEncounter, minLevel at most maxLevel and a chance from 1 to 100."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:Encounter ;
+    sh:property [
+        sh:path pkmn:atLocation ;
+        sh:name "C1" ;
+        sh:message "An encounter needs exactly 1 atLocation, a Location."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class mo:Location
+    ] ;
+    sh:property [
+        sh:path pkmn:inVersion ;
+        sh:name "C1" ;
+        sh:message "An encounter needs exactly 1 inVersion, a Version."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Version
+    ] ;
+    sh:property [
+        sh:path [ sh:inversePath pkmn:hasEncounter ] ;
+        sh:name "C1" ;
+        sh:message "An encounter needs exactly 1 species pointing at it with hasEncounter."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:PokemonSpecies
+    ] ;
+    sh:property [
+        sh:path pkmn:minLevel ;
+        sh:name "C1" ;
+        sh:message "minLevel must not exceed maxLevel."@en ;
+        sh:severity sh:Violation ;
+        sh:lessThanOrEquals pkmn:maxLevel
+    ] ;
+    sh:property [
+        sh:path pkmn:chance ;
+        sh:name "C1" ;
+        sh:message "chance is an integer from 1 to 100."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 100
+    ] .
