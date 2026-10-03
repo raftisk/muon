@@ -184,6 +184,8 @@ Weather and terrain individuals point at types with `amplifiesType` and `dampens
 | Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role |
 | Encounters and locations | C1 encounter links, level order and chance |
 
+Every shape carries `pkmn-shape:scope`, the classes it checks, or `pkmn-shape:Always` for the shapes that run on every touched node (L2 and T1). `validate(batch, scope)` runs a shape when its scope class is in the requested scope or a subclass of it. A node outside the scope may be a stub with only `id`, `name` and labels, and the Always shapes still apply to it. `scope=None` runs every shape and is the final sweep after all ingestion passes.
+
 The shapes check a projection of the Neo4j transaction, not the Neo4j data directly:
 
 - The node key `id` becomes `pkmn:id` and `name` becomes `rdfs:label`. Neither is declared in the ttl.

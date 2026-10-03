@@ -1,5 +1,5 @@
-from rdflib import Graph
-from rdflib.namespace import RDF, SH
+from rdflib import Graph, URIRef
+from rdflib.namespace import OWL, RDF, SH
 
 
 def list_top_level_shapes(shapes: Graph) -> set:
@@ -30,3 +30,32 @@ def test_every_shape_has_rule_id_and_message(shapes_graph):
         assert (shape, SH.message, None) in shapes_graph, f"shape {shape} has no sh:message"
         severities = set(shapes_graph.objects(shape, SH.severity))
         assert severities == {SH.Violation}, f"shape {shape} severity is {severities}"
+
+
+ALWAYS = URIRef("https://muon.dev/ns/pkmn-shapes#Always")
+SCOPE = URIRef("https://muon.dev/ns/pkmn-shapes#scope")
+
+
+def test_every_shape_has_a_scope(shapes_graph):
+    for shape in shapes_graph.subjects(RDF.type, SH.NodeShape):
+        assert (shape, SCOPE, None) in shapes_graph, f"shape {shape} has no pkmn-shape:scope"
+
+
+def test_every_scope_is_always_or_a_tbox_class(shapes_graph, tbox_graph):
+    for shape, scope in shapes_graph.subject_objects(SCOPE):
+        if scope == ALWAYS:
+            continue
+        assert (scope, RDF.type, OWL.Class) in tbox_graph, f"{shape} scopes unknown class {scope}"
+
+
+def test_scope_matches_target_class(shapes_graph):
+    for shape in shapes_graph.subjects(RDF.type, SH.NodeShape):
+        target_classes = set(shapes_graph.objects(shape, SH.targetClass))
+        scopes = set(shapes_graph.objects(shape, SCOPE))
+        if target_classes and scopes != {ALWAYS}:
+            assert scopes == target_classes, f"{shape} scope {scopes} differs from {target_classes}"
+
+
+def test_always_shapes_stand_alone(shapes_graph):
+    for shape in shapes_graph.subjects(SCOPE, ALWAYS):
+        assert set(shapes_graph.objects(shape, SCOPE)) == {ALWAYS}, f"{shape} mixes Always"

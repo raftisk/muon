@@ -24,6 +24,16 @@
                [ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] ,
                [ sh:prefix "owl" ; sh:namespace "http://www.w3.org/2002/07/owl#"^^xsd:anyURI ] .
 
+# `pkmn-shape:scope` names the classes a shape checks. validate(batch, scope)
+# runs a shape when one of its scope classes is in the requested scope or a
+# subclass of it. `pkmn-shape:Always` shapes run for every touched node.
+pkmn-shape:scope a rdf:Property ;
+    rdfs:label "scope"@en ;
+    rdfs:comment "A class whose nodes the shape checks, or pkmn-shape:Always."@en .
+
+pkmn-shape:Always rdfs:label "Always"@en ;
+    rdfs:comment "Scope value of a shape that runs for every touched node whatever the requested scope."@en .
+
 #################################################################
 #  Node keys and edge typing
 #################################################################
@@ -35,6 +45,7 @@ pkmn-shape:L2_NodeKey a sh:NodeShape ;
     sh:name "L2" ;
     sh:message "Node has no valid pkmn:id: exactly 1 lowercase hyphenated slug, with colon-separated segments for reified nodes."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn-shape:Always ;
     sh:targetClass mo:Entity , mo:Meta ;
     sh:property [
         sh:path pkmn:id ;
@@ -54,6 +65,7 @@ pkmn-shape:T1_EdgeRange a sh:NodeShape ;
     sh:name "T1" ;
     sh:message "Edge target is not an instance of the ttl rdfs:range of the property."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn-shape:Always ;
     sh:targetClass mo:Entity , mo:Meta ;
     sh:sparql [
         a sh:SPARQLConstraint ;
@@ -76,6 +88,7 @@ pkmn-shape:T1_EdgeDomain a sh:NodeShape ;
     sh:name "T1" ;
     sh:message "Edge source is not an instance of the ttl rdfs:domain of the property."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn-shape:Always ;
     sh:targetClass mo:Entity , mo:Meta ;
     sh:sparql [
         a sh:SPARQLConstraint ;
@@ -102,6 +115,7 @@ pkmn-shape:S1_PokedexNumber a sh:NodeShape ;
     sh:name "S1" ;
     sh:message "A species needs exactly 1 pokedexNumber, an integer of at least 1."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:PokemonSpecies ;
     sh:targetClass pkmn:PokemonSpecies ;
     sh:property [
         sh:path pkmn:pokedexNumber ;
@@ -120,6 +134,7 @@ pkmn-shape:S2_SpeciesTypes a sh:NodeShape ;
     sh:name "S2" ;
     sh:message "A species has 1 primaryType and at most 1 secondaryType, and they differ."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:PokemonSpecies ;
     sh:targetClass pkmn:PokemonSpecies ;
     sh:property [
         sh:path pkmn:primaryType ;
@@ -145,6 +160,7 @@ pkmn-shape:S3_GenderAndGrowth a sh:NodeShape ;
     sh:name "S3" ;
     sh:message "femaleRate is absent if and only if isGenderless is true; growthRate comes from the ttl list."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:PokemonSpecies ;
     sh:targetClass pkmn:PokemonSpecies ;
     sh:property [
         sh:path pkmn:femaleRate ;
@@ -180,6 +196,7 @@ pkmn-shape:S4_YieldsEvAmount a sh:NodeShape ;
     sh:name "S4" ;
     sh:message "A YIELDS_EV edge needs exactly 1 amount, an integer from 1 to 3."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:PokemonSpecies ;
     sh:target [
         a sh:SPARQLTarget ;
         sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
@@ -205,6 +222,7 @@ pkmn-shape:M1_MoveTypeAndClass a sh:NodeShape ;
     sh:name "M1" ;
     sh:message "A move has exactly 1 hasType and exactly 1 hasDamageClass."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Move ;
     sh:targetClass pkmn:Move ;
     sh:property [
         sh:path pkmn:hasType ;
@@ -233,6 +251,7 @@ pkmn-shape:C2_MachineLinks a sh:NodeShape ;
     sh:name "C2" ;
     sh:message "A machine has exactly 1 inVersionGroup and exactly 1 teachesMove."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Machine ;
     sh:targetClass pkmn:Machine ;
     sh:property [
         sh:path pkmn:inVersionGroup ;
@@ -264,6 +283,7 @@ pkmn-shape:X1_TextChunk a sh:NodeShape ;
     sh:name "X1" ;
     sh:message "A text chunk needs 1 describes, 1 aspect from the vocabulary and exactly 1 of source or fromWork."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope mo:TextChunk ;
     sh:targetClass mo:TextChunk ;
     sh:property [
         sh:path mo:describes ;
@@ -291,6 +311,7 @@ pkmn-shape:X2_FromWorkByAspect a sh:NodeShape ;
     sh:name "X2" ;
     sh:message "fromWork depends on the aspect: pokedex needs Versions, flavor needs VersionGroups, any other aspect has none."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope mo:TextChunk ;
     sh:targetClass mo:TextChunk ;
     sh:or (
         [
@@ -316,6 +337,7 @@ pkmn-shape:C2_LearnsetEntryVersionGroup a sh:NodeShape ;
     sh:name "C2" ;
     sh:message "A learnset entry has exactly 1 inVersionGroup."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:LearnsetEntry ;
     sh:targetClass pkmn:LearnsetEntry ;
     sh:property [
         sh:path pkmn:inVersionGroup ;
@@ -335,6 +357,7 @@ pkmn-shape:E1_EffectValues a sh:NodeShape ;
     sh:name "E1" ;
     sh:message "Effect values are out of range or outside their vocabulary."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
     sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
     sh:property [
         sh:path pkmn:probability ;
@@ -389,6 +412,7 @@ pkmn-shape:X3_EffectTextOwner a sh:NodeShape ;
     sh:name "X3" ;
     sh:message "effectText belongs only on a Move, an Ability or an Item."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Move , pkmn:Ability , pkmn:Item ;
     sh:targetSubjectsOf pkmn:effectText ;
     sh:or ( [ sh:class pkmn:Move ] [ sh:class pkmn:Ability ] [ sh:class pkmn:Item ] ) ;
     sh:property [
@@ -408,6 +432,7 @@ pkmn-shape:V1_FromAndToSpecies a sh:NodeShape ;
     sh:name "V1" ;
     sh:message "An evolution or form change has exactly 1 fromSpecies and 1 toSpecies."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Evolution , pkmn:FormChange ;
     sh:targetClass pkmn:Evolution , pkmn:FormChange ;
     sh:property [
         sh:path pkmn:fromSpecies ;
@@ -433,6 +458,7 @@ pkmn-shape:V2_FormKind a sh:NodeShape ;
     sh:name "V2" ;
     sh:message "A form change has 1 formKind from the vocabulary and 1 isBattleOnly, false only for alternate."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:FormChange ;
     sh:targetClass pkmn:FormChange ;
     sh:property [
         sh:path pkmn:formKind ;
@@ -469,6 +495,7 @@ pkmn-shape:R1_RequiresRole a sh:NodeShape ;
     sh:name "R1" ;
     sh:message "A REQUIRES edge needs a role from the table, and its target class must match the role."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Evolution , pkmn:FormChange ;
     sh:target [
         a sh:SPARQLTarget ;
         sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
@@ -515,6 +542,7 @@ pkmn-shape:C1_Encounter a sh:NodeShape ;
     sh:name "C1" ;
     sh:message "An encounter has 1 atLocation, 1 inVersion and 1 incoming hasEncounter, minLevel at most maxLevel and a chance from 1 to 100."@en ;
     sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Encounter ;
     sh:targetClass pkmn:Encounter ;
     sh:property [
         sh:path pkmn:atLocation ;
