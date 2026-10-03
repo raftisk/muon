@@ -192,9 +192,9 @@ pkmn:galar  a mo:Region ; rdfs:label "Galar"@en  ; pkmn:introducedIn pkmn:gen8 .
 pkmn:hisui  a mo:Region ; rdfs:label "Hisui"@en  ; pkmn:introducedIn pkmn:gen8 .
 pkmn:paldea a mo:Region ; rdfs:label "Paldea"@en ; pkmn:introducedIn pkmn:gen9 .
 
-## Generation mechanics (individuals; distinct from the MegaEvolution class) ##
-pkmn:megaEvolution    a pkmn:GenerationMechanic ; rdfs:label "Mega Evolution"@en .
-pkmn:zMove            a pkmn:GenerationMechanic ; rdfs:label "Z-Move"@en .
-pkmn:dynamax          a pkmn:GenerationMechanic ; rdfs:label "Dynamax"@en .
-pkmn:gigantamax       a pkmn:GenerationMechanic ; rdfs:label "Gigantamax"@en .
-pkmn:terastallization a pkmn:GenerationMechanic ; rdfs:label "Terastallization"@en .
+## Generation mechanics ##
+pkmn:megaEvolution    a pkmn:GenerationMechanic ; rdfs:label "Mega Evolution"@en   ; pkmn:introducedIn pkmn:gen6 .
+pkmn:zMove            a pkmn:GenerationMechanic ; rdfs:label "Z-Move"@en           ; pkmn:introducedIn pkmn:gen7 .
+pkmn:dynamax          a pkmn:GenerationMechanic ; rdfs:label "Dynamax"@en          ; pkmn:introducedIn pkmn:gen8 .
+pkmn:gigantamax       a pkmn:GenerationMechanic ; rdfs:label "Gigantamax"@en       ; pkmn:introducedIn pkmn:gen8 .
+pkmn:terastallization a pkmn:GenerationMechanic ; rdfs:label "Terastallization"@en ; pkmn:introducedIn pkmn:gen9 .

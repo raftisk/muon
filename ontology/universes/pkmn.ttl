@@ -367,23 +367,19 @@ pkmn:hpBasis a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "hpBasi
 #  Meta: generations, versions, mechanics
 #################################################################
 
-pkmn:Generation         a owl:Class ; rdfs:subClassOf mo:Series ; rdfs:label "Generation"@en .
+pkmn:Generation         a owl:Class ; rdfs:subClassOf mo:Series ; rdfs:label "Generation"@en ;
+    skos:definition "A numbered era of the main series games. Version groups are part of it."@en .
 pkmn:VersionGroup       a owl:Class ; rdfs:subClassOf mo:Work ; rdfs:label "VersionGroup"@en ;
     skos:definition "A set of games sharing one data set (e.g. Diamond-Pearl)."@en .
-pkmn:Version            a owl:Class ; rdfs:subClassOf mo:Work ; rdfs:label "Version"@en .
-pkmn:GenerationMechanic a owl:Class ; rdfs:subClassOf mo:System ; rdfs:label "GenerationMechanic"@en ;
-    skos:definition "A generation-defining battle mechanic (Mega Evolution, Dynamax, ...)."@en .
+pkmn:Version            a owl:Class ; rdfs:subClassOf mo:Work ; rdfs:label "Version"@en ;
+    skos:definition "A single game release. Part of exactly 1 version group."@en .
+pkmn:GenerationMechanic a owl:Class ; rdfs:subClassOf mo:Meta ; rdfs:label "GenerationMechanic"@en ;
+    skos:definition "A battle mechanic of the main series games, recorded for the generation that introduced it. A form change names its mechanic with formKind."@en .
 
 pkmn:introducedIn a owl:ObjectProperty ;
     rdfs:range pkmn:Generation ;
     rdfs:label "introducedIn"@en ;
     skos:definition "The generation a species, move, ability, mechanic or region debuted in."@en .
-
-pkmn:appliesTo a owl:ObjectProperty ;
-    rdfs:domain pkmn:GenerationMechanic ;
-    rdfs:range  pkmn:PokemonSpecies ;
-    rdfs:label  "appliesTo"@en ;
-    skos:definition "Species eligible for a species-specific mechanic (Mega, Gigantamax)."@en .
 
 #################################################################
 #  Moves: flags, effects, learnset
