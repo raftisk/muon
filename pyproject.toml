@@ -6,6 +6,8 @@ requires-python = ">=3.12"
 dependencies = [
     "neo4j",
     "pydantic-settings",
+    "pyshacl>=0.40.1",
+    "rdflib>=7.6.0",
 ]
 
 [dependency-groups]

@@ -1,0 +1,57 @@
+@prefix pkmn: <https://muon.dev/ns/pkmn#> .
+@prefix pkmn-shape: <https://muon.dev/ns/pkmn-shapes#> .
+@prefix mo: <https://muon.dev/ns/core#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# Shapes for the pkmn universe, validated against the projection of a Neo4j
+# write transaction. Sections follow ontology/universes/pkmn.ttl. The ttl
+# sections without rules (base stats, natures, abilities, egg groups, battle
+# conditions, species groups) have no banner here.
+
+<https://muon.dev/ns/pkmn-shapes> a owl:Ontology ;
+    dcterms:title   "muon: Pokémon SHACL shapes"@en ;
+    owl:versionInfo "0.1.0" ;
+    owl:imports     <https://muon.dev/ns/pkmn> ;
+    sh:declare [ sh:prefix "pkmn" ; sh:namespace "https://muon.dev/ns/pkmn#"^^xsd:anyURI ] ,
+               [ sh:prefix "mo" ; sh:namespace "https://muon.dev/ns/core#"^^xsd:anyURI ] ,
+               [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] ,
+               [ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] ,
+               [ sh:prefix "owl" ; sh:namespace "http://www.w3.org/2002/07/owl#"^^xsd:anyURI ] .
+
+#################################################################
+#  Cross-cutting: node keys and edge typing
+#################################################################
+
+#################################################################
+#  Species
+#################################################################
+
+#################################################################
+#  Moves and types
+#################################################################
+
+#################################################################
+#  Items
+#################################################################
+
+#################################################################
+#  Meta and text
+#################################################################
+
+#################################################################
+#  Moves: flags, effects, learnset
+#################################################################
+
+#################################################################
+#  Evolution and forms
+#################################################################
+
+#################################################################
+#  Encounters and locations
+#################################################################
