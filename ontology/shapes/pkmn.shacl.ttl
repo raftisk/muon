@@ -201,9 +201,57 @@ pkmn-shape:S4_YieldsEvAmount a sh:NodeShape ;
 #  Moves and types
 #################################################################
 
+pkmn-shape:M1_MoveTypeAndClass a sh:NodeShape ;
+    sh:name "M1" ;
+    sh:message "A move has exactly 1 hasType and exactly 1 hasDamageClass."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:Move ;
+    sh:property [
+        sh:path pkmn:hasType ;
+        sh:name "M1" ;
+        sh:message "A move needs exactly 1 hasType, a Type."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Type
+    ] ;
+    sh:property [
+        sh:path pkmn:hasDamageClass ;
+        sh:name "M1" ;
+        sh:message "A move needs exactly 1 hasDamageClass, a MoveDamageClass."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:MoveDamageClass
+    ] .
+
 #################################################################
 #  Items
 #################################################################
+
+pkmn-shape:C2_MachineLinks a sh:NodeShape ;
+    sh:name "C2" ;
+    sh:message "A machine has exactly 1 inVersionGroup and exactly 1 teachesMove."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:Machine ;
+    sh:property [
+        sh:path pkmn:inVersionGroup ;
+        sh:name "C2" ;
+        sh:message "A machine needs exactly 1 inVersionGroup, a VersionGroup."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:VersionGroup
+    ] ;
+    sh:property [
+        sh:path pkmn:teachesMove ;
+        sh:name "C2" ;
+        sh:message "A machine needs exactly 1 teachesMove, a Move."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Move
+    ] .
 
 #################################################################
 #  Meta and text
@@ -212,6 +260,21 @@ pkmn-shape:S4_YieldsEvAmount a sh:NodeShape ;
 #################################################################
 #  Moves: flags, effects, learnset
 #################################################################
+
+pkmn-shape:C2_LearnsetEntryVersionGroup a sh:NodeShape ;
+    sh:name "C2" ;
+    sh:message "A learnset entry has exactly 1 inVersionGroup."@en ;
+    sh:severity sh:Violation ;
+    sh:targetClass pkmn:LearnsetEntry ;
+    sh:property [
+        sh:path pkmn:inVersionGroup ;
+        sh:name "C2" ;
+        sh:message "A learnset entry needs exactly 1 inVersionGroup, a VersionGroup."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:VersionGroup
+    ] .
 
 #################################################################
 #  Evolution and forms

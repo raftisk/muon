@@ -1,5 +1,9 @@
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
-FLAMETHROWER = 'ex:flamethrower a pkmn:Move ; pkmn:id "flamethrower" ; pkmn:hasType ex:fire .'
+SPECIAL = 'ex:special a pkmn:MoveDamageClass ; pkmn:id "special" .'
+FLAMETHROWER = (
+    'ex:flamethrower a pkmn:Move ; pkmn:id "flamethrower" ; '
+    "pkmn:hasType ex:fire ; pkmn:hasDamageClass ex:special ."
+)
 
 
 def test_valid_slug_conforms(validate_fixture):
@@ -7,7 +11,11 @@ def test_valid_slug_conforms(validate_fixture):
 
 
 def test_composite_reified_key_conforms(validate_fixture):
-    data = 'ex:entry a pkmn:LearnsetEntry ; pkmn:id "diglett:earthquake:level:40:scarlet-violet" .'
+    data = (
+        'ex:sv a pkmn:VersionGroup ; pkmn:id "scarlet-violet" . '
+        'ex:entry a pkmn:LearnsetEntry ; pkmn:id "diglett:earthquake:level:40:scarlet-violet" ; '
+        "pkmn:inVersionGroup ex:sv ."
+    )
     assert validate_fixture(data).conforms
 
 
@@ -17,7 +25,7 @@ def test_uppercase_id_fails(validate_fixture):
 
 
 def test_underscore_id_fails(validate_fixture):
-    report = validate_fixture('ex:ball a pkmn:Move ; pkmn:id "shadow_ball" .')
+    report = validate_fixture('ex:ball a pkmn:Type ; pkmn:id "shadow_ball" .')
     assert report.rule_ids == {"L2"}
 
 
@@ -31,13 +39,13 @@ def test_two_ids_fail(validate_fixture):
 
 
 def test_edge_to_range_class_conforms(validate_fixture):
-    assert validate_fixture(FIRE + FLAMETHROWER).conforms
+    assert validate_fixture(FIRE + SPECIAL + FLAMETHROWER).conforms
 
 
 def test_edge_to_wrong_class_fails_range(validate_fixture):
-    data = FLAMETHROWER + 'ex:fire a pkmn:Ability ; pkmn:id "fire" .'
+    data = SPECIAL + FLAMETHROWER + 'ex:fire a pkmn:Ability ; pkmn:id "fire" .'
     report = validate_fixture(data)
-    assert report.rule_ids == {"T1"}
+    assert "T1" in report.rule_ids
     assert any("hasType" in message for message in report.messages)
 
 
