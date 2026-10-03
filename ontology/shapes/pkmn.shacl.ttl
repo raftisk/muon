@@ -25,7 +25,7 @@
                [ sh:prefix "owl" ; sh:namespace "http://www.w3.org/2002/07/owl#"^^xsd:anyURI ] .
 
 #################################################################
-#  Cross-cutting: node keys and edge typing
+#  Node keys and edge typing
 #################################################################
 
 # Node keys. `pkmn:id` is the projection of the Neo4j node key, which the ttl

@@ -7,6 +7,7 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 | `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 20 object properties, 6 datatype properties |
 | `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box. Imports the core. 37 classes, 47 object properties, 62 datatype properties |
 | `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 163 enumerable individuals in 17 classes |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 16 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -168,6 +169,30 @@ Weather and terrain individuals point at types with `amplifiesType` and `dampens
 - `Encounter` reifies 1 wild encounter. It links `atLocation` (a `LocationArea` or a location) and `inVersion`, with `method`, `conditions`, `minLevel`, `maxLevel` and `chance`. A species links to it with `hasEncounter`.
 - `LocationArea` is a subdivision of a location (a floor, a sector) and chains to it with `mo:locatedIn`.
 
+## Shapes
+
+`shapes/pkmn.shacl.ttl` holds the constraints a pkmn node or edge must meet. The Validator loads it with `pyshacl` and checks the post-state of every write transaction, using the T-Box as the ontology graph. Its sections follow `universes/pkmn.ttl`. A shape's `sh:name` is its rule id and `sh:message` names the values involved.
+
+| Section | Rules |
+| --- | --- |
+| Node keys and edge typing | L2 node key pattern, T1 edge range and domain read from the T-Box |
+| Species | S1 dex number, S2 types, S3 female rate and growth rate, S4 EV amount |
+| Moves and types | M1 one type and one damage class |
+| Items | C2 machine links |
+| Meta and text | X1 text chunk completeness, X2 `fromWork` by aspect |
+| Moves: flags, effects, learnset | C2 learnset entry, E1 effect values, X3 `effectText` owner |
+| Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role |
+| Encounters and locations | C1 encounter links, level order and chance |
+
+The shapes check a projection of the Neo4j transaction, not the Neo4j data directly:
+
+- The node key `id` becomes `pkmn:id` and `name` becomes `rdfs:label`. Neither is declared in the ttl.
+- Each label becomes an `rdf:type`, and the T-Box subclass closure resolves `sh:class`.
+- `HAS_TYPE {slot:1}` becomes `pkmn:primaryType` and `{slot:2}` becomes `pkmn:secondaryType`.
+- An edge with properties (`REQUIRES {role}`, `YIELDS_EV {amount}`) becomes a reified edge node with `rdf:subject`, `rdf:predicate`, `rdf:object` and the edge properties.
+
+The label hierarchy check (L1) and `id` uniqueness are not SHACL. The Validator runs them in code. Every `sh:in` list repeats values from a ttl definition, and `tests/unit/shapes/test_vocabularies.py` checks that they agree.
+
 ## LPG realization
 
 The Neo4j graph follows the ttl through these rules.
@@ -183,6 +208,7 @@ The Neo4j graph follows the ttl through these rules.
 - Labels. A node carries its class and every ancestor class as co-labels, so `pkmn:Berry` becomes `:Berry:Item:Object:pkmn`. Abstract classes never become labels: `mo:Entity`, `mo:Concept`, `mo:Meta`, `mo:Source`, `pkmn:BattleCondition`, `pkmn:FieldCondition`.
 - Universe. Every node of a universe carries its prefix label, meta nodes included. `mo:inUniverse` and `mo:ofUniverse` have no relationship in Neo4j.
 - Sub-properties. Only the most specific property becomes a relationship. An effect node may write the general `AFFECTS_STAT`, because its magnitude lives on the node.
+- Exception: `pkmn:primaryType` and `pkmn:secondaryType` both become `HAS_TYPE`, with the edge property `slot` 1 or 2. A move has 1 `HAS_TYPE` and no `slot`.
 - Shortcuts. `EVOLVES_TO`, `CAN_LEARN` and `FOUND_IN` are derived from reified nodes and exist next to them.
 - Edge properties exist in Neo4j only: `isHidden` on `HAS_ABILITY`, `amount` on `YIELDS_EV` and `role` on `REQUIRES` (use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor, fusesWith).
 - Individuals from `individuals/` become nodes with their class labels, the universe label and `name`.
