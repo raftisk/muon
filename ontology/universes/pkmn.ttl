@@ -8,7 +8,7 @@
 
 <https://muon.dev/ns/pkmn> a owl:Ontology ;
     dcterms:title   "muon: Pokémon extension"@en ;
-    owl:versionInfo "0.3.0" ;
+    owl:versionInfo "0.4.0" ;
     owl:imports     <https://muon.dev/ns/core> ;
     skos:definition    "Pokémon-universe extension of the muon core ontology."@en .
 
@@ -455,7 +455,7 @@ pkmn:powerMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:labe
 pkmn:damageMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "damageMultiplier"@en ;
     skos:definition "Factor on the final damage of the moves that pass the effect's filters."@en .
 
-pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect or a form change fires: switch_in, switch_out (holder leaves battle), on_attack (holder uses a move), on_hit (holder is hit), on_knock_out (holder knocks out a Pokémon with a move), low_hp, end_of_turn, passive. A form change with no trigger happens outside battle."@en .
+pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect or a form change fires: switch_in, switch_out (holder leaves battle), on_attack (holder uses a move), on_hit (holder is hit), on_knock_out (holder knocks out a Pokémon with a move), low_hp, end_of_turn, passive. A form change with no trigger is either out of battle with a used item (formKind alternate) or activated by the player (formKind mega, ultra_burst, gigantamax or terastal)."@en .
 
 pkmn:method a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "Learnset method (level, machine, egg, tutor, evolution, special (event and Wild Tera moves)) or encounter method (walk, surf, old-rod, headbutt, gift, ...)."@en .
 pkmn:level  a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:integer ; rdfs:label "level"@en .
@@ -486,13 +486,8 @@ pkmn:hasOverworldEffect a owl:DatatypeProperty ; rdfs:domain pkmn:Ability ; rdfs
 pkmn:Evolution a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "Evolution"@en ;
     skos:definition "A reified evolution: from-species, to-species, and its conditions."@en .
 
-pkmn:MegaEvolution a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MegaEvolution"@en ;
-    skos:definition "A reified Mega Evolution linking a base species, its mega form, and the Mega Stone. Not an Evolution: reversible and battle-only."@en .
-
-pkmn:FormChange a owl:Class ;
-    rdfs:subClassOf mo:Concept ;
-    rdfs:label "FormChange"@en ;
-    skos:definition "A reified change from a species to one of its form nodes, with its trigger and the ability that causes it or the items it requires. Mega Evolution uses MegaEvolution instead."@en .
+pkmn:FormChange a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "FormChange"@en ;
+    skos:definition "A reified change from a species to one of its form nodes: its kind, whether the form lasts only for a battle, its trigger, and the ability that causes it or the items, moves or species it requires."@en .
 
 pkmn:fromSpecies a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Evolution pkmn:FormChange ) ] ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "fromSpecies"@en .
 pkmn:toSpecies   a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Evolution pkmn:FormChange ) ] ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "toSpecies"@en .
@@ -500,16 +495,19 @@ pkmn:toSpecies   a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf 
 pkmn:requires a owl:ObjectProperty ;
     rdfs:range [ a owl:Class ; owl:unionOf ( pkmn:Item pkmn:Move mo:Location pkmn:PokemonSpecies pkmn:Type ) ] ;
     rdfs:label "requires"@en ;
-    skos:definition "A required object of an evolution, mega evolution or form change."@en ;
+    skos:definition "A required object of an evolution or a form change."@en ;
     rdfs:comment "In Neo4j every REQUIRES edge carries role: use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor, fusesWith."@en .
-
-pkmn:baseSpecies a owl:ObjectProperty ; rdfs:domain pkmn:MegaEvolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "baseSpecies"@en .
-pkmn:megaForm    a owl:ObjectProperty ; rdfs:domain pkmn:MegaEvolution ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "megaForm"@en .
 
 pkmn:evolvesTo a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "evolvesTo"@en ;
     skos:definition "Shortcut of the Evolution reification for chain traversal."@en .
 pkmn:hasForm a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "hasForm"@en ;
-    skos:definition "A battle-distinct alternate form (regional, alternate, or battle-only)."@en .
+    skos:definition "A battle-distinct form of a species. How the species reaches the form, if it can, lives on FormChange."@en .
+
+pkmn:formKind a owl:DatatypeProperty ; rdfs:domain pkmn:FormChange ; rdfs:range xsd:string ; rdfs:label "formKind"@en ;
+    skos:definition "Kind of form change: alternate (the form lasts outside battle), battle (an ability changes the form in battle), or the mechanic it belongs to: mega, primal, ultra_burst, gigantamax, terastal."@en .
+
+pkmn:isBattleOnly a owl:DatatypeProperty ; rdfs:domain pkmn:FormChange ; rdfs:range xsd:boolean ; rdfs:label "isBattleOnly"@en ;
+    skos:definition "True when the form exists only in battle and reverts at the latest when the battle ends. False only for formKind alternate."@en .
 
 pkmn:evoTrigger a owl:DatatypeProperty ; rdfs:domain pkmn:Evolution ; rdfs:range xsd:string  ; rdfs:label "evoTrigger"@en ; skos:definition "level, item, trade, friendship, ..."@en .
 pkmn:minLevel   a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "minLevel"@en ; skos:definition "Minimum level of an evolution or an encounter."@en .
