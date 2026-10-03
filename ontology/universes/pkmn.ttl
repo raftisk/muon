@@ -80,7 +80,7 @@ pkmn:hasType a owl:ObjectProperty ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:PokemonSpecies pkmn:Move ) ] ;
     rdfs:range pkmn:Type ;
     rdfs:label "hasType"@en ;
-    rdfs:comment "A species has one or two types; a move has exactly one."@en .
+    rdfs:comment "A species has one or two types; a move has exactly one. In Neo4j, primaryType and secondaryType both become HAS_TYPE with slot 1 or 2."@en .
 
 pkmn:primaryType a owl:ObjectProperty ;
     rdfs:subPropertyOf pkmn:hasType ;

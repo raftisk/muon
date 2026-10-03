@@ -1,0 +1,590 @@
+@prefix pkmn: <https://muon.dev/ns/pkmn#> .
+@prefix pkmn-shape: <https://muon.dev/ns/pkmn-shapes#> .
+@prefix mo: <https://muon.dev/ns/core#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# Shapes for the pkmn universe, validated against the projection of a Neo4j
+# write transaction. Sections follow ontology/universes/pkmn.ttl. The ttl
+# sections without rules (base stats, natures, abilities, egg groups, battle
+# conditions, species groups) have no banner here.
+
+<https://muon.dev/ns/pkmn-shapes> a owl:Ontology ;
+    dcterms:title   "muon: Pokémon SHACL shapes"@en ;
+    owl:versionInfo "0.1.0" ;
+    owl:imports     <https://muon.dev/ns/pkmn> ;
+    sh:declare [ sh:prefix "pkmn" ; sh:namespace "https://muon.dev/ns/pkmn#"^^xsd:anyURI ] ,
+               [ sh:prefix "mo" ; sh:namespace "https://muon.dev/ns/core#"^^xsd:anyURI ] ,
+               [ sh:prefix "rdf" ; sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ] ,
+               [ sh:prefix "rdfs" ; sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ] ,
+               [ sh:prefix "owl" ; sh:namespace "http://www.w3.org/2002/07/owl#"^^xsd:anyURI ] .
+
+# `pkmn-shape:scope` names the classes a shape checks. validate(batch, scope)
+# runs a shape when one of its scope classes is in the requested scope or a
+# subclass of it. `pkmn-shape:Always` shapes run for every touched node.
+pkmn-shape:scope a rdf:Property ;
+    rdfs:label "scope"@en ;
+    rdfs:comment "A class whose nodes the shape checks, or pkmn-shape:Always."@en .
+
+pkmn-shape:Always rdfs:label "Always"@en ;
+    rdfs:comment "Scope value of a shape that runs for every touched node whatever the requested scope."@en .
+
+#################################################################
+#  Node keys and edge typing
+#################################################################
+
+# Node keys. `pkmn:id` is the projection of the Neo4j node key, which the ttl
+# does not declare. Reified nodes build their id from their participants and
+# join the segments with a colon.
+pkmn-shape:L2_NodeKey a sh:NodeShape ;
+    sh:name "L2" ;
+    sh:message "Node has no valid pkmn:id: exactly 1 lowercase hyphenated slug, with colon-separated segments for reified nodes."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn-shape:Always ;
+    sh:targetClass mo:Entity , mo:Meta ;
+    sh:property [
+        sh:path pkmn:id ;
+        sh:name "L2" ;
+        sh:message "pkmn:id must appear exactly once and match a lowercase hyphenated slug, with colon-separated segments for reified nodes."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^[a-z0-9]+(-[a-z0-9]+)*(:[a-z0-9]+(-[a-z0-9]+)*)*$"
+    ] .
+
+# Edge typing. Both shapes read rdfs:range and rdfs:domain from the T-Box, so
+# they cannot drift from the ttl. A property with no declared range or domain
+# is not checked. A union in owl:unionOf accepts any of its members.
+pkmn-shape:T1_EdgeRange a sh:NodeShape ;
+    sh:name "T1" ;
+    sh:message "Edge target is not an instance of the ttl rdfs:range of the property."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn-shape:Always ;
+    sh:targetClass mo:Entity , mo:Meta ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Edge {?path} from {$this} to {?value} does not match the rdfs:range in the ttl."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?path ?value WHERE {
+                $this ?path ?value .
+                ?path rdfs:range ?range .
+                FILTER isIRI(?value)
+                FILTER NOT EXISTS {
+                    ?range (owl:unionOf/rdf:rest*/rdf:first)? ?allowed .
+                    ?value rdf:type/rdfs:subClassOf* ?allowed .
+                }
+            }
+        """
+    ] .
+
+pkmn-shape:T1_EdgeDomain a sh:NodeShape ;
+    sh:name "T1" ;
+    sh:message "Edge source is not an instance of the ttl rdfs:domain of the property."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn-shape:Always ;
+    sh:targetClass mo:Entity , mo:Meta ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Edge {?path} from {$this} to {?value} does not match the rdfs:domain in the ttl."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?path ?value WHERE {
+                $this ?path ?value .
+                ?path rdfs:domain ?domain .
+                FILTER NOT EXISTS {
+                    ?domain (owl:unionOf/rdf:rest*/rdf:first)? ?allowed .
+                    $this rdf:type/rdfs:subClassOf* ?allowed .
+                }
+            }
+        """
+    ] .
+
+#################################################################
+#  Species
+#################################################################
+
+# Forms are PokemonSpecies nodes, so every shape here applies to them too.
+pkmn-shape:S1_PokedexNumber a sh:NodeShape ;
+    sh:name "S1" ;
+    sh:message "A species needs exactly 1 pokedexNumber, an integer of at least 1."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:PokemonSpecies ;
+    sh:targetClass pkmn:PokemonSpecies ;
+    sh:property [
+        sh:path pkmn:pokedexNumber ;
+        sh:name "S1" ;
+        sh:message "A species needs exactly 1 pokedexNumber, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] .
+
+# In Neo4j both properties are HAS_TYPE edges, slot 1 and slot 2. The
+# projection maps the slots back to these two properties.
+pkmn-shape:S2_SpeciesTypes a sh:NodeShape ;
+    sh:name "S2" ;
+    sh:message "A species has 1 primaryType and at most 1 secondaryType, and they differ."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:PokemonSpecies ;
+    sh:targetClass pkmn:PokemonSpecies ;
+    sh:property [
+        sh:path pkmn:primaryType ;
+        sh:name "S2" ;
+        sh:message "A species needs exactly 1 primaryType, a Type, different from its secondaryType."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Type ;
+        sh:disjoint pkmn:secondaryType
+    ] ;
+    sh:property [
+        sh:path pkmn:secondaryType ;
+        sh:name "S2" ;
+        sh:message "A species has at most 1 secondaryType, a Type."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Type
+    ] .
+
+# An absent isGenderless counts as false.
+pkmn-shape:S3_GenderAndGrowth a sh:NodeShape ;
+    sh:name "S3" ;
+    sh:message "femaleRate is absent if and only if isGenderless is true; growthRate comes from the ttl list."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:PokemonSpecies ;
+    sh:targetClass pkmn:PokemonSpecies ;
+    sh:property [
+        sh:path pkmn:femaleRate ;
+        sh:name "S3" ;
+        sh:message "femaleRate is a decimal from 0 to 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1
+    ] ;
+    sh:property [
+        sh:path pkmn:growthRate ;
+        sh:name "S3" ;
+        sh:message "growthRate must be one of erratic, fast, medium_fast, medium_slow, slow, fluctuating."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in ( "erratic" "fast" "medium_fast" "medium_slow" "slow" "fluctuating" )
+    ] ;
+    sh:or (
+        [
+            sh:property [ sh:path pkmn:isGenderless ; sh:hasValue true ] ;
+            sh:property [ sh:path pkmn:femaleRate ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:isGenderless ; sh:not [ sh:hasValue true ] ] ;
+            sh:property [ sh:path pkmn:femaleRate ; sh:minCount 1 ]
+        ]
+    ) .
+
+# The amount is a Neo4j edge property, so it arrives on a reified edge node.
+pkmn-shape:S4_YieldsEvAmount a sh:NodeShape ;
+    sh:name "S4" ;
+    sh:message "A YIELDS_EV edge needs exactly 1 amount, an integer from 1 to 3."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:PokemonSpecies ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select "SELECT ?this WHERE { ?this rdf:predicate pkmn:yieldsEv }"
+    ] ;
+    sh:property [
+        sh:path pkmn:amount ;
+        sh:name "S4" ;
+        sh:message "A YIELDS_EV edge needs exactly 1 amount, an integer from 1 to 3."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 3
+    ] .
+
+#################################################################
+#  Moves and types
+#################################################################
+
+pkmn-shape:M1_MoveTypeAndClass a sh:NodeShape ;
+    sh:name "M1" ;
+    sh:message "A move has exactly 1 hasType and exactly 1 hasDamageClass."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Move ;
+    sh:targetClass pkmn:Move ;
+    sh:property [
+        sh:path pkmn:hasType ;
+        sh:name "M1" ;
+        sh:message "A move needs exactly 1 hasType, a Type."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Type
+    ] ;
+    sh:property [
+        sh:path pkmn:hasDamageClass ;
+        sh:name "M1" ;
+        sh:message "A move needs exactly 1 hasDamageClass, a MoveDamageClass."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:MoveDamageClass
+    ] .
+
+#################################################################
+#  Items
+#################################################################
+
+pkmn-shape:C2_MachineLinks a sh:NodeShape ;
+    sh:name "C2" ;
+    sh:message "A machine has exactly 1 inVersionGroup and exactly 1 teachesMove."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Machine ;
+    sh:targetClass pkmn:Machine ;
+    sh:property [
+        sh:path pkmn:inVersionGroup ;
+        sh:name "C2" ;
+        sh:message "A machine needs exactly 1 inVersionGroup, a VersionGroup."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:VersionGroup
+    ] ;
+    sh:property [
+        sh:path pkmn:teachesMove ;
+        sh:name "C2" ;
+        sh:message "A machine needs exactly 1 teachesMove, a Move."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Move
+    ] .
+
+#################################################################
+#  Meta and text
+#################################################################
+
+# Text chunks. `aspect` takes the core values plus `pokedex`, which only a
+# universe can describe. A canon chunk names its work with fromWork; every other
+# chunk names its origin with source.
+pkmn-shape:X1_TextChunk a sh:NodeShape ;
+    sh:name "X1" ;
+    sh:message "A text chunk needs 1 describes, 1 aspect from the vocabulary and exactly 1 of source or fromWork."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope mo:TextChunk ;
+    sh:targetClass mo:TextChunk ;
+    sh:property [
+        sh:path mo:describes ;
+        sh:name "X1" ;
+        sh:message "A text chunk needs exactly 1 describes."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1
+    ] ;
+    sh:property [
+        sh:path mo:aspect ;
+        sh:name "X1" ;
+        sh:message "A text chunk needs exactly 1 aspect: biology, effect, flavor, trivia, origin, profile, anime, manga, side_game or pokedex."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "biology" "effect" "flavor" "trivia" "origin" "profile" "anime" "manga" "side_game" "pokedex" )
+    ] ;
+    sh:xone (
+        [ sh:property [ sh:path mo:source ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path mo:fromWork ; sh:minCount 1 ] ]
+    ) .
+
+pkmn-shape:X2_FromWorkByAspect a sh:NodeShape ;
+    sh:name "X2" ;
+    sh:message "fromWork depends on the aspect: pokedex needs Versions, flavor needs VersionGroups, any other aspect has none."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope mo:TextChunk ;
+    sh:targetClass mo:TextChunk ;
+    sh:or (
+        [
+            sh:property [ sh:path mo:aspect ; sh:hasValue "pokedex" ] ;
+            sh:property [ sh:path mo:fromWork ; sh:minCount 1 ; sh:class pkmn:Version ] ;
+            sh:property [ sh:path mo:describes ; sh:class pkmn:PokemonSpecies ]
+        ]
+        [
+            sh:property [ sh:path mo:aspect ; sh:hasValue "flavor" ] ;
+            sh:property [ sh:path mo:fromWork ; sh:minCount 1 ; sh:class pkmn:VersionGroup ]
+        ]
+        [
+            sh:property [ sh:path mo:aspect ; sh:not [ sh:in ( "pokedex" "flavor" ) ] ] ;
+            sh:property [ sh:path mo:fromWork ; sh:maxCount 0 ]
+        ]
+    ) .
+
+#################################################################
+#  Moves: flags, effects, learnset
+#################################################################
+
+pkmn-shape:C2_LearnsetEntryVersionGroup a sh:NodeShape ;
+    sh:name "C2" ;
+    sh:message "A learnset entry has exactly 1 inVersionGroup."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:LearnsetEntry ;
+    sh:targetClass pkmn:LearnsetEntry ;
+    sh:property [
+        sh:path pkmn:inVersionGroup ;
+        sh:name "C2" ;
+        sh:message "A learnset entry needs exactly 1 inVersionGroup, a VersionGroup."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:VersionGroup
+    ] .
+
+# Effect values. Shared by the Abilities: effects and Items sections of the ttl,
+# which add no properties of their own. `trigger` applies to ability and item
+# effects; `target` names the recipient on an effect, unlike the targeting code
+# on a Move.
+pkmn-shape:E1_EffectValues a sh:NodeShape ;
+    sh:name "E1" ;
+    sh:message "Effect values are out of range or outside their vocabulary."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:property [
+        sh:path pkmn:probability ;
+        sh:name "E1" ;
+        sh:message "probability is an integer from 0 to 100."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 100
+    ] ;
+    sh:property [
+        sh:path pkmn:statStages ;
+        sh:name "E1" ;
+        sh:message "statStages is an integer from -6 to 6."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive -6 ;
+        sh:maxInclusive 6
+    ] ;
+    sh:property [
+        sh:path pkmn:hpThreshold ;
+        sh:name "E1" ;
+        sh:message "hpThreshold is a decimal from 0 to 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1
+    ] ;
+    sh:property [
+        sh:path pkmn:trigger ;
+        sh:name "E1" ;
+        sh:message "trigger must be one of switch_in, switch_out, on_attack, on_hit, on_knock_out, low_hp, end_of_turn, passive."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in ( "switch_in" "switch_out" "on_attack" "on_hit" "on_knock_out" "low_hp" "end_of_turn" "passive" )
+    ] ;
+    sh:property [
+        sh:path pkmn:target ;
+        sh:name "E1" ;
+        sh:message "An effect target must be one of self, ally, foe, field, move."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in ( "self" "ally" "foe" "field" "move" )
+    ] .
+
+# `embedding` is not in the ttl, so the Validator checks that only a TextChunk
+# carries one.
+pkmn-shape:X3_EffectTextOwner a sh:NodeShape ;
+    sh:name "X3" ;
+    sh:message "effectText belongs only on a Move, an Ability or an Item."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Move , pkmn:Ability , pkmn:Item ;
+    sh:targetSubjectsOf pkmn:effectText ;
+    sh:or ( [ sh:class pkmn:Move ] [ sh:class pkmn:Ability ] [ sh:class pkmn:Item ] ) ;
+    sh:property [
+        sh:path pkmn:effectText ;
+        sh:name "X3" ;
+        sh:message "A node has at most 1 effectText, a string."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string
+    ] .
+
+#################################################################
+#  Evolution and forms
+#################################################################
+
+pkmn-shape:V1_FromAndToSpecies a sh:NodeShape ;
+    sh:name "V1" ;
+    sh:message "An evolution or form change has exactly 1 fromSpecies and 1 toSpecies."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Evolution , pkmn:FormChange ;
+    sh:targetClass pkmn:Evolution , pkmn:FormChange ;
+    sh:property [
+        sh:path pkmn:fromSpecies ;
+        sh:name "V1" ;
+        sh:message "An evolution or form change needs exactly 1 fromSpecies, a PokemonSpecies."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:PokemonSpecies
+    ] ;
+    sh:property [
+        sh:path pkmn:toSpecies ;
+        sh:name "V1" ;
+        sh:message "An evolution or form change needs exactly 1 toSpecies, a PokemonSpecies."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:PokemonSpecies
+    ] .
+
+# isBattleOnly is false if and only if formKind is alternate.
+pkmn-shape:V2_FormKind a sh:NodeShape ;
+    sh:name "V2" ;
+    sh:message "A form change has 1 formKind from the vocabulary and 1 isBattleOnly, false only for alternate."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:FormChange ;
+    sh:targetClass pkmn:FormChange ;
+    sh:property [
+        sh:path pkmn:formKind ;
+        sh:name "V2" ;
+        sh:message "formKind must be exactly 1 of alternate, battle, mega, primal, ultra_burst, gigantamax, terastal."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "alternate" "battle" "mega" "primal" "ultra_burst" "gigantamax" "terastal" )
+    ] ;
+    sh:property [
+        sh:path pkmn:isBattleOnly ;
+        sh:name "V2" ;
+        sh:message "A form change needs exactly 1 isBattleOnly, a boolean."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean
+    ] ;
+    sh:or (
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "alternate" ] ;
+            sh:property [ sh:path pkmn:isBattleOnly ; sh:hasValue false ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:not [ sh:hasValue "alternate" ] ] ;
+            sh:property [ sh:path pkmn:isBattleOnly ; sh:hasValue true ]
+        ]
+    ) .
+
+# A REQUIRES edge carries its role in Neo4j, so it arrives as a reified edge
+# node. Each role pairs with the class its target must have.
+pkmn-shape:R1_RequiresRole a sh:NodeShape ;
+    sh:name "R1" ;
+    sh:message "A REQUIRES edge needs a role from the table, and its target class must match the role."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Evolution , pkmn:FormChange ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select "SELECT ?this WHERE { ?this rdf:predicate pkmn:requires }"
+    ] ;
+    sh:property [
+        sh:path pkmn:role ;
+        sh:name "R1" ;
+        sh:message "A REQUIRES edge needs exactly 1 role: use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor or fusesWith."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1
+    ] ;
+    sh:or (
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "use" "hold" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:Item ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "knownMove" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:Move ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "knownMoveType" "partyType" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:Type ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "atLocation" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class mo:Location ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "partySpecies" "tradedFor" "fusesWith" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:PokemonSpecies ]
+        ]
+    ) .
+
+#################################################################
+#  Encounters and locations
+#################################################################
+
+# The incoming hasEncounter edge makes the validator project the incoming side
+# of every touched Encounter.
+pkmn-shape:C1_Encounter a sh:NodeShape ;
+    sh:name "C1" ;
+    sh:message "An encounter has 1 atLocation, 1 inVersion and 1 incoming hasEncounter, minLevel at most maxLevel and a chance from 1 to 100."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Encounter ;
+    sh:targetClass pkmn:Encounter ;
+    sh:property [
+        sh:path pkmn:atLocation ;
+        sh:name "C1" ;
+        sh:message "An encounter needs exactly 1 atLocation, a Location."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class mo:Location
+    ] ;
+    sh:property [
+        sh:path pkmn:inVersion ;
+        sh:name "C1" ;
+        sh:message "An encounter needs exactly 1 inVersion, a Version."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Version
+    ] ;
+    sh:property [
+        sh:path [ sh:inversePath pkmn:hasEncounter ] ;
+        sh:name "C1" ;
+        sh:message "An encounter needs exactly 1 species pointing at it with hasEncounter."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:PokemonSpecies
+    ] ;
+    sh:property [
+        sh:path pkmn:minLevel ;
+        sh:name "C1" ;
+        sh:message "minLevel must not exceed maxLevel."@en ;
+        sh:severity sh:Violation ;
+        sh:lessThanOrEquals pkmn:maxLevel
+    ] ;
+    sh:property [
+        sh:path pkmn:chance ;
+        sh:name "C1" ;
+        sh:message "chance is an integer from 1 to 100."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 100
+    ] .
