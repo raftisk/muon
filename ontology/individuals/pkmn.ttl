@@ -5,6 +5,9 @@
 # Enumerable individuals (A-Box) for the pkmn ontology.
 # The T-Box (classes + properties) lives in ontology/universes/pkmn.ttl.
 
+## Universe ##
+pkmn:pokemon a mo:Universe ; rdfs:label "Pokémon"@en .
+
 ## Types ##
 pkmn:Normal   a pkmn:Type ; rdfs:label "Normal"@en .
 pkmn:Fire     a pkmn:Type ; rdfs:label "Fire"@en .
