@@ -108,29 +108,29 @@ pkmn:eggGroupNoEggs    a pkmn:EggGroup ; rdfs:label "No Eggs Discovered"@en .
 
 ## Natures ##
 pkmn:hardy   a pkmn:Nature ; rdfs:label "Hardy"@en .
-pkmn:lonely  a pkmn:Nature ; rdfs:label "Lonely"@en .
-pkmn:brave   a pkmn:Nature ; rdfs:label "Brave"@en .
-pkmn:adamant a pkmn:Nature ; rdfs:label "Adamant"@en .
-pkmn:naughty a pkmn:Nature ; rdfs:label "Naughty"@en .
-pkmn:bold    a pkmn:Nature ; rdfs:label "Bold"@en .
+pkmn:lonely  a pkmn:Nature ; rdfs:label "Lonely"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:defense .
+pkmn:brave   a pkmn:Nature ; rdfs:label "Brave"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:speed .
+pkmn:adamant a pkmn:Nature ; rdfs:label "Adamant"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:specialAttack .
+pkmn:naughty a pkmn:Nature ; rdfs:label "Naughty"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:specialDefense .
+pkmn:bold    a pkmn:Nature ; rdfs:label "Bold"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:attack .
 pkmn:docile  a pkmn:Nature ; rdfs:label "Docile"@en .
-pkmn:relaxed a pkmn:Nature ; rdfs:label "Relaxed"@en .
-pkmn:impish  a pkmn:Nature ; rdfs:label "Impish"@en .
-pkmn:lax     a pkmn:Nature ; rdfs:label "Lax"@en .
-pkmn:timid   a pkmn:Nature ; rdfs:label "Timid"@en .
-pkmn:hasty   a pkmn:Nature ; rdfs:label "Hasty"@en .
+pkmn:relaxed a pkmn:Nature ; rdfs:label "Relaxed"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:speed .
+pkmn:impish  a pkmn:Nature ; rdfs:label "Impish"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:specialAttack .
+pkmn:lax     a pkmn:Nature ; rdfs:label "Lax"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:specialDefense .
+pkmn:timid   a pkmn:Nature ; rdfs:label "Timid"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:attack .
+pkmn:hasty   a pkmn:Nature ; rdfs:label "Hasty"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:defense .
 pkmn:serious a pkmn:Nature ; rdfs:label "Serious"@en .
-pkmn:jolly   a pkmn:Nature ; rdfs:label "Jolly"@en .
-pkmn:naive   a pkmn:Nature ; rdfs:label "Naive"@en .
-pkmn:modest  a pkmn:Nature ; rdfs:label "Modest"@en .
-pkmn:mild    a pkmn:Nature ; rdfs:label "Mild"@en .
-pkmn:quiet   a pkmn:Nature ; rdfs:label "Quiet"@en .
+pkmn:jolly   a pkmn:Nature ; rdfs:label "Jolly"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:specialAttack .
+pkmn:naive   a pkmn:Nature ; rdfs:label "Naive"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:specialDefense .
+pkmn:modest  a pkmn:Nature ; rdfs:label "Modest"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:attack .
+pkmn:mild    a pkmn:Nature ; rdfs:label "Mild"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:defense .
+pkmn:quiet   a pkmn:Nature ; rdfs:label "Quiet"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:speed .
 pkmn:bashful a pkmn:Nature ; rdfs:label "Bashful"@en .
-pkmn:rash    a pkmn:Nature ; rdfs:label "Rash"@en .
-pkmn:calm    a pkmn:Nature ; rdfs:label "Calm"@en .
-pkmn:gentle  a pkmn:Nature ; rdfs:label "Gentle"@en .
-pkmn:sassy   a pkmn:Nature ; rdfs:label "Sassy"@en .
-pkmn:careful a pkmn:Nature ; rdfs:label "Careful"@en .
+pkmn:rash    a pkmn:Nature ; rdfs:label "Rash"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:specialDefense .
+pkmn:calm    a pkmn:Nature ; rdfs:label "Calm"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:attack .
+pkmn:gentle  a pkmn:Nature ; rdfs:label "Gentle"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:defense .
+pkmn:sassy   a pkmn:Nature ; rdfs:label "Sassy"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:speed .
+pkmn:careful a pkmn:Nature ; rdfs:label "Careful"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:specialAttack .
 pkmn:quirky  a pkmn:Nature ; rdfs:label "Quirky"@en .
 
 ## Status conditions ##

@@ -102,3 +102,28 @@ TYPE_CHART: dict[str, dict[str, tuple[str, ...]]] = {
         "noEffectAgainst": (),
     },
 }
+
+NATURE_GRID: dict[str, tuple[str, str]] = {
+    "adamant": ("attack", "specialAttack"),
+    "bold": ("defense", "attack"),
+    "brave": ("attack", "speed"),
+    "calm": ("specialDefense", "attack"),
+    "careful": ("specialDefense", "specialAttack"),
+    "gentle": ("specialDefense", "defense"),
+    "hasty": ("speed", "defense"),
+    "impish": ("defense", "specialAttack"),
+    "jolly": ("speed", "specialAttack"),
+    "lax": ("defense", "specialDefense"),
+    "lonely": ("attack", "defense"),
+    "mild": ("specialAttack", "defense"),
+    "modest": ("specialAttack", "attack"),
+    "naive": ("speed", "specialDefense"),
+    "naughty": ("attack", "specialDefense"),
+    "quiet": ("specialAttack", "speed"),
+    "rash": ("specialAttack", "specialDefense"),
+    "relaxed": ("defense", "speed"),
+    "sassy": ("specialDefense", "speed"),
+    "timid": ("speed", "attack"),
+}
+
+NEUTRAL_NATURES = ("bashful", "docile", "hardy", "quirky", "serious")

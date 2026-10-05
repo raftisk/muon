@@ -2,7 +2,12 @@ from collections import Counter
 
 from rdflib import Graph
 
-from tests.unit.shapes.reference_facts import EFFECTIVENESS_PROPERTIES, TYPE_CHART
+from tests.unit.shapes.reference_facts import (
+    EFFECTIVENESS_PROPERTIES,
+    NATURE_GRID,
+    NEUTRAL_NATURES,
+    TYPE_CHART,
+)
 from tests.unit.shapes.vocabulary import PKMN
 
 EXPECTED_EDGE_COUNTS = {
@@ -10,6 +15,7 @@ EXPECTED_EDGE_COUNTS = {
     "notVeryEffectiveAgainst": 61,
     "noEffectAgainst": 8,
 }
+NATURE_STATS = ("attack", "defense", "specialAttack", "specialDefense", "speed")
 EXPECTED_IMMUNITIES = {
     ("Normal", "Ghost"),
     ("Electric", "Ground"),
@@ -59,3 +65,34 @@ def test_type_chart_pair_has_one_property(abox_graph):
 
 def test_type_chart_immunities(abox_graph):
     assert read_edges(abox_graph, "noEffectAgainst") == EXPECTED_IMMUNITIES
+
+
+def test_nature_edge_counts(abox_graph):
+    assert len(read_edges(abox_graph, "boostsStat")) == 20
+    assert len(read_edges(abox_graph, "reducesStat")) == 20
+
+
+def test_nature_pairs_match_grid(abox_graph):
+    boosts = dict(read_edges(abox_graph, "boostsStat"))
+    reduces = dict(read_edges(abox_graph, "reducesStat"))
+    assert {name: (boosts[name], reduces[name]) for name in boosts} == NATURE_GRID
+
+
+def test_nature_pairs_cover_every_ordered_pair():
+    expected = {(boosted, reduced) for boosted in NATURE_STATS for reduced in NATURE_STATS}
+    expected -= {(stat, stat) for stat in NATURE_STATS}
+    assert set(NATURE_GRID.values()) == expected
+    assert len(NATURE_GRID) == len(expected)
+
+
+def test_neutral_natures_have_no_edges(abox_graph):
+    edged = {name for name, _ in read_edges(abox_graph, "boostsStat")}
+    edged |= {name for name, _ in read_edges(abox_graph, "reducesStat")}
+    assert edged.isdisjoint(NEUTRAL_NATURES)
+    assert len(NEUTRAL_NATURES) == 5
+
+
+def test_no_nature_touches_hp(abox_graph):
+    targets = {t for _, t in read_edges(abox_graph, "boostsStat")}
+    targets |= {t for _, t in read_edges(abox_graph, "reducesStat")}
+    assert "hp" not in targets
