@@ -28,6 +28,52 @@ pkmn:Dark     a pkmn:Type ; rdfs:label "Dark"@en .
 pkmn:Steel    a pkmn:Type ; rdfs:label "Steel"@en .
 pkmn:Fairy    a pkmn:Type ; rdfs:label "Fairy"@en .
 
+## Type chart ##
+# Scarlet/Violet chart. A pair at x1 has no edge.
+pkmn:Normal pkmn:notVeryEffectiveAgainst pkmn:Rock, pkmn:Steel .
+pkmn:Normal pkmn:noEffectAgainst pkmn:Ghost .
+pkmn:Fire pkmn:superEffectiveAgainst pkmn:Grass, pkmn:Ice, pkmn:Bug, pkmn:Steel .
+pkmn:Fire pkmn:notVeryEffectiveAgainst pkmn:Fire, pkmn:Water, pkmn:Rock, pkmn:Dragon .
+pkmn:Water pkmn:superEffectiveAgainst pkmn:Fire, pkmn:Ground, pkmn:Rock .
+pkmn:Water pkmn:notVeryEffectiveAgainst pkmn:Water, pkmn:Grass, pkmn:Dragon .
+pkmn:Electric pkmn:superEffectiveAgainst pkmn:Water, pkmn:Flying .
+pkmn:Electric pkmn:notVeryEffectiveAgainst pkmn:Electric, pkmn:Grass, pkmn:Dragon .
+pkmn:Electric pkmn:noEffectAgainst pkmn:Ground .
+pkmn:Grass pkmn:superEffectiveAgainst pkmn:Water, pkmn:Ground, pkmn:Rock .
+pkmn:Grass pkmn:notVeryEffectiveAgainst pkmn:Fire, pkmn:Grass, pkmn:Poison, pkmn:Flying, pkmn:Bug, pkmn:Dragon, pkmn:Steel .
+pkmn:Ice pkmn:superEffectiveAgainst pkmn:Grass, pkmn:Ground, pkmn:Flying, pkmn:Dragon .
+pkmn:Ice pkmn:notVeryEffectiveAgainst pkmn:Fire, pkmn:Water, pkmn:Ice, pkmn:Steel .
+pkmn:Fighting pkmn:superEffectiveAgainst pkmn:Normal, pkmn:Ice, pkmn:Rock, pkmn:Dark, pkmn:Steel .
+pkmn:Fighting pkmn:notVeryEffectiveAgainst pkmn:Poison, pkmn:Flying, pkmn:Psychic, pkmn:Bug, pkmn:Fairy .
+pkmn:Fighting pkmn:noEffectAgainst pkmn:Ghost .
+pkmn:Poison pkmn:superEffectiveAgainst pkmn:Grass, pkmn:Fairy .
+pkmn:Poison pkmn:notVeryEffectiveAgainst pkmn:Poison, pkmn:Ground, pkmn:Rock, pkmn:Ghost .
+pkmn:Poison pkmn:noEffectAgainst pkmn:Steel .
+pkmn:Ground pkmn:superEffectiveAgainst pkmn:Fire, pkmn:Electric, pkmn:Poison, pkmn:Rock, pkmn:Steel .
+pkmn:Ground pkmn:notVeryEffectiveAgainst pkmn:Grass, pkmn:Bug .
+pkmn:Ground pkmn:noEffectAgainst pkmn:Flying .
+pkmn:Flying pkmn:superEffectiveAgainst pkmn:Grass, pkmn:Fighting, pkmn:Bug .
+pkmn:Flying pkmn:notVeryEffectiveAgainst pkmn:Electric, pkmn:Rock, pkmn:Steel .
+pkmn:Psychic pkmn:superEffectiveAgainst pkmn:Fighting, pkmn:Poison .
+pkmn:Psychic pkmn:notVeryEffectiveAgainst pkmn:Psychic, pkmn:Steel .
+pkmn:Psychic pkmn:noEffectAgainst pkmn:Dark .
+pkmn:Bug pkmn:superEffectiveAgainst pkmn:Grass, pkmn:Psychic, pkmn:Dark .
+pkmn:Bug pkmn:notVeryEffectiveAgainst pkmn:Fire, pkmn:Fighting, pkmn:Poison, pkmn:Flying, pkmn:Ghost, pkmn:Steel, pkmn:Fairy .
+pkmn:Rock pkmn:superEffectiveAgainst pkmn:Fire, pkmn:Ice, pkmn:Flying, pkmn:Bug .
+pkmn:Rock pkmn:notVeryEffectiveAgainst pkmn:Fighting, pkmn:Ground, pkmn:Steel .
+pkmn:Ghost pkmn:superEffectiveAgainst pkmn:Psychic, pkmn:Ghost .
+pkmn:Ghost pkmn:notVeryEffectiveAgainst pkmn:Dark .
+pkmn:Ghost pkmn:noEffectAgainst pkmn:Normal .
+pkmn:Dragon pkmn:superEffectiveAgainst pkmn:Dragon .
+pkmn:Dragon pkmn:notVeryEffectiveAgainst pkmn:Steel .
+pkmn:Dragon pkmn:noEffectAgainst pkmn:Fairy .
+pkmn:Dark pkmn:superEffectiveAgainst pkmn:Psychic, pkmn:Ghost .
+pkmn:Dark pkmn:notVeryEffectiveAgainst pkmn:Fighting, pkmn:Dark, pkmn:Fairy .
+pkmn:Steel pkmn:superEffectiveAgainst pkmn:Ice, pkmn:Rock, pkmn:Fairy .
+pkmn:Steel pkmn:notVeryEffectiveAgainst pkmn:Fire, pkmn:Water, pkmn:Electric, pkmn:Steel .
+pkmn:Fairy pkmn:superEffectiveAgainst pkmn:Fighting, pkmn:Dragon, pkmn:Dark .
+pkmn:Fairy pkmn:notVeryEffectiveAgainst pkmn:Fire, pkmn:Poison, pkmn:Steel .
+
 ## Stats ##
 pkmn:hp             a pkmn:Stat ; rdfs:label "HP"@en .
 pkmn:attack         a pkmn:Stat ; rdfs:label "Attack"@en .

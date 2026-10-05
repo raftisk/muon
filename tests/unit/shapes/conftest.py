@@ -15,6 +15,7 @@ ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
 SHAPES_PATH = ONTOLOGY_DIR / "shapes" / "pkmn.shacl.ttl"
 CORE_TTL_PATH = ONTOLOGY_DIR / "core" / "muon.ttl"
 PKMN_TTL_PATH = ONTOLOGY_DIR / "universes" / "pkmn.ttl"
+ABOX_TTL_PATH = ONTOLOGY_DIR / "individuals" / "pkmn.ttl"
 TURTLE_FORMAT = "turtle"
 
 FIXTURE_PREFIXES = """\
@@ -45,6 +46,11 @@ def tbox_graph() -> Graph:
     graph.parse(CORE_TTL_PATH, format=TURTLE_FORMAT)
     graph.parse(PKMN_TTL_PATH, format=TURTLE_FORMAT)
     return graph
+
+
+@pytest.fixture(scope="session")
+def abox_graph() -> Graph:
+    return Graph().parse(ABOX_TTL_PATH, format=TURTLE_FORMAT)
 
 
 def read_rule_ids(results_graph: Graph, shapes: Graph) -> frozenset[str]:
