@@ -4,6 +4,7 @@ from rdflib import Graph
 
 from tests.unit.shapes.reference_facts import (
     EFFECTIVENESS_PROPERTIES,
+    INTRODUCED_IN,
     NATURE_GRID,
     NEUTRAL_NATURES,
     TYPE_CHART,
@@ -114,3 +115,16 @@ def test_weather_terrain_edge_counts(abox_graph):
 
 def test_weather_terrain_edges_match_spec(abox_graph):
     assert read_weather_terrain_edges(abox_graph) == set(WEATHER_TERRAIN_EDGES)
+
+
+def test_introduced_in_matches_table(abox_graph):
+    edges = read_edges(abox_graph, "introducedIn")
+    assert {(name, gen) for name, gen in edges if name in INTRODUCED_IN} == set(
+        INTRODUCED_IN.items()
+    )
+
+
+def test_introduced_in_is_single_valued(abox_graph):
+    for name in INTRODUCED_IN:
+        generations = list(abox_graph.objects(PKMN[name], PKMN.introducedIn))
+        assert len(generations) == 1, name

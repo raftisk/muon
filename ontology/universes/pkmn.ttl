@@ -379,7 +379,7 @@ pkmn:GenerationMechanic a owl:Class ; rdfs:subClassOf mo:Meta ; rdfs:label "Gene
 pkmn:introducedIn a owl:ObjectProperty ;
     rdfs:range pkmn:Generation ;
     rdfs:label "introducedIn"@en ;
-    skos:definition "The generation a species, move, ability, mechanic or region debuted in."@en .
+    skos:definition "The generation a species, move, ability, mechanic, region, type, nature or terrain debuted in."@en .
 
 #################################################################
 #  Moves: flags, effects, learnset
