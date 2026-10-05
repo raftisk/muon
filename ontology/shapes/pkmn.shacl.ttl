@@ -11,7 +11,7 @@
 
 # Shapes for the pkmn universe, validated against the projection of a Neo4j
 # write transaction. Sections follow ontology/universes/pkmn.ttl. The ttl
-# sections without rules (base stats, natures, abilities, egg groups, battle
+# sections without rules (base stats, abilities, egg groups, battle
 # conditions, species groups) have no banner here.
 
 <https://muon.dev/ns/pkmn-shapes> a owl:Ontology ;
@@ -215,6 +215,40 @@ pkmn-shape:S4_YieldsEvAmount a sh:NodeShape ;
     ] .
 
 #################################################################
+#  Natures
+#################################################################
+
+# A non-neutral nature boosts 1 stat and reduces a different 1, never HP. A
+# neutral nature has neither edge. The query lists the 4 ways to break this.
+pkmn-shape:N1_NatureStats a sh:NodeShape ;
+    sh:name "N1" ;
+    sh:message "A nature has a boostsStat and a reducesStat to 2 different stats other than HP, or neither."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Nature ;
+    sh:targetClass pkmn:Nature ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Nature {$this} must boost and reduce 2 different stats other than HP, or have no stat edges."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                {
+                    $this pkmn:boostsStat ?boosted .
+                    FILTER NOT EXISTS { $this pkmn:reducesStat ?anyReduced }
+                } UNION {
+                    $this pkmn:reducesStat ?reduced .
+                    FILTER NOT EXISTS { $this pkmn:boostsStat ?anyBoosted }
+                } UNION {
+                    $this pkmn:boostsStat ?sameStat .
+                    $this pkmn:reducesStat ?sameStat .
+                } UNION {
+                    $this pkmn:boostsStat|pkmn:reducesStat pkmn:hp .
+                }
+            }
+        """
+    ] .
+
+#################################################################
 #  Moves and types
 #################################################################
 
@@ -241,6 +275,29 @@ pkmn-shape:M1_MoveTypeAndClass a sh:NodeShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class pkmn:MoveDamageClass
+    ] .
+
+# A type pair has at most 1 effectiveness. The query names the 3 sub-properties
+# of effectiveAgainst, because the shapes run without RDFS inference.
+pkmn-shape:K1_TypePairEffectiveness a sh:NodeShape ;
+    sh:name "K1" ;
+    sh:message "An attacking type holds at most 1 of superEffectiveAgainst, notVeryEffectiveAgainst and noEffectAgainst towards a defending type."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Type ;
+    sh:targetClass pkmn:Type ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Type {$this} has 2 effectiveness edges towards {?defender}."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?defender WHERE {
+                $this ?first ?defender .
+                $this ?second ?defender .
+                FILTER (?first != ?second)
+                FILTER (?first IN (pkmn:superEffectiveAgainst, pkmn:notVeryEffectiveAgainst, pkmn:noEffectAgainst))
+                FILTER (?second IN (pkmn:superEffectiveAgainst, pkmn:notVeryEffectiveAgainst, pkmn:noEffectAgainst))
+            }
+        """
     ] .
 
 #################################################################
