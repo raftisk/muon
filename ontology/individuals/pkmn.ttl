@@ -164,21 +164,21 @@ pkmn:embargo         a pkmn:VolatileCondition ; rdfs:label "Embargo"@en .
 pkmn:healBlock       a pkmn:VolatileCondition ; rdfs:label "Heal Block"@en .
 
 ## Weather ##
-pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en .
-pkmn:harshSunlight          a pkmn:Weather ; rdfs:label "Harsh Sunlight"@en .
+pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en ; pkmn:amplifiesType pkmn:Water ; pkmn:dampensType pkmn:Fire .
+pkmn:harshSunlight          a pkmn:Weather ; rdfs:label "Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire ; pkmn:dampensType pkmn:Water .
 pkmn:sandstorm              a pkmn:Weather ; rdfs:label "Sandstorm"@en .
 pkmn:hail                   a pkmn:Weather ; rdfs:label "Hail"@en .
 pkmn:snow                   a pkmn:Weather ; rdfs:label "Snow"@en .
 pkmn:fog                    a pkmn:Weather ; rdfs:label "Fog"@en .
-pkmn:extremelyHarshSunlight a pkmn:Weather ; rdfs:label "Extremely Harsh Sunlight"@en .
-pkmn:heavyRain              a pkmn:Weather ; rdfs:label "Heavy Rain"@en .
+pkmn:extremelyHarshSunlight a pkmn:Weather ; rdfs:label "Extremely Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire .
+pkmn:heavyRain              a pkmn:Weather ; rdfs:label "Heavy Rain"@en ; pkmn:amplifiesType pkmn:Water .
 pkmn:strongWinds            a pkmn:Weather ; rdfs:label "Strong Winds"@en .
 
 ## Terrain ##
-pkmn:electricTerrain a pkmn:Terrain ; rdfs:label "Electric Terrain"@en .
-pkmn:grassyTerrain   a pkmn:Terrain ; rdfs:label "Grassy Terrain"@en .
-pkmn:mistyTerrain    a pkmn:Terrain ; rdfs:label "Misty Terrain"@en .
-pkmn:psychicTerrain  a pkmn:Terrain ; rdfs:label "Psychic Terrain"@en .
+pkmn:electricTerrain a pkmn:Terrain ; rdfs:label "Electric Terrain"@en ; pkmn:amplifiesType pkmn:Electric .
+pkmn:grassyTerrain   a pkmn:Terrain ; rdfs:label "Grassy Terrain"@en ; pkmn:amplifiesType pkmn:Grass .
+pkmn:mistyTerrain    a pkmn:Terrain ; rdfs:label "Misty Terrain"@en ; pkmn:dampensType pkmn:Dragon .
+pkmn:psychicTerrain  a pkmn:Terrain ; rdfs:label "Psychic Terrain"@en ; pkmn:amplifiesType pkmn:Psychic .
 
 ## Entry hazards ##
 pkmn:stealthRock a pkmn:EntryHazard ; rdfs:label "Stealth Rock"@en .

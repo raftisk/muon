@@ -7,6 +7,7 @@ from tests.unit.shapes.reference_facts import (
     NATURE_GRID,
     NEUTRAL_NATURES,
     TYPE_CHART,
+    WEATHER_TERRAIN_EDGES,
 )
 from tests.unit.shapes.vocabulary import PKMN
 
@@ -96,3 +97,20 @@ def test_no_nature_touches_hp(abox_graph):
     targets = {t for _, t in read_edges(abox_graph, "boostsStat")}
     targets |= {t for _, t in read_edges(abox_graph, "reducesStat")}
     assert "hp" not in targets
+
+
+def read_weather_terrain_edges(graph: Graph) -> set[tuple[str, str, str]]:
+    return {
+        (subject, property_name, target)
+        for property_name in ("amplifiesType", "dampensType")
+        for subject, target in read_edges(graph, property_name)
+    }
+
+
+def test_weather_terrain_edge_counts(abox_graph):
+    assert len(read_edges(abox_graph, "amplifiesType")) == 7
+    assert len(read_edges(abox_graph, "dampensType")) == 3
+
+
+def test_weather_terrain_edges_match_spec(abox_graph):
+    assert read_weather_terrain_edges(abox_graph) == set(WEATHER_TERRAIN_EDGES)

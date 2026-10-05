@@ -127,3 +127,16 @@ NATURE_GRID: dict[str, tuple[str, str]] = {
 }
 
 NEUTRAL_NATURES = ("bashful", "docile", "hardy", "quirky", "serious")
+
+WEATHER_TERRAIN_EDGES: tuple[tuple[str, str, str], ...] = (
+    ("rain", "amplifiesType", "Water"),
+    ("rain", "dampensType", "Fire"),
+    ("harshSunlight", "amplifiesType", "Fire"),
+    ("harshSunlight", "dampensType", "Water"),
+    ("heavyRain", "amplifiesType", "Water"),
+    ("extremelyHarshSunlight", "amplifiesType", "Fire"),
+    ("electricTerrain", "amplifiesType", "Electric"),
+    ("grassyTerrain", "amplifiesType", "Grass"),
+    ("psychicTerrain", "amplifiesType", "Psychic"),
+    ("mistyTerrain", "dampensType", "Dragon"),
+)
