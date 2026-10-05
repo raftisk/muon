@@ -7,7 +7,7 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 | `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 20 object properties, 6 datatype properties |
 | `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box. Imports the core. 37 classes, 47 object properties, 62 datatype properties |
 | `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 163 enumerable individuals in 17 classes |
-| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 16 rules, listed in [Shapes](#shapes) |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 18 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -112,13 +112,13 @@ The pkmn ontology models species and game mechanics. It holds no individual Poke
 
 ### Individuals
 
-`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 12 EggGroups, 25 Natures, 6 StatusConditions, 20 VolatileConditions, 9 Weathers, 4 Terrains, 4 EntryHazards, 8 FieldEffects, 19 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics and the `pkmn:pokemon` Universe. Regions and mechanics carry `introducedIn`. Every other instance is created by ingestion.
+`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 12 EggGroups, 25 Natures, 6 StatusConditions, 20 VolatileConditions, 9 Weathers, 4 Terrains, 4 EntryHazards, 8 FieldEffects, 19 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics and the `pkmn:pokemon` Universe. Regions, mechanics, Types, Natures and Terrains carry `introducedIn`. The A-Box also holds 217 reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 10 weather and terrain type edges and 47 `introducedIn` edges. Every other instance is created by ingestion.
 
 ### Species, types and natures
 
 - A species has a type through `primaryType` and `secondaryType`, both sub-properties of `hasType`. A move has exactly 1 `hasType`.
-- Type effectiveness uses sub-properties of `effectiveAgainst`, so the multiplier is in the property name: `superEffectiveAgainst` (x2), `notVeryEffectiveAgainst` (x0.5), `noEffectAgainst` (x0).
-- A nature points at stats with `boostsStat` and `reducesStat`, both sub-properties of `affectsStat`.
+- Type effectiveness uses sub-properties of `effectiveAgainst`, so the multiplier is in the property name: `superEffectiveAgainst` (x2), `notVeryEffectiveAgainst` (x0.5), `noEffectAgainst` (x0). The A-Box holds the current chart as 51, 61 and 8 edges. A pair at x1 has no edge and a pair holds at most 1 of the 3.
+- A nature points at stats with `boostsStat` and `reducesStat`, both sub-properties of `affectsStat`. The 20 non-neutral natures carry 1 of each, to 2 different stats other than HP. The 5 neutral natures carry none.
 - Other species edges: `hasAbility`, `inEggGroup`, `yieldsEv` (to Stat), `inGroup`, `designedBy` (to `mo:Creator`), `introducedIn`.
 - Species properties: `pokedexNumber`, the 6 base stats (`baseHp` to `baseSpeed`), `height` (m), `weight` (kg), `femaleRate`, `isGenderless`, `catchRate`, `baseExpYield`, `shape`, `genus`, `eggCycles`, `baseFriendship`, `growthRate`, `color`, `isLegendary`, `isMythical`, `isStarter`, `isDefaultForm`.
 
@@ -148,7 +148,7 @@ Magnitudes are node properties: `probability`, `statStages`, `statMultiplier`, `
 
 `target` names the recipient (self, ally, foe, field, move). `trigger` names the moment an ability effect, item effect or form change fires: switch_in, switch_out, on_attack, on_hit, on_knock_out, low_hp, end_of_turn, passive.
 
-Weather and terrain individuals point at types with `amplifiesType` and `dampensType`, both sub-properties of `modifiesType`.
+Weather and terrain individuals point at types with `amplifiesType` and `dampensType`, both sub-properties of `modifiesType`. The A-Box holds 7 `amplifiesType` and 3 `dampensType` edges for type-based damage changes only. Weather damage, Strong Winds and the rules that make a move fail stay in text.
 
 ### Evolution and forms
 
@@ -177,7 +177,8 @@ Weather and terrain individuals point at types with `amplifiesType` and `dampens
 | --- | --- |
 | Node keys and edge typing | L2 node key pattern, T1 edge range and domain read from the T-Box |
 | Species | S1 dex number, S2 types, S3 female rate and growth rate, S4 EV amount |
-| Moves and types | M1 one type and one damage class |
+| Natures | N1 nature stat edges |
+| Moves and types | M1 one type and one damage class, K1 one effectiveness per type pair |
 | Items | C2 machine links |
 | Meta and text | X1 text chunk completeness, X2 `fromWork` by aspect |
 | Moves: flags, effects, learnset | C2 learnset entry, E1 effect values, X3 `effectText` owner |
