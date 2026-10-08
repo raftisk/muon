@@ -4,6 +4,7 @@ Compiles a `GraphBatch` into fixed Cypher statements and writes them in one
 transaction. Labels and relationship types travel as parameters through dynamic
 labels (`$(...)`), with names from the label materializer. A node merges on its
 class label, the universe label and `id`; an edge merges on (start, type, end).
+It also purges a universe: every node with the universe label, in one statement.
 """
 
 from dataclasses import dataclass, fields
@@ -80,9 +81,14 @@ MATCH (b:$([row.end_label, $universe]) {id: row.end_id})
 MERGE (a)-[:$(row.type)]->(b)
 """
 
+PURGE_UNIVERSE: LiteralString = """
+MATCH (n:$($universe))
+DETACH DELETE n
+"""
+
 
 class Runner:
-    """Writes batches of one universe through a `GraphClient`."""
+    """Writes batches of one universe through a `GraphClient` and purges that universe."""
 
     def __init__(self, client: GraphClient, materializer: LabelMaterializer) -> None:
         self.client = client
@@ -101,6 +107,16 @@ class Runner:
         statements = build_statements(batch, mode, self.materializer)
         summaries = await self.client.execute_write_batch(statements)
         return summarize_run(summaries, constraints_ensured)
+
+    async def purge(self) -> WriteSummary:
+        """Delete every node carrying the universe label, with its relationships.
+
+        Constraints, indexes and the nodes of other universes stay. A relationship
+        between a purged node and a node of another universe goes with the purged node.
+        """
+        return await self.client.execute_write(
+            PURGE_UNIVERSE, {"universe": self.materializer.universe_label}
+        )
 
 
 def build_statements(

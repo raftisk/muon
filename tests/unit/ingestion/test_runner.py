@@ -158,3 +158,20 @@ async def test_other_universe_batch_raises(materializer: LabelMaterializer) -> N
         await Runner(client, materializer).write(other_batch, WriteMode.SYNC)
 
     assert client.calls == []
+
+
+async def test_purge_sends_the_universe_label(materializer: LabelMaterializer) -> None:
+    client = RecordingGraphClient(TOY_SUMMARY)
+
+    summary = await Runner(client, materializer).purge()
+
+    assert client.writes == [runner.PURGE_UNIVERSE]
+    assert client.batches == []
+    assert client.write_parameters == [{"universe": TOY_UNIVERSE}]
+    assert summary == TOY_SUMMARY
+
+
+def test_purge_statement_takes_the_label_as_parameter_and_keeps_the_schema() -> None:
+    assert "$universe" in runner.PURGE_UNIVERSE
+    assert "DROP" not in runner.PURGE_UNIVERSE
+    assert "CONSTRAINT" not in runner.PURGE_UNIVERSE

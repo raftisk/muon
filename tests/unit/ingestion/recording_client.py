@@ -20,12 +20,14 @@ class RecordingGraphClient:
     """Records writes in call order and answers each statement with `summary`.
 
     `calls` holds the query of an `execute_write` or the statement list of an
-    `execute_write_batch`.
+    `execute_write_batch`. `write_parameters` holds the parameters of each
+    `execute_write`, in the same order as `writes`.
     """
 
     def __init__(self, summary: WriteSummary = EMPTY_SUMMARY) -> None:
         self.summary = summary
         self.calls: list[str | list[Statement]] = []
+        self.write_parameters: list[Mapping[str, Any] | None] = []
 
     @property
     def writes(self) -> list[str]:
@@ -44,6 +46,7 @@ class RecordingGraphClient:
         self, query: LiteralString, parameters: Mapping[str, Any] | None = None
     ) -> WriteSummary:
         self.calls.append(query)
+        self.write_parameters.append(parameters)
         return self.summary
 
     async def execute_write_batch(self, statements: Sequence[Statement]) -> list[WriteSummary]:
