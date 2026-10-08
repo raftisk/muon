@@ -73,7 +73,7 @@ Meta
 | `owns` | Agent -> Entity | Open range |
 | `participatesIn` | Agent -> Event | |
 | `hasSpecies`, `speaks`, `hasPower` | Agent -> Species, Language, Power | |
-| `partOf` | Source -> Source | Transitive |
+| `partOf` | Source -> Source | Transitive. Chapter in a work, work in a series or a larger work |
 | `appearsIn`, `mentionedIn` | Entity -> Source | Depiction, reference |
 | `createdBy` | Series, Work or Universe -> Creator | |
 | `fromWork` | TextChunk -> Work | |
@@ -217,7 +217,7 @@ The Neo4j graph follows the ttl through these rules.
 - Shortcuts. `EVOLVES_TO`, `CAN_LEARN` and `FOUND_IN` are derived from reified nodes and exist next to them.
 - Edge properties exist in Neo4j only: `isHidden` on `HAS_ABILITY`, `amount` on `YIELDS_EV` and `role` on `REQUIRES` (use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor, fusesWith).
 - Individuals from `individuals/` become nodes with their class labels, the universe label and `name`.
-- Node key. `id` is the lowercase hyphenated English name (`shadow-ball`, `diglett-alola`), unique per label. `name` is not a key, since names repeat across labels ("Psychic" is a Type and a Move).
+- Node key. `id` is the lowercase hyphenated English name (`shadow-ball`, `diglett-alola`), unique per label. Apostrophes are dropped, not hyphenated (`Farfetch'd` gives `farfetchd`). `name` is not a key, since names repeat across labels ("Psychic" is a Type and a Move).
 - Datatypes. `xsd:string` -> `STRING`, `xsd:integer` -> `INTEGER`, `xsd:decimal` -> `FLOAT`, `xsd:boolean` -> `BOOLEAN`. A repeated string (`aliases`, `conditions`) becomes `LIST<STRING>`.
 - Text. Only `TextChunk` nodes carry an `embedding` (`VECTOR`), which is not declared in the ttl.
 

@@ -292,7 +292,7 @@ mo:partOf a owl:ObjectProperty, owl:TransitiveProperty ;
     rdfs:domain mo:Source ;
     rdfs:range  mo:Source ;
     rdfs:label "part of"@en ;
-    skos:definition "Associates a chapter with the work it is part of."@en .
+    skos:definition "Associates a source with the larger source it is part of: a chapter with its work, a work with the series or the larger work that groups it."@en .
 
 mo:appearsIn a owl:ObjectProperty ;
     rdfs:domain mo:Entity ;
