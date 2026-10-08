@@ -1,10 +1,14 @@
 import pytest
-from rdflib import RDF, RDFS, Graph, Namespace, URIRef
+from rdflib import RDF, RDFS, Graph, Literal, Namespace, URIRef
 
+from muon.ingestion.batch import build_node_id
 from tests.unit.shapes.abox_completion import (
+    ABSENT_GAME_LABELS,
     ALIASES,
     CLASS_COUNTS,
+    GAME_GROUPS,
     REMOVED_LOCAL_NAMES,
+    VERSION_IDS_SPOT_CHECK,
     VOCABULARY_LABELS,
 )
 from tests.unit.shapes.vocabulary import PKMN
@@ -61,3 +65,38 @@ def test_drowsy_exists_in_two_classes(abox_graph):
     assert (PKMN.volatileDrowsy, RDF.type, PKMN.VolatileCondition) in abox_graph
     assert "Drowsy" in read_labels(abox_graph, "pkmn:StatusCondition")
     assert "Drowsy" in read_labels(abox_graph, "pkmn:VolatileCondition")
+
+
+def read_individuals_by_label(graph: Graph, class_name: str, label: str) -> list[URIRef]:
+    return [
+        individual
+        for individual in graph.subjects(RDF.type, expand_class(class_name))
+        if Literal(label, lang="en") in set(graph.objects(individual, RDFS.label))
+    ]
+
+
+def test_game_chain_matches_table(abox_graph):
+    chain_edges = 0
+    for group_label, _, generation, version_labels in GAME_GROUPS:
+        groups = read_individuals_by_label(abox_graph, "pkmn:VersionGroup", group_label)
+        assert len(groups) == 1, group_label
+        assert set(abox_graph.objects(groups[0], MO.partOf)) == {PKMN[generation]}, group_label
+        chain_edges += 1
+        for version_label in version_labels:
+            versions = read_individuals_by_label(abox_graph, "pkmn:Version", version_label)
+            assert len(versions) == 1, version_label
+            assert set(abox_graph.objects(versions[0], MO.partOf)) == {groups[0]}, version_label
+            chain_edges += 1
+    assert chain_edges == 64
+
+
+def test_game_ids(abox_graph):
+    for group_label, group_id, _, _ in GAME_GROUPS:
+        assert build_node_id(group_label) == group_id
+    version_ids = {build_node_id(label) for label in read_labels(abox_graph, "pkmn:Version")}
+    assert set(VERSION_IDS_SPOT_CHECK) <= version_ids
+
+
+def test_absent_games(abox_graph):
+    all_labels = {str(label) for label in abox_graph.objects(None, RDFS.label)}
+    assert all_labels.isdisjoint(ABSENT_GAME_LABELS)

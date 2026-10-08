@@ -6,7 +6,7 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 | --- | --- | --- |
 | `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 20 object properties, 6 datatype properties |
 | `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box. Imports the core. 37 classes, 47 object properties, 62 datatype properties |
-| `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 171 enumerable individuals in 17 classes |
+| `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 235 enumerable individuals in 19 classes |
 | `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 18 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
@@ -112,7 +112,7 @@ The pkmn ontology models species and game mechanics. It holds no individual Poke
 
 ### Individuals
 
-`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 15 EggGroups, 25 Natures, 8 StatusConditions, 20 VolatileConditions, 9 Weathers, 4 Terrains, 5 EntryHazards, 10 FieldEffects, 19 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics and the `pkmn:pokemon` Universe. Regions, mechanics, Types, Natures and Terrains carry `introducedIn`. The A-Box also holds 217 reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 10 weather and terrain type edges and 47 `introducedIn` edges. A condition enters the A-Box when at least 2 distinct entities (moves, abilities, items, types, terrains) inflict, cure, block, ignore or react to it; the others stay in text. A condition carries `aliases` for the move-derived name (Taunted: Taunt). Every other instance is created by ingestion.
+`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 15 EggGroups, 25 Natures, 8 StatusConditions, 20 VolatileConditions, 9 Weathers, 4 Terrains, 5 EntryHazards, 10 FieldEffects, 19 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics, 24 VersionGroups, 40 Versions and the `pkmn:pokemon` Universe. Regions, mechanics, Types, Natures and Terrains carry `introducedIn`. The A-Box also holds 217 reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 10 weather and terrain type edges and 47 `introducedIn` edges. A condition enters the A-Box when at least 2 distinct entities (moves, abilities, items, types, terrains) inflict, cure, block, ignore or react to it; the others stay in text. A condition carries `aliases` for the move-derived name (Taunted: Taunt). Every other instance is created by ingestion.
 
 ### Species, types and natures
 
@@ -164,7 +164,7 @@ Weather and terrain individuals point at types with `amplifiesType` and `dampens
 
 ### Generations, versions and encounters
 
-- `Version` is part of a `VersionGroup`, which is part of a `Generation`, through `mo:partOf`.
+- `Version` is part of a `VersionGroup`, which is part of a `Generation`, through `mo:partOf`. The A-Box holds the 24 groups and 40 versions of the main series games, Colosseum and XD included, with 64 `partOf` edges. Downloadable content belongs to its base game.
 - `GenerationMechanic` records a battle mechanic (Mega Evolution, Z-Move, Dynamax, Gigantamax, Terastallization) and its generation.
 - `Encounter` reifies 1 wild encounter. It links `atLocation` (a `LocationArea` or a location) and `inVersion`, with `method`, `conditions`, `minLevel`, `maxLevel` and `chance`. A species links to it with `hasEncounter`.
 - `LocationArea` is a subdivision of a location (a floor, a sector) and chains to it with `mo:locatedIn`.

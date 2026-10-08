@@ -256,3 +256,73 @@ pkmn:zMove            a pkmn:GenerationMechanic ; rdfs:label "Z-Move"@en        
 pkmn:dynamax          a pkmn:GenerationMechanic ; rdfs:label "Dynamax"@en          ; pkmn:introducedIn pkmn:gen8 .
 pkmn:gigantamax       a pkmn:GenerationMechanic ; rdfs:label "Gigantamax"@en       ; pkmn:introducedIn pkmn:gen8 .
 pkmn:terastallization a pkmn:GenerationMechanic ; rdfs:label "Terastallization"@en ; pkmn:introducedIn pkmn:gen9 .
+
+## Version groups ##
+# A set of games that share one data set. Downloadable content belongs to its base game.
+pkmn:versionGroupRedBlue a pkmn:VersionGroup ; rdfs:label "Red-Blue"@en ; mo:partOf pkmn:gen1 .
+pkmn:versionGroupYellow a pkmn:VersionGroup ; rdfs:label "Yellow"@en ; mo:partOf pkmn:gen1 .
+pkmn:versionGroupGoldSilver a pkmn:VersionGroup ; rdfs:label "Gold-Silver"@en ; mo:partOf pkmn:gen2 .
+pkmn:versionGroupCrystal a pkmn:VersionGroup ; rdfs:label "Crystal"@en ; mo:partOf pkmn:gen2 .
+pkmn:versionGroupRubySapphire a pkmn:VersionGroup ; rdfs:label "Ruby-Sapphire"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupEmerald a pkmn:VersionGroup ; rdfs:label "Emerald"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupFireRedLeafGreen a pkmn:VersionGroup ; rdfs:label "FireRed-LeafGreen"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupColosseum a pkmn:VersionGroup ; rdfs:label "Colosseum"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupXD a pkmn:VersionGroup ; rdfs:label "XD"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupDiamondPearl a pkmn:VersionGroup ; rdfs:label "Diamond-Pearl"@en ; mo:partOf pkmn:gen4 .
+pkmn:versionGroupPlatinum a pkmn:VersionGroup ; rdfs:label "Platinum"@en ; mo:partOf pkmn:gen4 .
+pkmn:versionGroupHeartGoldSoulSilver a pkmn:VersionGroup ; rdfs:label "HeartGold-SoulSilver"@en ; mo:partOf pkmn:gen4 .
+pkmn:versionGroupBlackWhite a pkmn:VersionGroup ; rdfs:label "Black-White"@en ; mo:partOf pkmn:gen5 .
+pkmn:versionGroupBlack2White2 a pkmn:VersionGroup ; rdfs:label "Black 2-White 2"@en ; mo:partOf pkmn:gen5 .
+pkmn:versionGroupXY a pkmn:VersionGroup ; rdfs:label "X-Y"@en ; mo:partOf pkmn:gen6 .
+pkmn:versionGroupOmegaRubyAlphaSapphire a pkmn:VersionGroup ; rdfs:label "Omega Ruby-Alpha Sapphire"@en ; mo:partOf pkmn:gen6 .
+pkmn:versionGroupSunMoon a pkmn:VersionGroup ; rdfs:label "Sun-Moon"@en ; mo:partOf pkmn:gen7 .
+pkmn:versionGroupUltraSunUltraMoon a pkmn:VersionGroup ; rdfs:label "Ultra Sun-Ultra Moon"@en ; mo:partOf pkmn:gen7 .
+pkmn:versionGroupLetsGoPikachuLetsGoEevee a pkmn:VersionGroup ; rdfs:label "Let's Go Pikachu-Let's Go Eevee"@en ; mo:partOf pkmn:gen7 .
+pkmn:versionGroupSwordShield a pkmn:VersionGroup ; rdfs:label "Sword-Shield"@en ; mo:partOf pkmn:gen8 .
+pkmn:versionGroupBrilliantDiamondAndShiningPearl a pkmn:VersionGroup ; rdfs:label "Brilliant Diamond and Shining Pearl"@en ; mo:partOf pkmn:gen8 .
+pkmn:versionGroupLegendsArceus a pkmn:VersionGroup ; rdfs:label "Legends: Arceus"@en ; mo:partOf pkmn:gen8 .
+pkmn:versionGroupScarletViolet a pkmn:VersionGroup ; rdfs:label "Scarlet-Violet"@en ; mo:partOf pkmn:gen9 .
+pkmn:versionGroupLegendsZA a pkmn:VersionGroup ; rdfs:label "Legends: Z-A"@en ; mo:partOf pkmn:gen9 .
+
+## Versions ##
+# One game release. It is part of exactly 1 version group.
+pkmn:versionRed a pkmn:Version ; rdfs:label "Red"@en ; mo:partOf pkmn:versionGroupRedBlue .
+pkmn:versionBlue a pkmn:Version ; rdfs:label "Blue"@en ; mo:partOf pkmn:versionGroupRedBlue .
+pkmn:versionYellow a pkmn:Version ; rdfs:label "Yellow"@en ; mo:partOf pkmn:versionGroupYellow .
+pkmn:versionGold a pkmn:Version ; rdfs:label "Gold"@en ; mo:partOf pkmn:versionGroupGoldSilver .
+pkmn:versionSilver a pkmn:Version ; rdfs:label "Silver"@en ; mo:partOf pkmn:versionGroupGoldSilver .
+pkmn:versionCrystal a pkmn:Version ; rdfs:label "Crystal"@en ; mo:partOf pkmn:versionGroupCrystal .
+pkmn:versionRuby a pkmn:Version ; rdfs:label "Ruby"@en ; mo:partOf pkmn:versionGroupRubySapphire .
+pkmn:versionSapphire a pkmn:Version ; rdfs:label "Sapphire"@en ; mo:partOf pkmn:versionGroupRubySapphire .
+pkmn:versionEmerald a pkmn:Version ; rdfs:label "Emerald"@en ; mo:partOf pkmn:versionGroupEmerald .
+pkmn:versionFireRed a pkmn:Version ; rdfs:label "FireRed"@en ; mo:partOf pkmn:versionGroupFireRedLeafGreen .
+pkmn:versionLeafGreen a pkmn:Version ; rdfs:label "LeafGreen"@en ; mo:partOf pkmn:versionGroupFireRedLeafGreen .
+pkmn:versionColosseum a pkmn:Version ; rdfs:label "Colosseum"@en ; mo:partOf pkmn:versionGroupColosseum .
+pkmn:versionXD a pkmn:Version ; rdfs:label "XD"@en ; mo:partOf pkmn:versionGroupXD .
+pkmn:versionDiamond a pkmn:Version ; rdfs:label "Diamond"@en ; mo:partOf pkmn:versionGroupDiamondPearl .
+pkmn:versionPearl a pkmn:Version ; rdfs:label "Pearl"@en ; mo:partOf pkmn:versionGroupDiamondPearl .
+pkmn:versionPlatinum a pkmn:Version ; rdfs:label "Platinum"@en ; mo:partOf pkmn:versionGroupPlatinum .
+pkmn:versionHeartGold a pkmn:Version ; rdfs:label "HeartGold"@en ; mo:partOf pkmn:versionGroupHeartGoldSoulSilver .
+pkmn:versionSoulSilver a pkmn:Version ; rdfs:label "SoulSilver"@en ; mo:partOf pkmn:versionGroupHeartGoldSoulSilver .
+pkmn:versionBlack a pkmn:Version ; rdfs:label "Black"@en ; mo:partOf pkmn:versionGroupBlackWhite .
+pkmn:versionWhite a pkmn:Version ; rdfs:label "White"@en ; mo:partOf pkmn:versionGroupBlackWhite .
+pkmn:versionBlack2 a pkmn:Version ; rdfs:label "Black 2"@en ; mo:partOf pkmn:versionGroupBlack2White2 .
+pkmn:versionWhite2 a pkmn:Version ; rdfs:label "White 2"@en ; mo:partOf pkmn:versionGroupBlack2White2 .
+pkmn:versionX a pkmn:Version ; rdfs:label "X"@en ; mo:partOf pkmn:versionGroupXY .
+pkmn:versionY a pkmn:Version ; rdfs:label "Y"@en ; mo:partOf pkmn:versionGroupXY .
+pkmn:versionOmegaRuby a pkmn:Version ; rdfs:label "Omega Ruby"@en ; mo:partOf pkmn:versionGroupOmegaRubyAlphaSapphire .
+pkmn:versionAlphaSapphire a pkmn:Version ; rdfs:label "Alpha Sapphire"@en ; mo:partOf pkmn:versionGroupOmegaRubyAlphaSapphire .
+pkmn:versionSun a pkmn:Version ; rdfs:label "Sun"@en ; mo:partOf pkmn:versionGroupSunMoon .
+pkmn:versionMoon a pkmn:Version ; rdfs:label "Moon"@en ; mo:partOf pkmn:versionGroupSunMoon .
+pkmn:versionUltraSun a pkmn:Version ; rdfs:label "Ultra Sun"@en ; mo:partOf pkmn:versionGroupUltraSunUltraMoon .
+pkmn:versionUltraMoon a pkmn:Version ; rdfs:label "Ultra Moon"@en ; mo:partOf pkmn:versionGroupUltraSunUltraMoon .
+pkmn:versionLetsGoPikachu a pkmn:Version ; rdfs:label "Let's Go Pikachu"@en ; mo:partOf pkmn:versionGroupLetsGoPikachuLetsGoEevee .
+pkmn:versionLetsGoEevee a pkmn:Version ; rdfs:label "Let's Go Eevee"@en ; mo:partOf pkmn:versionGroupLetsGoPikachuLetsGoEevee .
+pkmn:versionSword a pkmn:Version ; rdfs:label "Sword"@en ; mo:partOf pkmn:versionGroupSwordShield .
+pkmn:versionShield a pkmn:Version ; rdfs:label "Shield"@en ; mo:partOf pkmn:versionGroupSwordShield .
+pkmn:versionBrilliantDiamond a pkmn:Version ; rdfs:label "Brilliant Diamond"@en ; mo:partOf pkmn:versionGroupBrilliantDiamondAndShiningPearl .
+pkmn:versionShiningPearl a pkmn:Version ; rdfs:label "Shining Pearl"@en ; mo:partOf pkmn:versionGroupBrilliantDiamondAndShiningPearl .
+pkmn:versionLegendsArceus a pkmn:Version ; rdfs:label "Legends: Arceus"@en ; mo:partOf pkmn:versionGroupLegendsArceus .
+pkmn:versionScarlet a pkmn:Version ; rdfs:label "Scarlet"@en ; mo:partOf pkmn:versionGroupScarletViolet .
+pkmn:versionViolet a pkmn:Version ; rdfs:label "Violet"@en ; mo:partOf pkmn:versionGroupScarletViolet .
+pkmn:versionLegendsZA a pkmn:Version ; rdfs:label "Legends: Z-A"@en ; mo:partOf pkmn:versionGroupLegendsZA .

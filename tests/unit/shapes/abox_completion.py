@@ -21,6 +21,8 @@ CLASS_COUNTS: dict[str, int] = {
     "pkmn:Generation": 9,
     "mo:Region": 11,
     "pkmn:GenerationMechanic": 5,
+    "pkmn:VersionGroup": 24,
+    "pkmn:Version": 40,
 }
 
 VOCABULARY_LABELS: dict[str, tuple[str, ...]] = {
@@ -119,4 +121,68 @@ REMOVED_LOCAL_NAMES: tuple[str, ...] = (
     "confusion",
     "infatuation",
     "leechSeed",
+)
+
+# (group label, expected group id, generation local name, version labels)
+GAME_GROUPS: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
+    ("Red-Blue", "red-blue", "gen1", ("Red", "Blue")),
+    ("Yellow", "yellow", "gen1", ("Yellow",)),
+    ("Gold-Silver", "gold-silver", "gen2", ("Gold", "Silver")),
+    ("Crystal", "crystal", "gen2", ("Crystal",)),
+    ("Ruby-Sapphire", "ruby-sapphire", "gen3", ("Ruby", "Sapphire")),
+    ("Emerald", "emerald", "gen3", ("Emerald",)),
+    ("FireRed-LeafGreen", "firered-leafgreen", "gen3", ("FireRed", "LeafGreen")),
+    ("Colosseum", "colosseum", "gen3", ("Colosseum",)),
+    ("XD", "xd", "gen3", ("XD",)),
+    ("Diamond-Pearl", "diamond-pearl", "gen4", ("Diamond", "Pearl")),
+    ("Platinum", "platinum", "gen4", ("Platinum",)),
+    ("HeartGold-SoulSilver", "heartgold-soulsilver", "gen4", ("HeartGold", "SoulSilver")),
+    ("Black-White", "black-white", "gen5", ("Black", "White")),
+    ("Black 2-White 2", "black-2-white-2", "gen5", ("Black 2", "White 2")),
+    ("X-Y", "x-y", "gen6", ("X", "Y")),
+    (
+        "Omega Ruby-Alpha Sapphire",
+        "omega-ruby-alpha-sapphire",
+        "gen6",
+        ("Omega Ruby", "Alpha Sapphire"),
+    ),
+    ("Sun-Moon", "sun-moon", "gen7", ("Sun", "Moon")),
+    ("Ultra Sun-Ultra Moon", "ultra-sun-ultra-moon", "gen7", ("Ultra Sun", "Ultra Moon")),
+    (
+        "Let's Go Pikachu-Let's Go Eevee",
+        "lets-go-pikachu-lets-go-eevee",
+        "gen7",
+        ("Let's Go Pikachu", "Let's Go Eevee"),
+    ),
+    ("Sword-Shield", "sword-shield", "gen8", ("Sword", "Shield")),
+    (
+        "Brilliant Diamond and Shining Pearl",
+        "brilliant-diamond-and-shining-pearl",
+        "gen8",
+        ("Brilliant Diamond", "Shining Pearl"),
+    ),
+    ("Legends: Arceus", "legends-arceus", "gen8", ("Legends: Arceus",)),
+    ("Scarlet-Violet", "scarlet-violet", "gen9", ("Scarlet", "Violet")),
+    ("Legends: Z-A", "legends-z-a", "gen9", ("Legends: Z-A",)),
+)
+
+VERSION_IDS_SPOT_CHECK: tuple[str, ...] = (
+    "lets-go-pikachu",
+    "lets-go-eevee",
+    "firered",
+    "heartgold",
+    "black-2",
+    "omega-ruby",
+    "legends-z-a",
+)
+
+ABSENT_GAME_LABELS: tuple[str, ...] = (
+    "Green",
+    "Stadium",
+    "Isle of Armor",
+    "Crown Tundra",
+    "Teal Mask",
+    "Indigo Disk",
+    "Mega Dimension",
+    "Winds and Waves",
 )

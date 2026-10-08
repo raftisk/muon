@@ -14,9 +14,9 @@ REAL_ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
 CORE = "https://muon.dev/ns/core#"
 PKMN = "https://muon.dev/ns/pkmn#"
 TOY = "https://muon.dev/ns/muontoy#"
-REAL_NODE_COUNT = 171
-REAL_EDGE_COUNT = 233
-REAL_CLASS_COUNT = 17
+REAL_NODE_COUNT = 235
+REAL_EDGE_COUNT = 297
+REAL_CLASS_COUNT = 19
 INLINE_SOURCE = "inline.ttl"
 TOY_PREFIXES = """\
 @prefix muontoy: <https://muon.dev/ns/muontoy#> .
