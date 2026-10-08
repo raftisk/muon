@@ -30,8 +30,7 @@ async def graph_client(run_id: str) -> AsyncIterator[Neo4jGraphClient]:
 @pytest.fixture
 async def name_constraint(graph_client: Neo4jGraphClient) -> AsyncIterator[None]:
     await graph_client.execute_write(
-        "CREATE CONSTRAINT muon_test_name IF NOT EXISTS "
-        "FOR (n:MuonTest) REQUIRE n.name IS UNIQUE"
+        "CREATE CONSTRAINT muon_test_name IF NOT EXISTS FOR (n:MuonTest) REQUIRE n.name IS UNIQUE"
     )
     yield
     await graph_client.execute_write("DROP CONSTRAINT muon_test_name IF EXISTS")

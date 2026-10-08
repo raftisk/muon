@@ -19,9 +19,7 @@ SECRET_PARAMETER_VALUE = "private-value"
 
 @pytest.fixture
 def settings() -> Neo4jSettings:
-    return Neo4jSettings(
-        uri=URI, username="neo4j", password=SecretStr(PASSWORD), database=DATABASE
-    )
+    return Neo4jSettings(uri=URI, username="neo4j", password=SecretStr(PASSWORD), database=DATABASE)
 
 
 @pytest.fixture

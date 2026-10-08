@@ -37,9 +37,7 @@ async def test_bad_cypher_raises_query_error(graph_client: Neo4jGraphClient) -> 
 
 
 @pytest.mark.usefixtures("name_constraint")
-async def test_constraint_violation_rolls_back(
-    graph_client: Neo4jGraphClient, run_id: str
-) -> None:
+async def test_constraint_violation_rolls_back(graph_client: Neo4jGraphClient, run_id: str) -> None:
     with pytest.raises(GraphQueryError):
         await graph_client.execute_write(
             "CREATE (:MuonTest {run_id: $run_id, name: $name}), "
