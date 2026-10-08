@@ -14,6 +14,7 @@ from typing import Final, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 NODE_ID_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*(:[a-z0-9]+(-[a-z0-9]+)*)*$")
+APOSTROPHES: Final = re.compile("['’]")
 NON_ID_CHARACTERS = re.compile(r"[^a-z0-9]+")
 ID_SEPARATOR = "-"
 UNICODE_DECOMPOSITION: Final = "NFKD"
@@ -24,13 +25,14 @@ PropertyValue = str | int | float | bool | tuple[str, ...]
 def build_node_id(name: str) -> str:
     """Return the node `id` for an English name, e.g. "Béta Unit" -> "beta-unit".
 
-    Accents are stripped, the rest is lowercased and each run of characters outside
-    `[a-z0-9]` becomes one hyphen. The result is empty when `name` holds no letter
-    or digit.
+    Accents and apostrophes are stripped ("Let's Go" -> "lets-go", "Farfetch'd" ->
+    "farfetchd"), the rest is lowercased and each run of characters outside `[a-z0-9]`
+    becomes one hyphen. The result is empty when `name` holds no letter or digit.
     """
     decomposed = unicodedata.normalize(UNICODE_DECOMPOSITION, name)
     unaccented = "".join(char for char in decomposed if not unicodedata.combining(char))
-    return NON_ID_CHARACTERS.sub(ID_SEPARATOR, unaccented.lower()).strip(ID_SEPARATOR)
+    unquoted = APOSTROPHES.sub("", unaccented)
+    return NON_ID_CHARACTERS.sub(ID_SEPARATOR, unquoted.lower()).strip(ID_SEPARATOR)
 
 
 class NodeRef(BaseModel):

@@ -35,6 +35,8 @@ INDIVIDUALS_DIR_NAME = "individuals"
 LABEL_LANGUAGE = "en"
 IGNORED_PREDICATES = frozenset({str(RDFS.comment), str(SKOS.definition)})
 RESERVED_PREDICATES = frozenset({str(RDF.type), str(RDFS.label)})
+# Core properties that hold a list even when the A-Box gives 1 value.
+REPEATED_PROPERTIES = frozenset({"https://muon.dev/ns/core#aliases"})
 LITERAL_CONVERTERS: Mapping[URIRef | None, Callable[[Literal], PropertyValue]] = {
     None: str,
     XSD.string: str,
@@ -202,11 +204,15 @@ def read_node_properties(
 def merge_property_values(
     subject: str, values_by_property: Mapping[str, list[PropertyValue]]
 ) -> tuple[dict[str, PropertyValue], list[str]]:
-    """Keep single values; turn repeated strings into a sorted tuple."""
+    """Keep single values; turn repeated strings into a sorted tuple.
+
+    A property in `REPEATED_PROPERTIES` always becomes a tuple, so a node with 1 alias
+    still gets a list.
+    """
     properties: dict[str, PropertyValue] = {}
     problems: list[str] = []
     for predicate_iri, values in values_by_property.items():
-        if len(values) == 1:
+        if len(values) == 1 and predicate_iri not in REPEATED_PROPERTIES:
             properties[predicate_iri] = values[0]
         elif all(isinstance(value, str) for value in values):
             properties[predicate_iri] = tuple(sorted(str(value) for value in values))

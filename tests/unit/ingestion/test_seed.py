@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from rdflib import Graph
 
-from muon.ingestion.batch import GraphBatch, NodeRef
+from muon.ingestion.batch import GraphBatch, NodeRef, PropertyValue
 from muon.ingestion.runner import MERGE_EDGES, MERGE_NODES_SYNC, PRUNE_EDGES, PRUNE_NODES
 from muon.ingestion.seed import ABoxError, build_abox_batch, read_abox, seed_universe
 from muon.ontology.model import OntologyModel, load_ontology_model
@@ -11,6 +11,7 @@ from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.unit.ingestion.recording_client import RecordingGraphClient
 
 REAL_ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
+CORE = "https://muon.dev/ns/core#"
 PKMN = "https://muon.dev/ns/pkmn#"
 TOY = "https://muon.dev/ns/muontoy#"
 REAL_NODE_COUNT = 163
@@ -147,6 +148,22 @@ def test_all_problems_in_one_error(toy_model: OntologyModel) -> None:
         read_inline(toy_model, body)
 
     assert len(error_info.value.problems) == 3
+
+
+def read_inline_aliases(model: OntologyModel, aliases: str) -> PropertyValue:
+    body = (
+        "@prefix mo: <https://muon.dev/ns/core#> .\n"
+        f'muontoy:x a muontoy:ToyGadget ; rdfs:label "X"@en ; mo:aliases {aliases} .'
+    )
+    return read_inline(model, body).nodes[0].properties[CORE + "aliases"]
+
+
+def test_single_alias_loads_as_a_tuple(toy_model: OntologyModel) -> None:
+    assert read_inline_aliases(toy_model, '"one"@en') == ("one",)
+
+
+def test_two_aliases_load_sorted(toy_model: OntologyModel) -> None:
+    assert read_inline_aliases(toy_model, '"two"@en, "one"@en') == ("one", "two")
 
 
 def test_ignored_predicates_are_not_properties(toy_model: OntologyModel) -> None:
