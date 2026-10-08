@@ -1,0 +1,56 @@
+@prefix muontoy: <https://muon.dev/ns/muontoy#> .
+@prefix mo: <https://muon.dev/ns/core#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://muon.dev/ns/muontoy> a owl:Ontology ;
+    owl:imports <https://muon.dev/ns/core> ;
+    skos:definition "Toy universe for seed loader tests."@en .
+
+muontoy:ToyGadget a owl:Class ;
+    rdfs:subClassOf mo:Object ;
+    rdfs:label "Toy gadget"@en ;
+    skos:definition "A small device of the toy universe."@en .
+
+muontoy:ToyColor a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "Toy color"@en ;
+    skos:definition "A color a toy gadget can have."@en .
+
+muontoy:hasColor a owl:ObjectProperty ;
+    rdfs:domain muontoy:ToyGadget ;
+    rdfs:range muontoy:ToyColor ;
+    rdfs:label "has color"@en ;
+    skos:definition "The color of a gadget."@en .
+
+muontoy:pairsWith a owl:ObjectProperty ;
+    rdfs:domain muontoy:ToyGadget ;
+    rdfs:range muontoy:ToyGadget ;
+    rdfs:label "pairs with"@en ;
+    skos:definition "Another gadget this gadget works with."@en .
+
+muontoy:weight a owl:DatatypeProperty ;
+    rdfs:domain muontoy:ToyGadget ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "weight"@en ;
+    skos:definition "Weight of a gadget in kilograms."@en .
+
+muontoy:serial a owl:DatatypeProperty ;
+    rdfs:domain muontoy:ToyGadget ;
+    rdfs:range xsd:integer ;
+    rdfs:label "serial"@en ;
+    skos:definition "Serial number of a gadget."@en .
+
+muontoy:isBroken a owl:DatatypeProperty ;
+    rdfs:domain muontoy:ToyGadget ;
+    rdfs:range xsd:boolean ;
+    rdfs:label "is broken"@en ;
+    skos:definition "Whether a gadget is broken."@en .
+
+muontoy:nickname a owl:DatatypeProperty ;
+    rdfs:domain muontoy:ToyGadget ;
+    rdfs:range xsd:string ;
+    rdfs:label "nickname"@en ;
+    skos:definition "An informal name of a gadget."@en .
