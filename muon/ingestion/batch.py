@@ -1,0 +1,101 @@
+"""The contract between producers and the graph, in ontology terms.
+
+A `GraphBatch` holds class and property IRIs, never Neo4j labels or relationship
+types; the label materializer supplies those when the batch is written. A node is
+keyed by its asserted class and its `id`, which `build_node_id` derives from the
+English name.
+"""
+
+import re
+import unicodedata
+from collections.abc import Mapping
+from typing import Final, Self
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+NODE_ID_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*(:[a-z0-9]+(-[a-z0-9]+)*)*$")
+NON_ID_CHARACTERS = re.compile(r"[^a-z0-9]+")
+ID_SEPARATOR = "-"
+UNICODE_DECOMPOSITION: Final = "NFKD"
+
+PropertyValue = str | int | float | bool | tuple[str, ...]
+
+
+def build_node_id(name: str) -> str:
+    """Return the node `id` for an English name, e.g. "Béta Unit" -> "beta-unit".
+
+    Accents are stripped, the rest is lowercased and each run of characters outside
+    `[a-z0-9]` becomes one hyphen. The result is empty when `name` holds no letter
+    or digit.
+    """
+    decomposed = unicodedata.normalize(UNICODE_DECOMPOSITION, name)
+    unaccented = "".join(char for char in decomposed if not unicodedata.combining(char))
+    return NON_ID_CHARACTERS.sub(ID_SEPARATOR, unaccented.lower()).strip(ID_SEPARATOR)
+
+
+class NodeRef(BaseModel):
+    """The key of a node: its asserted class and its `id`."""
+
+    model_config = ConfigDict(frozen=True)
+
+    class_iri: str
+    id: str
+
+
+class NodeRecord(BaseModel):
+    """One node. `properties` maps datatype property IRIs to values."""
+
+    model_config = ConfigDict(frozen=True)
+
+    class_iri: str
+    id: str
+    name: str
+    properties: Mapping[str, PropertyValue] = Field(default_factory=dict)
+
+    @property
+    def node_ref(self) -> NodeRef:
+        return NodeRef(class_iri=self.class_iri, id=self.id)
+
+
+class EdgeRecord(BaseModel):
+    """One edge, typed by its most specific object property."""
+
+    model_config = ConfigDict(frozen=True)
+
+    property_iri: str
+    start: NodeRef
+    end: NodeRef
+
+
+class GraphBatch(BaseModel):
+    """One unit of validation and one write transaction.
+
+    `scope` holds the classes the batch is complete for. Every node class is in
+    `scope`, node keys are unique and every edge end matches a node record.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    universe: str
+    scope: frozenset[str]
+    nodes: tuple[NodeRecord, ...]
+    edges: tuple[EdgeRecord, ...]
+
+    @model_validator(mode="after")
+    def check_references(self) -> Self:
+        node_refs: set[NodeRef] = set()
+        for node in self.nodes:
+            if node.class_iri not in self.scope:
+                raise ValueError(f"Node {node.class_iri} {node.id!r} has a class outside scope")
+            if node.node_ref in node_refs:
+                raise ValueError(f"Duplicate node key {node.class_iri} {node.id!r}")
+            node_refs.add(node.node_ref)
+
+        for edge in self.edges:
+            missing_ends = [end for end in (edge.start, edge.end) if end not in node_refs]
+            if missing_ends:
+                end = missing_ends[0]
+                raise ValueError(
+                    f"Edge {edge.property_iri} refers to a missing node {end.class_iri} {end.id!r}"
+                )
+        return self
