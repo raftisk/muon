@@ -4,9 +4,11 @@ import pytest
 from rdflib import Graph
 
 from muon.ingestion.batch import GraphBatch, NodeRef
-from muon.ingestion.seed import ABoxError, build_abox_batch, read_abox
+from muon.ingestion.runner import MERGE_EDGES, MERGE_NODES_SYNC, PRUNE_EDGES, PRUNE_NODES
+from muon.ingestion.seed import ABoxError, build_abox_batch, read_abox, seed_universe
 from muon.ontology.model import OntologyModel, load_ontology_model
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
+from tests.unit.ingestion.recording_client import RecordingGraphClient
 
 REAL_ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
 PKMN = "https://muon.dev/ns/pkmn#"
@@ -162,3 +164,31 @@ def test_missing_abox_file_names_path(toy_model: OntologyModel, tmp_path: Path) 
         read_abox(toy_model, tmp_path)
 
     assert str(tmp_path / "individuals" / f"{TOY_UNIVERSE}.ttl") in str(error_info.value)
+
+
+async def test_seed_universe_writes_constraints_then_batch(tmp_path: Path) -> None:
+    ontology_dir = copy_toy_ontology(tmp_path)
+    client = RecordingGraphClient()
+
+    report = await seed_universe(client, ontology_dir, TOY_UNIVERSE)
+
+    assert len(client.writes) == 2
+    assert [statement.query for statement in client.batches[0]] == [
+        PRUNE_NODES,
+        PRUNE_EDGES,
+        MERGE_NODES_SYNC,
+        MERGE_EDGES,
+    ]
+    assert report.constraints_ensured == 2
+
+
+async def test_seed_universe_with_invalid_abox_writes_nothing(tmp_path: Path) -> None:
+    ontology_dir = copy_toy_ontology(tmp_path)
+    abox_path = ontology_dir / "individuals" / f"{TOY_UNIVERSE}.ttl"
+    abox_path.write_text(abox_path.read_text() + "muontoy:alpha muontoy:unknown 3 .\n")
+    client = RecordingGraphClient()
+
+    with pytest.raises(ABoxError, match="the predicate is not declared"):
+        await seed_universe(client, ontology_dir, TOY_UNIVERSE)
+
+    assert client.calls == []

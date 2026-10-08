@@ -1,6 +1,9 @@
-"""Seed path: a universe's hand-written A-Box, read into a `GraphBatch`.
+"""Seed path: a universe's hand-written A-Box, loaded into the graph.
 
-`read_abox` maps `individuals/<prefix>.ttl` with no knowledge of the universe:
+`seed_universe` reads the T-Box and `individuals/<prefix>.ttl`, then writes the
+batch in sync mode, so the graph mirrors the file after every run.
+
+`read_abox` maps the A-Box with no knowledge of the universe:
 every typed subject becomes a node, every datatype literal a node property and
 every object property value an edge. It collects every problem into one
 `ABoxError`, so nothing reaches the graph from a file it cannot map in full.
@@ -15,6 +18,7 @@ from rdflib.namespace import RDF, RDFS, SKOS, XSD
 from rdflib.plugins.parsers.notation3 import BadSyntax
 from rdflib.term import Node
 
+from muon.graph import GraphClient
 from muon.ingestion.batch import (
     EdgeRecord,
     GraphBatch,
@@ -23,7 +27,9 @@ from muon.ingestion.batch import (
     PropertyValue,
     build_node_id,
 )
-from muon.ontology.model import TTL_SUFFIX, TURTLE_FORMAT, OntologyModel
+from muon.ingestion.runner import Runner, RunReport, WriteMode
+from muon.ontology.materializer import LabelMaterializer
+from muon.ontology.model import TTL_SUFFIX, TURTLE_FORMAT, OntologyModel, load_ontology_model
 
 INDIVIDUALS_DIR_NAME = "individuals"
 LABEL_LANGUAGE = "en"
@@ -53,6 +59,17 @@ class Individual:
     iri: str
     node_ref: NodeRef
     name: str
+
+
+async def seed_universe(client: GraphClient, ontology_dir: Path, universe: str) -> RunReport:
+    """Load the A-Box of `universe` and write it in sync mode.
+
+    Both ttl reads finish before the first database call, so an invalid file
+    leaves the graph untouched.
+    """
+    model = load_ontology_model(ontology_dir, universe)
+    batch = read_abox(model, ontology_dir)
+    return await Runner(client, LabelMaterializer(model)).write(batch, WriteMode.SYNC)
 
 
 def read_abox(model: OntologyModel, ontology_dir: Path) -> GraphBatch:

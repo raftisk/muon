@@ -5,16 +5,16 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from muon.config import Neo4jSettings, get_settings
+from muon.config import PROJECT_ROOT, Neo4jSettings, OntologySettings, get_settings
 
-NEO4J_ENV_PREFIX = "NEO4J_"
+ENV_PREFIXES = ("NEO4J_", "MUON_")
 PASSWORD = "file-secret"
 
 
 @pytest.fixture(autouse=True)
-def clear_neo4j_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def clear_settings_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in list(os.environ):
-        if name.startswith(NEO4J_ENV_PREFIX):
+        if name.startswith(ENV_PREFIXES):
             monkeypatch.delenv(name)
 
 
@@ -75,3 +75,19 @@ def test_get_settings_is_cached(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("NEO4J_PASSWORD", "env-secret")
 
     assert get_settings() is get_settings()
+
+
+def test_ontology_dir_defaults_to_repo_ontology(tmp_path: Path) -> None:
+    settings = OntologySettings(_env_file=tmp_path / ".env")
+
+    assert settings.ontology_dir == PROJECT_ROOT / "ontology"
+
+
+def test_ontology_dir_env_var_overrides_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MUON_ONTOLOGY_DIR", str(tmp_path))
+
+    settings = OntologySettings(_env_file=tmp_path / ".env")
+
+    assert settings.ontology_dir == tmp_path
