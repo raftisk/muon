@@ -14,7 +14,7 @@ REAL_ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
 CORE = "https://muon.dev/ns/core#"
 PKMN = "https://muon.dev/ns/pkmn#"
 TOY = "https://muon.dev/ns/muontoy#"
-REAL_NODE_COUNT = 163
+REAL_NODE_COUNT = 171
 REAL_EDGE_COUNT = 233
 REAL_CLASS_COUNT = 17
 INLINE_SOURCE = "inline.ttl"
@@ -58,6 +58,14 @@ def test_real_abox_universe_node(real_batch: GraphBatch) -> None:
 
     assert node.class_iri == "https://muon.dev/ns/core#Universe"
     assert node.name == "Pokémon"
+
+
+def test_real_abox_alias_and_key(real_batch: GraphBatch) -> None:
+    stealth_rock = next(node for node in real_batch.nodes if node.id == "stealth-rock")
+    escape = NodeRef(class_iri=PKMN + "VolatileCondition", id="cant-escape")
+
+    assert stealth_rock.properties[CORE + "aliases"] == ("Pointed Stones",)
+    assert escape in {node.node_ref for node in real_batch.nodes}
 
 
 def test_real_abox_type_chart_edges(real_batch: GraphBatch) -> None:

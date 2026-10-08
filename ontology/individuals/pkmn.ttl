@@ -105,6 +105,9 @@ pkmn:eggGroupMineral   a pkmn:EggGroup ; rdfs:label "Mineral"@en .
 pkmn:eggGroupDragon    a pkmn:EggGroup ; rdfs:label "Dragon"@en .
 pkmn:eggGroupDitto     a pkmn:EggGroup ; rdfs:label "Ditto"@en .
 pkmn:eggGroupNoEggs    a pkmn:EggGroup ; rdfs:label "No Eggs Discovered"@en .
+pkmn:eggGroupWater2    a pkmn:EggGroup ; rdfs:label "Water 2"@en .
+pkmn:eggGroupWater3    a pkmn:EggGroup ; rdfs:label "Water 3"@en .
+pkmn:eggGroupAmorphous a pkmn:EggGroup ; rdfs:label "Amorphous"@en .
 
 ## Natures ##
 pkmn:hardy   a pkmn:Nature ; rdfs:label "Hardy"@en ; pkmn:introducedIn pkmn:gen3 .
@@ -140,28 +143,31 @@ pkmn:statusParalysis     a pkmn:StatusCondition ; rdfs:label "Paralysis"@en .
 pkmn:statusPoison        a pkmn:StatusCondition ; rdfs:label "Poison"@en .
 pkmn:statusBadlyPoisoned a pkmn:StatusCondition ; rdfs:label "Badly Poisoned"@en .
 pkmn:statusSleep         a pkmn:StatusCondition ; rdfs:label "Sleep"@en .
+pkmn:statusFrostbite     a pkmn:StatusCondition ; rdfs:label "Frostbite"@en .
+pkmn:statusDrowsy        a pkmn:StatusCondition ; rdfs:label "Drowsy"@en .
 
 ## Volatile conditions ##
-pkmn:confusion       a pkmn:VolatileCondition ; rdfs:label "Confusion"@en .
-pkmn:flinch          a pkmn:VolatileCondition ; rdfs:label "Flinch"@en .
-pkmn:taunt           a pkmn:VolatileCondition ; rdfs:label "Taunt"@en .
-pkmn:encore          a pkmn:VolatileCondition ; rdfs:label "Encore"@en .
-pkmn:leechSeed       a pkmn:VolatileCondition ; rdfs:label "Leech Seed"@en .
-pkmn:infatuation     a pkmn:VolatileCondition ; rdfs:label "Infatuation"@en .
-pkmn:trapped         a pkmn:VolatileCondition ; rdfs:label "Trapped"@en .
-pkmn:substitute      a pkmn:VolatileCondition ; rdfs:label "Substitute"@en .
-pkmn:semiInvulnerable a pkmn:VolatileCondition ; rdfs:label "Semi-Invulnerable"@en .
-pkmn:curse           a pkmn:VolatileCondition ; rdfs:label "Curse"@en .
-pkmn:nightmare       a pkmn:VolatileCondition ; rdfs:label "Nightmare"@en .
-pkmn:disable         a pkmn:VolatileCondition ; rdfs:label "Disable"@en .
-pkmn:torment         a pkmn:VolatileCondition ; rdfs:label "Torment"@en .
-pkmn:yawn            a pkmn:VolatileCondition ; rdfs:label "Yawn"@en .
-pkmn:aquaRing        a pkmn:VolatileCondition ; rdfs:label "Aqua Ring"@en .
-pkmn:ingrain         a pkmn:VolatileCondition ; rdfs:label "Ingrain"@en .
-pkmn:magnetRise      a pkmn:VolatileCondition ; rdfs:label "Magnet Rise"@en .
-pkmn:telekinesis     a pkmn:VolatileCondition ; rdfs:label "Telekinesis"@en .
-pkmn:embargo         a pkmn:VolatileCondition ; rdfs:label "Embargo"@en .
-pkmn:healBlock       a pkmn:VolatileCondition ; rdfs:label "Heal Block"@en .
+# Names are the in-game status names; mo:aliases keeps the move-derived name.
+pkmn:confused         a pkmn:VolatileCondition ; rdfs:label "Confused"@en ; mo:aliases "Confusion"@en .
+pkmn:flinch           a pkmn:VolatileCondition ; rdfs:label "Flinch"@en .
+pkmn:infatuated       a pkmn:VolatileCondition ; rdfs:label "Infatuated"@en ; mo:aliases "Infatuation"@en .
+pkmn:taunted          a pkmn:VolatileCondition ; rdfs:label "Taunted"@en ; mo:aliases "Taunt"@en .
+pkmn:encore           a pkmn:VolatileCondition ; rdfs:label "Encore"@en .
+pkmn:moveDisabled     a pkmn:VolatileCondition ; rdfs:label "Move Disabled"@en ; mo:aliases "Disable"@en .
+pkmn:unableToRepeat   a pkmn:VolatileCondition ; rdfs:label "Unable to Repeat"@en ; mo:aliases "Torment"@en .
+pkmn:healingPrevented a pkmn:VolatileCondition ; rdfs:label "Healing Prevented"@en ; mo:aliases "Heal Block"@en .
+pkmn:leechSeeded      a pkmn:VolatileCondition ; rdfs:label "Leech Seeded"@en ; mo:aliases "Leech Seed"@en .
+pkmn:volatileDrowsy   a pkmn:VolatileCondition ; rdfs:label "Drowsy"@en ; mo:aliases "Yawn"@en .
+pkmn:cantEscape       a pkmn:VolatileCondition ; rdfs:label "Can't Escape"@en ; mo:aliases "Trapped"@en .
+pkmn:bound            a pkmn:VolatileCondition ; rdfs:label "Bound"@en .
+pkmn:noAbility        a pkmn:VolatileCondition ; rdfs:label "No Ability"@en .
+pkmn:substitute       a pkmn:VolatileCondition ; rdfs:label "Substitute"@en .
+pkmn:telekinesis      a pkmn:VolatileCondition ; rdfs:label "Telekinesis"@en .
+pkmn:magnetRise       a pkmn:VolatileCondition ; rdfs:label "Magnet Rise"@en .
+pkmn:concealed        a pkmn:VolatileCondition ; rdfs:label "Concealed"@en .
+pkmn:skyHigh          a pkmn:VolatileCondition ; rdfs:label "Sky-High"@en .
+pkmn:submerged        a pkmn:VolatileCondition ; rdfs:label "Submerged"@en .
+pkmn:underground      a pkmn:VolatileCondition ; rdfs:label "Underground"@en .
 
 ## Weather ##
 pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en ; pkmn:amplifiesType pkmn:Water ; pkmn:dampensType pkmn:Fire .
@@ -181,10 +187,11 @@ pkmn:mistyTerrain    a pkmn:Terrain ; rdfs:label "Misty Terrain"@en ; pkmn:dampe
 pkmn:psychicTerrain  a pkmn:Terrain ; rdfs:label "Psychic Terrain"@en ; pkmn:amplifiesType pkmn:Psychic ; pkmn:introducedIn pkmn:gen7 .
 
 ## Entry hazards ##
-pkmn:stealthRock a pkmn:EntryHazard ; rdfs:label "Stealth Rock"@en .
+pkmn:stealthRock a pkmn:EntryHazard ; rdfs:label "Stealth Rock"@en ; mo:aliases "Pointed Stones"@en .
 pkmn:spikes      a pkmn:EntryHazard ; rdfs:label "Spikes"@en .
-pkmn:toxicSpikes a pkmn:EntryHazard ; rdfs:label "Toxic Spikes"@en .
+pkmn:toxicSpikes a pkmn:EntryHazard ; rdfs:label "Toxic Spikes"@en ; mo:aliases "Poison Spikes"@en .
 pkmn:stickyWeb   a pkmn:EntryHazard ; rdfs:label "Sticky Web"@en .
+pkmn:steelsurge  a pkmn:EntryHazard ; rdfs:label "Steelsurge"@en ; mo:aliases "Sharp Steel"@en, "G-Max Steelsurge"@en .
 
 ## Field effects ##
 pkmn:trickRoom   a pkmn:FieldEffect ; rdfs:label "Trick Room"@en .
@@ -195,6 +202,8 @@ pkmn:tailwind    a pkmn:FieldEffect ; rdfs:label "Tailwind"@en .
 pkmn:lightScreen a pkmn:FieldEffect ; rdfs:label "Light Screen"@en .
 pkmn:reflect     a pkmn:FieldEffect ; rdfs:label "Reflect"@en .
 pkmn:auroraVeil  a pkmn:FieldEffect ; rdfs:label "Aurora Veil"@en .
+pkmn:safeguard   a pkmn:FieldEffect ; rdfs:label "Safeguard"@en .
+pkmn:mist        a pkmn:FieldEffect ; rdfs:label "Mist"@en .
 
 ## Move flags ##
 pkmn:contact   a pkmn:MoveFlag ; rdfs:label "contact"@en .
