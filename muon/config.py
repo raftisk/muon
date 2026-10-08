@@ -12,6 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = PROJECT_ROOT / ".env"
+DEFAULT_ONTOLOGY_DIR = PROJECT_ROOT / "ontology"
 
 DEFAULT_DATABASE = "neo4j"
 DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30.0
@@ -31,8 +32,17 @@ class Neo4jSettings(BaseSettings):
     max_connection_pool_size: int = DEFAULT_MAX_CONNECTION_POOL_SIZE
 
 
+class OntologySettings(BaseSettings):
+    """Location of the ontology files, read from `MUON_*` variables."""
+
+    model_config = SettingsConfigDict(env_prefix="MUON_", env_file=ENV_FILE, extra="ignore")
+
+    ontology_dir: Path = DEFAULT_ONTOLOGY_DIR
+
+
 class Settings(BaseModel):
     neo4j: Neo4jSettings = Field(default_factory=Neo4jSettings)
+    ontology: OntologySettings = Field(default_factory=OntologySettings)
 
 
 @functools.cache

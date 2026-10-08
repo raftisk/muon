@@ -1,6 +1,6 @@
 """Neo4j implementation of `GraphClient`, built on the async driver."""
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import TracebackType
 from typing import Any, LiteralString, Self
@@ -15,7 +15,7 @@ from neo4j.exceptions import (
 
 from muon.config import Neo4jSettings
 from muon.graph.errors import GraphConnectionError, GraphQueryError
-from muon.graph.protocol import WriteSummary
+from muon.graph.protocol import Statement, WriteSummary
 
 READ_OPERATION = "read"
 WRITE_OPERATION = "write"
@@ -69,7 +69,8 @@ class Neo4jGraphClient:
     ) -> list[dict[str, Any]]:
         driver = self.require_driver()
         query_parameters = dict(parameters or {})
-        with wrap_driver_errors(READ_OPERATION, self.settings.database, query, query_parameters):
+        context = describe_query(READ_OPERATION, self.settings.database, query, query_parameters)
+        with wrap_driver_errors(context):
             async with driver.session(database=self.settings.database) as session:
                 return await session.execute_read(fetch_records, query, query_parameters)
 
@@ -78,9 +79,18 @@ class Neo4jGraphClient:
     ) -> WriteSummary:
         driver = self.require_driver()
         query_parameters = dict(parameters or {})
-        with wrap_driver_errors(WRITE_OPERATION, self.settings.database, query, query_parameters):
+        context = describe_query(WRITE_OPERATION, self.settings.database, query, query_parameters)
+        with wrap_driver_errors(context):
             async with driver.session(database=self.settings.database) as session:
                 return await session.execute_write(consume_counters, query, query_parameters)
+
+    async def execute_write_batch(self, statements: Sequence[Statement]) -> list[WriteSummary]:
+        driver = self.require_driver()
+        database = self.settings.database
+        context = f"{WRITE_OPERATION} of {len(statements)} statements on database={database!r}"
+        with wrap_driver_errors(context):
+            async with driver.session(database=database) as session:
+                return await session.execute_write(run_statements, statements, database)
 
     def require_driver(self) -> AsyncDriver:
         if self.driver is None:
@@ -88,16 +98,18 @@ class Neo4jGraphClient:
         return self.driver
 
 
-@contextmanager
-def wrap_driver_errors(
-    operation: str, database: str, query: str, parameters: Mapping[str, Any]
-) -> Iterator[None]:
-    """Translate driver errors into graph errors.
+def describe_query(operation: str, database: str, query: str, parameters: Mapping[str, Any]) -> str:
+    """Name a query for an error message.
 
-    Messages carry parameter names only, because parameter values can hold
-    arbitrary ingested data.
+    Carries parameter names only, because parameter values can hold arbitrary
+    ingested data.
     """
-    context = f"{operation} on database={database!r} query={query!r} params={sorted(parameters)}"
+    return f"{operation} on database={database!r} query={query!r} params={sorted(parameters)}"
+
+
+@contextmanager
+def wrap_driver_errors(context: str) -> Iterator[None]:
+    """Translate driver errors into graph errors whose message ends with `context`."""
     try:
         yield
     except (ServiceUnavailable, SessionExpired) as error:
@@ -125,5 +137,31 @@ async def consume_counters(
         nodes_deleted=counters.nodes_deleted,
         relationships_created=counters.relationships_created,
         relationships_deleted=counters.relationships_deleted,
+        labels_added=counters.labels_added,
+        labels_removed=counters.labels_removed,
         properties_set=counters.properties_set,
     )
+
+
+async def run_statements(
+    tx: AsyncManagedTransaction, statements: Sequence[Statement], database: str
+) -> list[WriteSummary]:
+    """Run each statement in order inside one transaction.
+
+    A retryable error propagates unchanged so the driver can retry the whole
+    transaction. Any other driver error names the failing statement by its
+    1-based position.
+    """
+    summaries: list[WriteSummary] = []
+    for position, (query, parameters) in enumerate(statements, start=1):
+        query_parameters = dict(parameters)
+        try:
+            summaries.append(await consume_counters(tx, query, query_parameters))
+        except Neo4jError as error:
+            if error.is_retryable():
+                raise
+            context = describe_query(WRITE_OPERATION, database, query, query_parameters)
+            raise GraphQueryError(
+                f"Neo4j rejected statement {position} of {len(statements)}: {context}"
+            ) from error
+    return summaries

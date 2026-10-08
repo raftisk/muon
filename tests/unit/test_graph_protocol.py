@@ -1,7 +1,7 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, LiteralString
 
-from muon.graph import GraphClient, WriteSummary
+from muon.graph import GraphClient, Statement, WriteSummary
 
 CANNED_RECORDS = [{"name": "x"}]
 EMPTY_SUMMARY = WriteSummary(
@@ -9,6 +9,8 @@ EMPTY_SUMMARY = WriteSummary(
     nodes_deleted=0,
     relationships_created=0,
     relationships_deleted=0,
+    labels_added=0,
+    labels_removed=0,
     properties_set=0,
 )
 
@@ -23,6 +25,9 @@ class FakeGraphClient:
         self, query: LiteralString, parameters: Mapping[str, Any] | None = None
     ) -> WriteSummary:
         return EMPTY_SUMMARY
+
+    async def execute_write_batch(self, statements: Sequence[Statement]) -> list[WriteSummary]:
+        return [EMPTY_SUMMARY for _ in statements]
 
 
 # mypy checks that the fake satisfies the protocol.

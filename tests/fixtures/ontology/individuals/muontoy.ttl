@@ -1,0 +1,34 @@
+@prefix muontoy: <https://muon.dev/ns/muontoy#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 1 triple per line, so tests can edit or remove single facts.
+
+muontoy:red a muontoy:ToyColor .
+muontoy:red rdfs:label "Red"@en .
+muontoy:blue a muontoy:ToyColor .
+muontoy:blue rdfs:label "Blue"@en .
+muontoy:green a muontoy:ToyColor .
+muontoy:green rdfs:label "Green"@en .
+
+muontoy:alpha a muontoy:ToyGadget .
+muontoy:alpha rdfs:label "Alpha"@en .
+muontoy:alpha rdfs:comment "A modelling note the reader ignores."@en .
+muontoy:alpha skos:definition "The first toy gadget."@en .
+muontoy:alpha muontoy:weight 1.5 .
+muontoy:alpha muontoy:serial 7 .
+muontoy:alpha muontoy:isBroken false .
+muontoy:alpha muontoy:nickname "a-one" .
+muontoy:alpha muontoy:nickname "a-prime" .
+muontoy:alpha muontoy:hasColor muontoy:red .
+muontoy:alpha muontoy:pairsWith muontoy:beta .
+
+muontoy:beta a muontoy:ToyGadget .
+muontoy:beta rdfs:label "Béta Unit"@en .
+muontoy:beta muontoy:hasColor muontoy:blue .
+
+muontoy:gamma a muontoy:ToyGadget .
+muontoy:gamma rdfs:label "Gamma"@en .
+muontoy:gamma muontoy:hasColor muontoy:green .
+muontoy:gamma muontoy:pairsWith muontoy:alpha .
