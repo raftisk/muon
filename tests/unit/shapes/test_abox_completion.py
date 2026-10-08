@@ -5,8 +5,11 @@ from muon.ingestion.batch import build_node_id
 from tests.unit.shapes.abox_completion import (
     ABSENT_GAME_LABELS,
     ALIASES,
+    APPEARS_IN_EDGES,
     CLASS_COUNTS,
+    CONDITION_EDGES,
     GAME_GROUPS,
+    INTRODUCED_IN_BY_CLASS,
     REMOVED_LOCAL_NAMES,
     VERSION_IDS_SPOT_CHECK,
     VOCABULARY_LABELS,
@@ -24,6 +27,13 @@ def expand_class(name: str) -> URIRef:
 
 def read_local_name(node) -> str:
     return str(node).removeprefix(str(PKMN))
+
+
+def read_edges(graph: Graph, predicate: URIRef) -> set[tuple[str, str]]:
+    return {
+        (read_local_name(subject), read_local_name(target))
+        for subject, target in graph.subject_objects(predicate)
+    }
 
 
 def read_labels(graph: Graph, class_name: str) -> list[str]:
@@ -100,3 +110,52 @@ def test_game_ids(abox_graph):
 def test_absent_games(abox_graph):
     all_labels = {str(label) for label in abox_graph.objects(None, RDFS.label)}
     assert all_labels.isdisjoint(ABSENT_GAME_LABELS)
+
+
+def test_introduced_in_new_classes(abox_graph):
+    edges = read_edges(abox_graph, PKMN.introducedIn)
+    assert {(name, gen) for name, gen in edges if name in INTRODUCED_IN_BY_CLASS} == set(
+        INTRODUCED_IN_BY_CLASS.items()
+    )
+
+
+def test_introduced_in_is_single_valued_for_new_classes(abox_graph):
+    for name in INTRODUCED_IN_BY_CLASS:
+        generations = list(abox_graph.objects(PKMN[name], PKMN.introducedIn))
+        assert len(generations) == 1, name
+
+
+def test_introduced_in_total(abox_graph):
+    assert len(INTRODUCED_IN_BY_CLASS) == 37
+    assert len(list(abox_graph.subject_objects(PKMN.introducedIn))) == 100
+
+
+def test_condition_edges_match_table(abox_graph):
+    properties = ("immuneTo", "blocksCondition", "inflictsCondition")
+    actual = {
+        (subject, name, target)
+        for name in properties
+        for subject, target in read_edges(abox_graph, PKMN[name])
+    }
+    assert actual == set(CONDITION_EDGES)
+    assert len(CONDITION_EDGES) == 27
+    counts = {name: len(read_edges(abox_graph, PKMN[name])) for name in properties}
+    assert counts == {"immuneTo": 9, "blocksCondition": 16, "inflictsCondition": 2}
+
+
+def test_appears_in_edges(abox_graph):
+    assert read_edges(abox_graph, MO.appearsIn) == set(APPEARS_IN_EDGES)
+
+
+def test_existing_edge_counts_unchanged(abox_graph):
+    expected = {
+        "superEffectiveAgainst": 51,
+        "notVeryEffectiveAgainst": 61,
+        "noEffectAgainst": 8,
+        "boostsStat": 20,
+        "reducesStat": 20,
+        "amplifiesType": 7,
+        "dampensType": 3,
+    }
+    actual = {name: len(read_edges(abox_graph, PKMN[name])) for name in expected}
+    assert actual == expected

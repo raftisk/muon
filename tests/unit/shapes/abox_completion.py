@@ -186,3 +186,84 @@ ABSENT_GAME_LABELS: tuple[str, ...] = (
     "Mega Dimension",
     "Winds and Waves",
 )
+
+# Debut generation of the individuals that gained `introducedIn` with the A-Box completion.
+INTRODUCED_IN_BY_CLASS: dict[str, str] = {
+    **{
+        f"eggGroup{name}": "gen2"
+        for name in (
+            "Monster",
+            "Water1",
+            "Water2",
+            "Water3",
+            "Bug",
+            "Flying",
+            "Field",
+            "Fairy",
+            "Grass",
+            "HumanLike",
+            "Mineral",
+            "Amorphous",
+            "Ditto",
+            "Dragon",
+            "NoEggs",
+        )
+    },
+    "spikes": "gen2",
+    "stealthRock": "gen4",
+    "toxicSpikes": "gen4",
+    "stickyWeb": "gen6",
+    "steelsurge": "gen8",
+    **{
+        f"status{name}": "gen1"
+        for name in ("Burn", "Freeze", "Paralysis", "Poison", "BadlyPoisoned", "Sleep")
+    },
+    "statusFrostbite": "gen8",
+    "statusDrowsy": "gen8",
+    "rain": "gen2",
+    "harshSunlight": "gen2",
+    "sandstorm": "gen2",
+    "hail": "gen2",
+    "fog": "gen4",
+    "snow": "gen8",
+    "extremelyHarshSunlight": "gen6",
+    "heavyRain": "gen6",
+    "strongWinds": "gen6",
+}
+
+NON_VOLATILE_STATUSES: tuple[str, ...] = (
+    "statusBurn",
+    "statusFreeze",
+    "statusParalysis",
+    "statusPoison",
+    "statusBadlyPoisoned",
+    "statusSleep",
+)
+
+# (subject, property, object) between individuals, all local names in the pkmn namespace.
+CONDITION_EDGES: tuple[tuple[str, str, str], ...] = (
+    ("Fire", "immuneTo", "statusBurn"),
+    ("Ice", "immuneTo", "statusFreeze"),
+    ("Ice", "immuneTo", "statusFrostbite"),
+    ("Electric", "immuneTo", "statusParalysis"),
+    ("Poison", "immuneTo", "statusPoison"),
+    ("Poison", "immuneTo", "statusBadlyPoisoned"),
+    ("Steel", "immuneTo", "statusPoison"),
+    ("Steel", "immuneTo", "statusBadlyPoisoned"),
+    ("Grass", "immuneTo", "powder"),
+    ("electricTerrain", "blocksCondition", "statusSleep"),
+    ("electricTerrain", "blocksCondition", "volatileDrowsy"),
+    *(
+        ("mistyTerrain", "blocksCondition", target)
+        for target in (*NON_VOLATILE_STATUSES, "confused")
+    ),
+    *(("safeguard", "blocksCondition", target) for target in (*NON_VOLATILE_STATUSES, "confused")),
+    ("toxicSpikes", "inflictsCondition", "statusPoison"),
+    ("toxicSpikes", "inflictsCondition", "statusBadlyPoisoned"),
+)
+
+APPEARS_IN_EDGES: tuple[tuple[str, str], ...] = (
+    ("statusFrostbite", "versionGroupLegendsArceus"),
+    ("statusDrowsy", "versionGroupLegendsArceus"),
+    ("statusDrowsy", "versionGroupLegendsZA"),
+)

@@ -112,7 +112,7 @@ The pkmn ontology models species and game mechanics. It holds no individual Poke
 
 ### Individuals
 
-`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 15 EggGroups, 25 Natures, 8 StatusConditions, 20 VolatileConditions, 9 Weathers, 4 Terrains, 5 EntryHazards, 10 FieldEffects, 19 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics, 24 VersionGroups, 40 Versions and the `pkmn:pokemon` Universe. Regions, mechanics, Types, Natures and Terrains carry `introducedIn`. The A-Box also holds 217 reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 10 weather and terrain type edges and 47 `introducedIn` edges. A condition enters the A-Box when at least 2 distinct entities (moves, abilities, items, types, terrains) inflict, cure, block, ignore or react to it; the others stay in text. A condition carries `aliases` for the move-derived name (Taunted: Taunt). Every other instance is created by ingestion.
+`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 15 EggGroups, 25 Natures, 8 StatusConditions, 20 VolatileConditions, 9 Weathers, 4 Terrains, 5 EntryHazards, 10 FieldEffects, 19 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics, 24 VersionGroups, 40 Versions and the `pkmn:pokemon` Universe. `introducedIn` sits on Types, Natures, Terrains, Regions, GenerationMechanics, EggGroups, EntryHazards, StatusConditions and Weathers (100 edges). The A-Box also holds reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 10 weather and terrain type edges, 64 `partOf` edges and 27 condition edges. A condition enters the A-Box when at least 2 distinct entities (moves, abilities, items, types, terrains) inflict, cure, block, ignore or react to it; the others stay in text. A condition carries `aliases` for the move-derived name (Taunted: Taunt). Every other instance is created by ingestion.
 
 ### Species, types and natures
 
@@ -149,6 +149,8 @@ Magnitudes are node properties: `probability`, `statStages`, `statMultiplier`, `
 `target` names the recipient (self, ally, foe, field, move). `trigger` names the moment an ability effect, item effect or form change fires: switch_in, switch_out, on_attack, on_hit, on_knock_out, low_hp, end_of_turn, passive.
 
 Weather and terrain individuals point at types with `amplifiesType` and `dampensType`, both sub-properties of `modifiesType`. The A-Box holds 7 `amplifiesType` and 3 `dampensType` edges for type-based damage changes only. Weather damage, Strong Winds and the rules that make a move fail stay in text.
+
+The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze and Frostbite, Electric to Paralysis, Poison and Steel to Poison and Badly Poisoned, Grass to the `powder` flag), 16 `blocksCondition` (Electric Terrain to Sleep and Drowsy, Misty Terrain and Safeguard to the 6 non-volatile statuses and Confused) and 2 `inflictsCondition` (Toxic Spikes to Poison and Badly Poisoned). Frostbite and Drowsy exist in the Legends games only and point at them with `mo:appearsIn`. Edges from abilities, items and weather to conditions are not in the A-Box; ingestion adds them.
 
 ### Evolution and forms
 
