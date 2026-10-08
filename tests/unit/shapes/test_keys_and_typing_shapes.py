@@ -1,3 +1,5 @@
+from tests.unit.shapes.games_fixtures import GENERATION_NODE, build_version_group
+
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
 SPECIAL = 'ex:special a pkmn:MoveDamageClass ; pkmn:id "special" .'
 FLAMETHROWER = (
@@ -12,8 +14,9 @@ def test_valid_slug_conforms(validate_fixture):
 
 def test_composite_reified_key_conforms(validate_fixture):
     data = (
-        'ex:sv a pkmn:VersionGroup ; pkmn:id "scarlet-violet" . '
-        'ex:entry a pkmn:LearnsetEntry ; pkmn:id "diglett:earthquake:level:40:scarlet-violet" ; '
+        GENERATION_NODE
+        + build_version_group("sv", "scarlet-violet")
+        + 'ex:entry a pkmn:LearnsetEntry ; pkmn:id "diglett:earthquake:level:40:scarlet-violet" ; '
         "pkmn:inVersionGroup ex:sv ."
     )
     assert validate_fixture(data).conforms

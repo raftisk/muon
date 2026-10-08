@@ -1,11 +1,18 @@
+from tests.unit.shapes.games_fixtures import (
+    GENERATION_NODE,
+    build_version,
+    build_version_group,
+)
+
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
 SPECIES = (
     'ex:charmander a pkmn:PokemonSpecies ; pkmn:id "charmander" ; pkmn:pokedexNumber 4 ; '
     "pkmn:primaryType ex:fire ; pkmn:isGenderless false ; pkmn:femaleRate 0.125 ."
 )
-VERSION = 'ex:red a pkmn:Version ; pkmn:id "red" .'
+GROUP = build_version_group("rb", "red-blue")
+VERSION = build_version("red", "red", "rb")
 AREA = 'ex:cave-1f a pkmn:LocationArea ; pkmn:id "cave-1f" .'
-REFERENCES = FIRE + SPECIES + VERSION + AREA
+REFERENCES = FIRE + SPECIES + GENERATION_NODE + GROUP + VERSION + AREA
 
 
 def encounter(properties: str = "pkmn:minLevel 5 ; pkmn:maxLevel 10 ; pkmn:chance 20") -> str:

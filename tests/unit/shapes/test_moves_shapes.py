@@ -1,12 +1,14 @@
+from tests.unit.shapes.games_fixtures import GENERATION_NODE, build_version_group
+
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
 ICE = 'ex:ice a pkmn:Type ; pkmn:id "ice" .'
 SPECIAL = 'ex:special a pkmn:MoveDamageClass ; pkmn:id "special" .'
-GROUP = 'ex:sv a pkmn:VersionGroup ; pkmn:id "scarlet-violet" .'
+GROUP = build_version_group("sv", "scarlet-violet")
 EARTHQUAKE = (
     'ex:earthquake a pkmn:Move ; pkmn:id "earthquake" ; '
     "pkmn:hasType ex:fire ; pkmn:hasDamageClass ex:special ."
 )
-REFERENCES = FIRE + ICE + SPECIAL + GROUP + EARTHQUAKE
+REFERENCES = FIRE + ICE + SPECIAL + GENERATION_NODE + GROUP + EARTHQUAKE
 
 
 def move(
@@ -75,9 +77,10 @@ def test_learnset_entry_with_one_version_group_conforms(validate_fixture):
 
 
 def test_learnset_entry_with_two_version_groups_fails(validate_fixture):
-    data = REFERENCES + (
-        'ex:other a pkmn:VersionGroup ; pkmn:id "sword-shield" . '
-        'ex:entry a pkmn:LearnsetEntry ; pkmn:id "diglett:earthquake:level:40:scarlet-violet" ; '
+    data = (
+        REFERENCES
+        + build_version_group("other", "sword-shield")
+        + 'ex:entry a pkmn:LearnsetEntry ; pkmn:id "diglett:earthquake:level:40:scarlet-violet" ; '
         "pkmn:inVersionGroup ex:sv , ex:other ."
     )
     assert validate_fixture(data).rule_ids == {"C2"}
