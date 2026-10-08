@@ -10,6 +10,9 @@ dependencies = [
     "rdflib>=7.6.0",
 ]
 
+[project.scripts]
+muon = "muon.cli:main"
+
 [dependency-groups]
 dev = [
     "mypy",
