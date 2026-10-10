@@ -49,6 +49,9 @@ INDEX_EXTRA_TITLES = tuple(
         "Hitmontop",
         "Nidorina",
         "Nidorino",
+        "Burmy",
+        "Wormadam",
+        "Mothim",
     )
 )
 
