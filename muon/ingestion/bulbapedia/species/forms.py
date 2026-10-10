@@ -153,10 +153,21 @@ def read_sprite_code(file_or_number: str, base_name: str) -> str:
     `0050Diglett-Alola.png` and `0051Dugtrio-Alola` give `Alola`, and `0050` gives `""`.
     """
     stem = IMAGE_EXTENSION.sub("", file_or_number.strip())
-    rest = LEADING_DIGITS.sub("", stem)
-    if rest.lower().startswith(base_name.lower()):
-        rest = rest[len(base_name) :]
+    rest = strip_name_prefix(LEADING_DIGITS.sub("", stem), base_name)
     return rest.strip(CODE_PADDING)
+
+
+def strip_name_prefix(text: str, name: str) -> str:
+    """Remove `name` from the start of `text`, ignoring case and any punctuation `text`
+    leaves out ("Mime Jr" for "Mime Jr."). Return `text` unchanged when it does not start
+    with `name`."""
+    position = 0
+    for character in name:
+        if position < len(text) and text[position].lower() == character.lower():
+            position += 1
+        elif character.isalnum():
+            return text
+    return text[position:]
 
 
 def read_region(infobox_name: str) -> str | None:

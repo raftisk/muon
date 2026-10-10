@@ -112,6 +112,9 @@ def test_build_species_id(name: str, expected: str) -> None:
         ("0122Mr. Mime-Galar.png", "Mr. Mime", "Galar"),
         ("0555Darmanitan-Galar-Zen.png", "Darmanitan", "Galar-Zen"),
         ("HOME0669Y.png", "Flabébé", "HOME0669Y"),
+        ("0439Mime Jr", "Mime Jr.", ""),
+        ("0439Mime Jr-Galar", "Mime Jr.", "Galar"),
+        ("0772Type Null", "Type: Null", ""),
     ],
 )
 def test_read_sprite_code(file_or_number: str, base_name: str, expected: str) -> None:
