@@ -2,6 +2,7 @@ from collections.abc import Mapping
 
 import pytest
 
+from muon.ingestion.bulbapedia.pages import PageStore
 from muon.ingestion.bulbapedia.species import forms
 from muon.ingestion.bulbapedia.species.extract import FormOutcome, NoteKind
 from muon.ingestion.bulbapedia.species.forms import (
@@ -524,5 +525,14 @@ def test_check_override_titles_rejects_an_unpinned_page(
     check_override_titles(["Diglett (Pokémon)", "Ghost (Pokémon)"])
 
 
-def test_check_override_titles_passes_with_no_overrides() -> None:
+def test_check_override_titles_passes_with_no_overrides(
+    overrides: dict[str, PageOverride],
+) -> None:
     check_override_titles([])
+
+
+def test_the_committed_overrides_name_pinned_species_pages() -> None:
+    pins = PageStore().read_manifest().list_pins("species")
+
+    assert forms.FORM_OVERRIDES
+    check_override_titles([pin.title for pin in pins])

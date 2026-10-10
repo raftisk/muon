@@ -73,9 +73,22 @@ class PageOverride:
     subsections: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
 
-# Starts empty. An entry is added only when the full run shows a page the rules cannot read
-# and no rule change fixes it.
-FORM_OVERRIDES: Mapping[str, PageOverride] = {}
+# An entry is added only when the full run shows a page the rules cannot read and no rule
+# change fixes it.
+FORM_OVERRIDES: Mapping[str, PageOverride] = {
+    # The infobox gives Stereo Rotom types, but the page says it appears only in Pokopia.
+    "Rotom (Pokémon)": PageOverride(forms={7: FormOverride(is_node=False)}),
+    # 1 stats subsection covers both Standard Mode forms and spells the Galarian one
+    # "(Standard Mode)", which no node name does.
+    "Darmanitan (Pokémon)": PageOverride(
+        subsections={
+            "Darmanitan (Standard Mode) and Galarian Darmanitan (Standard Mode)": (
+                "darmanitan",
+                "darmanitan-galar",
+            )
+        }
+    ),
+}
 NO_OVERRIDE = PageOverride()
 
 

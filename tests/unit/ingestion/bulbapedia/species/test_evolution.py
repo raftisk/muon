@@ -650,7 +650,7 @@ def test_other_form_nodes_are_residue_with_the_form_data_text() -> None:
         "==Game data==\n===Form data===\nRotom has forms.\n"
         "====Appliances====\n{{Evobox/Formes|forme1=Heat Rotom|loc1=Heat}}\n"
     )
-    forms = resolve_forms(FormInputs("Rotom (Pokémon)", infobox, (), ()))
+    forms = resolve_forms(FormInputs("Testmon (Pokémon)", infobox, (), ()))
 
     changes, residue = read_form_changes(FormChangeInputs(sections, infobox, forms))
 
