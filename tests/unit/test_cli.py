@@ -8,6 +8,9 @@ import pytest
 from muon import cli
 from muon.config import Neo4jSettings, OntologySettings, Settings
 from muon.graph import GraphConnectionError, WriteSummary
+from muon.ingestion.bulbapedia.api import BulbapediaAPIError
+from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
+from muon.ingestion.bulbapedia.pages import PageStoreError
 from muon.ingestion.runner import RunReport
 from muon.ingestion.seed import ABoxError
 from muon.ontology.model import OntologyError
@@ -274,3 +277,158 @@ async def test_run_purge_with_missing_tbox_opens_no_client(
 
     with pytest.raises(OntologyError):
         await cli.run_purge(empty_dir_settings, PREFIX)
+
+
+FETCH_REPORT = FetchReport(
+    page_type="species",
+    listed=3,
+    fetched=1,
+    skipped=2,
+    added=("Mew (Pokémon)",),
+    changed=(),
+    removed=("Bulbasaur (Pokémon)",),
+    redirects=(("Mew", "Mew (Pokémon)"),),
+    requests=4,
+    elapsed_seconds=2.25,
+)
+
+
+class RecordingFetch:
+    """Stands in for `cli.run_fetch` and records the requests it ran."""
+
+    def __init__(self, outcome: FetchReport | Exception) -> None:
+        self.outcome = outcome
+        self.requests: list[FetchRequest] = []
+
+    def __call__(self, request: FetchRequest) -> FetchReport:
+        self.requests.append(request)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return self.outcome
+
+
+def arrange_fetch(
+    monkeypatch: pytest.MonkeyPatch, outcome: FetchReport | Exception
+) -> RecordingFetch:
+    fetch = RecordingFetch(outcome)
+    monkeypatch.setattr(cli, "run_fetch", fetch)
+    return fetch
+
+
+def test_fetch_parses_its_arguments(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetch = arrange_fetch(monkeypatch, FETCH_REPORT)
+
+    cli.main(["fetch", "bulbapedia", "ability", "--title", "A (Ability)", "--title", "B (Ability)"])
+    cli.main(["fetch", "bulbapedia", "species", "--update"])
+
+    assert fetch.requests == [
+        FetchRequest(page_type="ability", titles=("A (Ability)", "B (Ability)")),
+        FetchRequest(page_type="species", is_update=True),
+    ]
+
+
+def test_fetch_runs_without_neo4j_settings(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    for name in list(os.environ):
+        if name.startswith("NEO4J_"):
+            monkeypatch.delenv(name)
+
+    def fail_on_settings() -> Settings:
+        raise AssertionError("fetch must not read the Neo4j settings")
+
+    monkeypatch.setattr(cli, "get_settings", fail_on_settings)
+    arrange_fetch(monkeypatch, FETCH_REPORT)
+
+    exit_code = cli.main(["fetch", "bulbapedia", "species"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert "fetch bulbapedia species: done" in capsys.readouterr().out
+
+
+def test_fetch_prints_counts(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_fetch(monkeypatch, FETCH_REPORT)
+
+    cli.main(["fetch", "bulbapedia", "species"])
+
+    assert capsys.readouterr().out.splitlines() == [
+        "fetch bulbapedia species: done",
+        "listed: 3",
+        "fetched: 1",
+        "skipped: 2",
+        "added: 1",
+        "changed: 0",
+        "removed: 1",
+        "redirects: 1",
+        "requests: 4",
+        "elapsed seconds: 2.2",
+    ]
+
+
+def test_fetch_update_lists_the_titles(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_fetch(monkeypatch, FETCH_REPORT)
+
+    cli.main(["fetch", "bulbapedia", "species", "--update"])
+
+    assert capsys.readouterr().out.splitlines()[-3:] == [
+        "added: Mew (Pokémon)",
+        "removed: Bulbasaur (Pokémon)",
+        "redirect: Mew -> Mew (Pokémon)",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("argv", "invalid"),
+    [
+        (["fetch", "bulbapedia", "moves"], "'moves'"),
+        (["fetch", "serebii", "species"], "'serebii'"),
+    ],
+)
+def test_fetch_rejects_unknown_choices(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    argv: list[str],
+    invalid: str,
+) -> None:
+    fetch = arrange_fetch(monkeypatch, FETCH_REPORT)
+
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(argv)
+
+    error = capsys.readouterr().err
+    assert exit_info.value.code == 2
+    assert f"invalid choice: {invalid}" in error
+    assert fetch.requests == []
+
+
+def test_fetch_lists_the_valid_page_types(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        cli.main(["fetch", "bulbapedia", "moves"])
+
+    error = capsys.readouterr().err
+    assert all(page_type in error for page_type in ("ability", "item", "species"))
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        BulbapediaAPIError("GET api.php for titles=X failed with HTTP 403"),
+        FetchError("Category:Pokémon lists no page ending in ' (Pokémon)'"),
+        PageStoreError("Cannot read manifest data/bulbapedia/manifest.json"),
+    ],
+)
+def test_fetch_failure_prints_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    arrange_fetch(monkeypatch, error)
+
+    exit_code = cli.main(["fetch", "bulbapedia", "species"])
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_FAILURE
+    assert f"fetch bulbapedia species failed: {error}" in captured.err
+    assert captured.out == ""
