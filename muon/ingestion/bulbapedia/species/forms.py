@@ -10,6 +10,7 @@ which infobox images and Evobox `no` fields share, so references agree across pa
 import re
 from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass, field
+from typing import Protocol
 
 from muon.ingestion.batch import build_node_id
 from muon.ingestion.bulbapedia.species.extract import (
@@ -321,7 +322,17 @@ def has_own_data(infobox: Mapping[str, str], index: int, mega_rank: int | None) 
     return any(has_value(infobox, key) for key in keys)
 
 
-def rank_mega_forms(candidates: tuple[FormCandidate, ...]) -> Mapping[int, int]:
+class NamedCandidate(Protocol):
+    """A `FormCandidate` or a `FormCandidateResult`."""
+
+    @property
+    def index(self) -> int: ...
+
+    @property
+    def infobox_name(self) -> str: ...
+
+
+def rank_mega_forms(candidates: Iterable[NamedCandidate]) -> Mapping[int, int]:
     """Return the position of each non-default Mega candidate among the Mega forms."""
     mega = [
         candidate.index
