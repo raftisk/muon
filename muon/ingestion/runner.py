@@ -3,10 +3,13 @@
 Compiles a `GraphBatch` into fixed Cypher statements and writes them in one
 transaction. Labels and relationship types travel as parameters through dynamic
 labels (`$(...)`), with names from the label materializer. A node merges on its
-class label, the universe label and `id`; an edge merges on (start, type, end).
-It also purges a universe: every node with the universe label, in one statement.
+class label, the universe label and `id`; an edge merges on (start, type, end) and
+carries its properties. A stub merges on the same key as a node and is set on
+create only, so it never changes a node that exists. It also purges a universe:
+every node with the universe label, in one statement.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass, fields
 from enum import StrEnum
 from typing import Any, LiteralString
@@ -24,7 +27,7 @@ class WriteMode(StrEnum):
 
     `sync` treats the batch as the full truth for its scope: it also deletes the
     universe's scope nodes the batch does not list, and the relationships between
-    2 scope nodes the batch does not list.
+    2 scope nodes the batch does not list. A sync batch holds no stubs.
     """
 
     UPSERT = "upsert"
@@ -74,12 +77,24 @@ MERGE_NODES_SYNC: LiteralString = MERGE_NODES_HEAD + "SET n = row.properties\n"
 
 MERGE_NODES_UPSERT: LiteralString = MERGE_NODES_HEAD + "SET n += row.properties\n"
 
-MERGE_EDGES: LiteralString = """
+# A stub never changes a node that exists: a reference by an ancestor class must
+# not remove the owner's subclass label or overwrite its name.
+MERGE_STUBS: LiteralString = """
+UNWIND $stubs AS row
+MERGE (n:$(row.key_labels) {id: row.id})
+ON CREATE SET n:$(row.labels), n = row.properties
+"""
+
+MERGE_EDGES_HEAD: LiteralString = """
 UNWIND $edges AS row
 MATCH (a:$([row.start_label, $universe]) {id: row.start_id})
 MATCH (b:$([row.end_label, $universe]) {id: row.end_id})
-MERGE (a)-[:$(row.type)]->(b)
+MERGE (a)-[r:$(row.type)]->(b)
 """
+
+MERGE_EDGES_SYNC: LiteralString = MERGE_EDGES_HEAD + "SET r = row.properties\n"
+
+MERGE_EDGES_UPSERT: LiteralString = MERGE_EDGES_HEAD + "SET r += row.properties\n"
 
 PURGE_UNIVERSE: LiteralString = """
 MATCH (n:$($universe))
@@ -95,14 +110,20 @@ class Runner:
         self.materializer = materializer
 
     async def write(self, batch: GraphBatch, mode: WriteMode) -> RunReport:
-        """Ensure the scope constraints, then write the batch in one transaction."""
+        """Ensure the scope and stub class constraints, then write the batch in one transaction."""
         if batch.universe != self.materializer.universe_label:
             raise ValueError(
                 f"Batch universe {batch.universe!r} does not match the ontology universe "
                 f"{self.materializer.universe_label!r}"
             )
+        if mode is WriteMode.SYNC and batch.stub_nodes:
+            stub = batch.stub_nodes[0]
+            raise ValueError(
+                f"Sync mode takes no stubs: {stub.class_iri} {stub.id!r} is outside scope"
+            )
+        stub_classes = {stub.class_iri for stub in batch.stub_nodes}
         constraints_ensured = await ensure_id_constraints(
-            self.client, self.materializer, batch.scope
+            self.client, self.materializer, batch.scope | stub_classes
         )
         statements = build_statements(batch, mode, self.materializer)
         summaries = await self.client.execute_write_batch(statements)
@@ -125,13 +146,22 @@ def build_statements(
     """Return the statements of `mode` in run order, each with the parameters it uses."""
     universe = materializer.universe_label
     node_parameters = {
-        "nodes": build_node_rows(batch, materializer),
+        "nodes": build_node_rows(batch.owner_nodes, materializer),
         "class_labels": sorted(materializer.list_ontology_labels()),
     }
     edge_rows = build_edge_rows(batch, materializer)
-    merge_edges = Statement(MERGE_EDGES, {"universe": universe, "edges": edge_rows})
+    edge_parameters = {"universe": universe, "edges": edge_rows}
     if mode is WriteMode.UPSERT:
-        return [Statement(MERGE_NODES_UPSERT, node_parameters), merge_edges]
+        stub_statements = (
+            [Statement(MERGE_STUBS, {"stubs": build_node_rows(batch.stub_nodes, materializer)})]
+            if batch.stub_nodes
+            else []
+        )
+        return [
+            Statement(MERGE_NODES_UPSERT, node_parameters),
+            *stub_statements,
+            Statement(MERGE_EDGES_UPSERT, edge_parameters),
+        ]
 
     scope_labels = sorted(materializer.map_class_label(class_iri) for class_iri in batch.scope)
     prune_nodes_parameters = {
@@ -148,11 +178,13 @@ def build_statements(
         Statement(PRUNE_NODES, prune_nodes_parameters),
         Statement(PRUNE_EDGES, prune_edges_parameters),
         Statement(MERGE_NODES_SYNC, node_parameters),
-        merge_edges,
+        Statement(MERGE_EDGES_SYNC, edge_parameters),
     ]
 
 
-def build_node_rows(batch: GraphBatch, materializer: LabelMaterializer) -> list[dict[str, Any]]:
+def build_node_rows(
+    nodes: Sequence[NodeRecord], materializer: LabelMaterializer
+) -> list[dict[str, Any]]:
     return [
         {
             "key_labels": [
@@ -163,7 +195,7 @@ def build_node_rows(batch: GraphBatch, materializer: LabelMaterializer) -> list[
             "id": node.id,
             "properties": build_node_properties(node, materializer),
         }
-        for node in batch.nodes
+        for node in nodes
     ]
 
 
@@ -176,7 +208,7 @@ def build_node_properties(node: NodeRecord, materializer: LabelMaterializer) -> 
     return properties
 
 
-def build_edge_rows(batch: GraphBatch, materializer: LabelMaterializer) -> list[dict[str, str]]:
+def build_edge_rows(batch: GraphBatch, materializer: LabelMaterializer) -> list[dict[str, Any]]:
     return [
         {
             "type": materializer.map_relationship_type(edge.property_iri),
@@ -184,6 +216,10 @@ def build_edge_rows(batch: GraphBatch, materializer: LabelMaterializer) -> list[
             "start_id": edge.start.id,
             "end_label": materializer.map_class_label(edge.end.class_iri),
             "end_id": edge.end.id,
+            "properties": {
+                name: list(value) if isinstance(value, tuple) else value
+                for name, value in edge.properties.items()
+            },
         }
         for edge in batch.edges
     ]
@@ -194,7 +230,7 @@ def build_ids_by_label(batch: GraphBatch, materializer: LabelMaterializer) -> di
     ids_by_label: dict[str, list[str]] = {
         materializer.map_class_label(class_iri): [] for class_iri in batch.scope
     }
-    for node in batch.nodes:
+    for node in batch.owner_nodes:
         ids_by_label[materializer.map_class_label(node.class_iri)].append(node.id)
     return ids_by_label
 

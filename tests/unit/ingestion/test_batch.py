@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from pydantic import ValidationError
 
@@ -7,12 +9,14 @@ from muon.ingestion.batch import (
     GraphBatch,
     NodeRecord,
     NodeRef,
+    PropertyValue,
     build_node_id,
 )
 
 EX = "https://example.org/fixture#"
 WIDGET = EX + "Widget"
 COLOR = EX + "Color"
+GADGET = EX + "Gadget"
 HAS_COLOR = EX + "hasColor"
 
 
@@ -68,11 +72,64 @@ def test_edge_to_missing_node_raises() -> None:
         build_batch((WIDGET_NODE,), (COLOR_EDGE,))
 
 
-def test_node_class_outside_scope_raises() -> None:
-    stray = NodeRecord(class_iri=EX + "Gadget", id="beta", name="Beta")
+def test_node_outside_scope_is_stub() -> None:
+    stub = NodeRecord(class_iri=GADGET, id="beta", name="Beta")
 
-    with pytest.raises(ValidationError, match="Gadget 'beta' has a class outside scope"):
-        build_batch((stray,))
+    batch = build_batch((WIDGET_NODE, stub))
+
+    assert batch.stub_nodes == (stub,)
+    assert batch.owner_nodes == (WIDGET_NODE,)
+
+
+def test_stub_with_properties_raises() -> None:
+    stub = NodeRecord(class_iri=GADGET, id="beta", name="Beta", properties={EX + "size": 1})
+    message = f"Stub {GADGET} 'beta' is outside scope and carries {EX}size"
+
+    with pytest.raises(ValidationError, match=re.escape(message)):
+        build_batch((stub,))
+
+
+@pytest.mark.parametrize("second_properties", [{}, {"shade": "dark"}])
+def test_duplicate_edge_raises(second_properties: dict[str, PropertyValue]) -> None:
+    duplicate = EdgeRecord(
+        property_iri=HAS_COLOR,
+        start=COLOR_EDGE.start,
+        end=COLOR_EDGE.end,
+        properties=second_properties,
+    )
+    message = f"Duplicate edge {HAS_COLOR} from {WIDGET} 'alpha' to {COLOR} 'red'"
+
+    with pytest.raises(ValidationError, match=re.escape(message)):
+        build_batch((WIDGET_NODE, COLOR_NODE), (COLOR_EDGE, duplicate))
+
+
+def test_edge_properties_default_empty() -> None:
+    assert COLOR_EDGE.properties == {}
+
+
+def test_edge_properties_kept() -> None:
+    edge = EdgeRecord(
+        property_iri=HAS_COLOR,
+        start=COLOR_EDGE.start,
+        end=COLOR_EDGE.end,
+        properties={"slot": 1, "isHidden": True},
+    )
+
+    batch = build_batch((WIDGET_NODE, COLOR_NODE), (edge,))
+
+    assert batch.edges[0].properties == {"slot": 1, "isHidden": True}
+
+
+def test_edge_may_end_at_stub() -> None:
+    batch = GraphBatch(
+        universe="ex",
+        scope=frozenset({WIDGET}),
+        nodes=(WIDGET_NODE, COLOR_NODE),
+        edges=(COLOR_EDGE,),
+    )
+
+    assert batch.stub_nodes == (COLOR_NODE,)
+    assert batch.edges == (COLOR_EDGE,)
 
 
 def test_batch_is_immutable() -> None:
