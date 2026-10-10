@@ -40,5 +40,8 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-markers = ["integration: needs a live Neo4j"]
-addopts = "-m 'not integration' --import-mode=importlib"
+markers = [
+    "integration: needs a live Neo4j",
+    "network: calls a live external API",
+]
+addopts = "-m 'not integration and not network' --import-mode=importlib"
