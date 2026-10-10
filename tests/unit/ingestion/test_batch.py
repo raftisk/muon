@@ -23,6 +23,9 @@ HAS_COLOR = EX + "hasColor"
         ("Mr. Mime", "mr-mime"),
         ("  Fire  ", "fire"),
         ("Béta Unit", "beta-unit"),
+        ("Let's Go Pikachu", "lets-go-pikachu"),
+        ("Can't Escape", "cant-escape"),
+        ("Farfetch’d", "farfetchd"),
         ("!!!", ""),
     ],
 )

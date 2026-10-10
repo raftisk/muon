@@ -56,7 +56,7 @@ def driver(monkeypatch: pytest.MonkeyPatch, session: AsyncMock) -> MagicMock:
 
 async def test_enter_verifies_connectivity(settings: Neo4jSettings, driver: MagicMock) -> None:
     async with Neo4jGraphClient(settings):
-        driver.verify_connectivity.assert_awaited_once_with(database=DATABASE)
+        driver.verify_connectivity.assert_awaited_once_with()
 
 
 async def test_exit_closes_driver(settings: Neo4jSettings, driver: MagicMock) -> None:

@@ -1,11 +1,17 @@
+from tests.unit.shapes.games_fixtures import (
+    GENERATION_NODE,
+    build_version,
+    build_version_group,
+)
+
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
-VERSION = 'ex:red a pkmn:Version ; pkmn:id "red" .'
-GROUP = 'ex:rb a pkmn:VersionGroup ; pkmn:id "red-blue" .'
+GROUP = build_version_group("rb", "red-blue")
+VERSION = build_version("red", "red", "rb")
 SPECIES = (
     'ex:charmander a pkmn:PokemonSpecies ; pkmn:id "charmander" ; pkmn:pokedexNumber 4 ; '
     "pkmn:primaryType ex:fire ; pkmn:isGenderless false ; pkmn:femaleRate 0.125 ."
 )
-REFERENCES = FIRE + VERSION + GROUP + SPECIES
+REFERENCES = FIRE + GENERATION_NODE + GROUP + VERSION + SPECIES
 
 
 def chunk(properties: str) -> str:

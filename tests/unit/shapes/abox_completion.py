@@ -1,0 +1,269 @@
+"""Expected A-Box content, copied from the pkmn A-Box completion spec and the pkmn A-Box note.
+
+Class names carry their prefix (`pkmn:` or `mo:`); individuals are named by their ttl local name.
+"""
+
+CLASS_COUNTS: dict[str, int] = {
+    "mo:Universe": 1,
+    "pkmn:Type": 18,
+    "pkmn:Stat": 6,
+    "pkmn:BattleStat": 3,
+    "pkmn:MoveDamageClass": 3,
+    "pkmn:EggGroup": 15,
+    "pkmn:Nature": 25,
+    "pkmn:StatusCondition": 8,
+    "pkmn:VolatileCondition": 20,
+    "pkmn:Weather": 9,
+    "pkmn:Terrain": 4,
+    "pkmn:EntryHazard": 5,
+    "pkmn:FieldEffect": 10,
+    "pkmn:MoveFlag": 19,
+    "pkmn:Generation": 9,
+    "mo:Region": 11,
+    "pkmn:GenerationMechanic": 5,
+    "pkmn:VersionGroup": 24,
+    "pkmn:Version": 40,
+}
+
+VOCABULARY_LABELS: dict[str, tuple[str, ...]] = {
+    "pkmn:EggGroup": (
+        "Monster",
+        "Water 1",
+        "Water 2",
+        "Water 3",
+        "Bug",
+        "Flying",
+        "Field",
+        "Fairy",
+        "Grass",
+        "Human-Like",
+        "Mineral",
+        "Amorphous",
+        "Ditto",
+        "Dragon",
+        "No Eggs Discovered",
+    ),
+    "pkmn:StatusCondition": (
+        "Burn",
+        "Freeze",
+        "Paralysis",
+        "Poison",
+        "Badly Poisoned",
+        "Sleep",
+        "Frostbite",
+        "Drowsy",
+    ),
+    "pkmn:VolatileCondition": (
+        "Confused",
+        "Flinch",
+        "Infatuated",
+        "Taunted",
+        "Encore",
+        "Move Disabled",
+        "Unable to Repeat",
+        "Healing Prevented",
+        "Leech Seeded",
+        "Drowsy",
+        "Can't Escape",
+        "Bound",
+        "No Ability",
+        "Substitute",
+        "Telekinesis",
+        "Magnet Rise",
+        "Concealed",
+        "Sky-High",
+        "Submerged",
+        "Underground",
+    ),
+    "pkmn:EntryHazard": ("Spikes", "Stealth Rock", "Toxic Spikes", "Sticky Web", "Steelsurge"),
+    "pkmn:FieldEffect": (
+        "Trick Room",
+        "Gravity",
+        "Magic Room",
+        "Wonder Room",
+        "Tailwind",
+        "Light Screen",
+        "Reflect",
+        "Aurora Veil",
+        "Safeguard",
+        "Mist",
+    ),
+}
+
+ALIASES: dict[str, tuple[str, ...]] = {
+    "stealthRock": ("Pointed Stones",),
+    "toxicSpikes": ("Poison Spikes",),
+    "steelsurge": ("G-Max Steelsurge", "Sharp Steel"),
+    "confused": ("Confusion",),
+    "infatuated": ("Infatuation",),
+    "taunted": ("Taunt",),
+    "moveDisabled": ("Disable",),
+    "unableToRepeat": ("Torment",),
+    "healingPrevented": ("Heal Block",),
+    "leechSeeded": ("Leech Seed",),
+    "volatileDrowsy": ("Yawn",),
+    "cantEscape": ("Trapped",),
+}
+
+REMOVED_LOCAL_NAMES: tuple[str, ...] = (
+    "curse",
+    "nightmare",
+    "aquaRing",
+    "ingrain",
+    "embargo",
+    "semiInvulnerable",
+    "trapped",
+    "yawn",
+    "disable",
+    "torment",
+    "healBlock",
+    "taunt",
+    "confusion",
+    "infatuation",
+    "leechSeed",
+)
+
+# (group label, expected group id, generation local name, version labels)
+GAME_GROUPS: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
+    ("Red-Blue", "red-blue", "gen1", ("Red", "Blue")),
+    ("Yellow", "yellow", "gen1", ("Yellow",)),
+    ("Gold-Silver", "gold-silver", "gen2", ("Gold", "Silver")),
+    ("Crystal", "crystal", "gen2", ("Crystal",)),
+    ("Ruby-Sapphire", "ruby-sapphire", "gen3", ("Ruby", "Sapphire")),
+    ("Emerald", "emerald", "gen3", ("Emerald",)),
+    ("FireRed-LeafGreen", "firered-leafgreen", "gen3", ("FireRed", "LeafGreen")),
+    ("Colosseum", "colosseum", "gen3", ("Colosseum",)),
+    ("XD", "xd", "gen3", ("XD",)),
+    ("Diamond-Pearl", "diamond-pearl", "gen4", ("Diamond", "Pearl")),
+    ("Platinum", "platinum", "gen4", ("Platinum",)),
+    ("HeartGold-SoulSilver", "heartgold-soulsilver", "gen4", ("HeartGold", "SoulSilver")),
+    ("Black-White", "black-white", "gen5", ("Black", "White")),
+    ("Black 2-White 2", "black-2-white-2", "gen5", ("Black 2", "White 2")),
+    ("X-Y", "x-y", "gen6", ("X", "Y")),
+    (
+        "Omega Ruby-Alpha Sapphire",
+        "omega-ruby-alpha-sapphire",
+        "gen6",
+        ("Omega Ruby", "Alpha Sapphire"),
+    ),
+    ("Sun-Moon", "sun-moon", "gen7", ("Sun", "Moon")),
+    ("Ultra Sun-Ultra Moon", "ultra-sun-ultra-moon", "gen7", ("Ultra Sun", "Ultra Moon")),
+    (
+        "Let's Go Pikachu-Let's Go Eevee",
+        "lets-go-pikachu-lets-go-eevee",
+        "gen7",
+        ("Let's Go Pikachu", "Let's Go Eevee"),
+    ),
+    ("Sword-Shield", "sword-shield", "gen8", ("Sword", "Shield")),
+    (
+        "Brilliant Diamond and Shining Pearl",
+        "brilliant-diamond-and-shining-pearl",
+        "gen8",
+        ("Brilliant Diamond", "Shining Pearl"),
+    ),
+    ("Legends: Arceus", "legends-arceus", "gen8", ("Legends: Arceus",)),
+    ("Scarlet-Violet", "scarlet-violet", "gen9", ("Scarlet", "Violet")),
+    ("Legends: Z-A", "legends-z-a", "gen9", ("Legends: Z-A",)),
+)
+
+VERSION_IDS_SPOT_CHECK: tuple[str, ...] = (
+    "lets-go-pikachu",
+    "lets-go-eevee",
+    "firered",
+    "heartgold",
+    "black-2",
+    "omega-ruby",
+    "legends-z-a",
+)
+
+ABSENT_GAME_LABELS: tuple[str, ...] = (
+    "Green",
+    "Stadium",
+    "Isle of Armor",
+    "Crown Tundra",
+    "Teal Mask",
+    "Indigo Disk",
+    "Mega Dimension",
+    "Winds and Waves",
+)
+
+# Debut generation of the individuals that gained `introducedIn` with the A-Box completion.
+INTRODUCED_IN_BY_CLASS: dict[str, str] = {
+    **{
+        f"eggGroup{name}": "gen2"
+        for name in (
+            "Monster",
+            "Water1",
+            "Water2",
+            "Water3",
+            "Bug",
+            "Flying",
+            "Field",
+            "Fairy",
+            "Grass",
+            "HumanLike",
+            "Mineral",
+            "Amorphous",
+            "Ditto",
+            "Dragon",
+            "NoEggs",
+        )
+    },
+    "spikes": "gen2",
+    "stealthRock": "gen4",
+    "toxicSpikes": "gen4",
+    "stickyWeb": "gen6",
+    "steelsurge": "gen8",
+    **{
+        f"status{name}": "gen1"
+        for name in ("Burn", "Freeze", "Paralysis", "Poison", "BadlyPoisoned", "Sleep")
+    },
+    "statusFrostbite": "gen8",
+    "statusDrowsy": "gen8",
+    "rain": "gen2",
+    "harshSunlight": "gen2",
+    "sandstorm": "gen2",
+    "hail": "gen2",
+    "fog": "gen4",
+    "snow": "gen8",
+    "extremelyHarshSunlight": "gen6",
+    "heavyRain": "gen6",
+    "strongWinds": "gen6",
+}
+
+NON_VOLATILE_STATUSES: tuple[str, ...] = (
+    "statusBurn",
+    "statusFreeze",
+    "statusParalysis",
+    "statusPoison",
+    "statusBadlyPoisoned",
+    "statusSleep",
+)
+
+# (subject, property, object) between individuals, all local names in the pkmn namespace.
+CONDITION_EDGES: tuple[tuple[str, str, str], ...] = (
+    ("Fire", "immuneTo", "statusBurn"),
+    ("Ice", "immuneTo", "statusFreeze"),
+    ("Ice", "immuneTo", "statusFrostbite"),
+    ("Electric", "immuneTo", "statusParalysis"),
+    ("Poison", "immuneTo", "statusPoison"),
+    ("Poison", "immuneTo", "statusBadlyPoisoned"),
+    ("Steel", "immuneTo", "statusPoison"),
+    ("Steel", "immuneTo", "statusBadlyPoisoned"),
+    ("Grass", "immuneTo", "powder"),
+    ("electricTerrain", "blocksCondition", "statusSleep"),
+    ("electricTerrain", "blocksCondition", "volatileDrowsy"),
+    *(
+        ("mistyTerrain", "blocksCondition", target)
+        for target in (*NON_VOLATILE_STATUSES, "confused")
+    ),
+    *(("safeguard", "blocksCondition", target) for target in (*NON_VOLATILE_STATUSES, "confused")),
+    ("toxicSpikes", "inflictsCondition", "statusPoison"),
+    ("toxicSpikes", "inflictsCondition", "statusBadlyPoisoned"),
+)
+
+APPEARS_IN_EDGES: tuple[tuple[str, str], ...] = (
+    ("statusFrostbite", "versionGroupLegendsArceus"),
+    ("statusDrowsy", "versionGroupLegendsArceus"),
+    ("statusDrowsy", "versionGroupLegendsZA"),
+)

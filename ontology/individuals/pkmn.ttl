@@ -93,18 +93,21 @@ pkmn:special  a pkmn:MoveDamageClass ; rdfs:label "Special"@en .
 pkmn:status   a pkmn:MoveDamageClass ; rdfs:label "Status"@en .
 
 ## Egg groups ##
-pkmn:eggGroupMonster   a pkmn:EggGroup ; rdfs:label "Monster"@en .
-pkmn:eggGroupWater1    a pkmn:EggGroup ; rdfs:label "Water 1"@en .
-pkmn:eggGroupBug       a pkmn:EggGroup ; rdfs:label "Bug"@en .
-pkmn:eggGroupFlying    a pkmn:EggGroup ; rdfs:label "Flying"@en .
-pkmn:eggGroupField     a pkmn:EggGroup ; rdfs:label "Field"@en .
-pkmn:eggGroupFairy     a pkmn:EggGroup ; rdfs:label "Fairy"@en .
-pkmn:eggGroupGrass     a pkmn:EggGroup ; rdfs:label "Grass"@en .
-pkmn:eggGroupHumanLike a pkmn:EggGroup ; rdfs:label "Human-Like"@en .
-pkmn:eggGroupMineral   a pkmn:EggGroup ; rdfs:label "Mineral"@en .
-pkmn:eggGroupDragon    a pkmn:EggGroup ; rdfs:label "Dragon"@en .
-pkmn:eggGroupDitto     a pkmn:EggGroup ; rdfs:label "Ditto"@en .
-pkmn:eggGroupNoEggs    a pkmn:EggGroup ; rdfs:label "No Eggs Discovered"@en .
+pkmn:eggGroupMonster   a pkmn:EggGroup ; rdfs:label "Monster"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupWater1    a pkmn:EggGroup ; rdfs:label "Water 1"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupBug       a pkmn:EggGroup ; rdfs:label "Bug"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupFlying    a pkmn:EggGroup ; rdfs:label "Flying"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupField     a pkmn:EggGroup ; rdfs:label "Field"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupFairy     a pkmn:EggGroup ; rdfs:label "Fairy"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupGrass     a pkmn:EggGroup ; rdfs:label "Grass"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupHumanLike a pkmn:EggGroup ; rdfs:label "Human-Like"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupMineral   a pkmn:EggGroup ; rdfs:label "Mineral"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupDragon    a pkmn:EggGroup ; rdfs:label "Dragon"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupDitto     a pkmn:EggGroup ; rdfs:label "Ditto"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupNoEggs    a pkmn:EggGroup ; rdfs:label "No Eggs Discovered"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupWater2    a pkmn:EggGroup ; rdfs:label "Water 2"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupWater3    a pkmn:EggGroup ; rdfs:label "Water 3"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:eggGroupAmorphous a pkmn:EggGroup ; rdfs:label "Amorphous"@en ; pkmn:introducedIn pkmn:gen2 .
 
 ## Natures ##
 pkmn:hardy   a pkmn:Nature ; rdfs:label "Hardy"@en ; pkmn:introducedIn pkmn:gen3 .
@@ -134,45 +137,48 @@ pkmn:careful a pkmn:Nature ; rdfs:label "Careful"@en ; pkmn:boostsStat pkmn:spec
 pkmn:quirky  a pkmn:Nature ; rdfs:label "Quirky"@en ; pkmn:introducedIn pkmn:gen3 .
 
 ## Status conditions ##
-pkmn:statusBurn          a pkmn:StatusCondition ; rdfs:label "Burn"@en .
-pkmn:statusFreeze        a pkmn:StatusCondition ; rdfs:label "Freeze"@en .
-pkmn:statusParalysis     a pkmn:StatusCondition ; rdfs:label "Paralysis"@en .
-pkmn:statusPoison        a pkmn:StatusCondition ; rdfs:label "Poison"@en .
-pkmn:statusBadlyPoisoned a pkmn:StatusCondition ; rdfs:label "Badly Poisoned"@en .
-pkmn:statusSleep         a pkmn:StatusCondition ; rdfs:label "Sleep"@en .
+pkmn:statusBurn          a pkmn:StatusCondition ; rdfs:label "Burn"@en ; pkmn:introducedIn pkmn:gen1 .
+pkmn:statusFreeze        a pkmn:StatusCondition ; rdfs:label "Freeze"@en ; pkmn:introducedIn pkmn:gen1 .
+pkmn:statusParalysis     a pkmn:StatusCondition ; rdfs:label "Paralysis"@en ; pkmn:introducedIn pkmn:gen1 .
+pkmn:statusPoison        a pkmn:StatusCondition ; rdfs:label "Poison"@en ; pkmn:introducedIn pkmn:gen1 .
+pkmn:statusBadlyPoisoned a pkmn:StatusCondition ; rdfs:label "Badly Poisoned"@en ; pkmn:introducedIn pkmn:gen1 .
+pkmn:statusSleep         a pkmn:StatusCondition ; rdfs:label "Sleep"@en ; pkmn:introducedIn pkmn:gen1 .
+pkmn:statusFrostbite     a pkmn:StatusCondition ; rdfs:label "Frostbite"@en ; pkmn:introducedIn pkmn:gen8 .
+pkmn:statusDrowsy        a pkmn:StatusCondition ; rdfs:label "Drowsy"@en ; pkmn:introducedIn pkmn:gen8 .
 
 ## Volatile conditions ##
-pkmn:confusion       a pkmn:VolatileCondition ; rdfs:label "Confusion"@en .
-pkmn:flinch          a pkmn:VolatileCondition ; rdfs:label "Flinch"@en .
-pkmn:taunt           a pkmn:VolatileCondition ; rdfs:label "Taunt"@en .
-pkmn:encore          a pkmn:VolatileCondition ; rdfs:label "Encore"@en .
-pkmn:leechSeed       a pkmn:VolatileCondition ; rdfs:label "Leech Seed"@en .
-pkmn:infatuation     a pkmn:VolatileCondition ; rdfs:label "Infatuation"@en .
-pkmn:trapped         a pkmn:VolatileCondition ; rdfs:label "Trapped"@en .
-pkmn:substitute      a pkmn:VolatileCondition ; rdfs:label "Substitute"@en .
-pkmn:semiInvulnerable a pkmn:VolatileCondition ; rdfs:label "Semi-Invulnerable"@en .
-pkmn:curse           a pkmn:VolatileCondition ; rdfs:label "Curse"@en .
-pkmn:nightmare       a pkmn:VolatileCondition ; rdfs:label "Nightmare"@en .
-pkmn:disable         a pkmn:VolatileCondition ; rdfs:label "Disable"@en .
-pkmn:torment         a pkmn:VolatileCondition ; rdfs:label "Torment"@en .
-pkmn:yawn            a pkmn:VolatileCondition ; rdfs:label "Yawn"@en .
-pkmn:aquaRing        a pkmn:VolatileCondition ; rdfs:label "Aqua Ring"@en .
-pkmn:ingrain         a pkmn:VolatileCondition ; rdfs:label "Ingrain"@en .
-pkmn:magnetRise      a pkmn:VolatileCondition ; rdfs:label "Magnet Rise"@en .
-pkmn:telekinesis     a pkmn:VolatileCondition ; rdfs:label "Telekinesis"@en .
-pkmn:embargo         a pkmn:VolatileCondition ; rdfs:label "Embargo"@en .
-pkmn:healBlock       a pkmn:VolatileCondition ; rdfs:label "Heal Block"@en .
+# Names are the in-game status names; mo:aliases keeps the move-derived name.
+pkmn:confused         a pkmn:VolatileCondition ; rdfs:label "Confused"@en ; mo:aliases "Confusion"@en .
+pkmn:flinch           a pkmn:VolatileCondition ; rdfs:label "Flinch"@en .
+pkmn:infatuated       a pkmn:VolatileCondition ; rdfs:label "Infatuated"@en ; mo:aliases "Infatuation"@en .
+pkmn:taunted          a pkmn:VolatileCondition ; rdfs:label "Taunted"@en ; mo:aliases "Taunt"@en .
+pkmn:encore           a pkmn:VolatileCondition ; rdfs:label "Encore"@en .
+pkmn:moveDisabled     a pkmn:VolatileCondition ; rdfs:label "Move Disabled"@en ; mo:aliases "Disable"@en .
+pkmn:unableToRepeat   a pkmn:VolatileCondition ; rdfs:label "Unable to Repeat"@en ; mo:aliases "Torment"@en .
+pkmn:healingPrevented a pkmn:VolatileCondition ; rdfs:label "Healing Prevented"@en ; mo:aliases "Heal Block"@en .
+pkmn:leechSeeded      a pkmn:VolatileCondition ; rdfs:label "Leech Seeded"@en ; mo:aliases "Leech Seed"@en .
+pkmn:volatileDrowsy   a pkmn:VolatileCondition ; rdfs:label "Drowsy"@en ; mo:aliases "Yawn"@en .
+pkmn:cantEscape       a pkmn:VolatileCondition ; rdfs:label "Can't Escape"@en ; mo:aliases "Trapped"@en .
+pkmn:bound            a pkmn:VolatileCondition ; rdfs:label "Bound"@en .
+pkmn:noAbility        a pkmn:VolatileCondition ; rdfs:label "No Ability"@en .
+pkmn:substitute       a pkmn:VolatileCondition ; rdfs:label "Substitute"@en .
+pkmn:telekinesis      a pkmn:VolatileCondition ; rdfs:label "Telekinesis"@en .
+pkmn:magnetRise       a pkmn:VolatileCondition ; rdfs:label "Magnet Rise"@en .
+pkmn:concealed        a pkmn:VolatileCondition ; rdfs:label "Concealed"@en .
+pkmn:skyHigh          a pkmn:VolatileCondition ; rdfs:label "Sky-High"@en .
+pkmn:submerged        a pkmn:VolatileCondition ; rdfs:label "Submerged"@en .
+pkmn:underground      a pkmn:VolatileCondition ; rdfs:label "Underground"@en .
 
 ## Weather ##
-pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en ; pkmn:amplifiesType pkmn:Water ; pkmn:dampensType pkmn:Fire .
-pkmn:harshSunlight          a pkmn:Weather ; rdfs:label "Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire ; pkmn:dampensType pkmn:Water .
-pkmn:sandstorm              a pkmn:Weather ; rdfs:label "Sandstorm"@en .
-pkmn:hail                   a pkmn:Weather ; rdfs:label "Hail"@en .
-pkmn:snow                   a pkmn:Weather ; rdfs:label "Snow"@en .
-pkmn:fog                    a pkmn:Weather ; rdfs:label "Fog"@en .
-pkmn:extremelyHarshSunlight a pkmn:Weather ; rdfs:label "Extremely Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire .
-pkmn:heavyRain              a pkmn:Weather ; rdfs:label "Heavy Rain"@en ; pkmn:amplifiesType pkmn:Water .
-pkmn:strongWinds            a pkmn:Weather ; rdfs:label "Strong Winds"@en .
+pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en ; pkmn:amplifiesType pkmn:Water ; pkmn:dampensType pkmn:Fire ; pkmn:introducedIn pkmn:gen2 .
+pkmn:harshSunlight          a pkmn:Weather ; rdfs:label "Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire ; pkmn:dampensType pkmn:Water ; pkmn:introducedIn pkmn:gen2 .
+pkmn:sandstorm              a pkmn:Weather ; rdfs:label "Sandstorm"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:hail                   a pkmn:Weather ; rdfs:label "Hail"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:snow                   a pkmn:Weather ; rdfs:label "Snow"@en ; pkmn:introducedIn pkmn:gen8 .
+pkmn:fog                    a pkmn:Weather ; rdfs:label "Fog"@en ; pkmn:introducedIn pkmn:gen4 .
+pkmn:extremelyHarshSunlight a pkmn:Weather ; rdfs:label "Extremely Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire ; pkmn:introducedIn pkmn:gen6 .
+pkmn:heavyRain              a pkmn:Weather ; rdfs:label "Heavy Rain"@en ; pkmn:amplifiesType pkmn:Water ; pkmn:introducedIn pkmn:gen6 .
+pkmn:strongWinds            a pkmn:Weather ; rdfs:label "Strong Winds"@en ; pkmn:introducedIn pkmn:gen6 .
 
 ## Terrain ##
 pkmn:electricTerrain a pkmn:Terrain ; rdfs:label "Electric Terrain"@en ; pkmn:amplifiesType pkmn:Electric ; pkmn:introducedIn pkmn:gen6 .
@@ -181,10 +187,11 @@ pkmn:mistyTerrain    a pkmn:Terrain ; rdfs:label "Misty Terrain"@en ; pkmn:dampe
 pkmn:psychicTerrain  a pkmn:Terrain ; rdfs:label "Psychic Terrain"@en ; pkmn:amplifiesType pkmn:Psychic ; pkmn:introducedIn pkmn:gen7 .
 
 ## Entry hazards ##
-pkmn:stealthRock a pkmn:EntryHazard ; rdfs:label "Stealth Rock"@en .
-pkmn:spikes      a pkmn:EntryHazard ; rdfs:label "Spikes"@en .
-pkmn:toxicSpikes a pkmn:EntryHazard ; rdfs:label "Toxic Spikes"@en .
-pkmn:stickyWeb   a pkmn:EntryHazard ; rdfs:label "Sticky Web"@en .
+pkmn:stealthRock a pkmn:EntryHazard ; rdfs:label "Stealth Rock"@en ; mo:aliases "Pointed Stones"@en ; pkmn:introducedIn pkmn:gen4 .
+pkmn:spikes      a pkmn:EntryHazard ; rdfs:label "Spikes"@en ; pkmn:introducedIn pkmn:gen2 .
+pkmn:toxicSpikes a pkmn:EntryHazard ; rdfs:label "Toxic Spikes"@en ; mo:aliases "Poison Spikes"@en ; pkmn:introducedIn pkmn:gen4 .
+pkmn:stickyWeb   a pkmn:EntryHazard ; rdfs:label "Sticky Web"@en ; pkmn:introducedIn pkmn:gen6 .
+pkmn:steelsurge  a pkmn:EntryHazard ; rdfs:label "Steelsurge"@en ; mo:aliases "Sharp Steel"@en, "G-Max Steelsurge"@en ; pkmn:introducedIn pkmn:gen8 .
 
 ## Field effects ##
 pkmn:trickRoom   a pkmn:FieldEffect ; rdfs:label "Trick Room"@en .
@@ -195,6 +202,8 @@ pkmn:tailwind    a pkmn:FieldEffect ; rdfs:label "Tailwind"@en .
 pkmn:lightScreen a pkmn:FieldEffect ; rdfs:label "Light Screen"@en .
 pkmn:reflect     a pkmn:FieldEffect ; rdfs:label "Reflect"@en .
 pkmn:auroraVeil  a pkmn:FieldEffect ; rdfs:label "Aurora Veil"@en .
+pkmn:safeguard   a pkmn:FieldEffect ; rdfs:label "Safeguard"@en .
+pkmn:mist        a pkmn:FieldEffect ; rdfs:label "Mist"@en .
 
 ## Move flags ##
 pkmn:contact   a pkmn:MoveFlag ; rdfs:label "contact"@en .
@@ -247,3 +256,97 @@ pkmn:zMove            a pkmn:GenerationMechanic ; rdfs:label "Z-Move"@en        
 pkmn:dynamax          a pkmn:GenerationMechanic ; rdfs:label "Dynamax"@en          ; pkmn:introducedIn pkmn:gen8 .
 pkmn:gigantamax       a pkmn:GenerationMechanic ; rdfs:label "Gigantamax"@en       ; pkmn:introducedIn pkmn:gen8 .
 pkmn:terastallization a pkmn:GenerationMechanic ; rdfs:label "Terastallization"@en ; pkmn:introducedIn pkmn:gen9 .
+
+## Version groups ##
+# A set of games that share one data set. Downloadable content belongs to its base game.
+pkmn:versionGroupRedBlue a pkmn:VersionGroup ; rdfs:label "Red-Blue"@en ; mo:partOf pkmn:gen1 .
+pkmn:versionGroupYellow a pkmn:VersionGroup ; rdfs:label "Yellow"@en ; mo:partOf pkmn:gen1 .
+pkmn:versionGroupGoldSilver a pkmn:VersionGroup ; rdfs:label "Gold-Silver"@en ; mo:partOf pkmn:gen2 .
+pkmn:versionGroupCrystal a pkmn:VersionGroup ; rdfs:label "Crystal"@en ; mo:partOf pkmn:gen2 .
+pkmn:versionGroupRubySapphire a pkmn:VersionGroup ; rdfs:label "Ruby-Sapphire"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupEmerald a pkmn:VersionGroup ; rdfs:label "Emerald"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupFireRedLeafGreen a pkmn:VersionGroup ; rdfs:label "FireRed-LeafGreen"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupColosseum a pkmn:VersionGroup ; rdfs:label "Colosseum"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupXD a pkmn:VersionGroup ; rdfs:label "XD"@en ; mo:partOf pkmn:gen3 .
+pkmn:versionGroupDiamondPearl a pkmn:VersionGroup ; rdfs:label "Diamond-Pearl"@en ; mo:partOf pkmn:gen4 .
+pkmn:versionGroupPlatinum a pkmn:VersionGroup ; rdfs:label "Platinum"@en ; mo:partOf pkmn:gen4 .
+pkmn:versionGroupHeartGoldSoulSilver a pkmn:VersionGroup ; rdfs:label "HeartGold-SoulSilver"@en ; mo:partOf pkmn:gen4 .
+pkmn:versionGroupBlackWhite a pkmn:VersionGroup ; rdfs:label "Black-White"@en ; mo:partOf pkmn:gen5 .
+pkmn:versionGroupBlack2White2 a pkmn:VersionGroup ; rdfs:label "Black 2-White 2"@en ; mo:partOf pkmn:gen5 .
+pkmn:versionGroupXY a pkmn:VersionGroup ; rdfs:label "X-Y"@en ; mo:partOf pkmn:gen6 .
+pkmn:versionGroupOmegaRubyAlphaSapphire a pkmn:VersionGroup ; rdfs:label "Omega Ruby-Alpha Sapphire"@en ; mo:partOf pkmn:gen6 .
+pkmn:versionGroupSunMoon a pkmn:VersionGroup ; rdfs:label "Sun-Moon"@en ; mo:partOf pkmn:gen7 .
+pkmn:versionGroupUltraSunUltraMoon a pkmn:VersionGroup ; rdfs:label "Ultra Sun-Ultra Moon"@en ; mo:partOf pkmn:gen7 .
+pkmn:versionGroupLetsGoPikachuLetsGoEevee a pkmn:VersionGroup ; rdfs:label "Let's Go Pikachu-Let's Go Eevee"@en ; mo:partOf pkmn:gen7 .
+pkmn:versionGroupSwordShield a pkmn:VersionGroup ; rdfs:label "Sword-Shield"@en ; mo:partOf pkmn:gen8 .
+pkmn:versionGroupBrilliantDiamondAndShiningPearl a pkmn:VersionGroup ; rdfs:label "Brilliant Diamond and Shining Pearl"@en ; mo:partOf pkmn:gen8 .
+pkmn:versionGroupLegendsArceus a pkmn:VersionGroup ; rdfs:label "Legends: Arceus"@en ; mo:partOf pkmn:gen8 .
+pkmn:versionGroupScarletViolet a pkmn:VersionGroup ; rdfs:label "Scarlet-Violet"@en ; mo:partOf pkmn:gen9 .
+pkmn:versionGroupLegendsZA a pkmn:VersionGroup ; rdfs:label "Legends: Z-A"@en ; mo:partOf pkmn:gen9 .
+
+## Versions ##
+# One game release. It is part of exactly 1 version group.
+pkmn:versionRed a pkmn:Version ; rdfs:label "Red"@en ; mo:partOf pkmn:versionGroupRedBlue .
+pkmn:versionBlue a pkmn:Version ; rdfs:label "Blue"@en ; mo:partOf pkmn:versionGroupRedBlue .
+pkmn:versionYellow a pkmn:Version ; rdfs:label "Yellow"@en ; mo:partOf pkmn:versionGroupYellow .
+pkmn:versionGold a pkmn:Version ; rdfs:label "Gold"@en ; mo:partOf pkmn:versionGroupGoldSilver .
+pkmn:versionSilver a pkmn:Version ; rdfs:label "Silver"@en ; mo:partOf pkmn:versionGroupGoldSilver .
+pkmn:versionCrystal a pkmn:Version ; rdfs:label "Crystal"@en ; mo:partOf pkmn:versionGroupCrystal .
+pkmn:versionRuby a pkmn:Version ; rdfs:label "Ruby"@en ; mo:partOf pkmn:versionGroupRubySapphire .
+pkmn:versionSapphire a pkmn:Version ; rdfs:label "Sapphire"@en ; mo:partOf pkmn:versionGroupRubySapphire .
+pkmn:versionEmerald a pkmn:Version ; rdfs:label "Emerald"@en ; mo:partOf pkmn:versionGroupEmerald .
+pkmn:versionFireRed a pkmn:Version ; rdfs:label "FireRed"@en ; mo:partOf pkmn:versionGroupFireRedLeafGreen .
+pkmn:versionLeafGreen a pkmn:Version ; rdfs:label "LeafGreen"@en ; mo:partOf pkmn:versionGroupFireRedLeafGreen .
+pkmn:versionColosseum a pkmn:Version ; rdfs:label "Colosseum"@en ; mo:partOf pkmn:versionGroupColosseum .
+pkmn:versionXD a pkmn:Version ; rdfs:label "XD"@en ; mo:partOf pkmn:versionGroupXD .
+pkmn:versionDiamond a pkmn:Version ; rdfs:label "Diamond"@en ; mo:partOf pkmn:versionGroupDiamondPearl .
+pkmn:versionPearl a pkmn:Version ; rdfs:label "Pearl"@en ; mo:partOf pkmn:versionGroupDiamondPearl .
+pkmn:versionPlatinum a pkmn:Version ; rdfs:label "Platinum"@en ; mo:partOf pkmn:versionGroupPlatinum .
+pkmn:versionHeartGold a pkmn:Version ; rdfs:label "HeartGold"@en ; mo:partOf pkmn:versionGroupHeartGoldSoulSilver .
+pkmn:versionSoulSilver a pkmn:Version ; rdfs:label "SoulSilver"@en ; mo:partOf pkmn:versionGroupHeartGoldSoulSilver .
+pkmn:versionBlack a pkmn:Version ; rdfs:label "Black"@en ; mo:partOf pkmn:versionGroupBlackWhite .
+pkmn:versionWhite a pkmn:Version ; rdfs:label "White"@en ; mo:partOf pkmn:versionGroupBlackWhite .
+pkmn:versionBlack2 a pkmn:Version ; rdfs:label "Black 2"@en ; mo:partOf pkmn:versionGroupBlack2White2 .
+pkmn:versionWhite2 a pkmn:Version ; rdfs:label "White 2"@en ; mo:partOf pkmn:versionGroupBlack2White2 .
+pkmn:versionX a pkmn:Version ; rdfs:label "X"@en ; mo:partOf pkmn:versionGroupXY .
+pkmn:versionY a pkmn:Version ; rdfs:label "Y"@en ; mo:partOf pkmn:versionGroupXY .
+pkmn:versionOmegaRuby a pkmn:Version ; rdfs:label "Omega Ruby"@en ; mo:partOf pkmn:versionGroupOmegaRubyAlphaSapphire .
+pkmn:versionAlphaSapphire a pkmn:Version ; rdfs:label "Alpha Sapphire"@en ; mo:partOf pkmn:versionGroupOmegaRubyAlphaSapphire .
+pkmn:versionSun a pkmn:Version ; rdfs:label "Sun"@en ; mo:partOf pkmn:versionGroupSunMoon .
+pkmn:versionMoon a pkmn:Version ; rdfs:label "Moon"@en ; mo:partOf pkmn:versionGroupSunMoon .
+pkmn:versionUltraSun a pkmn:Version ; rdfs:label "Ultra Sun"@en ; mo:partOf pkmn:versionGroupUltraSunUltraMoon .
+pkmn:versionUltraMoon a pkmn:Version ; rdfs:label "Ultra Moon"@en ; mo:partOf pkmn:versionGroupUltraSunUltraMoon .
+pkmn:versionLetsGoPikachu a pkmn:Version ; rdfs:label "Let's Go Pikachu"@en ; mo:partOf pkmn:versionGroupLetsGoPikachuLetsGoEevee .
+pkmn:versionLetsGoEevee a pkmn:Version ; rdfs:label "Let's Go Eevee"@en ; mo:partOf pkmn:versionGroupLetsGoPikachuLetsGoEevee .
+pkmn:versionSword a pkmn:Version ; rdfs:label "Sword"@en ; mo:partOf pkmn:versionGroupSwordShield .
+pkmn:versionShield a pkmn:Version ; rdfs:label "Shield"@en ; mo:partOf pkmn:versionGroupSwordShield .
+pkmn:versionBrilliantDiamond a pkmn:Version ; rdfs:label "Brilliant Diamond"@en ; mo:partOf pkmn:versionGroupBrilliantDiamondAndShiningPearl .
+pkmn:versionShiningPearl a pkmn:Version ; rdfs:label "Shining Pearl"@en ; mo:partOf pkmn:versionGroupBrilliantDiamondAndShiningPearl .
+pkmn:versionLegendsArceus a pkmn:Version ; rdfs:label "Legends: Arceus"@en ; mo:partOf pkmn:versionGroupLegendsArceus .
+pkmn:versionScarlet a pkmn:Version ; rdfs:label "Scarlet"@en ; mo:partOf pkmn:versionGroupScarletViolet .
+pkmn:versionViolet a pkmn:Version ; rdfs:label "Violet"@en ; mo:partOf pkmn:versionGroupScarletViolet .
+pkmn:versionLegendsZA a pkmn:Version ; rdfs:label "Legends: Z-A"@en ; mo:partOf pkmn:versionGroupLegendsZA .
+
+## Type condition immunities ##
+# A type that cannot gain a status condition, or that a move flag does not affect.
+pkmn:Fire     pkmn:immuneTo pkmn:statusBurn .
+pkmn:Ice      pkmn:immuneTo pkmn:statusFreeze, pkmn:statusFrostbite .
+pkmn:Electric pkmn:immuneTo pkmn:statusParalysis .
+pkmn:Poison   pkmn:immuneTo pkmn:statusPoison, pkmn:statusBadlyPoisoned .
+pkmn:Steel    pkmn:immuneTo pkmn:statusPoison, pkmn:statusBadlyPoisoned .
+pkmn:Grass    pkmn:immuneTo pkmn:powder .
+
+## Condition blocks ##
+# A terrain or a side effect that stops conditions from applying.
+pkmn:electricTerrain pkmn:blocksCondition pkmn:statusSleep, pkmn:volatileDrowsy .
+pkmn:mistyTerrain    pkmn:blocksCondition pkmn:statusBurn, pkmn:statusFreeze, pkmn:statusParalysis, pkmn:statusPoison, pkmn:statusBadlyPoisoned, pkmn:statusSleep, pkmn:confused .
+pkmn:safeguard       pkmn:blocksCondition pkmn:statusBurn, pkmn:statusFreeze, pkmn:statusParalysis, pkmn:statusPoison, pkmn:statusBadlyPoisoned, pkmn:statusSleep, pkmn:confused .
+
+## Condition inflictions ##
+# An entry hazard that applies a status condition to a Pokemon that switches in.
+pkmn:toxicSpikes pkmn:inflictsCondition pkmn:statusPoison, pkmn:statusBadlyPoisoned .
+
+## Legends-only conditions ##
+# Conditions that exist only in the games named here. A snapshot query that leaves these games out reads these edges.
+pkmn:statusFrostbite mo:appearsIn pkmn:versionGroupLegendsArceus .
+pkmn:statusDrowsy    mo:appearsIn pkmn:versionGroupLegendsArceus, pkmn:versionGroupLegendsZA .

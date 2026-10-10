@@ -46,7 +46,7 @@ class Neo4jGraphClient:
             raise GraphConnectionError(f"Failed to create Neo4j driver for {target}") from error
 
         try:
-            await driver.verify_connectivity(database=self.settings.database)
+            await driver.verify_connectivity()
         except (ServiceUnavailable, Neo4jError) as error:
             await driver.close()
             raise GraphConnectionError(f"Failed to connect to Neo4j at {target}") from error

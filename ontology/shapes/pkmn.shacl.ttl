@@ -333,6 +333,40 @@ pkmn-shape:C2_MachineLinks a sh:NodeShape ;
 #  Meta and text
 #################################################################
 
+# A version is part of exactly 1 version group, and a version group of exactly 1
+# generation. The two shapes check the chain that learnsets, machines and text point at.
+pkmn-shape:G1_VersionPartOf a sh:NodeShape ;
+    sh:name "G1" ;
+    sh:message "A version is part of exactly 1 version group."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Version ;
+    sh:targetClass pkmn:Version ;
+    sh:property [
+        sh:path mo:partOf ;
+        sh:name "G1" ;
+        sh:message "A version needs exactly 1 partOf, a VersionGroup."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:VersionGroup
+    ] .
+
+pkmn-shape:G2_VersionGroupPartOf a sh:NodeShape ;
+    sh:name "G2" ;
+    sh:message "A version group is part of exactly 1 generation."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:VersionGroup ;
+    sh:targetClass pkmn:VersionGroup ;
+    sh:property [
+        sh:path mo:partOf ;
+        sh:name "G2" ;
+        sh:message "A version group needs exactly 1 partOf, a Generation."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Generation
+    ] .
+
 # Text chunks. `aspect` takes the core values plus `pokedex`, which only a
 # universe can describe. A canon chunk names its work with fromWork; every other
 # chunk names its origin with source.
