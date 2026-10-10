@@ -1,9 +1,10 @@
 """The contract between producers and the graph, in ontology terms.
 
 A `GraphBatch` holds class and property IRIs, never Neo4j labels or relationship
-types; the label materializer supplies those when the batch is written. A node is
-keyed by its asserted class and its `id`, which `build_node_id` derives from the
-English name.
+types; the label materializer supplies those when the batch is written. Edge
+property names are the exception: they exist in Neo4j only and travel as Neo4j
+names. A node is keyed by its asserted class and its `id`, which `build_node_id`
+derives from the English name.
 """
 
 import re
@@ -60,20 +61,27 @@ class NodeRecord(BaseModel):
 
 
 class EdgeRecord(BaseModel):
-    """One edge, typed by its most specific object property."""
+    """One edge, typed by its most specific object property.
+
+    A producer uses the super-property instead when an edge property carries what a
+    sub-property would say. `properties` maps Neo4j edge property names to values.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     property_iri: str
     start: NodeRef
     end: NodeRef
+    properties: Mapping[str, PropertyValue] = Field(default_factory=dict)
 
 
 class GraphBatch(BaseModel):
     """One unit of validation and one write transaction.
 
-    `scope` holds the classes the batch is complete for. Every node class is in
-    `scope`, node keys are unique and every edge end matches a node record.
+    `scope` holds the classes the batch owns. A node record of any other class is a
+    stub: a node the batch references but does not own, with `name` and no
+    properties. Node keys and edge keys (property IRI, start, end) are unique, and
+    every edge end matches a node record, owner or stub.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -83,16 +91,35 @@ class GraphBatch(BaseModel):
     nodes: tuple[NodeRecord, ...]
     edges: tuple[EdgeRecord, ...]
 
+    @property
+    def owner_nodes(self) -> tuple[NodeRecord, ...]:
+        return tuple(node for node in self.nodes if node.class_iri in self.scope)
+
+    @property
+    def stub_nodes(self) -> tuple[NodeRecord, ...]:
+        return tuple(node for node in self.nodes if node.class_iri not in self.scope)
+
     @model_validator(mode="after")
-    def check_references(self) -> Self:
+    def check_nodes(self) -> Self:
         node_refs: set[NodeRef] = set()
         for node in self.nodes:
-            if node.class_iri not in self.scope:
-                raise ValueError(f"Node {node.class_iri} {node.id!r} has a class outside scope")
             if node.node_ref in node_refs:
                 raise ValueError(f"Duplicate node key {node.class_iri} {node.id!r}")
             node_refs.add(node.node_ref)
 
+        for stub in self.stub_nodes:
+            if stub.properties:
+                first_property = next(iter(stub.properties))
+                raise ValueError(
+                    f"Stub {stub.class_iri} {stub.id!r} is outside scope and carries "
+                    f"{first_property}; a stub carries name only"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def check_edges(self) -> Self:
+        node_refs = {node.node_ref for node in self.nodes}
+        edge_keys: set[tuple[str, NodeRef, NodeRef]] = set()
         for edge in self.edges:
             missing_ends = [end for end in (edge.start, edge.end) if end not in node_refs]
             if missing_ends:
@@ -100,4 +127,11 @@ class GraphBatch(BaseModel):
                 raise ValueError(
                     f"Edge {edge.property_iri} refers to a missing node {end.class_iri} {end.id!r}"
                 )
+            edge_key = (edge.property_iri, edge.start, edge.end)
+            if edge_key in edge_keys:
+                raise ValueError(
+                    f"Duplicate edge {edge.property_iri} from {edge.start.class_iri} "
+                    f"{edge.start.id!r} to {edge.end.class_iri} {edge.end.id!r}"
+                )
+            edge_keys.add(edge_key)
         return self
