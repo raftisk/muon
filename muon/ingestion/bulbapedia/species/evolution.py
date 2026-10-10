@@ -1,9 +1,12 @@
-"""Evolutions of a species page: Evobox stages and the rules that read their methods.
+"""How a species becomes another node: evolutions, and Mega and Primal form changes.
 
 An Evobox lists stages (`no1`, `name1`, ...) and the method from each stage to the next
 (`evo1`, or `evo1a` and `evo1b` for a branch). Each edge becomes an `EvolutionFact`: its
 method is read by `METHOD_RULES` when exactly 1 Scarlet/Violet alternative remains and
 matches a rule, and kept as `condition` text plus a residue item otherwise.
+
+A Mega form takes the stone the infobox lists in `mega` and `mega2`, a Primal form the orb
+its `Evobox/Formes` row names. Every other non-regional form node is residue.
 """
 
 import re
@@ -17,13 +20,21 @@ from mwparserfromhell.wikicode import Wikicode
 
 from muon.ingestion.bulbapedia.species.extract import (
     EvolutionFact,
+    FormChangeFact,
     Requirement,
     RequirementRole,
     Residue,
     ResidueKind,
     SpeciesRef,
 )
-from muon.ingestion.bulbapedia.species.forms import flatten_text, read_sprite_code
+from muon.ingestion.bulbapedia.species.forms import (
+    PRIMAL_FORM_NAME,
+    FormSet,
+    ResolvedForm,
+    flatten_text,
+    rank_mega_forms,
+    read_sprite_code,
+)
 from muon.ingestion.bulbapedia.wikitext import (
     Section,
     find_sections,
@@ -493,3 +504,138 @@ def read_evolutions(
                 )
             )
     return tuple(dict.fromkeys(evolutions)), tuple(residue)
+
+
+FORM_DATA_PATH = ("Game data", "Form data")
+FORMES_TEMPLATE = "evobox/formes"
+MEGA_STONE_KEYS = ("mega", "mega2")
+NO_STONE = "None"
+MEGA_KIND = "mega"
+PRIMAL_KIND = "primal"
+PRIMAL_TRIGGER = "switch_in"
+FORME_KEY_PATTERN = re.compile(r"^forme(\d+)$")
+FORME_KEY = "forme{row}"
+ITEM_KEY = "item{row}"
+LOCATION_KEY = "loc{row}"
+HELD_PREFIX = "Held "
+
+
+@dataclass(frozen=True)
+class FormChangeInputs:
+    sections: Sequence[Section]
+    infobox: Mapping[str, str]
+    forms: FormSet
+
+
+@dataclass(frozen=True)
+class FormesRow:
+    """1 row of an `Evobox/Formes` template: the form's name and the item it is shown with."""
+
+    name: str
+    item: str | None
+    location: str
+
+
+def read_formes_rows(sections: Sequence[Section]) -> list[FormesRow]:
+    rows: list[FormesRow] = []
+    for section in find_sections(sections, FORM_DATA_PATH):
+        for template in find_templates(section.parse(), (FORMES_TEMPLATE,)):
+            params = read_params(template)
+            for key in sorted(params):
+                match = FORME_KEY_PATTERN.match(key)
+                if match is None:
+                    continue
+                row = match.group(1)
+                rows.append(
+                    FormesRow(
+                        name=flatten_text(params[key]),
+                        item=flatten_text(params.get(ITEM_KEY.format(row=row), "")) or None,
+                        location=flatten_text(params.get(LOCATION_KEY.format(row=row), "")),
+                    )
+                )
+    return rows
+
+
+def read_primal_item(row: FormesRow | None) -> str | None:
+    """Return the orb of a Primal row: its `item`, else the item a "Held ..." location names."""
+    if row is None:
+        return None
+    if row.item:
+        return row.item
+    if row.location.startswith(HELD_PREFIX):
+        return row.location.removeprefix(HELD_PREFIX).strip() or None
+    return None
+
+
+def read_mega_stones(infobox: Mapping[str, str]) -> tuple[str, ...]:
+    """Return the Mega stones the infobox lists; `mega=None` lists none."""
+    stones = [flatten_text(infobox.get(key, "")) for key in MEGA_STONE_KEYS]
+    return tuple(stone for stone in stones if stone and stone != NO_STONE)
+
+
+def pick_mega_stone(stones: Sequence[str], rank: int) -> str | None:
+    """Pick the stone of the Mega form at `rank`. 1 stone is shared by every Mega form."""
+    if len(stones) == 1:
+        return stones[0]
+    return stones[rank] if rank < len(stones) else None
+
+
+def build_form_change(
+    form: ResolvedForm, base: ResolvedForm, kind: str, item: str
+) -> FormChangeFact:
+    return FormChangeFact(
+        from_id=base.id,
+        to_id=form.id,
+        form_kind=kind,
+        is_battle_only=True,
+        trigger=PRIMAL_TRIGGER if kind == PRIMAL_KIND else None,
+        held_item=item,
+    )
+
+
+def read_form_changes(
+    inputs: FormChangeInputs,
+) -> tuple[tuple[FormChangeFact, ...], tuple[Residue, ...]]:
+    """Read the Mega and Primal form changes. Every other non-regional form node is residue
+    holding the Form data text, since a rule cannot tell a form change from a fixed form."""
+    forms = inputs.forms
+    base = forms.forms[0]
+    ranks = rank_mega_forms(forms.candidates)
+    stones = read_mega_stones(inputs.infobox)
+    rows = {row.name: row for row in read_formes_rows(inputs.sections)}
+    changes: list[FormChangeFact] = []
+    unresolved: list[ResolvedForm] = []
+    for form in forms.forms:
+        if form.is_default or form.region is not None:
+            continue
+        if form.index in ranks:
+            item = pick_mega_stone(stones, ranks[form.index])
+            kind = MEGA_KIND
+        elif form.infobox_name == PRIMAL_FORM_NAME:
+            item = read_primal_item(rows.get(form.name))
+            kind = PRIMAL_KIND
+        else:
+            item, kind = None, ""
+        if item:
+            changes.append(build_form_change(form, base, kind, item))
+        else:
+            unresolved.append(form)
+    return tuple(changes), read_form_change_residue(inputs.sections, unresolved)
+
+
+def read_form_change_residue(
+    sections: Sequence[Section], forms: Sequence[ResolvedForm]
+) -> tuple[Residue, ...]:
+    form_data = "\n\n".join(
+        section.text.strip() for section in find_sections(sections, FORM_DATA_PATH)
+    ).strip()
+    return tuple(
+        Residue(
+            kind=ResidueKind.FORM_CHANGE,
+            section_path=PATH_SEPARATOR.join(FORM_DATA_PATH),
+            form_ids=(form.id,),
+            wikitext=form_data,
+            text=to_plain_text(form_data),
+        )
+        for form in forms
+    )

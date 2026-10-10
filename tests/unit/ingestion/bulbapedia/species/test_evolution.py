@@ -3,10 +3,12 @@ import pytest
 
 from muon.ingestion.bulbapedia.species.evolution import (
     METHOD_RULES,
+    FormChangeInputs,
     MethodFacts,
     apply_method_rules,
     read_evobox_edges,
     read_evolutions,
+    read_form_changes,
     read_method_refs,
     read_method_text,
     select_method,
@@ -17,6 +19,7 @@ from muon.ingestion.bulbapedia.species.extract import (
     ResidueKind,
     SpeciesRef,
 )
+from muon.ingestion.bulbapedia.species.forms import FormInputs, resolve_forms
 from muon.ingestion.bulbapedia.wikitext import find_templates, split_sections
 
 RARE_CANDY = "{{Bag/s|Rare Candy|SV}}"
@@ -505,3 +508,181 @@ def test_read_evolutions_collapses_repeated_boxes_and_ignores_other_sections() -
         "Game data > Evolution data > One",
         "Game data > Evolution data > Two",
     }
+
+
+def build_change_inputs(infobox: dict[str, str], form_data: str = "") -> FormChangeInputs:
+    sections = split_sections(f"==Game data==\n===Form data===\n{form_data}\n")
+    forms = resolve_forms(FormInputs("Testmon (Pokémon)", infobox, (), ()))
+    return FormChangeInputs(sections, infobox, forms)
+
+
+MEGA_INFOBOX = {
+    "name": "Charizard",
+    "form2": "Mega Charizard X",
+    "form3": "Mega&nbsp;Charizard&nbsp;Y",
+    "form4": "Gigantamax",
+    "image2": "0006Charizard-Mega X.png",
+    "image3": "0006Charizard-Mega Y.png",
+    "form2type1": "Fire",
+    "form3type1": "Fire",
+    "form4type1": "Fire",
+    "mega": "Charizardite X",
+    "mega2": "Charizardite Y",
+}
+
+
+def test_mega_forms_take_the_stones_in_infobox_order() -> None:
+    changes, residue = read_form_changes(build_change_inputs(MEGA_INFOBOX))
+
+    assert residue == ()
+    assert [(c.from_id, c.to_id, c.form_kind, c.held_item) for c in changes] == [
+        ("charizard", "charizard-mega-x", "mega", "Charizardite X"),
+        ("charizard", "charizard-mega-y", "mega", "Charizardite Y"),
+    ]
+    assert all(c.is_battle_only and c.trigger is None for c in changes)
+
+
+def test_one_stone_is_shared_by_every_mega_form() -> None:
+    infobox = {
+        "name": "Tatsugiri",
+        "form2": "Mega Tatsugiri (Curly Form)",
+        "form3": "Mega Tatsugiri (Droopy Form)",
+        "form4": "Mega Tatsugiri (Stretchy Form)",
+        "image2": "0978Tatsugiri-Mega Curly.png",
+        "image3": "0978Tatsugiri-Mega Droopy.png",
+        "image4": "0978Tatsugiri-Mega Stretchy.png",
+        "form2type1": "Dragon",
+        "form3type1": "Dragon",
+        "form4type1": "Dragon",
+        "mega": "Tatsugirinite",
+    }
+
+    changes, residue = read_form_changes(build_change_inputs(infobox))
+
+    assert residue == ()
+    assert {c.held_item for c in changes} == {"Tatsugirinite"}
+    assert len(changes) == 3
+
+
+def test_a_mega_form_beyond_the_listed_stones_is_residue() -> None:
+    infobox = {**MEGA_INFOBOX, "form4": "Mega Charizard Z", "image4": "0006Charizard-Mega Z.png"}
+
+    changes, residue = read_form_changes(build_change_inputs(infobox))
+
+    assert len(changes) == 2
+    assert [r.form_ids for r in residue] == [("charizard-mega-z",)]
+
+
+def test_mega_none_makes_the_mega_form_residue() -> None:
+    infobox = {
+        "name": "Rayquaza",
+        "form2": "Mega Rayquaza",
+        "image2": "0384Rayquaza-Mega.png",
+        "abilitym": "Delta Stream",
+        "mega": "None",
+    }
+    form_data = "Rayquaza can Mega Evolve if it knows Dragon Ascent."
+
+    changes, residue = read_form_changes(build_change_inputs(infobox, form_data))
+
+    assert changes == ()
+    (item,) = residue
+    assert item.kind is ResidueKind.FORM_CHANGE
+    assert item.form_ids == ("rayquaza-mega",)
+    assert item.section_path == "Game data > Form data"
+    assert item.wikitext == form_data
+
+
+GROUDON_INFOBOX = {
+    "name": "Groudon",
+    "form2": "Primal Reversion",
+    "image2": "0383Groudon-Primal.png",
+    "form2type1": "Ground",
+}
+GROUDON_FORMES = """{{Evobox/Formes
+|forme1=Groudon
+|loc1=Default
+|item1=Red Orb
+|forme2=Primal Groudon
+|loc2={{color2|000|Held item|Held}} Red Orb
+}}"""
+
+
+def test_a_primal_form_takes_the_orb_its_row_names() -> None:
+    changes, residue = read_form_changes(build_change_inputs(GROUDON_INFOBOX, GROUDON_FORMES))
+
+    assert residue == ()
+    (change,) = changes
+    assert (change.to_id, change.form_kind, change.trigger) == (
+        "groudon-primal",
+        "primal",
+        "switch_in",
+    )
+    assert (change.is_battle_only, change.held_item) == (True, "Red Orb")
+
+
+def test_a_primal_row_item_wins_over_its_location() -> None:
+    form_data = GROUDON_FORMES.replace("|loc2=", "|item2=Blue Orb\n|loc2=")
+
+    changes, _ = read_form_changes(build_change_inputs(GROUDON_INFOBOX, form_data))
+
+    assert changes[0].held_item == "Blue Orb"
+
+
+def test_a_primal_form_without_a_row_is_residue() -> None:
+    changes, residue = read_form_changes(build_change_inputs(GROUDON_INFOBOX, "No template."))
+
+    assert changes == ()
+    assert [r.form_ids for r in residue] == [("groudon-primal",)]
+
+
+def test_other_form_nodes_are_residue_with_the_form_data_text() -> None:
+    infobox = {
+        "name": "Rotom",
+        "form2": "Heat Rotom",
+        "form3": "Wash Rotom",
+        "image2": "0479Rotom-Heat.png",
+        "image3": "0479Rotom-Wash.png",
+        "form2type1": "Fire",
+        "form3type1": "Water",
+    }
+    sections = split_sections(
+        "==Game data==\n===Form data===\nRotom has forms.\n"
+        "====Appliances====\n{{Evobox/Formes|forme1=Heat Rotom|loc1=Heat}}\n"
+    )
+    forms = resolve_forms(FormInputs("Rotom (Pokémon)", infobox, (), ()))
+
+    changes, residue = read_form_changes(FormChangeInputs(sections, infobox, forms))
+
+    assert changes == ()
+    assert [r.form_ids for r in residue] == [("rotom-heat",), ("rotom-wash",)]
+    assert "Rotom has forms." in residue[0].wikitext
+    assert "{{Evobox/Formes|forme1=Heat Rotom|loc1=Heat}}" in residue[0].wikitext
+    assert residue[0].text.startswith("Rotom has forms.")
+
+
+def test_regional_and_default_forms_give_nothing() -> None:
+    infobox = {
+        "name": "Diglett",
+        "form2": "Alolan Form",
+        "image2": "0050Diglett-Alola.png",
+        "form2type1": "Ground",
+    }
+
+    changes, residue = read_form_changes(build_change_inputs(infobox))
+
+    assert (changes, residue) == ((), ())
+
+
+def test_a_page_without_form_data_still_gives_residue_with_no_text() -> None:
+    infobox = {
+        "name": "Testmon",
+        "form2": "Hot Form",
+        "image2": "0001Testmon-Hot.png",
+        "form2type1": "Fire",
+    }
+    forms = resolve_forms(FormInputs("Testmon (Pokémon)", infobox, (), ()))
+
+    _, residue = read_form_changes(FormChangeInputs(split_sections("lead"), infobox, forms))
+
+    assert [(r.form_ids, r.wikitext, r.text) for r in residue] == [(("testmon-hot",), "", "")]
