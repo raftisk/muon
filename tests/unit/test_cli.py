@@ -11,6 +11,18 @@ from muon.graph import GraphConnectionError, WriteSummary
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
 from muon.ingestion.bulbapedia.pages import PageStoreError
+from muon.ingestion.bulbapedia.species.extract import ResidueKind
+from muon.ingestion.bulbapedia.species.forms import OverrideError
+from muon.ingestion.bulbapedia.species.run import (
+    BatchCounts,
+    PageResult,
+    PageStatus,
+    ParseReport,
+    ParseRequest,
+    ParseRun,
+    ParseRunError,
+    ResidueItem,
+)
 from muon.ingestion.runner import RunReport
 from muon.ingestion.seed import ABoxError
 from muon.ontology.model import OntologyError
@@ -432,3 +444,205 @@ def test_fetch_failure_prints_error(
     assert exit_code == cli.EXIT_FAILURE
     assert f"fetch bulbapedia species failed: {error}" in captured.err
     assert captured.out == ""
+
+
+def build_counts(owners: int, stubs: int, edges: int) -> BatchCounts:
+    return BatchCounts(
+        owner_nodes={"PokemonSpecies": owners}, stubs={"Type": stubs}, edges={"hasType": edges}
+    )
+
+
+def build_parse_report(failed_titles: tuple[str, ...] = ()) -> ParseReport:
+    pages = (
+        PageResult(
+            title="Diglett (Pokémon)",
+            page_id=2482,
+            revision_id=4630045,
+            status=PageStatus.PARSED,
+            reason=None,
+        ),
+        PageResult(
+            title="Browt (Pokémon)",
+            page_id=352932,
+            revision_id=4538484,
+            status=PageStatus.SKIPPED,
+            reason="no Pokémon Infobox",
+        ),
+        *(
+            PageResult(
+                title=title,
+                page_id=1,
+                revision_id=2,
+                status=PageStatus.FAILED,
+                reason="no A-Box node for type1",
+            )
+            for title in failed_titles
+        ),
+    )
+    residue = (
+        ResidueItem(
+            id="2482:evolution:1",
+            page_title="Diglett (Pokémon)",
+            revision_id=4630045,
+            kind=ResidueKind.EVOLUTION,
+            section_path="Game data > Evolution data",
+            form_ids=(),
+            wikitext="x",
+            text="x",
+        ),
+    )
+    return ParseReport(
+        pages=pages,
+        pages_parsed=1,
+        pages_skipped=1,
+        pages_failed=len(failed_titles),
+        species_counts=build_counts(2, 5, 17),
+        evolution_counts=build_counts(1, 2, 3),
+        form_candidates=(),
+        overrides_applied=(),
+        notes=(),
+        unowned_evolution_pairs=(),
+        pages_without_learnset=(),
+        evolutions_total=1,
+        evolutions_structured=1,
+        evolution_rule_share=1.0,
+        mega_forms_with_stone=0,
+        mega_form_changes=0,
+        abox_stub_misses=0,
+        evolution_species_stub_misses=0,
+        residue=residue,
+    )
+
+
+class RecordingParse:
+    """Stands in for `cli.run_parse` and records the requests it ran."""
+
+    def __init__(self, outcome: ParseReport | Exception) -> None:
+        self.outcome = outcome
+        self.requests: list[ParseRequest] = []
+
+    def __call__(self, request: ParseRequest) -> ParseRun:
+        self.requests.append(request)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return ParseRun(outputs=(), report=self.outcome)
+
+
+def arrange_parse(
+    monkeypatch: pytest.MonkeyPatch, outcome: ParseReport | Exception
+) -> RecordingParse:
+    parse = RecordingParse(outcome)
+    monkeypatch.setattr(cli, "run_parse", parse)
+    return parse
+
+
+def test_parse_parses_its_arguments(monkeypatch: pytest.MonkeyPatch) -> None:
+    parse = arrange_parse(monkeypatch, build_parse_report())
+
+    cli.main(["parse", "bulbapedia", "species"])
+    cli.main(["parse", "bulbapedia", "species", "--title", "A (Pokémon)", "--title", "B (Pokémon)"])
+
+    assert parse.requests == [
+        ParseRequest(),
+        ParseRequest(titles=("A (Pokémon)", "B (Pokémon)")),
+    ]
+
+
+def test_parse_runs_without_neo4j_settings(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    for name in list(os.environ):
+        if name.startswith("NEO4J_"):
+            monkeypatch.delenv(name)
+
+    def fail_on_settings() -> Settings:
+        raise AssertionError("parse must not read the Neo4j settings")
+
+    monkeypatch.setattr(cli, "get_settings", fail_on_settings)
+    arrange_parse(monkeypatch, build_parse_report())
+
+    exit_code = cli.main(["parse", "bulbapedia", "species"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert "parse bulbapedia species: done" in capsys.readouterr().out
+
+
+def test_parse_prints_counts_and_residue_per_kind(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_parse(monkeypatch, build_parse_report())
+
+    cli.main(["parse", "bulbapedia", "species"])
+
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[:-1] == [
+        "parse bulbapedia species: done",
+        "pages parsed: 1",
+        "pages skipped: 1",
+        "pages failed: 0",
+        "species owner nodes: 2",
+        "species stubs: 5",
+        "species edges: 17",
+        "evolution owner nodes: 1",
+        "evolution stubs: 2",
+        "evolution edges: 3",
+        "residue evolution: 1",
+    ]
+    assert lines[-1].startswith("elapsed seconds: ")
+
+
+def test_parse_exits_1_when_a_page_failed_and_names_it(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_parse(monkeypatch, build_parse_report(failed_titles=("Gamma (Pokémon)",)))
+
+    exit_code = cli.main(["parse", "bulbapedia", "species"])
+
+    assert exit_code == cli.EXIT_FAILURE
+    assert "failed: Gamma (Pokémon): no A-Box node for type1" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        ParseRunError("Titles that are not pinned: ['Ghost']"),
+        OverrideError("FORM_OVERRIDES names pages that are not pinned: ['Ghost']"),
+        OntologyError("Missing universe T-Box"),
+        ABoxError("pkmn.ttl", ["bad"]),
+        PageStoreError("No page file"),
+    ],
+)
+def test_parse_reports_run_errors_with_exit_1(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    arrange_parse(monkeypatch, error)
+
+    exit_code = cli.main(["parse", "bulbapedia", "species"])
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_FAILURE
+    assert captured.err.startswith("parse bulbapedia species failed:")
+    assert captured.out == ""
+
+
+@pytest.mark.parametrize(
+    ("argv", "invalid"),
+    [
+        (["parse", "bulbapedia", "ability"], "'ability'"),
+        (["parse", "serebii", "species"], "'serebii'"),
+    ],
+)
+def test_parse_rejects_unknown_choices(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    argv: list[str],
+    invalid: str,
+) -> None:
+    parse = arrange_parse(monkeypatch, build_parse_report())
+
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(argv)
+
+    assert exit_info.value.code == 2
+    assert f"invalid choice: {invalid}" in capsys.readouterr().err
+    assert parse.requests == []
