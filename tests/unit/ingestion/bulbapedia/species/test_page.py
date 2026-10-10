@@ -1,7 +1,9 @@
 from collections.abc import Mapping
+from datetime import UTC, datetime
 
 import pytest
 
+from muon.ingestion.bulbapedia.pages import Page, compute_sha1
 from muon.ingestion.bulbapedia.species.extract import (
     AbilitySlot,
     FormFacts,
@@ -16,6 +18,7 @@ from muon.ingestion.bulbapedia.species.page import (
     PageParseError,
     list_stats_titles,
     parse_generation_range,
+    parse_species_page,
     read_abilities,
     read_aliases,
     read_base_stats,
@@ -833,3 +836,69 @@ def test_aliases_belong_to_the_base_node_only() -> None:
 )
 def test_split_top_level(body: str, expected: list[str]) -> None:
     assert split_top_level(body) == expected
+
+
+INFOBOX_WIKITEXT = (
+    "{{Pokémon Infobox\n"
+    + "".join(f"|{key}={value}\n" for key, value in BASE_INFOBOX.items())
+    + "}}\n"
+)
+SPECIES_WIKITEXT = (
+    INFOBOX_WIKITEXT
+    + "==Game data==\n===Stats===\n====Base stats====\n"
+    + STATS_TEMPLATE
+    + "\n===Learnset===\n====By leveling up====\n"
+    + "{{learnlist/level9|1|Sand Attack|Ground|Status|—|100|15}}\n"
+    + "===Evolution data===\n"
+    + "{{Evobox-2|no1=0050|name1=Testmon|evo1=Level 26|no2=0051|name2=Other}}\n"
+    + "[[Category:Legendary Pokémon]]\n"
+)
+
+
+def build_page(wikitext: str) -> Page:
+    return Page(
+        title=PAGE_TITLE,
+        page_id=2482,
+        revision_id=4630045,
+        timestamp=datetime(2026, 10, 10, tzinfo=UTC),
+        sha1=compute_sha1(wikitext),
+        page_type="species",
+        wikitext=wikitext,
+    )
+
+
+def test_parse_species_page_joins_every_reader() -> None:
+    extract = parse_species_page(build_page(SPECIES_WIKITEXT))
+
+    assert extract is not None
+    assert (extract.title, extract.page_id, extract.revision_id) == (PAGE_TITLE, 2482, 4630045)
+    assert [form.id for form in extract.forms] == ["testmon"]
+    assert extract.forms[0].is_legendary
+    assert extract.forms[0].base_stats.speed == 95
+    assert [(row.move, row.level) for row in extract.learnset] == [("Sand Attack", 1)]
+    assert [(e.target.name, e.min_level) for e in extract.evolutions] == [("Other", 26)]
+    assert [r.outcome.value for r in extract.candidates] == ["node"]
+    assert (extract.form_changes, extract.residue, extract.notes) == ((), (), ())
+
+
+def test_parse_species_page_skips_a_page_without_the_infobox() -> None:
+    assert (
+        parse_species_page(build_page("{{New Pokémon Infobox|name=Browt}}\n==Game data==")) is None
+    )
+
+
+def test_parse_species_page_adds_a_forms_residue_next_to_its_facts() -> None:
+    wikitext = SPECIES_WIKITEXT.replace(
+        "|category=Mole", "|category={{tt|Mole|Alolan Form}}"
+    ).replace(
+        "|name=Testmon\n",
+        "|name=Testmon\n|form2=Alolan Form\n|image2=0050Testmon-Alola.png\n|form2type1=Ground\n",
+    )
+
+    extract = parse_species_page(build_page(wikitext))
+
+    assert extract is not None
+    assert [form.id for form in extract.forms] == ["testmon", "testmon-alola"]
+    assert [form.genus for form in extract.forms] == [None, "Mole"]
+    assert [(r.kind, r.form_ids) for r in extract.residue] == [(ResidueKind.GENUS, ("testmon",))]
+    assert extract.notes == ()

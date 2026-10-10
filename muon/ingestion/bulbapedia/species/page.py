@@ -1,4 +1,5 @@
-"""Species page facts: infobox values, abilities, base stats, genus, aliases and categories.
+"""Species page facts: infobox values, abilities, base stats, genus, aliases and categories,
+and `parse_species_page`, which joins them with the learnset, evolution and form change readers.
 
 Every value is read per node of a `FormSet`. A form takes its own value where the page
 gives one and the base node's value otherwise. A fact the rules cannot place becomes a
@@ -14,6 +15,12 @@ from dataclasses import dataclass
 import mwparserfromhell
 from mwparserfromhell.nodes import Tag, Template
 
+from muon.ingestion.bulbapedia.pages import Page
+from muon.ingestion.bulbapedia.species.evolution import (
+    FormChangeInputs,
+    read_evolutions,
+    read_form_changes,
+)
 from muon.ingestion.bulbapedia.species.extract import (
     AbilitySlot,
     BaseStats,
@@ -23,17 +30,21 @@ from muon.ingestion.bulbapedia.species.extract import (
     PageParseError,
     Residue,
     ResidueKind,
+    SpeciesPageExtract,
 )
 from muon.ingestion.bulbapedia.species.forms import (
     DEFAULT_FORM_INDEX,
     NAME_KEY,
+    FormInputs,
     FormSet,
     ResolvedForm,
     flatten_text,
     match_subsection,
     rank_mega_forms,
     read_region,
+    resolve_forms,
 )
+from muon.ingestion.bulbapedia.species.learnset import list_learnset_titles, read_learnset
 from muon.ingestion.bulbapedia.wikitext import (
     COMMENT_PATTERN,
     PATH_SEPARATOR,
@@ -43,6 +54,7 @@ from muon.ingestion.bulbapedia.wikitext import (
     read_params,
     read_small_captions,
     render_node,
+    split_sections,
     to_plain_text,
 )
 
@@ -768,3 +780,44 @@ def read_form_facts(
         facts.append(form_facts)
         notes.extend(form_notes)
     return tuple(facts), (*abilities.residue, *genus_residue), tuple(notes)
+
+
+def parse_species_page(page: Page) -> SpeciesPageExtract | None:
+    """Parse 1 pinned species page into its extract.
+
+    Returns `None` for a page without a `Pokémon Infobox` (an unreleased species): the run
+    skips it. Raises `PageParseError` or `OverrideError` when the page breaks a rule that
+    has no residue path.
+    """
+    sections = split_sections(page.wikitext)
+    infobox = read_infobox(sections[0])
+    if infobox is None:
+        return None
+    forms = resolve_forms(
+        FormInputs(
+            page_title=page.title,
+            infobox=infobox,
+            stats_titles=list_stats_titles(sections),
+            learnset_titles=list_learnset_titles(sections),
+        )
+    )
+    facts, fact_residue, fact_notes = read_form_facts(
+        FactInputs(page.title, infobox, forms, sections, read_categories(page.wikitext))
+    )
+    learnset, learnset_notes = read_learnset(sections, forms, page.title)
+    evolutions, evolution_residue = read_evolutions(sections)
+    form_changes, form_change_residue = read_form_changes(
+        FormChangeInputs(sections, infobox, forms)
+    )
+    return SpeciesPageExtract(
+        title=page.title,
+        page_id=page.page_id,
+        revision_id=page.revision_id,
+        forms=facts,
+        candidates=forms.candidates,
+        learnset=learnset,
+        form_changes=form_changes,
+        evolutions=evolutions,
+        residue=(*fact_residue, *evolution_residue, *form_change_residue),
+        notes=(*forms.notes, *fact_notes, *learnset_notes),
+    )
