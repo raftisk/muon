@@ -59,7 +59,7 @@ STAGE_TEMPLATES = (
 STAGE_NUMBER_PATTERN = re.compile(r"^no(\d+)([a-z]?)$")
 METHOD_PARAM_PATTERN = re.compile(r"^evo(\d+)([a-z]?)$")
 STAGE_NAME_KEY = "name{stage}{variant}"
-STAGE_NUMBER_KEY = "no{stage}{variant}"
+STAGE_ART_KEY = "art{stage}{variant}"
 SINGLE_VARIANT = ""
 
 ALTERNATIVE_SEPARATOR_PATTERN = re.compile(
@@ -105,7 +105,10 @@ class EvoboxEdge:
 
 
 def read_stages(params: Mapping[str, str]) -> dict[int, dict[str, SpeciesRef]]:
-    """Return the species of each stage by variant letter; a single species has variant `""`."""
+    """Return the species of each stage by variant letter; a single species has variant `""`.
+
+    The form code comes from `no`, or from `art` when `no` is the bare dex number.
+    """
     stages: dict[int, dict[str, SpeciesRef]] = {}
     for key in params:
         match = STAGE_NUMBER_PATTERN.match(key)
@@ -114,7 +117,10 @@ def read_stages(params: Mapping[str, str]) -> dict[int, dict[str, SpeciesRef]]:
         stage, variant = int(match.group(1)), match.group(2)
         name = flatten_text(params.get(STAGE_NAME_KEY.format(stage=stage, variant=variant), ""))
         if name:
-            code = read_sprite_code(flatten_text(params[key]), name)
+            art = params.get(STAGE_ART_KEY.format(stage=stage, variant=variant), "")
+            code = read_sprite_code(flatten_text(params[key]), name) or read_sprite_code(
+                flatten_text(art), name
+            )
             stages.setdefault(stage, {})[variant] = SpeciesRef(name=name, code=code)
     return stages
 

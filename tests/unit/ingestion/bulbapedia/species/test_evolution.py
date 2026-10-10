@@ -119,6 +119,19 @@ def test_2branch1_links_variant_to_the_same_variant() -> None:
     ]
 
 
+def test_a_bare_dex_number_takes_its_form_code_from_art() -> None:
+    wikitext = """{{Evobox/1branch2
+|no1=0104|name1=Cubone|evo1a=A
+|no2a=0105|name2a=Marowak
+|evo1b=B
+|art2b=0105Marowak-Alola|no2b=0105|name2b=Marowak|form2b=Alolan Form}}"""
+
+    assert read_edges(wikitext, "evobox/1branch2") == [
+        ("Cubone", "", "Marowak", "", "A"),
+        ("Cubone", "", "Marowak", "Alola", "B"),
+    ]
+
+
 def test_evobox_1_has_no_arrow() -> None:
     wikitext = "{{Evobox-1|no1=0550Basculin-Red|name1=Basculin|form1=Red-Striped Form}}"
 
