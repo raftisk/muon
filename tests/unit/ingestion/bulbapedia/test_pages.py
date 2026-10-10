@@ -237,3 +237,25 @@ def test_writes_leave_no_temporary_files(store: PageStore) -> None:
     names = sorted(path.name for path in store.manifest_path.parent.rglob("*") if path.is_file())
 
     assert names == ["2482.json", "manifest.json"]
+
+
+def test_list_page_files_ignores_other_files(store: PageStore) -> None:
+    store.write_page(DIGLETT)
+    store.write_page(BULBASAUR)
+    (store.pages_dir / "notes.json").write_text("{}", encoding="utf-8")
+
+    assert list(store.list_page_files()) == [BULBASAUR.page_id, DIGLETT.page_id]
+
+
+def test_read_unpinned_pages_returns_intact_unpinned_files(store: PageStore) -> None:
+    store.write_page(DIGLETT)
+    store.write_page(BULBASAUR)
+    edited = build_page("Mew (Pokémon)", 151, 9, "original")
+    store.write_page(edited)
+    path = store.build_page_path(edited.page_id)
+    tampered = json.loads(path.read_text(encoding="utf-8")) | {"wikitext": "tampered"}
+    path.write_text(json.dumps(tampered), encoding="utf-8")
+
+    unpinned = store.read_unpinned_pages(frozenset({DIGLETT.page_id}))
+
+    assert unpinned == (BULBASAUR,)

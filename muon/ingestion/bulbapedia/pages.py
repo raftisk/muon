@@ -212,15 +212,40 @@ class PageStore:
     def write_page(self, page: Page) -> None:
         write_text_atomically(self.build_page_path(page.page_id), page.model_dump_json())
 
+    def list_page_files(self) -> dict[int, Path]:
+        """Return the page files on disk by page id, in page id order."""
+        if not self.pages_dir.exists():
+            return {}
+        paths = self.pages_dir.glob(f"*{PAGE_FILE_SUFFIX}")
+        return dict(sorted((int(path.stem), path) for path in paths if path.stem.isdigit()))
+
+    def read_unpinned_pages(self, pinned_ids: frozenset[int]) -> tuple[Page, ...]:
+        """Return the intact page files that no pin points at.
+
+        A run that fails before it writes the manifest leaves such files behind, and
+        the next run can reuse them. Unreadable or edited files are left out, so the
+        run fetches those pages again.
+        """
+        unpinned_paths = [
+            path for page_id, path in self.list_page_files().items() if page_id not in pinned_ids
+        ]
+        pages = []
+        for path in unpinned_paths:
+            try:
+                page = self.load_page_file(path)
+            except PageStoreError:
+                continue
+            if compute_sha1(page.wikitext) == page.sha1:
+                pages.append(page)
+        return tuple(pages)
+
     def delete_pages_except(self, page_ids: frozenset[int]) -> tuple[int, ...]:
         """Delete every page file whose page id is not in `page_ids` and return the deleted ids."""
-        if not self.pages_dir.exists():
-            return ()
-        stale_paths = sorted(
-            path
-            for path in self.pages_dir.glob(f"*{PAGE_FILE_SUFFIX}")
-            if path.stem.isdigit() and int(path.stem) not in page_ids
-        )
-        for path in stale_paths:
+        stale = {
+            page_id: path
+            for page_id, path in self.list_page_files().items()
+            if page_id not in page_ids
+        }
+        for path in stale.values():
             path.unlink()
-        return tuple(int(path.stem) for path in stale_paths)
+        return tuple(stale)
