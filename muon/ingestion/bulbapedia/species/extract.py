@@ -11,6 +11,17 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict
 
 
+class PageParseError(Exception):
+    """A page broke a rule that has no residue path. The message names all 4 fields."""
+
+    def __init__(self, page_title: str, section_path: str, field: str, value: str) -> None:
+        super().__init__(f"{page_title}: cannot read {field} in {section_path}: {value!r}")
+        self.page_title = page_title
+        self.section_path = section_path
+        self.field = field
+        self.value = value
+
+
 class ExtractModel(BaseModel):
     model_config = ConfigDict(frozen=True)
 

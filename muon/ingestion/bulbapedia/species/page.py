@@ -20,6 +20,7 @@ from muon.ingestion.bulbapedia.species.extract import (
     FormFacts,
     NoteKind,
     PageNote,
+    PageParseError,
     Residue,
     ResidueKind,
 )
@@ -35,6 +36,7 @@ from muon.ingestion.bulbapedia.species.forms import (
 )
 from muon.ingestion.bulbapedia.wikitext import (
     COMMENT_PATTERN,
+    PATH_SEPARATOR,
     Section,
     find_sections,
     find_templates,
@@ -50,7 +52,6 @@ STATS_PATH = ("Game data", "Stats", "Base stats")
 LANGUAGES_PATH = ("In other languages",)
 STATS_TEMPLATES = ("stats", "basestats", "base stats", "basestats with rby")
 OTHER_LANGUAGES_TEMPLATE = "other languages"
-PATH_SEPARATOR = " > "
 CATEGORY_PATTERN = re.compile(r"\[\[\s*Category\s*:\s*([^\]|]+)", re.IGNORECASE)
 
 GENDER_RATES: Mapping[int, float] = {
@@ -149,17 +150,6 @@ ROMAN_VALUES = {"I": 1, "V": 5, "X": 10}
 SNAPSHOT_GENERATION = 9
 EV_FOOTNOTE_MARK = "*"
 OPEN_ENDED_GENERATION = 99
-
-
-class PageParseError(Exception):
-    """A page broke a rule that has no residue path. The message names all 4 fields."""
-
-    def __init__(self, page_title: str, section_path: str, field: str, value: str) -> None:
-        super().__init__(f"{page_title}: cannot read {field} in {section_path}: {value!r}")
-        self.page_title = page_title
-        self.section_path = section_path
-        self.field = field
-        self.value = value
 
 
 def read_infobox(lead: Section) -> dict[str, str] | None:

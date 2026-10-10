@@ -36,6 +36,7 @@ from muon.ingestion.bulbapedia.species.forms import (
     read_sprite_code,
 )
 from muon.ingestion.bulbapedia.wikitext import (
+    PATH_SEPARATOR,
     Section,
     find_sections,
     find_templates,
@@ -45,7 +46,6 @@ from muon.ingestion.bulbapedia.wikitext import (
 )
 
 EVOLUTION_PATH = ("Game data", "Evolution data")
-PATH_SEPARATOR = " > "
 EVOBOX_PREFIX = "evobox"
 STAGE_TEMPLATES = (
     "evobox-1",

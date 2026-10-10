@@ -16,10 +16,11 @@ from muon.ingestion.bulbapedia.species.extract import (
     LearnsetRow,
     NoteKind,
     PageNote,
+    PageParseError,
 )
 from muon.ingestion.bulbapedia.species.forms import FormSet
-from muon.ingestion.bulbapedia.species.page import PATH_SEPARATOR, PageParseError
 from muon.ingestion.bulbapedia.wikitext import (
+    PATH_SEPARATOR,
     Section,
     find_sections,
     find_templates,

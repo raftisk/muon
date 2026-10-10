@@ -28,6 +28,7 @@ HEADING_PATTERN = re.compile(r"^(={2,6})\s*(.+?)\s*\1\s*$", re.MULTILINE)
 COMMENT_PATTERN = re.compile(r"<!--.*?(?:-->|\Z)", re.DOTALL)
 NON_NEWLINE_PATTERN = re.compile(r"[^\n]")
 MASK_CHARACTER = " "
+PATH_SEPARATOR = " > "
 LEAD_LEVEL = 1
 LEAD_TITLE = ""
 PLAIN_TEXT_SEPARATOR = "\n"
