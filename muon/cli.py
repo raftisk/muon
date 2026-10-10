@@ -1,4 +1,5 @@
-"""Command line entry point: `muon seed <prefix>` and `muon purge <prefix>`."""
+"""Command line entry point: `muon seed <prefix>`, `muon purge <prefix>` and
+`muon fetch bulbapedia <page-type>`."""
 
 import argparse
 import asyncio
@@ -12,6 +13,15 @@ from pydantic import SecretStr, ValidationError
 
 from muon.config import Settings, get_settings
 from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
+from muon.ingestion.bulbapedia.api import BulbapediaAPIError, BulbapediaClient, build_http_client
+from muon.ingestion.bulbapedia.fetch import (
+    PAGE_TYPES,
+    FetchError,
+    FetchReport,
+    FetchRequest,
+    fetch_pages,
+)
+from muon.ingestion.bulbapedia.pages import PageStore, PageStoreError
 from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, seed_universe
 from muon.ontology.materializer import LabelMaterializer
@@ -22,6 +32,8 @@ EXIT_FAILURE = 1
 PROGRAM_NAME = "muon"
 SEED_COMMAND = "seed"
 PURGE_COMMAND = "purge"
+FETCH_COMMAND = "fetch"
+BULBAPEDIA_SOURCE = "bulbapedia"
 PASSWORD_PROMPT = "Neo4j password: "
 PASSWORD_ENCODING = "utf-8"
 PASSWORD_MISMATCH_MESSAGE = "the password does not match NEO4J_PASSWORD"
@@ -40,6 +52,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="delete every node of a universe after a Neo4j password prompt",
     )
     purge.add_argument("prefix", help="universe prefix, the stem of universes/<prefix>.ttl")
+    fetch = commands.add_parser(
+        FETCH_COMMAND, help="download pinned source pages into data/<source>/ for ingestion"
+    )
+    fetch.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to fetch from")
+    fetch.add_argument("page_type", choices=sorted(PAGE_TYPES), help="the set of pages to fetch")
+    fetch.add_argument(
+        "--update", action="store_true", help="move the pins to the latest revisions"
+    )
+    fetch.add_argument(
+        "--title",
+        action="append",
+        default=[],
+        dest="titles",
+        metavar="TITLE",
+        help="fetch only this page (repeatable)",
+    )
     return parser
 
 
@@ -87,6 +115,48 @@ async def run_purge(settings: Settings, prefix: str) -> WriteSummary:
         return await Runner(client, LabelMaterializer(model)).purge()
 
 
+def run_fetch(request: FetchRequest) -> FetchReport:
+    with build_http_client() as http_client:
+        return fetch_pages(request, PageStore(), BulbapediaClient(http_client))
+
+
+def format_fetch_report(request: FetchRequest, report: FetchReport) -> str:
+    """The counts of a run, and for an update or title run the titles behind them."""
+    lines = [
+        f"{FETCH_COMMAND} {BULBAPEDIA_SOURCE} {report.page_type}: done",
+        f"listed: {report.listed}",
+        f"fetched: {report.fetched}",
+        f"skipped: {report.skipped}",
+        f"added: {len(report.added)}",
+        f"changed: {len(report.changed)}",
+        f"removed: {len(report.removed)}",
+        f"redirects: {len(report.redirects)}",
+        f"requests: {report.requests}",
+        f"elapsed seconds: {report.elapsed_seconds:.1f}",
+    ]
+    if request.is_update or request.titles:
+        for label, titles in (
+            ("added", report.added),
+            ("changed", report.changed),
+            ("removed", report.removed),
+        ):
+            lines.extend(f"{label}: {title}" for title in titles)
+        lines.extend(f"redirect: {source} -> {target}" for source, target in report.redirects)
+    return "\n".join(lines)
+
+
+def execute_fetch(request: FetchRequest) -> int:
+    failure_prefix = build_failure_prefix(FETCH_COMMAND, f"{BULBAPEDIA_SOURCE} {request.page_type}")
+    try:
+        report = run_fetch(request)
+    except (BulbapediaAPIError, FetchError, PageStoreError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_fetch_report(request, report))
+    return EXIT_SUCCESS
+
+
 def execute_seed(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_seed(settings, prefix))
@@ -123,6 +193,14 @@ def execute_purge(settings: Settings, prefix: str) -> int:
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command in `argv` and return the process exit code."""
     arguments = build_parser().parse_args(argv)
+    if arguments.command == FETCH_COMMAND:
+        request = FetchRequest(
+            page_type=arguments.page_type,
+            titles=tuple(arguments.titles),
+            is_update=arguments.update,
+        )
+        return execute_fetch(request)
+
     try:
         settings = get_settings()
     except ValidationError as error:

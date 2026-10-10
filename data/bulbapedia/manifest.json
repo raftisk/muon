@@ -1,0 +1,6174 @@
+{
+  "page_types": {
+    "species": [
+      {
+        "title": "Abomasnow (Pokémon)",
+        "page_id": 13581,
+        "revision_id": 4635243,
+        "sha1": "634baa1d67508764104bd040303c3007a16e85ab"
+      },
+      {
+        "title": "Abra (Pokémon)",
+        "page_id": 2443,
+        "revision_id": 4623331,
+        "sha1": "34242f5f9fde3166acfe7681af5556213e65c505"
+      },
+      {
+        "title": "Absol (Pokémon)",
+        "page_id": 2683,
+        "revision_id": 4643594,
+        "sha1": "176e97d8fffbc4fb7cd2309fc633cb00392a6e30"
+      },
+      {
+        "title": "Accelgor (Pokémon)",
+        "page_id": 116018,
+        "revision_id": 4610585,
+        "sha1": "75b3cb63e417e512b4d7933be2acdb88fa2b07a7"
+      },
+      {
+        "title": "Aegislash (Pokémon)",
+        "page_id": 184601,
+        "revision_id": 4631108,
+        "sha1": "258f7d5500effb1887d8f474520616f866b72c42"
+      },
+      {
+        "title": "Aerodactyl (Pokémon)",
+        "page_id": 2419,
+        "revision_id": 4635262,
+        "sha1": "b934652ba0c390fadcec53bb3a84f151959992c5"
+      },
+      {
+        "title": "Aggron (Pokémon)",
+        "page_id": 2635,
+        "revision_id": 4635235,
+        "sha1": "cbd0593cb1b5e21fc1bf4c0afbb811734df70b8a"
+      },
+      {
+        "title": "Aipom (Pokémon)",
+        "page_id": 2452,
+        "revision_id": 4643483,
+        "sha1": "e373d3955dd73c70464e42158abab27e6c940deb"
+      },
+      {
+        "title": "Alakazam (Pokémon)",
+        "page_id": 2454,
+        "revision_id": 4635280,
+        "sha1": "386931808f3219b501348581d2f2a0e88bfebae2"
+      },
+      {
+        "title": "Alcremie (Pokémon)",
+        "page_id": 239621,
+        "revision_id": 4637799,
+        "sha1": "bee25222e675ac675fbd1e14684f2eaf6fb9b6f8"
+      },
+      {
+        "title": "Alomomola (Pokémon)",
+        "page_id": 109706,
+        "revision_id": 4613128,
+        "sha1": "a1dea2b3ef17f3f7dbcb361464f8f4c4173517e7"
+      },
+      {
+        "title": "Altaria (Pokémon)",
+        "page_id": 2618,
+        "revision_id": 4626548,
+        "sha1": "7fef5a2bf00afa3d553ee8225c4ae2b75273b538"
+      },
+      {
+        "title": "Amaura (Pokémon)",
+        "page_id": 182723,
+        "revision_id": 4628743,
+        "sha1": "a28916787b7299be43d7ca46aabca2705278dbe9"
+      },
+      {
+        "title": "Ambipom (Pokémon)",
+        "page_id": 13467,
+        "revision_id": 4610590,
+        "sha1": "76bd155a380d4c336dda6b6a74feac1c7e7a4794"
+      },
+      {
+        "title": "Amoonguss (Pokémon)",
+        "page_id": 116119,
+        "revision_id": 4641745,
+        "sha1": "6afdaaefb19394508b45f941cfdba17dc9903690"
+      },
+      {
+        "title": "Ampharos (Pokémon)",
+        "page_id": 2520,
+        "revision_id": 4635216,
+        "sha1": "c0df3a4702165c72bb408f2120afd25384256e3f"
+      },
+      {
+        "title": "Annihilape (Pokémon)",
+        "page_id": 277534,
+        "revision_id": 4642395,
+        "sha1": "a236c0e20702d643f8ab94d1f3a2d1c157df9df5"
+      },
+      {
+        "title": "Anorith (Pokémon)",
+        "page_id": 2609,
+        "revision_id": 4610593,
+        "sha1": "8b0d096aaaa96aa7692a86c87a344c6fa1f3fa8b"
+      },
+      {
+        "title": "Appletun (Pokémon)",
+        "page_id": 244051,
+        "revision_id": 4637522,
+        "sha1": "33a8f4a9ad3a2cc36984fa927ea1ae59b62ef8ca"
+      },
+      {
+        "title": "Applin (Pokémon)",
+        "page_id": 244049,
+        "revision_id": 4610595,
+        "sha1": "a1ae008a3ae95bbf5d371797bdc14d389f4abfab"
+      },
+      {
+        "title": "Araquanid (Pokémon)",
+        "page_id": 218162,
+        "revision_id": 4630083,
+        "sha1": "b3ee93a7be6a2adec1017cae6cc6ed4053b4650a"
+      },
+      {
+        "title": "Arbok (Pokémon)",
+        "page_id": 2444,
+        "revision_id": 4640519,
+        "sha1": "06547bb789499498a2a3e975e93e6e92089ada55"
+      },
+      {
+        "title": "Arboliva (Pokémon)",
+        "page_id": 277474,
+        "revision_id": 4629622,
+        "sha1": "5f9d02ece239c3f1dd74d39af024913933c6b0ac"
+      },
+      {
+        "title": "Arcanine (Pokémon)",
+        "page_id": 62985,
+        "revision_id": 4635989,
+        "sha1": "213177b6a895e4f1be4aee6c982191a04617402b"
+      },
+      {
+        "title": "Arceus (Pokémon)",
+        "page_id": 13538,
+        "revision_id": 4642231,
+        "sha1": "6eda0ea56eff4c3bc7318ef49c0341f8913868c6"
+      },
+      {
+        "title": "Archaludon (Pokémon)",
+        "page_id": 294166,
+        "revision_id": 4636333,
+        "sha1": "0697564e4c04c031ee3f7e120f84c65a113b07c7"
+      },
+      {
+        "title": "Archen (Pokémon)",
+        "page_id": 116025,
+        "revision_id": 4610603,
+        "sha1": "76ef0451d76f2f7c79c230f7cee6a26ed811818f"
+      },
+      {
+        "title": "Archeops (Pokémon)",
+        "page_id": 116027,
+        "revision_id": 4610604,
+        "sha1": "8a71f7e1c6620d9d3eb3f9f95b18dc451a32036a"
+      },
+      {
+        "title": "Arctibax (Pokémon)",
+        "page_id": 277505,
+        "revision_id": 4628756,
+        "sha1": "b4572834738a0058ba21e8394fd11777edb46f72"
+      },
+      {
+        "title": "Arctovish (Pokémon)",
+        "page_id": 244086,
+        "revision_id": 4638304,
+        "sha1": "8b2e3e58720c497bc88eaca6c2b906520477828e"
+      },
+      {
+        "title": "Arctozolt (Pokémon)",
+        "page_id": 244084,
+        "revision_id": 4611737,
+        "sha1": "95184506f5a7d13955cf9ef0c669a2af48fc4ecb"
+      },
+      {
+        "title": "Ariados (Pokémon)",
+        "page_id": 61463,
+        "revision_id": 4634905,
+        "sha1": "49d229a1da618dd8136862987a4ffd3ba74fdf51"
+      },
+      {
+        "title": "Armaldo (Pokémon)",
+        "page_id": 2580,
+        "revision_id": 4610610,
+        "sha1": "33c9b84223125247269c04a5c04e2aa89d4bfba7"
+      },
+      {
+        "title": "Armarouge (Pokémon)",
+        "page_id": 274247,
+        "revision_id": 4631141,
+        "sha1": "6fbefed65c5963abf012b0756fb874a39de1223d"
+      },
+      {
+        "title": "Aromatisse (Pokémon)",
+        "page_id": 183540,
+        "revision_id": 4610612,
+        "sha1": "5e7852da42612f60cab79d86e6ac1508628eeee5"
+      },
+      {
+        "title": "Aron (Pokémon)",
+        "page_id": 2659,
+        "revision_id": 4610613,
+        "sha1": "dc9299d528bd440a7e810cad521c0e57a94caaf2"
+      },
+      {
+        "title": "Arrokuda (Pokémon)",
+        "page_id": 244054,
+        "revision_id": 4611722,
+        "sha1": "4ad0752838716671b4dfbd975966c3985152e563"
+      },
+      {
+        "title": "Articuno (Pokémon)",
+        "page_id": 2357,
+        "revision_id": 4621851,
+        "sha1": "475fbcbe3f1966909bc68025696504e42fe0b9db"
+      },
+      {
+        "title": "Audino (Pokémon)",
+        "page_id": 112027,
+        "revision_id": 4635180,
+        "sha1": "d6443741ed99d7f92a01c899ee75009531ef3f35"
+      },
+      {
+        "title": "Aurorus (Pokémon)",
+        "page_id": 183142,
+        "revision_id": 4636004,
+        "sha1": "d0fb979f085236274d3b39b27eecf5a7d4a40d07"
+      },
+      {
+        "title": "Avalugg (Pokémon)",
+        "page_id": 184606,
+        "revision_id": 4628751,
+        "sha1": "8a7497cda136463c202972ed8f6f1f2fa9f46a34"
+      },
+      {
+        "title": "Axew (Pokémon)",
+        "page_id": 108958,
+        "revision_id": 4610620,
+        "sha1": "05e934a780aaade948b63a78dea3c505572694e2"
+      },
+      {
+        "title": "Azelf (Pokémon)",
+        "page_id": 13441,
+        "revision_id": 4612706,
+        "sha1": "894e1f1d4ba6da59a460b6368cf86db66deab8e5"
+      },
+      {
+        "title": "Azumarill (Pokémon)",
+        "page_id": 2524,
+        "revision_id": 4626142,
+        "sha1": "42ee6b6e50a0db125a73b112fb4271f84d5b7ba0"
+      },
+      {
+        "title": "Azurill (Pokémon)",
+        "page_id": 2523,
+        "revision_id": 4636250,
+        "sha1": "b37e43638464b9510e4a4cbf0528e0abe7fac6e0"
+      },
+      {
+        "title": "Bagon (Pokémon)",
+        "page_id": 2699,
+        "revision_id": 4610622,
+        "sha1": "b4e436e7fd0509a5df14f3786c42e24588382647"
+      },
+      {
+        "title": "Baltoy (Pokémon)",
+        "page_id": 2623,
+        "revision_id": 4610623,
+        "sha1": "9216b5d025098e66dc9c563d02435cd5d5673043"
+      },
+      {
+        "title": "Banette (Pokémon)",
+        "page_id": 2716,
+        "revision_id": 4617306,
+        "sha1": "35eabd752d2321ea335de984e9fad4344498aac8"
+      },
+      {
+        "title": "Barbaracle (Pokémon)",
+        "page_id": 184597,
+        "revision_id": 4628704,
+        "sha1": "bdb7372a53c9a8cad85f2445dc229f0746e7b1b5"
+      },
+      {
+        "title": "Barboach (Pokémon)",
+        "page_id": 2647,
+        "revision_id": 4613089,
+        "sha1": "c2cf1a219633ba8fbf09f28df11fb16cf0307ba2"
+      },
+      {
+        "title": "Barraskewda (Pokémon)",
+        "page_id": 244055,
+        "revision_id": 4621864,
+        "sha1": "a4123e082971703dd2d7fd254def11edfd31ef78"
+      },
+      {
+        "title": "Basculegion (Pokémon)",
+        "page_id": 263747,
+        "revision_id": 4643591,
+        "sha1": "3f4eeb67cdfaf3b083ffa34037692259a2ef947a"
+      },
+      {
+        "title": "Basculin (Pokémon)",
+        "page_id": 111664,
+        "revision_id": 4626363,
+        "sha1": "8f78abc9228071493dbc59719f93982083a03c80"
+      },
+      {
+        "title": "Bastiodon (Pokémon)",
+        "page_id": 13436,
+        "revision_id": 4610633,
+        "sha1": "d2c87e491f44d26ac425f84a56ed878a96cdd674"
+      },
+      {
+        "title": "Baxcalibur (Pokémon)",
+        "page_id": 277506,
+        "revision_id": 4643593,
+        "sha1": "5bc18f02d6c1ba3b539e06b23394404d0c3ddd92"
+      },
+      {
+        "title": "Bayleef (Pokémon)",
+        "page_id": 2499,
+        "revision_id": 4632024,
+        "sha1": "b83a1becfb2258423f43ecba2ea5b70ade3765c5"
+      },
+      {
+        "title": "Beartic (Pokémon)",
+        "page_id": 115975,
+        "revision_id": 4623430,
+        "sha1": "5846cb872006505bc3e50c759ebea8df5f09faef"
+      },
+      {
+        "title": "Beautifly (Pokémon)",
+        "page_id": 2577,
+        "revision_id": 4622206,
+        "sha1": "81941b6901ede565b4aa4b89294e99f0165a3bc3"
+      },
+      {
+        "title": "Beedrill (Pokémon)",
+        "page_id": 2418,
+        "revision_id": 4635522,
+        "sha1": "22100652bff07cb8e5837a3e4b5c568591cc7b72"
+      },
+      {
+        "title": "Beheeyem (Pokémon)",
+        "page_id": 116076,
+        "revision_id": 4610641,
+        "sha1": "dd147e572ba70461ba82d1f0f58d712053b5c139"
+      },
+      {
+        "title": "Beldum (Pokémon)",
+        "page_id": 2594,
+        "revision_id": 4610642,
+        "sha1": "1b863ff482e2e2f252f1a0d46c2df20b8c7fe163"
+      },
+      {
+        "title": "Bellibolt (Pokémon)",
+        "page_id": 276279,
+        "revision_id": 4610643,
+        "sha1": "8a448e3ed33cf86ecebbc5cd064a868d9c84b671"
+      },
+      {
+        "title": "Bellossom (Pokémon)",
+        "page_id": 2521,
+        "revision_id": 4634922,
+        "sha1": "e4c81129eab3e2c2b0a800617cfe705175977e85"
+      },
+      {
+        "title": "Bellsprout (Pokémon)",
+        "page_id": 2378,
+        "revision_id": 4623347,
+        "sha1": "05e364acfb591fd92ce77438c5b9afefabd3f3a6"
+      },
+      {
+        "title": "Bergmite (Pokémon)",
+        "page_id": 184605,
+        "revision_id": 4623434,
+        "sha1": "5a46b5cc81c9156ce52cc0194d61bd2b8c655b52"
+      },
+      {
+        "title": "Bewear (Pokémon)",
+        "page_id": 214460,
+        "revision_id": 4630061,
+        "sha1": "0a7a1c420e6923b2a2adb06835cdfc17cad486db"
+      },
+      {
+        "title": "Bibarel (Pokémon)",
+        "page_id": 13417,
+        "revision_id": 4610648,
+        "sha1": "f9d96539a471dec58bb4cafb9b2ce126dad0b48d"
+      },
+      {
+        "title": "Bidoof (Pokémon)",
+        "page_id": 13159,
+        "revision_id": 4610649,
+        "sha1": "c34c001b16ce8a6ad22a26abc865097079b4b5aa"
+      },
+      {
+        "title": "Binacle (Pokémon)",
+        "page_id": 184596,
+        "revision_id": 4628703,
+        "sha1": "7dd8a239bd2d3f039e3f219121231c0ccb2302ab"
+      },
+      {
+        "title": "Bisharp (Pokémon)",
+        "page_id": 116070,
+        "revision_id": 4630434,
+        "sha1": "3e20964d007b924fd19d88c247c25948f114e045"
+      },
+      {
+        "title": "Blacephalon (Pokémon)",
+        "page_id": 225651,
+        "revision_id": 4630287,
+        "sha1": "fa11c5d7d3a0a0b5ec901c4350711267d5b1e918"
+      },
+      {
+        "title": "Blastoise (Pokémon)",
+        "page_id": 2362,
+        "revision_id": 4637425,
+        "sha1": "2a98016c24eaad7af13b9582047eafc9098ad453"
+      },
+      {
+        "title": "Blaziken (Pokémon)",
+        "page_id": 2613,
+        "revision_id": 4635224,
+        "sha1": "ee27f05ea946d1238df964f492425a51193b25e7"
+      },
+      {
+        "title": "Blipbug (Pokémon)",
+        "page_id": 244039,
+        "revision_id": 4610653,
+        "sha1": "9808e887fc8a63635589030df2279dc6ad8bcc10"
+      },
+      {
+        "title": "Blissey (Pokémon)",
+        "page_id": 2554,
+        "revision_id": 4625845,
+        "sha1": "aea855f4e9236ee330347ca28e6e5b18f064c4b1"
+      },
+      {
+        "title": "Blitzle (Pokémon)",
+        "page_id": 106848,
+        "revision_id": 4623372,
+        "sha1": "24e8ea95d3342368fb00be15ddd00684c9ad7186"
+      },
+      {
+        "title": "Boldore (Pokémon)",
+        "page_id": 115979,
+        "revision_id": 4610655,
+        "sha1": "772b94f41e4d12bf65f08a9428b03349c3a6b86d"
+      },
+      {
+        "title": "Boltund (Pokémon)",
+        "page_id": 244046,
+        "revision_id": 4610656,
+        "sha1": "c288a550a0dad3ae779b8c0e1d30158620144d9d"
+      },
+      {
+        "title": "Bombirdier (Pokémon)",
+        "page_id": 277499,
+        "revision_id": 4643484,
+        "sha1": "0615b906031fad8272a31c5f21634f5a27453c87"
+      },
+      {
+        "title": "Bonsly (Pokémon)",
+        "page_id": 4546,
+        "revision_id": 4612287,
+        "sha1": "445b9316098711ae024a7098ce82e0f2e516b386"
+      },
+      {
+        "title": "Bouffalant (Pokémon)",
+        "page_id": 114944,
+        "revision_id": 4610659,
+        "sha1": "4320d31bdef3371304ff7f4bc1af014679345d26"
+      },
+      {
+        "title": "Bounsweet (Pokémon)",
+        "page_id": 214588,
+        "revision_id": 4632670,
+        "sha1": "9fc7ea8c4c559656bdade866c809299b3760f69c"
+      },
+      {
+        "title": "Braixen (Pokémon)",
+        "page_id": 182725,
+        "revision_id": 4628678,
+        "sha1": "47dafe8a34eb5eec9e9ec40b3c443fa042607379"
+      },
+      {
+        "title": "Brambleghast (Pokémon)",
+        "page_id": 277495,
+        "revision_id": 4634409,
+        "sha1": "08fba8cc461e5d555ba44c7b5981f924597b3a9a"
+      },
+      {
+        "title": "Bramblin (Pokémon)",
+        "page_id": 277494,
+        "revision_id": 4634613,
+        "sha1": "cdd49bfda5b7b986b827bff2333ee22cf39cf371"
+      },
+      {
+        "title": "Braviary (Pokémon)",
+        "page_id": 108698,
+        "revision_id": 4629338,
+        "sha1": "219a93d6417c93f928cb3eb265f16294a7a4c4b3"
+      },
+      {
+        "title": "Breloom (Pokémon)",
+        "page_id": 2671,
+        "revision_id": 4626134,
+        "sha1": "44b0149cc5fd42939be143e86c30b1c037fbafff"
+      },
+      {
+        "title": "Brionne (Pokémon)",
+        "page_id": 216299,
+        "revision_id": 4630118,
+        "sha1": "566e710d2f41cbb41dd3e5e4b67bff8f464cb23c"
+      },
+      {
+        "title": "Bronzong (Pokémon)",
+        "page_id": 13501,
+        "revision_id": 4610440,
+        "sha1": "9bb684b31607be629372dd05e464b711044b40fd"
+      },
+      {
+        "title": "Bronzor (Pokémon)",
+        "page_id": 13500,
+        "revision_id": 4643488,
+        "sha1": "2eb24057632e2d58b00ec57953ebfb91e4a73743"
+      },
+      {
+        "title": "Browt (Pokémon)",
+        "page_id": 352932,
+        "revision_id": 4538484,
+        "sha1": "a7447e9d879b31304f1fcf69c72a9b5708b621ae"
+      },
+      {
+        "title": "Brute Bonnet (Pokémon)",
+        "page_id": 277435,
+        "revision_id": 4610671,
+        "sha1": "fcb26990b04d77e9b4a61f86cd2f93646c2c54bd"
+      },
+      {
+        "title": "Bruxish (Pokémon)",
+        "page_id": 214113,
+        "revision_id": 4630155,
+        "sha1": "1b7a5ab91cfed518537c4ca008d6110d750c3578"
+      },
+      {
+        "title": "Budew (Pokémon)",
+        "page_id": 13157,
+        "revision_id": 4610673,
+        "sha1": "625df5cb4bfb61397d78c65c4d99d1818a14234b"
+      },
+      {
+        "title": "Buizel (Pokémon)",
+        "page_id": 9149,
+        "revision_id": 4613119,
+        "sha1": "8d8a613fc526164ac65b30745f7d4e9a9d06842e"
+      },
+      {
+        "title": "Bulbasaur (Pokémon)",
+        "page_id": 1161,
+        "revision_id": 4628537,
+        "sha1": "c562078ddce039348cf15c87c1dc555d28e6382d"
+      },
+      {
+        "title": "Buneary (Pokémon)",
+        "page_id": 13378,
+        "revision_id": 4643278,
+        "sha1": "ee70e7de2681c87dafb758d3251141cd3a15ef3b"
+      },
+      {
+        "title": "Bunnelby (Pokémon)",
+        "page_id": 181563,
+        "revision_id": 4626451,
+        "sha1": "a2f4b068113abeea474cbc1e0ec14c163877b9bd"
+      },
+      {
+        "title": "Burmy (Pokémon)",
+        "page_id": 13182,
+        "revision_id": 4630406,
+        "sha1": "8333a12d9282bff521015370fc4caa6d128c28c6"
+      },
+      {
+        "title": "Butterfree (Pokémon)",
+        "page_id": 2476,
+        "revision_id": 4637816,
+        "sha1": "a191f1ded9647475eca0e0bb2c5480980e7f0462"
+      },
+      {
+        "title": "Buzzwole (Pokémon)",
+        "page_id": 218185,
+        "revision_id": 4630159,
+        "sha1": "937a6d3dc2a2a1b626627a6953ead362110afe02"
+      },
+      {
+        "title": "Cacnea (Pokémon)",
+        "page_id": 2550,
+        "revision_id": 4610682,
+        "sha1": "3f7476fee4c66c376fe1feff074abaad69bf30eb"
+      },
+      {
+        "title": "Cacturne (Pokémon)",
+        "page_id": 2620,
+        "revision_id": 4630383,
+        "sha1": "6e5b46faba2ee4aa2bef20ed830f533579133280"
+      },
+      {
+        "title": "Calyrex (Pokémon)",
+        "page_id": 246817,
+        "revision_id": 4638316,
+        "sha1": "036a757f3bad562dcb78ba804e72583c41106a0d"
+      },
+      {
+        "title": "Camerupt (Pokémon)",
+        "page_id": 2639,
+        "revision_id": 4612245,
+        "sha1": "0f45ce6d49de7e04dc651d96b482e58c7586992c"
+      },
+      {
+        "title": "Capsakid (Pokémon)",
+        "page_id": 277483,
+        "revision_id": 4610686,
+        "sha1": "bab3673c2d4f033d3f411651964e3e14ac506b62"
+      },
+      {
+        "title": "Carbink (Pokémon)",
+        "page_id": 184559,
+        "revision_id": 4610689,
+        "sha1": "9d79d369a546c906b75c4d8fc651af7c518dc084"
+      },
+      {
+        "title": "Carkol (Pokémon)",
+        "page_id": 244047,
+        "revision_id": 4610691,
+        "sha1": "0cd2970539419493795fd4a41ecb5f6d1cc8cd17"
+      },
+      {
+        "title": "Carnivine (Pokémon)",
+        "page_id": 13183,
+        "revision_id": 4642397,
+        "sha1": "60f3aab2a8db12a8f8e8f707e436e28e60d3e2e6"
+      },
+      {
+        "title": "Carracosta (Pokémon)",
+        "page_id": 116024,
+        "revision_id": 4610694,
+        "sha1": "24e72edd2def71cd85ca48556491b21e3753ed62"
+      },
+      {
+        "title": "Carvanha (Pokémon)",
+        "page_id": 2677,
+        "revision_id": 4630430,
+        "sha1": "abc7e18f0b760a0ef9574a7d055a55e936f491a8"
+      },
+      {
+        "title": "Cascoon (Pokémon)",
+        "page_id": 2556,
+        "revision_id": 4610696,
+        "sha1": "09fc0e4de17f6803fb444eafdf88e01661e36551"
+      },
+      {
+        "title": "Castform (Pokémon)",
+        "page_id": 2641,
+        "revision_id": 4610698,
+        "sha1": "9bc4998f5e02a86df1862eb91c95ff74ddd946df"
+      },
+      {
+        "title": "Caterpie (Pokémon)",
+        "page_id": 2420,
+        "revision_id": 4632259,
+        "sha1": "2b92446a11dab7822011b05d5d9e2bca7765565b"
+      },
+      {
+        "title": "Celebi (Pokémon)",
+        "page_id": 1581,
+        "revision_id": 4638138,
+        "sha1": "568cb7396db160eb9953fe073a77425fcb8bc023"
+      },
+      {
+        "title": "Celesteela (Pokémon)",
+        "page_id": 218191,
+        "revision_id": 4630166,
+        "sha1": "89500e75b37d05ee38045c1539256d11f33c9322"
+      },
+      {
+        "title": "Centiskorch (Pokémon)",
+        "page_id": 244059,
+        "revision_id": 4637752,
+        "sha1": "8e8d644725db7bb2f3e827bc3ea2519e4c7b0571"
+      },
+      {
+        "title": "Ceruledge (Pokémon)",
+        "page_id": 274248,
+        "revision_id": 4628695,
+        "sha1": "d67b3ad86a9f6da9337396fb2e31fb026825f3f6"
+      },
+      {
+        "title": "Cetitan (Pokémon)",
+        "page_id": 273430,
+        "revision_id": 4623424,
+        "sha1": "f4532f938d2471376bae5e579f5e0efb2d0c5d67"
+      },
+      {
+        "title": "Cetoddle (Pokémon)",
+        "page_id": 277469,
+        "revision_id": 4623423,
+        "sha1": "b445cf0e416d005c3e566ce6c58eb99ce93e7f9e"
+      },
+      {
+        "title": "Chandelure (Pokémon)",
+        "page_id": 115955,
+        "revision_id": 4629770,
+        "sha1": "a625bbf9429de8b0c50ee7b27a386db68fe2f0bb"
+      },
+      {
+        "title": "Chansey (Pokémon)",
+        "page_id": 2374,
+        "revision_id": 4631777,
+        "sha1": "d5a1cd79cd6f314a4dd3736715d70931002f5861"
+      },
+      {
+        "title": "Charcadet (Pokémon)",
+        "page_id": 277450,
+        "revision_id": 4628693,
+        "sha1": "d097159281745be309e2b4e574448f4800579df5"
+      },
+      {
+        "title": "Charizard (Pokémon)",
+        "page_id": 2363,
+        "revision_id": 4637381,
+        "sha1": "f3cc115e2b7805385b49d77a2f346b43a401e2d1"
+      },
+      {
+        "title": "Charjabug (Pokémon)",
+        "page_id": 214115,
+        "revision_id": 4630123,
+        "sha1": "a3e0ded1024624146d9ac010c7e2eb90879bc293"
+      },
+      {
+        "title": "Charmander (Pokémon)",
+        "page_id": 65352,
+        "revision_id": 4641743,
+        "sha1": "4995ee9abc6d53237af6c03f12679b485e7339b8"
+      },
+      {
+        "title": "Charmeleon (Pokémon)",
+        "page_id": 2412,
+        "revision_id": 4642460,
+        "sha1": "0e93c8b5b2212725965e33b0905ffa7265c9b8b5"
+      },
+      {
+        "title": "Chatot (Pokémon)",
+        "page_id": 9150,
+        "revision_id": 4610711,
+        "sha1": "20754f71095ed66b8779ad20f8d4a5a8ad268a7b"
+      },
+      {
+        "title": "Cherrim (Pokémon)",
+        "page_id": 11998,
+        "revision_id": 4619731,
+        "sha1": "fd7fe36311f5ddae95dbb8b350d66d1ac245260d"
+      },
+      {
+        "title": "Cherubi (Pokémon)",
+        "page_id": 13452,
+        "revision_id": 4610713,
+        "sha1": "a117535451eb40e97301b0f4b43c2dee191fdbbc"
+      },
+      {
+        "title": "Chesnaught (Pokémon)",
+        "page_id": 184451,
+        "revision_id": 4626541,
+        "sha1": "0154590f7ae17dccf270080b831c6cce920db2b2"
+      },
+      {
+        "title": "Chespin (Pokémon)",
+        "page_id": 172502,
+        "revision_id": 4626539,
+        "sha1": "9c2c4a742582f3dce3fd446f7984d3c8526263e1"
+      },
+      {
+        "title": "Chewtle (Pokémon)",
+        "page_id": 244045,
+        "revision_id": 4613154,
+        "sha1": "0ea950183fb0190839526636953aa67558996ce2"
+      },
+      {
+        "title": "Chi-Yu (Pokémon)",
+        "page_id": 277465,
+        "revision_id": 4639180,
+        "sha1": "0fffeaecf47a21f1d6279f7d8b88697a35a8c2ac"
+      },
+      {
+        "title": "Chien-Pao (Pokémon)",
+        "page_id": 277463,
+        "revision_id": 4638013,
+        "sha1": "047b14035b2975f1fb7561fcf36da1e0e450b23c"
+      },
+      {
+        "title": "Chikorita (Pokémon)",
+        "page_id": 2072,
+        "revision_id": 4632023,
+        "sha1": "f473e2ee6c168dbb7e221b26a6e8774d5119a2fd"
+      },
+      {
+        "title": "Chimchar (Pokémon)",
+        "page_id": 12371,
+        "revision_id": 4625062,
+        "sha1": "968c242cd1893c760a4177c1fd8302bd5da7e968"
+      },
+      {
+        "title": "Chimecho (Pokémon)",
+        "page_id": 2665,
+        "revision_id": 4635201,
+        "sha1": "2a8d4cbd3901c3886b6b1a140815a6fcbc943c25"
+      },
+      {
+        "title": "Chinchou (Pokémon)",
+        "page_id": 2509,
+        "revision_id": 4634907,
+        "sha1": "2e48157c4138308e763940fe5f32069edc183b09"
+      },
+      {
+        "title": "Chingling (Pokémon)",
+        "page_id": 13498,
+        "revision_id": 4635046,
+        "sha1": "e425d6ecd53e611626804f7571201e40a4e0c6dc"
+      },
+      {
+        "title": "Cinccino (Pokémon)",
+        "page_id": 115970,
+        "revision_id": 4631653,
+        "sha1": "9b0fa217c55157475f875f8c48d4b9d71119f4a7"
+      },
+      {
+        "title": "Cinderace (Pokémon)",
+        "page_id": 244017,
+        "revision_id": 4643595,
+        "sha1": "ddcde72d7cb65b1aa7aee513bc42cce80dfea7c4"
+      },
+      {
+        "title": "Clamperl (Pokémon)",
+        "page_id": 2590,
+        "revision_id": 4610733,
+        "sha1": "1233e3236a44f3865aa2c4b726522d9f6f0f43b8"
+      },
+      {
+        "title": "Clauncher (Pokémon)",
+        "page_id": 178959,
+        "revision_id": 4615974,
+        "sha1": "c736a450e4dcd1b77ebc29b4a37d0d933fcd564d"
+      },
+      {
+        "title": "Clawitzer (Pokémon)",
+        "page_id": 184594,
+        "revision_id": 4615973,
+        "sha1": "cd45ed3d2fe556c146fe75088f7667fe32e57740"
+      },
+      {
+        "title": "Claydol (Pokémon)",
+        "page_id": 2582,
+        "revision_id": 4610425,
+        "sha1": "7671bf9527cba9a738316f2dbfb85b233b7a3406"
+      },
+      {
+        "title": "Clefable (Pokémon)",
+        "page_id": 2481,
+        "revision_id": 4628732,
+        "sha1": "4fd01df36b236393b6907240fc3fe26b2c84fd29"
+      },
+      {
+        "title": "Clefairy (Pokémon)",
+        "page_id": 8592,
+        "revision_id": 4628731,
+        "sha1": "6d416f32688bc49b917812cdabf62d8b4d143d27"
+      },
+      {
+        "title": "Cleffa (Pokémon)",
+        "page_id": 2512,
+        "revision_id": 4634909,
+        "sha1": "e090e25ce1a251c81cac65c93832f4b1d62443f9"
+      },
+      {
+        "title": "Clobbopus (Pokémon)",
+        "page_id": 244060,
+        "revision_id": 4622749,
+        "sha1": "e82fddcb6c38de4cd739a509ab94b7a95f0062f0"
+      },
+      {
+        "title": "Clodsire (Pokémon)",
+        "page_id": 277454,
+        "revision_id": 4610530,
+        "sha1": "cb04152e62201e1318c00292db4e0e353f6261d8"
+      },
+      {
+        "title": "Cloyster (Pokémon)",
+        "page_id": 2449,
+        "revision_id": 4631747,
+        "sha1": "9e705f222ced70184915cfcfdfd891c0e1e88bc2"
+      },
+      {
+        "title": "Coalossal (Pokémon)",
+        "page_id": 244048,
+        "revision_id": 4637221,
+        "sha1": "e5b40adbaccba54741557752c74b301b2de43103"
+      },
+      {
+        "title": "Cobalion (Pokémon)",
+        "page_id": 116036,
+        "revision_id": 4610740,
+        "sha1": "9a2c42b3963031d2c5b19edc408ee991ee6a1172"
+      },
+      {
+        "title": "Cofagrigus (Pokémon)",
+        "page_id": 111947,
+        "revision_id": 4627548,
+        "sha1": "2e646362fd86b5ece6c9b0beca9bd050605e60ee"
+      },
+      {
+        "title": "Combee (Pokémon)",
+        "page_id": 13450,
+        "revision_id": 4632235,
+        "sha1": "aebcf5839b1add6318bf75d606609208f783b173"
+      },
+      {
+        "title": "Combusken (Pokémon)",
+        "page_id": 2630,
+        "revision_id": 4630317,
+        "sha1": "a8fb68da7b888f042e3b4478524048bae36794d4"
+      },
+      {
+        "title": "Comfey (Pokémon)",
+        "page_id": 214589,
+        "revision_id": 4630093,
+        "sha1": "a95bb50f3fc5681e4da98f0e7d9d2bf281b51eda"
+      },
+      {
+        "title": "Conkeldurr (Pokémon)",
+        "page_id": 116125,
+        "revision_id": 4622598,
+        "sha1": "3991a286585621afdd2f4c76ae335cc1a5f73945"
+      },
+      {
+        "title": "Copperajah (Pokémon)",
+        "page_id": 244082,
+        "revision_id": 4637216,
+        "sha1": "74d8a144f3f5cd3b94046d96ffcd8292355dcbe5"
+      },
+      {
+        "title": "Corphish (Pokémon)",
+        "page_id": 2604,
+        "revision_id": 4613100,
+        "sha1": "645e2cd23227dee92799e48a3b2d14b53fd9d0a1"
+      },
+      {
+        "title": "Corsola (Pokémon)",
+        "page_id": 2606,
+        "revision_id": 4640045,
+        "sha1": "8a078541bde33dd4ee5785a06775f6ceea7acddd"
+      },
+      {
+        "title": "Corviknight (Pokémon)",
+        "page_id": 238714,
+        "revision_id": 4637319,
+        "sha1": "270301b0e927bd26f4ebd432d28442f086376e61"
+      },
+      {
+        "title": "Corvisquire (Pokémon)",
+        "page_id": 244038,
+        "revision_id": 4624785,
+        "sha1": "b1a9c4eddf7daf03910726cd4ca2b884f2c2df20"
+      },
+      {
+        "title": "Cosmoem (Pokémon)",
+        "page_id": 218180,
+        "revision_id": 4630151,
+        "sha1": "083a0a73bf5d99fc63981626d94725dfa8773de4"
+      },
+      {
+        "title": "Cosmog (Pokémon)",
+        "page_id": 216817,
+        "revision_id": 4630120,
+        "sha1": "b44072169df8a6301354ada95c43f3914870e057"
+      },
+      {
+        "title": "Cottonee (Pokémon)",
+        "page_id": 114940,
+        "revision_id": 4623339,
+        "sha1": "eb495d4a027eabe04a5fa1ff716db4c8d6e8358e"
+      },
+      {
+        "title": "Crabominable (Pokémon)",
+        "page_id": 218152,
+        "revision_id": 4635204,
+        "sha1": "1bf0b0ef6f8ee32ddd6268b495849e01501cd590"
+      },
+      {
+        "title": "Crabrawler (Pokémon)",
+        "page_id": 215354,
+        "revision_id": 4630140,
+        "sha1": "608a7c7b1aee411c05a64c8b1ef9fa12ed450dc9"
+      },
+      {
+        "title": "Cradily (Pokémon)",
+        "page_id": 2622,
+        "revision_id": 4610755,
+        "sha1": "361f8c5cbff6c8e6a63637fa3e3f483e6f903288"
+      },
+      {
+        "title": "Cramorant (Pokémon)",
+        "page_id": 240794,
+        "revision_id": 4630603,
+        "sha1": "b07804be907f9fe4d41337161b26c378aa13d9f1"
+      },
+      {
+        "title": "Cranidos (Pokémon)",
+        "page_id": 13180,
+        "revision_id": 4610757,
+        "sha1": "73d8b8e2e8af6c903f8c497fa029323af31784b1"
+      },
+      {
+        "title": "Crawdaunt (Pokémon)",
+        "page_id": 2614,
+        "revision_id": 4613106,
+        "sha1": "5b86577c5c9c6d56fbb726354040252b5c61ba06"
+      },
+      {
+        "title": "Cresselia (Pokémon)",
+        "page_id": 13539,
+        "revision_id": 4610758,
+        "sha1": "8ec7d2af130ab6529067c83ec7a53da5b8696bb4"
+      },
+      {
+        "title": "Croagunk (Pokémon)",
+        "page_id": 13553,
+        "revision_id": 4610760,
+        "sha1": "e84a605a97cc92f1b55d9111c30f35de156bacc8"
+      },
+      {
+        "title": "Crobat (Pokémon)",
+        "page_id": 2508,
+        "revision_id": 4643553,
+        "sha1": "ba85d844b1c3ba7c44897b972ddb8914867244ed"
+      },
+      {
+        "title": "Crocalor (Pokémon)",
+        "page_id": 277428,
+        "revision_id": 4628839,
+        "sha1": "1e781b548a714de3032eb71b6d5201fdc3dc7304"
+      },
+      {
+        "title": "Croconaw (Pokémon)",
+        "page_id": 2493,
+        "revision_id": 4619743,
+        "sha1": "b4384cd1c579eff53797928677163855e20c5c3a"
+      },
+      {
+        "title": "Crustle (Pokémon)",
+        "page_id": 116009,
+        "revision_id": 4610767,
+        "sha1": "05971a7d1aa53e82d93ac0c192a541e30e30b7a5"
+      },
+      {
+        "title": "Cryogonal (Pokémon)",
+        "page_id": 116005,
+        "revision_id": 4628753,
+        "sha1": "a010e2a4d5c767beb58bd302154542c08ffa033b"
+      },
+      {
+        "title": "Cubchoo (Pokémon)",
+        "page_id": 115877,
+        "revision_id": 4623429,
+        "sha1": "62d274f2b05b49b39d77f46901cba47218a2460b"
+      },
+      {
+        "title": "Cubone (Pokémon)",
+        "page_id": 2471,
+        "revision_id": 4632326,
+        "sha1": "1f0328c559608fd7fd065844f12350b40fb954fb"
+      },
+      {
+        "title": "Cufant (Pokémon)",
+        "page_id": 244081,
+        "revision_id": 4611735,
+        "sha1": "b2ad65642d29650b059a6c14eec3093e53a526b9"
+      },
+      {
+        "title": "Cursola (Pokémon)",
+        "page_id": 244069,
+        "revision_id": 4615174,
+        "sha1": "0280dd5a1756a259e2737326429a6723c449d64f"
+      },
+      {
+        "title": "Cutiefly (Pokémon)",
+        "page_id": 214114,
+        "revision_id": 4630121,
+        "sha1": "c47bc908dd1b9624573362c7ce2516e9f62dea9c"
+      },
+      {
+        "title": "Cyclizar (Pokémon)",
+        "page_id": 273851,
+        "revision_id": 4624632,
+        "sha1": "942471c6a17afe5de51312e63f9c4875ce227532"
+      },
+      {
+        "title": "Cyndaquil (Pokémon)",
+        "page_id": 2079,
+        "revision_id": 4628107,
+        "sha1": "e2012b555fc7d9c8ef678c332fda54d55b8adbe3"
+      },
+      {
+        "title": "Dachsbun (Pokémon)",
+        "page_id": 277471,
+        "revision_id": 4628734,
+        "sha1": "ff56353f0d738127c2e65907181db9616ade77d4"
+      },
+      {
+        "title": "Darkrai (Pokémon)",
+        "page_id": 13540,
+        "revision_id": 4634930,
+        "sha1": "e7af16325a180eaa1c6987d6b6d93903ab42ded1"
+      },
+      {
+        "title": "Darmanitan (Pokémon)",
+        "page_id": 106847,
+        "revision_id": 4610781,
+        "sha1": "e30a8055caea1ca26a9260613704d6fab71d1471"
+      },
+      {
+        "title": "Dartrix (Pokémon)",
+        "page_id": 216297,
+        "revision_id": 4630134,
+        "sha1": "ecff193e1987bba5db39a05b2cd7c9e729ed37a2"
+      },
+      {
+        "title": "Darumaka (Pokémon)",
+        "page_id": 111486,
+        "revision_id": 4610783,
+        "sha1": "56b7449220c7b6d5efc8c4ddef506d4cbd5eda5c"
+      },
+      {
+        "title": "Decidueye (Pokémon)",
+        "page_id": 216811,
+        "revision_id": 4630079,
+        "sha1": "34e30e04b332067905ebbc5954518f1697c6fa12"
+      },
+      {
+        "title": "Dedenne (Pokémon)",
+        "page_id": 181562,
+        "revision_id": 4628723,
+        "sha1": "702d51ce99363307ee44122d0875d3b91d16a42c"
+      },
+      {
+        "title": "Deerling (Pokémon)",
+        "page_id": 110443,
+        "revision_id": 4612271,
+        "sha1": "bdbe83531a65ccb60323adf626f49b92239bf14f"
+      },
+      {
+        "title": "Deino (Pokémon)",
+        "page_id": 116126,
+        "revision_id": 4619744,
+        "sha1": "3fe626f2934fcc689474607f1ee4a22443e202d6"
+      },
+      {
+        "title": "Delcatty (Pokémon)",
+        "page_id": 2670,
+        "revision_id": 4619723,
+        "sha1": "65173009d754cb8512405a9b7a65f94b32c53963"
+      },
+      {
+        "title": "Delibird (Pokémon)",
+        "page_id": 2579,
+        "revision_id": 4623431,
+        "sha1": "31b92e7a6c0b09f1d2f839e9eb68373156a63612"
+      },
+      {
+        "title": "Delphox (Pokémon)",
+        "page_id": 184452,
+        "revision_id": 4628679,
+        "sha1": "a71f8daf052282a2048c56bb0b89e303a7e48a19"
+      },
+      {
+        "title": "Deoxys (Pokémon)",
+        "page_id": 2561,
+        "revision_id": 4621536,
+        "sha1": "666c8d40617e446346f214eea532903745363d86"
+      },
+      {
+        "title": "Dewgong (Pokémon)",
+        "page_id": 2402,
+        "revision_id": 4631736,
+        "sha1": "17e0810628461aeb61857b21ad8789289b7e85dc"
+      },
+      {
+        "title": "Dewott (Pokémon)",
+        "page_id": 114969,
+        "revision_id": 4610792,
+        "sha1": "106fc571b05016f89056d26f4620de1cf4511c43"
+      },
+      {
+        "title": "Dewpider (Pokémon)",
+        "page_id": 218160,
+        "revision_id": 4630110,
+        "sha1": "a7f30c27352f9e7c4f1f525321d5bbece436fdb5"
+      },
+      {
+        "title": "Dhelmise (Pokémon)",
+        "page_id": 218176,
+        "revision_id": 4630414,
+        "sha1": "7d29fd16004b01f0a6ee845c6f8432e970819f1a"
+      },
+      {
+        "title": "Dialga (Pokémon)",
+        "page_id": 11989,
+        "revision_id": 4634855,
+        "sha1": "29609513c863d4068a8b718f060e03dd7830b88f"
+      },
+      {
+        "title": "Diancie (Pokémon)",
+        "page_id": 189837,
+        "revision_id": 4633181,
+        "sha1": "c6198a0391513f81070a8acd3b9422b14fa8fcfd"
+      },
+      {
+        "title": "Diggersby (Pokémon)",
+        "page_id": 184572,
+        "revision_id": 4610563,
+        "sha1": "67b6558a4f9a23e564d8b138f4bb30cb1678c28d"
+      },
+      {
+        "title": "Diglett (Pokémon)",
+        "page_id": 2482,
+        "revision_id": 4630045,
+        "sha1": "c3cccb26a683b57363e961ab9ba7ad703da70d2d"
+      },
+      {
+        "title": "Dipplin (Pokémon)",
+        "page_id": 294158,
+        "revision_id": 4610797,
+        "sha1": "c73aa301eddf07838277d8af2632897560a1c197"
+      },
+      {
+        "title": "Ditto (Pokémon)",
+        "page_id": 2457,
+        "revision_id": 4642259,
+        "sha1": "0300a243bd5d8515c165fa931851a2f005f73298"
+      },
+      {
+        "title": "Dodrio (Pokémon)",
+        "page_id": 2441,
+        "revision_id": 4631743,
+        "sha1": "c4f842dc402d2de57c7643d504805ad517fde3c4"
+      },
+      {
+        "title": "Doduo (Pokémon)",
+        "page_id": 2473,
+        "revision_id": 4631730,
+        "sha1": "aab907fae5d5b75728561363069b1d730e277efc"
+      },
+      {
+        "title": "Dolliv (Pokémon)",
+        "page_id": 277473,
+        "revision_id": 4610800,
+        "sha1": "f0c50a843e33a06439eceaab4a3aa6f871ecff5d"
+      },
+      {
+        "title": "Dondozo (Pokémon)",
+        "page_id": 277478,
+        "revision_id": 4628710,
+        "sha1": "620285b69b3a3cd616e6a04f43163cb5aafa8e69"
+      },
+      {
+        "title": "Donphan (Pokémon)",
+        "page_id": 2704,
+        "revision_id": 4634931,
+        "sha1": "1d9068534b49f1685444ca642662c913f23db2b5"
+      },
+      {
+        "title": "Dottler (Pokémon)",
+        "page_id": 244040,
+        "revision_id": 4610802,
+        "sha1": "cf08164db23d7db0d070c6cb7f87361612ae84b8"
+      },
+      {
+        "title": "Doublade (Pokémon)",
+        "page_id": 183320,
+        "revision_id": 4610803,
+        "sha1": "9b3f13bdee9158d77dae0233256f9e5bac07caf2"
+      },
+      {
+        "title": "Dracovish (Pokémon)",
+        "page_id": 244085,
+        "revision_id": 4610804,
+        "sha1": "5d72f1b636afb825e5b10ae90ea1f41198ff3383"
+      },
+      {
+        "title": "Dracozolt (Pokémon)",
+        "page_id": 244083,
+        "revision_id": 4638278,
+        "sha1": "4434dd6d2575434a235bbba2752a7bab40dcea36"
+      },
+      {
+        "title": "Dragalge (Pokémon)",
+        "page_id": 184593,
+        "revision_id": 4616424,
+        "sha1": "67f5ac93378ca21ab8bb23e678db120ee93f3dbb"
+      },
+      {
+        "title": "Dragapult (Pokémon)",
+        "page_id": 244089,
+        "revision_id": 4614042,
+        "sha1": "1d6f0f070630aa94f1f3163a0908de3b169ca309"
+      },
+      {
+        "title": "Dragonair (Pokémon)",
+        "page_id": 2447,
+        "revision_id": 4632022,
+        "sha1": "98a457da39f917b7335f5ae87a7294cb066fc506"
+      },
+      {
+        "title": "Dragonite (Pokémon)",
+        "page_id": 2467,
+        "revision_id": 4637184,
+        "sha1": "ef67e35c495a2eed058d1c61fed1c21c6e2e22b3"
+      },
+      {
+        "title": "Drakloak (Pokémon)",
+        "page_id": 244088,
+        "revision_id": 4610808,
+        "sha1": "bd8ad075577096ee0bbb516ecfeb13d8f420b3de"
+      },
+      {
+        "title": "Drampa (Pokémon)",
+        "page_id": 214108,
+        "revision_id": 4630090,
+        "sha1": "ceb75474543e22a107c0673d27e02d1fd0b8d21d"
+      },
+      {
+        "title": "Drapion (Pokémon)",
+        "page_id": 12000,
+        "revision_id": 4630466,
+        "sha1": "ff82c1adec0ba5e6d2c8d1eb36745aaf8eb379c6"
+      },
+      {
+        "title": "Dratini (Pokémon)",
+        "page_id": 2455,
+        "revision_id": 4633252,
+        "sha1": "ee2a703e97d2b5e9fb88052b1ba4b63f6ebdc0ab"
+      },
+      {
+        "title": "Drednaw (Pokémon)",
+        "page_id": 238713,
+        "revision_id": 4637847,
+        "sha1": "518d8772d775d62f02b0a94c749df41f96308672"
+      },
+      {
+        "title": "Dreepy (Pokémon)",
+        "page_id": 244087,
+        "revision_id": 4611740,
+        "sha1": "a1cb236163b0592389bf2e4a3e7323ebe49407a0"
+      },
+      {
+        "title": "Drifblim (Pokémon)",
+        "page_id": 61557,
+        "revision_id": 4610814,
+        "sha1": "8f81e38441fd71b9ada32e0abe984270a0f17b18"
+      },
+      {
+        "title": "Drifloon (Pokémon)",
+        "page_id": 13468,
+        "revision_id": 4623357,
+        "sha1": "cf561fdb27cb0c63e2da62bf4af3829ae1952eaf"
+      },
+      {
+        "title": "Drilbur (Pokémon)",
+        "page_id": 110573,
+        "revision_id": 4610816,
+        "sha1": "04d5112b3c85da01971bfbe37022dd8dac6c6da2"
+      },
+      {
+        "title": "Drizzile (Pokémon)",
+        "page_id": 244032,
+        "revision_id": 4610817,
+        "sha1": "78e2e9d48fcb9e6b65e985ba36aec411b19282d7"
+      },
+      {
+        "title": "Drowzee (Pokémon)",
+        "page_id": 2439,
+        "revision_id": 4631751,
+        "sha1": "8a99d2bdfa70a41989081e5ff7ce80152ff6f319"
+      },
+      {
+        "title": "Druddigon (Pokémon)",
+        "page_id": 116049,
+        "revision_id": 4610819,
+        "sha1": "ac7517ecda59e26cd7db9a21e856bc90dbbd45b4"
+      },
+      {
+        "title": "Dubwool (Pokémon)",
+        "page_id": 244044,
+        "revision_id": 4610821,
+        "sha1": "70d9377cca3f77b853043024fb843f579452ad38"
+      },
+      {
+        "title": "Ducklett (Pokémon)",
+        "page_id": 116108,
+        "revision_id": 4610823,
+        "sha1": "bdfc2d43401dd719755ee938acc56441b67e0e2b"
+      },
+      {
+        "title": "Dudunsparce (Pokémon)",
+        "page_id": 277455,
+        "revision_id": 4625863,
+        "sha1": "9f869e66ace7e4baeac61926100157709bee017c"
+      },
+      {
+        "title": "Dugtrio (Pokémon)",
+        "page_id": 2440,
+        "revision_id": 4630044,
+        "sha1": "be118ff537989c1e9c6e8e4d0409d8be762e5472"
+      },
+      {
+        "title": "Dunsparce (Pokémon)",
+        "page_id": 2588,
+        "revision_id": 4630224,
+        "sha1": "488bc72a490d414b9f0146630b328975f2b03157"
+      },
+      {
+        "title": "Duosion (Pokémon)",
+        "page_id": 116056,
+        "revision_id": 4610826,
+        "sha1": "511fd7fae993c4e944f86abaf1b57195c829589b"
+      },
+      {
+        "title": "Duraludon (Pokémon)",
+        "page_id": 239623,
+        "revision_id": 4643310,
+        "sha1": "1cb9b74f71144ff1d06787412dcf6bf61579f30c"
+      },
+      {
+        "title": "Durant (Pokémon)",
+        "page_id": 116120,
+        "revision_id": 4623452,
+        "sha1": "6f84025fc956b2fb2f8a85a81de1cb7adc9ff949"
+      },
+      {
+        "title": "Dusclops (Pokémon)",
+        "page_id": 2642,
+        "revision_id": 4610829,
+        "sha1": "8579034593e911385597f02890c2613b4fbef7e9"
+      },
+      {
+        "title": "Dusknoir (Pokémon)",
+        "page_id": 13611,
+        "revision_id": 4635784,
+        "sha1": "8af88edfdff76283b424eb4ddd6c504db5bc2bf0"
+      },
+      {
+        "title": "Duskull (Pokémon)",
+        "page_id": 2712,
+        "revision_id": 4610832,
+        "sha1": "53b45f5316ba907f0748517e34260f17a43eea1d"
+      },
+      {
+        "title": "Dustox (Pokémon)",
+        "page_id": 2575,
+        "revision_id": 4622207,
+        "sha1": "8f8c608686657b2fd4fb419cda15e3a10d2625a7"
+      },
+      {
+        "title": "Dwebble (Pokémon)",
+        "page_id": 115829,
+        "revision_id": 4610577,
+        "sha1": "d9db3426adf1ee23c94e972db65588cc4ecde12c"
+      },
+      {
+        "title": "Eelektrik (Pokémon)",
+        "page_id": 116052,
+        "revision_id": 4631655,
+        "sha1": "cc50cfa1162334771f79bae238d98c7bd8e7697f"
+      },
+      {
+        "title": "Eelektross (Pokémon)",
+        "page_id": 116054,
+        "revision_id": 4631659,
+        "sha1": "b41834a024eccc3af551b8d21084e96724f7a5ee"
+      },
+      {
+        "title": "Eevee (Pokémon)",
+        "page_id": 2361,
+        "revision_id": 4641836,
+        "sha1": "12eeb450504afbea5327e91366cc2128dc028eb1"
+      },
+      {
+        "title": "Eiscue (Pokémon)",
+        "page_id": 244078,
+        "revision_id": 4611755,
+        "sha1": "afc3c217e77d049e2c640e9af532da1a1bc487d9"
+      },
+      {
+        "title": "Ekans (Pokémon)",
+        "page_id": 2413,
+        "revision_id": 4623024,
+        "sha1": "d9480d7f080230590cb7c2450967e048c4e5a6a8"
+      },
+      {
+        "title": "Eldegoss (Pokémon)",
+        "page_id": 238712,
+        "revision_id": 4610842,
+        "sha1": "062abcaa4ab4ee3b0238c93a6a928baafe6465a8"
+      },
+      {
+        "title": "Electabuzz (Pokémon)",
+        "page_id": 2437,
+        "revision_id": 4632001,
+        "sha1": "e2198e7afc2593ec20f04cf980655ae2812a8ab7"
+      },
+      {
+        "title": "Electivire (Pokémon)",
+        "page_id": 60345,
+        "revision_id": 4610844,
+        "sha1": "e1a037a96457006d77e5c39dfc0d4fa6198ed13f"
+      },
+      {
+        "title": "Electrike (Pokémon)",
+        "page_id": 2680,
+        "revision_id": 4610845,
+        "sha1": "8aca065c4f08368c563a9fd762d83597894e68dc"
+      },
+      {
+        "title": "Electrode (Pokémon)",
+        "page_id": 2389,
+        "revision_id": 4631758,
+        "sha1": "24b9a61b1c75699e6c5b7a2a2e29a906bbd0b602"
+      },
+      {
+        "title": "Elekid (Pokémon)",
+        "page_id": 2617,
+        "revision_id": 4626298,
+        "sha1": "b71f8bfebaf88d123eac7b298dd69df4235718ee"
+      },
+      {
+        "title": "Elgyem (Pokémon)",
+        "page_id": 116075,
+        "revision_id": 4622716,
+        "sha1": "cf79cddb275bfe9a2af5417fce409fee3e0ea476"
+      },
+      {
+        "title": "Emboar (Pokémon)",
+        "page_id": 115751,
+        "revision_id": 4610849,
+        "sha1": "4408dde5008d5c1f2a154af93a7004d5ca7a759d"
+      },
+      {
+        "title": "Emolga (Pokémon)",
+        "page_id": 111480,
+        "revision_id": 4643756,
+        "sha1": "aeb9ad9f6da46fdf6edf70207b594f62a09bceb2"
+      },
+      {
+        "title": "Empoleon (Pokémon)",
+        "page_id": 13396,
+        "revision_id": 4610435,
+        "sha1": "f6c0ec52a75dde46f0f20c7fcd9373adfc7804c5"
+      },
+      {
+        "title": "Enamorus (Pokémon)",
+        "page_id": 268004,
+        "revision_id": 4618298,
+        "sha1": "cca2eb5bc08eecc17bf71c8383be504adbd9768d"
+      },
+      {
+        "title": "Entei (Pokémon)",
+        "page_id": 863,
+        "revision_id": 4613307,
+        "sha1": "106ede8d33c3d28fd57c2ae5af8cf786a6abf686"
+      },
+      {
+        "title": "Escavalier (Pokémon)",
+        "page_id": 116118,
+        "revision_id": 4610852,
+        "sha1": "33e4ad6e9b031d8f98ba52235a27a6f9e3b1b3da"
+      },
+      {
+        "title": "Espathra (Pokémon)",
+        "page_id": 277479,
+        "revision_id": 4626129,
+        "sha1": "925292e1c334704a1a738db2b9acfc29fedaff94"
+      },
+      {
+        "title": "Espeon (Pokémon)",
+        "page_id": 2535,
+        "revision_id": 4626516,
+        "sha1": "3feb9d7c5d28fabdfe692383ab8154a3cddd233e"
+      },
+      {
+        "title": "Espurr (Pokémon)",
+        "page_id": 184600,
+        "revision_id": 4636962,
+        "sha1": "07054e7b8e1f79b0d334d837da958feb3c87e211"
+      },
+      {
+        "title": "Eternatus (Pokémon)",
+        "page_id": 244090,
+        "revision_id": 4643273,
+        "sha1": "3a028094e4ffb2fcfccc68129a1c0cab8188d72f"
+      },
+      {
+        "title": "Excadrill (Pokémon)",
+        "page_id": 110882,
+        "revision_id": 4616763,
+        "sha1": "b5f5a7cf022bd1a5b72cd95549e30b9b39fb4375"
+      },
+      {
+        "title": "Exeggcute (Pokémon)",
+        "page_id": 2488,
+        "revision_id": 4632327,
+        "sha1": "3d94dd55934fa1d0a05cd4b656ddc4623295bad9"
+      },
+      {
+        "title": "Exeggutor (Pokémon)",
+        "page_id": 2384,
+        "revision_id": 4631760,
+        "sha1": "39f84b6b07fc496b44643d45e2ff642163182bd9"
+      },
+      {
+        "title": "Exploud (Pokémon)",
+        "page_id": 2698,
+        "revision_id": 4610857,
+        "sha1": "027032e7a8292d20eb059573438d7b791565b17a"
+      },
+      {
+        "title": "Falinks (Pokémon)",
+        "page_id": 244073,
+        "revision_id": 4626124,
+        "sha1": "b05143860e912d09186c10be9a1caf5cf48d50b9"
+      },
+      {
+        "title": "Farfetch'd (Pokémon)",
+        "page_id": 2485,
+        "revision_id": 4638078,
+        "sha1": "908575f9a99bc6cc83f656f130167abf5735c9a7"
+      },
+      {
+        "title": "Farigiraf (Pokémon)",
+        "page_id": 276132,
+        "revision_id": 4616444,
+        "sha1": "a148cb4f20bd08eaa244e0dad3a8d8522d7465b0"
+      },
+      {
+        "title": "Fearow (Pokémon)",
+        "page_id": 2379,
+        "revision_id": 4632248,
+        "sha1": "fe0dba30b29611177dd5e0b51a5cfbf594630367"
+      },
+      {
+        "title": "Feebas (Pokémon)",
+        "page_id": 2610,
+        "revision_id": 4643148,
+        "sha1": "353ff11ad642df50af431c65436ad233c0c28590"
+      },
+      {
+        "title": "Fennekin (Pokémon)",
+        "page_id": 172503,
+        "revision_id": 4628677,
+        "sha1": "a9ea413cdc2446bc6c41e6d10045113ef84cd63b"
+      },
+      {
+        "title": "Feraligatr (Pokémon)",
+        "page_id": 2494,
+        "revision_id": 4612833,
+        "sha1": "4a2ddd3a584bbfab44ca2e992971add14d32b7d0"
+      },
+      {
+        "title": "Ferroseed (Pokémon)",
+        "page_id": 116123,
+        "revision_id": 4629158,
+        "sha1": "6e28e33422ad14ee89dbf90ea14f54912375e2bb"
+      },
+      {
+        "title": "Ferrothorn (Pokémon)",
+        "page_id": 116122,
+        "revision_id": 4616435,
+        "sha1": "292f8b3b0b06d43a5785b6c71a38532f28d349ac"
+      },
+      {
+        "title": "Fezandipiti (Pokémon)",
+        "page_id": 281867,
+        "revision_id": 4643928,
+        "sha1": "a854164f06a1bfe32ef99474e35cdaf6ac8b2be0"
+      },
+      {
+        "title": "Fidough (Pokémon)",
+        "page_id": 273429,
+        "revision_id": 4628733,
+        "sha1": "2b94fe0b3bcfba16e11f74f99eca40330dd9c9c0"
+      },
+      {
+        "title": "Finizen (Pokémon)",
+        "page_id": 277481,
+        "revision_id": 4610868,
+        "sha1": "7045f31b824c5c873a90b6836e5cd1fcfb0daee1"
+      },
+      {
+        "title": "Finneon (Pokémon)",
+        "page_id": 13564,
+        "revision_id": 4613121,
+        "sha1": "e11dcec19a7153fc868c3b7e4c958b3c0277d773"
+      },
+      {
+        "title": "Flaaffy (Pokémon)",
+        "page_id": 2519,
+        "revision_id": 4634920,
+        "sha1": "05a706e9a03c307285b6c5292170d7ce2582ab92"
+      },
+      {
+        "title": "Flabébé (Pokémon)",
+        "page_id": 179013,
+        "revision_id": 4610871,
+        "sha1": "6be1a5cea0bb2b882582049e404a7ff025592e15"
+      },
+      {
+        "title": "Flamigo (Pokémon)",
+        "page_id": 277433,
+        "revision_id": 4627437,
+        "sha1": "ef6c40ca22e00d5951f4d0110bdfcb58f1236067"
+      },
+      {
+        "title": "Flapple (Pokémon)",
+        "page_id": 244050,
+        "revision_id": 4637212,
+        "sha1": "5ebc81f548a36875d325c16ae60434d566c16445"
+      },
+      {
+        "title": "Flareon (Pokémon)",
+        "page_id": 2448,
+        "revision_id": 4632012,
+        "sha1": "597e553607129223650cd51ce34407237c40f01f"
+      },
+      {
+        "title": "Fletchinder (Pokémon)",
+        "page_id": 184516,
+        "revision_id": 4610876,
+        "sha1": "6c1bf431264fe5472a9aa02996d843786a56fecb"
+      },
+      {
+        "title": "Fletchling (Pokémon)",
+        "page_id": 177478,
+        "revision_id": 4632957,
+        "sha1": "6be8721c7266ef9106840c9a3e8b0326d3ee8087"
+      },
+      {
+        "title": "Flittle (Pokémon)",
+        "page_id": 277477,
+        "revision_id": 4612284,
+        "sha1": "99eecfc607aab54bc20fc97480be900b0f32ea1b"
+      },
+      {
+        "title": "Floatzel (Pokémon)",
+        "page_id": 13409,
+        "revision_id": 4613120,
+        "sha1": "9fa058c85742ebafb8979dbc7d81063776b45d90"
+      },
+      {
+        "title": "Floette (Pokémon)",
+        "page_id": 184603,
+        "revision_id": 4624206,
+        "sha1": "adfe0570ab35985e3c4ab4419189a06b9a855cba"
+      },
+      {
+        "title": "Floragato (Pokémon)",
+        "page_id": 277429,
+        "revision_id": 4610881,
+        "sha1": "968b39331bd5621d44ac09ae8d38cf0716829063"
+      },
+      {
+        "title": "Florges (Pokémon)",
+        "page_id": 184604,
+        "revision_id": 4626136,
+        "sha1": "8ebb38d0b41b1a9a4ff94b1243d19a9d01ce6468"
+      },
+      {
+        "title": "Flutter Mane (Pokémon)",
+        "page_id": 277438,
+        "revision_id": 4610885,
+        "sha1": "fc660f81dc0a837dacde25f1bca0e85c439be2fe"
+      },
+      {
+        "title": "Flygon (Pokémon)",
+        "page_id": 2597,
+        "revision_id": 4610422,
+        "sha1": "bad9b8d4ec56ac341dac1d6d6120c3b85db0b056"
+      },
+      {
+        "title": "Fomantis (Pokémon)",
+        "page_id": 214951,
+        "revision_id": 4630136,
+        "sha1": "263f7186b6823d71e2d9c3dee4641086bf2c3282"
+      },
+      {
+        "title": "Foongus (Pokémon)",
+        "page_id": 114941,
+        "revision_id": 4642863,
+        "sha1": "ffeef14cbd9df6e795e9a35d0387105e55731ca4"
+      },
+      {
+        "title": "Forretress (Pokémon)",
+        "page_id": 2547,
+        "revision_id": 4623406,
+        "sha1": "843215898443eb358dc7f85027b9912436383e8f"
+      },
+      {
+        "title": "Fraxure (Pokémon)",
+        "page_id": 115957,
+        "revision_id": 4610888,
+        "sha1": "46fc5761c688d7a80227e7d05d90a29a9a1979d4"
+      },
+      {
+        "title": "Frigibax (Pokémon)",
+        "page_id": 277504,
+        "revision_id": 4628755,
+        "sha1": "fce2e8c0db5554384a092674bad93b674e9180eb"
+      },
+      {
+        "title": "Frillish (Pokémon)",
+        "page_id": 116062,
+        "revision_id": 4613124,
+        "sha1": "1e01b5ee2fd3f4e17d63c7e2277da2ca38ccee5c"
+      },
+      {
+        "title": "Froakie (Pokémon)",
+        "page_id": 206132,
+        "revision_id": 4628687,
+        "sha1": "a84b93e43433cdc9a0f5a24ad236a2b6c17acb87"
+      },
+      {
+        "title": "Frogadier (Pokémon)",
+        "page_id": 182726,
+        "revision_id": 4628686,
+        "sha1": "28b6487ffd1b601f2af6b4e22537438d84ce54c4"
+      },
+      {
+        "title": "Froslass (Pokémon)",
+        "page_id": 13601,
+        "revision_id": 4621305,
+        "sha1": "3f645ea9a82872ead7c76894a0c60665611c2895"
+      },
+      {
+        "title": "Frosmoth (Pokémon)",
+        "page_id": 244076,
+        "revision_id": 4637959,
+        "sha1": "8b4d74885cbfb2790357c6b63437dc3e73e7bc17"
+      },
+      {
+        "title": "Fuecoco (Pokémon)",
+        "page_id": 269685,
+        "revision_id": 4610901,
+        "sha1": "7f58a6a036b190acaa2a15110742a35e1a45a9f0"
+      },
+      {
+        "title": "Furfrou (Pokémon)",
+        "page_id": 182724,
+        "revision_id": 4620932,
+        "sha1": "d27ae95d4bb3ad6cb52f8863678fb631a0144dad"
+      },
+      {
+        "title": "Furret (Pokémon)",
+        "page_id": 2505,
+        "revision_id": 4632027,
+        "sha1": "c12638bb542f799505d0a2e156e3034b125fe534"
+      },
+      {
+        "title": "Gabite (Pokémon)",
+        "page_id": 13515,
+        "revision_id": 4612241,
+        "sha1": "5d7580f474561ac83250c715d9b89a472ab72ef6"
+      },
+      {
+        "title": "Gallade (Pokémon)",
+        "page_id": 13610,
+        "revision_id": 4621539,
+        "sha1": "1860907167698d6a16d40eb190526e53a4a8cad9"
+      },
+      {
+        "title": "Galvantula (Pokémon)",
+        "page_id": 111952,
+        "revision_id": 4610906,
+        "sha1": "bfd05992990a4e65bc8fb637f4a19aa769c687bd"
+      },
+      {
+        "title": "Garbodor (Pokémon)",
+        "page_id": 116030,
+        "revision_id": 4637783,
+        "sha1": "374c4d523323b94e916f25e5b19e96f710fa3e2e"
+      },
+      {
+        "title": "Garchomp (Pokémon)",
+        "page_id": 13516,
+        "revision_id": 4621447,
+        "sha1": "89a8b46f033b3123703fda261e73b535d325e273"
+      },
+      {
+        "title": "Gardevoir (Pokémon)",
+        "page_id": 2669,
+        "revision_id": 4635259,
+        "sha1": "0ac48bca65da5e4ba1881ba42765ea41fef7e75f"
+      },
+      {
+        "title": "Garganacl (Pokémon)",
+        "page_id": 277503,
+        "revision_id": 4628748,
+        "sha1": "cc7a2d6e4b9b8c8d8a742ea1bb2daacc9f51eccf"
+      },
+      {
+        "title": "Gastly (Pokémon)",
+        "page_id": 2487,
+        "revision_id": 4631748,
+        "sha1": "c69aebea477aaa26bc3c79c310b3f62b2f9687a9"
+      },
+      {
+        "title": "Gastrodon (Pokémon)",
+        "page_id": 13456,
+        "revision_id": 4610438,
+        "sha1": "3dce2556d357d266b4add9397a39379d8f7b665b"
+      },
+      {
+        "title": "Gecqua (Pokémon)",
+        "page_id": 352934,
+        "revision_id": 4501075,
+        "sha1": "8e5d9b02bb081ebc8e6c868e2178f464476bf575"
+      },
+      {
+        "title": "Genesect (Pokémon)",
+        "page_id": 115977,
+        "revision_id": 4642509,
+        "sha1": "93e77660a0dda71e4f9cf1c449f6ed515355cd2f"
+      },
+      {
+        "title": "Gengar (Pokémon)",
+        "page_id": 2425,
+        "revision_id": 4637198,
+        "sha1": "c449e68a38ddff491f9926a0eef79293e029ffce"
+      },
+      {
+        "title": "Geodude (Pokémon)",
+        "page_id": 1158,
+        "revision_id": 4632322,
+        "sha1": "4fc21f739c381701807ee1558fccd00edfab229a"
+      },
+      {
+        "title": "Gholdengo (Pokémon)",
+        "page_id": 277472,
+        "revision_id": 4633461,
+        "sha1": "1e28d4ac36456c1cc8dd5b2b4dde383c9ebfe697"
+      },
+      {
+        "title": "Gible (Pokémon)",
+        "page_id": 13514,
+        "revision_id": 4612279,
+        "sha1": "e235842cfa4862fb8dc0018b7ab92378723eb933"
+      },
+      {
+        "title": "Gigalith (Pokémon)",
+        "page_id": 109939,
+        "revision_id": 4610912,
+        "sha1": "47f6371411bfc0c5a9413fab65cc0a4f30e1fa5f"
+      },
+      {
+        "title": "Gimmighoul (Pokémon)",
+        "page_id": 276903,
+        "revision_id": 4627572,
+        "sha1": "3edb7c1f73b88db56a95a9cf234f226abdf88e4c"
+      },
+      {
+        "title": "Girafarig (Pokémon)",
+        "page_id": 2585,
+        "revision_id": 4610914,
+        "sha1": "9c68ba40c8795054adc8079932fd6fcd72d44599"
+      },
+      {
+        "title": "Giratina (Pokémon)",
+        "page_id": 13625,
+        "revision_id": 4630711,
+        "sha1": "39dd64906c6a508ee5bfd247a216fa92e8a25794"
+      },
+      {
+        "title": "Glaceon (Pokémon)",
+        "page_id": 13566,
+        "revision_id": 4629150,
+        "sha1": "5fd1be3c713ccc61d71fd3bf5c5c7916fde27ec5"
+      },
+      {
+        "title": "Glalie (Pokémon)",
+        "page_id": 2710,
+        "revision_id": 4621298,
+        "sha1": "51a7f1a7adfaa6f008906b29d355c94c39e24c1b"
+      },
+      {
+        "title": "Glameow (Pokémon)",
+        "page_id": 13185,
+        "revision_id": 4628167,
+        "sha1": "c63809c34c258ae565c288f217f7e29e36cae322"
+      },
+      {
+        "title": "Glastrier (Pokémon)",
+        "page_id": 257885,
+        "revision_id": 4610921,
+        "sha1": "1afac9e90c0a6424c412e3753f1b36cda2c92e25"
+      },
+      {
+        "title": "Gligar (Pokémon)",
+        "page_id": 2571,
+        "revision_id": 4610924,
+        "sha1": "ddf75ee5d0dc1305f26396dea80e020df0f8ab2e"
+      },
+      {
+        "title": "Glimmet (Pokémon)",
+        "page_id": 277490,
+        "revision_id": 4626605,
+        "sha1": "bffd4d072a7bc41b909169becb7bcb1cf2807ff0"
+      },
+      {
+        "title": "Glimmora (Pokémon)",
+        "page_id": 277491,
+        "revision_id": 4635198,
+        "sha1": "d96e30b6e9dedccbd81262de9f40bb59c6ef1038"
+      },
+      {
+        "title": "Gliscor (Pokémon)",
+        "page_id": 13573,
+        "revision_id": 4610560,
+        "sha1": "e3ed00cfc5e8d0e07acb17e0eb8fbab3011836eb"
+      },
+      {
+        "title": "Gloom (Pokémon)",
+        "page_id": 2372,
+        "revision_id": 4623288,
+        "sha1": "84e0535ba7d546d02bae848239f1a54589627735"
+      },
+      {
+        "title": "Gogoat (Pokémon)",
+        "page_id": 177479,
+        "revision_id": 4615943,
+        "sha1": "75bac8d548407700dff6c156c0ab0acda25d8b29"
+      },
+      {
+        "title": "Golbat (Pokémon)",
+        "page_id": 2300,
+        "revision_id": 4643554,
+        "sha1": "cf18e965a1fc681316e50179322327745bc5b392"
+      },
+      {
+        "title": "Goldeen (Pokémon)",
+        "page_id": 2468,
+        "revision_id": 4631786,
+        "sha1": "4d3acff5a04c7e289e6618517ff98d7bd930bda8"
+      },
+      {
+        "title": "Golduck (Pokémon)",
+        "page_id": 2381,
+        "revision_id": 4623403,
+        "sha1": "449c21062d2a408bd6a2c0138c62eb3ffa2fdc12"
+      },
+      {
+        "title": "Golem (Pokémon)",
+        "page_id": 2383,
+        "revision_id": 4630050,
+        "sha1": "caa5caaa1b2db2ab474ff5abfca5795a74eb409c"
+      },
+      {
+        "title": "Golett (Pokémon)",
+        "page_id": 116053,
+        "revision_id": 4627545,
+        "sha1": "8e2b54891fcbdc8f0a7ac9ab1815625277d94cd2"
+      },
+      {
+        "title": "Golisopod (Pokémon)",
+        "page_id": 218174,
+        "revision_id": 4636330,
+        "sha1": "c4f5dfbb2713ff8e0e676eadd5bb7f43afd13a16"
+      },
+      {
+        "title": "Golurk (Pokémon)",
+        "page_id": 116055,
+        "revision_id": 4627546,
+        "sha1": "b78306f86d7aba898bf1a221b53deb4f8e4bd8b9"
+      },
+      {
+        "title": "Goodra (Pokémon)",
+        "page_id": 184587,
+        "revision_id": 4628760,
+        "sha1": "2c39816be6a89636eca0368cce390f8f5e150e0f"
+      },
+      {
+        "title": "Goomy (Pokémon)",
+        "page_id": 184554,
+        "revision_id": 4628758,
+        "sha1": "bdb3cb8d902e598c796207fe778e75b3d9cff6a1"
+      },
+      {
+        "title": "Gorebyss (Pokémon)",
+        "page_id": 2658,
+        "revision_id": 4610940,
+        "sha1": "f606364f33f4842dd23f7217bb64b8aad31fa53a"
+      },
+      {
+        "title": "Gossifleur (Pokémon)",
+        "page_id": 238711,
+        "revision_id": 4632232,
+        "sha1": "91dfdd8acad9ad5cd738473f5274266f6498be12"
+      },
+      {
+        "title": "Gothita (Pokémon)",
+        "page_id": 116031,
+        "revision_id": 4610943,
+        "sha1": "aa6c8ba63ff88438e5cc4fd2a49fcc9620ad9664"
+      },
+      {
+        "title": "Gothitelle (Pokémon)",
+        "page_id": 108986,
+        "revision_id": 4610944,
+        "sha1": "fb40f7775fcaf88cb060a2c05f8e974a02ea352c"
+      },
+      {
+        "title": "Gothorita (Pokémon)",
+        "page_id": 116033,
+        "revision_id": 4610945,
+        "sha1": "be4e1780ff0ffdb1076c99bebd9b8f573eaa4d0b"
+      },
+      {
+        "title": "Gouging Fire (Pokémon)",
+        "page_id": 300801,
+        "revision_id": 4611552,
+        "sha1": "718836a73f28312d8741b9065f1bf5825f18bd70"
+      },
+      {
+        "title": "Gourgeist (Pokémon)",
+        "page_id": 184615,
+        "revision_id": 4638294,
+        "sha1": "1b1cec5634715449a6ee3b9a86fbe14061627162"
+      },
+      {
+        "title": "Grafaiai (Pokémon)",
+        "page_id": 274070,
+        "revision_id": 4621530,
+        "sha1": "b215b099b3e93e04cff816b6df0e8d35a773c4b3"
+      },
+      {
+        "title": "Granbull (Pokémon)",
+        "page_id": 2602,
+        "revision_id": 4610949,
+        "sha1": "d4e1f18374cbfe3fcdcc0cd636dba9078bee4852"
+      },
+      {
+        "title": "Grapploct (Pokémon)",
+        "page_id": 244061,
+        "revision_id": 4622750,
+        "sha1": "b60c3928f077000cd56b1da5ac96c2460738d8e7"
+      },
+      {
+        "title": "Graveler (Pokémon)",
+        "page_id": 2386,
+        "revision_id": 4642454,
+        "sha1": "9617e434d070fd404e827a9484d6b8a17a4b12e0"
+      },
+      {
+        "title": "Great Tusk (Pokémon)",
+        "page_id": 277434,
+        "revision_id": 4611568,
+        "sha1": "1b6128711fb46fbf79a022891f43efbb19a52331"
+      },
+      {
+        "title": "Greavard (Pokémon)",
+        "page_id": 276508,
+        "revision_id": 4627569,
+        "sha1": "5148ebc214998152607ebb694e6aefb410b93e20"
+      },
+      {
+        "title": "Greedent (Pokémon)",
+        "page_id": 244035,
+        "revision_id": 4627002,
+        "sha1": "5cf4747dcd568a3a016b87e0b9ab40a9049670b8"
+      },
+      {
+        "title": "Greninja (Pokémon)",
+        "page_id": 184453,
+        "revision_id": 4640295,
+        "sha1": "9a0cdbb6b992d8a68907ff38414d7ee6e02b4fae"
+      },
+      {
+        "title": "Grimer (Pokémon)",
+        "page_id": 2486,
+        "revision_id": 4631740,
+        "sha1": "701d040fcf8a1f37066e650d1fe5635aa4d28e9b"
+      },
+      {
+        "title": "Grimmsnarl (Pokémon)",
+        "page_id": 244067,
+        "revision_id": 4637441,
+        "sha1": "2b28fb882600610ab30c1e1a3765787c15c46d22"
+      },
+      {
+        "title": "Grookey (Pokémon)",
+        "page_id": 236040,
+        "revision_id": 4610957,
+        "sha1": "0091f88222b5bf93efd3498c3f6e5363b0545763"
+      },
+      {
+        "title": "Grotle (Pokémon)",
+        "page_id": 13390,
+        "revision_id": 4610959,
+        "sha1": "dd08b221c65d68bc6fc53d2ff61f2039eff53a64"
+      },
+      {
+        "title": "Groudon (Pokémon)",
+        "page_id": 2543,
+        "revision_id": 4636202,
+        "sha1": "1dc51dcac5a5d0a696a46014d32d9bfc9c5913ad"
+      },
+      {
+        "title": "Grovyle (Pokémon)",
+        "page_id": 2611,
+        "revision_id": 4610964,
+        "sha1": "34ea88e353f15d53675f956c0b396fb8c246497a"
+      },
+      {
+        "title": "Growlithe (Pokémon)",
+        "page_id": 8837,
+        "revision_id": 4631796,
+        "sha1": "56d43cfe1744a9e9a44984763446885986260ff1"
+      },
+      {
+        "title": "Grubbin (Pokémon)",
+        "page_id": 213755,
+        "revision_id": 4630137,
+        "sha1": "0c40dd1e3f0a2772dc34a78bef07b9c84f3c2cec"
+      },
+      {
+        "title": "Grumpig (Pokémon)",
+        "page_id": 2708,
+        "revision_id": 4627600,
+        "sha1": "c5eb07a76d47161b5ce3f1438027ef1df5bf4460"
+      },
+      {
+        "title": "Gulpin (Pokémon)",
+        "page_id": 2700,
+        "revision_id": 4626511,
+        "sha1": "e28ae0d4cc2b466b27ccadd28e510077e85c6621"
+      },
+      {
+        "title": "Gumshoos (Pokémon)",
+        "page_id": 214948,
+        "revision_id": 4630091,
+        "sha1": "d51333bfb75158b2ed23e6307569823dbed7febb"
+      },
+      {
+        "title": "Gurdurr (Pokémon)",
+        "page_id": 116121,
+        "revision_id": 4610976,
+        "sha1": "37cb1f1dc87bf47f6c30b20d07e974c3a78beeac"
+      },
+      {
+        "title": "Guzzlord (Pokémon)",
+        "page_id": 218195,
+        "revision_id": 4630146,
+        "sha1": "7176dda05936a5b451e3a5cb8fbbf4255aae85f8"
+      },
+      {
+        "title": "Gyarados (Pokémon)",
+        "page_id": 2070,
+        "revision_id": 4635213,
+        "sha1": "5ee97d76416050066637c43a4db8ea5ca1a5d657"
+      },
+      {
+        "title": "Hakamo-o (Pokémon)",
+        "page_id": 216458,
+        "revision_id": 4630154,
+        "sha1": "c20e7b0290a7494050f557840e94edf2d9302ab0"
+      },
+      {
+        "title": "Happiny (Pokémon)",
+        "page_id": 13149,
+        "revision_id": 4619741,
+        "sha1": "35eb67dc3da04e42b22caed91f40e309a23aef75"
+      },
+      {
+        "title": "Hariyama (Pokémon)",
+        "page_id": 2697,
+        "revision_id": 4620382,
+        "sha1": "a470bd19cdaf1b8306f608a570074556daa21e7f"
+      },
+      {
+        "title": "Hatenna (Pokémon)",
+        "page_id": 244063,
+        "revision_id": 4610980,
+        "sha1": "ee117341ffd03bb94485f0dcd1747e6ceb26cccb"
+      },
+      {
+        "title": "Hatterene (Pokémon)",
+        "page_id": 244065,
+        "revision_id": 4637644,
+        "sha1": "87e84eb43c5696c682e7cdf56bc5658e5ede5acf"
+      },
+      {
+        "title": "Hattrem (Pokémon)",
+        "page_id": 244064,
+        "revision_id": 4610981,
+        "sha1": "b0993d174ab26a5e43aa8d60c25c9e7de6ebd4ad"
+      },
+      {
+        "title": "Haunter (Pokémon)",
+        "page_id": 2416,
+        "revision_id": 4631749,
+        "sha1": "8a1646af0dd0a6e5fe2bd8024702c89ce7e1ea0e"
+      },
+      {
+        "title": "Hawlucha (Pokémon)",
+        "page_id": 184586,
+        "revision_id": 4630787,
+        "sha1": "6cae6a616a28526b73e51ec690e272511dff129b"
+      },
+      {
+        "title": "Haxorus (Pokémon)",
+        "page_id": 110883,
+        "revision_id": 4610983,
+        "sha1": "ff153332bbfdd6866089653c53edf53ed16cc7d5"
+      },
+      {
+        "title": "Heatmor (Pokémon)",
+        "page_id": 116116,
+        "revision_id": 4610984,
+        "sha1": "ef65e711890656cf35813ea604e74c0f59ba48a2"
+      },
+      {
+        "title": "Heatran (Pokémon)",
+        "page_id": 13592,
+        "revision_id": 4628597,
+        "sha1": "2de71728731743e393034bf676b4d0fe74c42934"
+      },
+      {
+        "title": "Heliolisk (Pokémon)",
+        "page_id": 184548,
+        "revision_id": 4613685,
+        "sha1": "cb6df59988475a966165eb753751eea4cecb0fd0"
+      },
+      {
+        "title": "Helioptile (Pokémon)",
+        "page_id": 177480,
+        "revision_id": 4613686,
+        "sha1": "e4520a064b04429b39f59b3b9154fcbde54a0269"
+      },
+      {
+        "title": "Heracross (Pokémon)",
+        "page_id": 2552,
+        "revision_id": 4635223,
+        "sha1": "4c97a26b051362fc53de199b47342bc753787d76"
+      },
+      {
+        "title": "Herdier (Pokémon)",
+        "page_id": 115820,
+        "revision_id": 4610987,
+        "sha1": "89265e31dd3f24ab71051b1087eda968c08fe6c5"
+      },
+      {
+        "title": "Hippopotas (Pokémon)",
+        "page_id": 13533,
+        "revision_id": 4610988,
+        "sha1": "3b5c11568ec26abfbd515d5fc7ae234e904b48cd"
+      },
+      {
+        "title": "Hippowdon (Pokémon)",
+        "page_id": 13534,
+        "revision_id": 4610553,
+        "sha1": "51444347b6befcd6a96ddb2c5506dcdffcafbbb7"
+      },
+      {
+        "title": "Hitmonchan (Pokémon)",
+        "page_id": 2463,
+        "revision_id": 4631766,
+        "sha1": "dd552367fa6df70ef1da5f5c547b5312e8990e2d"
+      },
+      {
+        "title": "Hitmonlee (Pokémon)",
+        "page_id": 2426,
+        "revision_id": 4631765,
+        "sha1": "63e3cd027ba22b2a919e7b5e841fd2a7fb11e38c"
+      },
+      {
+        "title": "Hitmontop (Pokémon)",
+        "page_id": 2596,
+        "revision_id": 4610992,
+        "sha1": "4ded0653541f4d6aaaf714e75e382af60eed97bf"
+      },
+      {
+        "title": "Ho-Oh (Pokémon)",
+        "page_id": 61453,
+        "revision_id": 4628451,
+        "sha1": "16bcdf5a6ad4d2390baf49f0030d5cb437b426c5"
+      },
+      {
+        "title": "Honchkrow (Pokémon)",
+        "page_id": 13490,
+        "revision_id": 4640886,
+        "sha1": "1078eab980e98ea276948829ee999a0ece8905df"
+      },
+      {
+        "title": "Honedge (Pokémon)",
+        "page_id": 179966,
+        "revision_id": 4610996,
+        "sha1": "b245c2d6959d91bb1d85c3dbd4443f88e9d49c1b"
+      },
+      {
+        "title": "Hoopa (Pokémon)",
+        "page_id": 200802,
+        "revision_id": 4620915,
+        "sha1": "3a32c86418f9eb23c8a7f8e2adc6a89c5ffe4192"
+      },
+      {
+        "title": "Hoothoot (Pokémon)",
+        "page_id": 2506,
+        "revision_id": 4634661,
+        "sha1": "c8e709451c9bfd335fec5d375249e9252bf64ec6"
+      },
+      {
+        "title": "Hoppip (Pokémon)",
+        "page_id": 2527,
+        "revision_id": 4632302,
+        "sha1": "05bdfc8dff2a1d8f91c87019af8d3d7a369f9fba"
+      },
+      {
+        "title": "Horsea (Pokémon)",
+        "page_id": 2465,
+        "revision_id": 4643531,
+        "sha1": "6221b57f01bd596cd61f5da306a14ca795d2329e"
+      },
+      {
+        "title": "Houndoom (Pokémon)",
+        "page_id": 2605,
+        "revision_id": 4635523,
+        "sha1": "9475cbd84e3d7579bb8c1cfa2958e92374ec64ea"
+      },
+      {
+        "title": "Houndour (Pokémon)",
+        "page_id": 2607,
+        "revision_id": 4620506,
+        "sha1": "2d795e5ba08478b714141fe07911da5c3c49380a"
+      },
+      {
+        "title": "Houndstone (Pokémon)",
+        "page_id": 277466,
+        "revision_id": 4627570,
+        "sha1": "5750f024f0de86fc692f1a6519b3da8d6b6adb7d"
+      },
+      {
+        "title": "Huntail (Pokémon)",
+        "page_id": 2581,
+        "revision_id": 4611003,
+        "sha1": "4b896f2b8149640962a9596845956782578edfef"
+      },
+      {
+        "title": "Hydrapple (Pokémon)",
+        "page_id": 300800,
+        "revision_id": 4638602,
+        "sha1": "c5cda218b9e0c4c625e5880ec76bcae1ac1ea4cb"
+      },
+      {
+        "title": "Hydreigon (Pokémon)",
+        "page_id": 116131,
+        "revision_id": 4635979,
+        "sha1": "f13e447ed266b25e758f4dad94552f956fc3297a"
+      },
+      {
+        "title": "Hypno (Pokémon)",
+        "page_id": 2399,
+        "revision_id": 4631753,
+        "sha1": "54f1ea078ec8d6081c137b764b060b4a0ac4b845"
+      },
+      {
+        "title": "Igglybuff (Pokémon)",
+        "page_id": 2513,
+        "revision_id": 4634910,
+        "sha1": "1ec645ea483ffde4611d749b4c58b6010178989d"
+      },
+      {
+        "title": "Illumise (Pokémon)",
+        "page_id": 2688,
+        "revision_id": 4634160,
+        "sha1": "fcf548e5981a5964b3525597312ccbcc2996d351"
+      },
+      {
+        "title": "Impidimp (Pokémon)",
+        "page_id": 238909,
+        "revision_id": 4615906,
+        "sha1": "631bbff601d360c57057754e02b2a1aed98c1d36"
+      },
+      {
+        "title": "Incineroar (Pokémon)",
+        "page_id": 216812,
+        "revision_id": 4630077,
+        "sha1": "f64d77d4e057d1b0b94f11d710ab8ce9bafa60b2"
+      },
+      {
+        "title": "Indeedee (Pokémon)",
+        "page_id": 244079,
+        "revision_id": 4636334,
+        "sha1": "8f526117e7ac7036f651c8b58620bb256e4614ab"
+      },
+      {
+        "title": "Infernape (Pokémon)",
+        "page_id": 13393,
+        "revision_id": 4611732,
+        "sha1": "d2a6b21be6b8ccc73d16406805614f9a1f00fb5e"
+      },
+      {
+        "title": "Inkay (Pokémon)",
+        "page_id": 180246,
+        "revision_id": 4643321,
+        "sha1": "54fc9bd515e256328d9e7de2e8da8ec30e51566b"
+      },
+      {
+        "title": "Inteleon (Pokémon)",
+        "page_id": 244033,
+        "revision_id": 4637729,
+        "sha1": "c4802c94f440190f458cbc76bf5009b1fa6fc4c5"
+      },
+      {
+        "title": "Iron Boulder (Pokémon)",
+        "page_id": 300803,
+        "revision_id": 4611545,
+        "sha1": "6b9a8035473067e3493972f25340b3d661d14145"
+      },
+      {
+        "title": "Iron Bundle (Pokémon)",
+        "page_id": 277445,
+        "revision_id": 4611013,
+        "sha1": "5613ff6ddcdfc796df2487f628f07f88b5157a17"
+      },
+      {
+        "title": "Iron Crown (Pokémon)",
+        "page_id": 294169,
+        "revision_id": 4611528,
+        "sha1": "853b10674939c4d5c2b2cb4fb1c00cbd2a8f1211"
+      },
+      {
+        "title": "Iron Hands (Pokémon)",
+        "page_id": 277442,
+        "revision_id": 4620961,
+        "sha1": "be97bef87aa448088a379db4872cc41a9edf30a3"
+      },
+      {
+        "title": "Iron Jugulis (Pokémon)",
+        "page_id": 277443,
+        "revision_id": 4611016,
+        "sha1": "1f633345106c32a68d1c9bc6dbf4a69ea9ee9196"
+      },
+      {
+        "title": "Iron Leaves (Pokémon)",
+        "page_id": 281858,
+        "revision_id": 4643544,
+        "sha1": "a31fe6dbc73f1c9d3b0ecf76d6da393141f20a3c"
+      },
+      {
+        "title": "Iron Moth (Pokémon)",
+        "page_id": 277441,
+        "revision_id": 4610534,
+        "sha1": "f8032725e4a9573620dc184d3fef24d4ee8509d1"
+      },
+      {
+        "title": "Iron Thorns (Pokémon)",
+        "page_id": 277444,
+        "revision_id": 4611018,
+        "sha1": "968840002fa39308e717393832a26f7b9f0e0915"
+      },
+      {
+        "title": "Iron Treads (Pokémon)",
+        "page_id": 277528,
+        "revision_id": 4640601,
+        "sha1": "f400690fffc128b79f7dfc855ed84f6582e3a7c2"
+      },
+      {
+        "title": "Iron Valiant (Pokémon)",
+        "page_id": 277446,
+        "revision_id": 4630632,
+        "sha1": "8b52a3b68f343aafbfadcf58d96514e1ce66823e"
+      },
+      {
+        "title": "Ivysaur (Pokémon)",
+        "page_id": 1526,
+        "revision_id": 4628542,
+        "sha1": "ccd299ba54391c5974b20422ed29ee171d35cb2a"
+      },
+      {
+        "title": "Jangmo-o (Pokémon)",
+        "page_id": 215675,
+        "revision_id": 4630156,
+        "sha1": "29b3752412b1532c1832398c5f6be6d056a1e932"
+      },
+      {
+        "title": "Jellicent (Pokémon)",
+        "page_id": 116059,
+        "revision_id": 4613126,
+        "sha1": "e35e80f17b61ad543eb7276621a63dcc202cefd4"
+      },
+      {
+        "title": "Jigglypuff (Pokémon)",
+        "page_id": 2414,
+        "revision_id": 4632260,
+        "sha1": "49cca84969ab8f0abe72d362ca1dda714583ffea"
+      },
+      {
+        "title": "Jirachi (Pokémon)",
+        "page_id": 2555,
+        "revision_id": 4629905,
+        "sha1": "80196593d608439942541bc56c1207a31a78b83d"
+      },
+      {
+        "title": "Jolteon (Pokémon)",
+        "page_id": 2442,
+        "revision_id": 4632011,
+        "sha1": "26e364d6f6e56dad1d77a4e3a102e637c00fb3e4"
+      },
+      {
+        "title": "Joltik (Pokémon)",
+        "page_id": 116021,
+        "revision_id": 4611023,
+        "sha1": "3a03980e405379a3a74a463bf9db8e4dc00a4fb8"
+      },
+      {
+        "title": "Jumpluff (Pokémon)",
+        "page_id": 2529,
+        "revision_id": 4617324,
+        "sha1": "c04ca9d647bcd0a5f743a8ea6f2c119533567f53"
+      },
+      {
+        "title": "Jynx (Pokémon)",
+        "page_id": 76755,
+        "revision_id": 4631793,
+        "sha1": "60bc7d5e9d062eb8a912cfe52176aba26cc0ac06"
+      },
+      {
+        "title": "Kabuto (Pokémon)",
+        "page_id": 2400,
+        "revision_id": 4632016,
+        "sha1": "54c0ed8a84eb3cecd5d29d0571ff63ae5e3d5fa7"
+      },
+      {
+        "title": "Kabutops (Pokémon)",
+        "page_id": 2403,
+        "revision_id": 4632018,
+        "sha1": "c8c3e20f0c1dd620ec12150ea6cfe7b226869cdd"
+      },
+      {
+        "title": "Kadabra (Pokémon)",
+        "page_id": 2462,
+        "revision_id": 4623332,
+        "sha1": "a1e9c3dcfb0b90f517b2755f3a3cd655c7e55c7e"
+      },
+      {
+        "title": "Kakuna (Pokémon)",
+        "page_id": 2410,
+        "revision_id": 4622431,
+        "sha1": "80ce7e6eb349dbf08cd913d41dd14e66f80406e3"
+      },
+      {
+        "title": "Kangaskhan (Pokémon)",
+        "page_id": 2423,
+        "revision_id": 4635191,
+        "sha1": "af4616aebef9d8aa80234d59d1d218d76c7d8cca"
+      },
+      {
+        "title": "Karrablast (Pokémon)",
+        "page_id": 116117,
+        "revision_id": 4611029,
+        "sha1": "6d874cac55de00e756a7f46ffd1e22fcb42f0364"
+      },
+      {
+        "title": "Kartana (Pokémon)",
+        "page_id": 218193,
+        "revision_id": 4633246,
+        "sha1": "ea761f5402450cbcca3bfa9d2e1880d95850faf8"
+      },
+      {
+        "title": "Kecleon (Pokémon)",
+        "page_id": 2633,
+        "revision_id": 4632236,
+        "sha1": "cb164ee5682ead699d8824ffb744dbd21636aa0b"
+      },
+      {
+        "title": "Keldeo (Pokémon)",
+        "page_id": 116011,
+        "revision_id": 4630269,
+        "sha1": "b1e91f2ac42b28d850e2f811dfc2a85a638cb8ff"
+      },
+      {
+        "title": "Kilowattrel (Pokémon)",
+        "page_id": 277498,
+        "revision_id": 4611031,
+        "sha1": "ceb2f8b4bcd98040511c0f2197ea6891e56cc782"
+      },
+      {
+        "title": "Kingambit (Pokémon)",
+        "page_id": 277453,
+        "revision_id": 4643558,
+        "sha1": "a372ba3fae154df7c3b72c7237f77534c8f59c02"
+      },
+      {
+        "title": "Kingdra (Pokémon)",
+        "page_id": 2672,
+        "revision_id": 4612823,
+        "sha1": "5c19946363707f699a7dcb05c25f35e574ff22dd"
+      },
+      {
+        "title": "Kingler (Pokémon)",
+        "page_id": 2433,
+        "revision_id": 4637325,
+        "sha1": "69f5eacca77283364893169d857fc6476aae8c92"
+      },
+      {
+        "title": "Kirlia (Pokémon)",
+        "page_id": 2660,
+        "revision_id": 4626545,
+        "sha1": "074917b23b502871f8714ea54fe0ee88606a659e"
+      },
+      {
+        "title": "Klang (Pokémon)",
+        "page_id": 116022,
+        "revision_id": 4617846,
+        "sha1": "d98abd5046dfda0a0ec86053ebce9d40a74fb54e"
+      },
+      {
+        "title": "Klawf (Pokémon)",
+        "page_id": 274249,
+        "revision_id": 4611035,
+        "sha1": "3508d2c8cb5141ee887a5c4cacf7a18c2a52002c"
+      },
+      {
+        "title": "Kleavor (Pokémon)",
+        "page_id": 264536,
+        "revision_id": 4627568,
+        "sha1": "d916c785f68357f69597e369dd61055002f35a5e"
+      },
+      {
+        "title": "Klefki (Pokémon)",
+        "page_id": 184583,
+        "revision_id": 4610484,
+        "sha1": "6e83adb50c69a1e341374391b7e4dd66682e2e1b"
+      },
+      {
+        "title": "Klink (Pokémon)",
+        "page_id": 106866,
+        "revision_id": 4617845,
+        "sha1": "2cb31424f107a214c35b4ef4f9d0f1e06970c3f2"
+      },
+      {
+        "title": "Klinklang (Pokémon)",
+        "page_id": 116026,
+        "revision_id": 4621823,
+        "sha1": "a486fd50770cbb7e1f398156d65ae8efb7d3c5f3"
+      },
+      {
+        "title": "Koffing (Pokémon)",
+        "page_id": 2436,
+        "revision_id": 4631771,
+        "sha1": "d66bffbe0af722d493e6049f561b11d922c5a589"
+      },
+      {
+        "title": "Komala (Pokémon)",
+        "page_id": 213642,
+        "revision_id": 4630094,
+        "sha1": "9ad347f719511a097a47d382a1f2d774c3c96146"
+      },
+      {
+        "title": "Kommo-o (Pokémon)",
+        "page_id": 216459,
+        "revision_id": 4630441,
+        "sha1": "549f2861c0382f925ce3c841870a7001a7abfefe"
+      },
+      {
+        "title": "Koraidon (Pokémon)",
+        "page_id": 271970,
+        "revision_id": 4636854,
+        "sha1": "ae16466c09eeb0f99537367b6533fe84f1a62fbb"
+      },
+      {
+        "title": "Krabby (Pokémon)",
+        "page_id": 2396,
+        "revision_id": 4631754,
+        "sha1": "e989a4add383193cd674112f29f2d20d9ad63b8f"
+      },
+      {
+        "title": "Kricketot (Pokémon)",
+        "page_id": 12180,
+        "revision_id": 4623375,
+        "sha1": "640eac4ee85bffc9dd5c094a326d8451c1eeaa72"
+      },
+      {
+        "title": "Kricketune (Pokémon)",
+        "page_id": 59988,
+        "revision_id": 4612922,
+        "sha1": "9b387bc1a7c2cb612c256bebd56f5f99f7c57cdb"
+      },
+      {
+        "title": "Krokorok (Pokémon)",
+        "page_id": 115874,
+        "revision_id": 4637171,
+        "sha1": "9ef869ba1dc04feb1bff583259a4b5a3bfca88e4"
+      },
+      {
+        "title": "Krookodile (Pokémon)",
+        "page_id": 115951,
+        "revision_id": 4612262,
+        "sha1": "4d0dcba5e816bbb37d7c0474b33586dca3a19765"
+      },
+      {
+        "title": "Kubfu (Pokémon)",
+        "page_id": 246812,
+        "revision_id": 4632134,
+        "sha1": "ad3d28eec8834591f26ad0fe21d725533bd228c3"
+      },
+      {
+        "title": "Kyogre (Pokémon)",
+        "page_id": 2544,
+        "revision_id": 4636203,
+        "sha1": "6ce81ef60b25f5dbfae216c86a8ae7e143172cac"
+      },
+      {
+        "title": "Kyurem (Pokémon)",
+        "page_id": 116017,
+        "revision_id": 4643546,
+        "sha1": "a72e2a26a2aca7bb9311e246897b3ea26bd54efe"
+      },
+      {
+        "title": "Lairon (Pokémon)",
+        "page_id": 2654,
+        "revision_id": 4611049,
+        "sha1": "ab81842cae060cfabafb2ebb9da0b0edc9a9f2d4"
+      },
+      {
+        "title": "Lampent (Pokémon)",
+        "page_id": 115956,
+        "revision_id": 4611050,
+        "sha1": "13dbe867316bda6fd1f85f962e8e71fd26384458"
+      },
+      {
+        "title": "Landorus (Pokémon)",
+        "page_id": 116019,
+        "revision_id": 4610477,
+        "sha1": "7e3536f27e9261a932ad3151078d56ae1701b079"
+      },
+      {
+        "title": "Lanturn (Pokémon)",
+        "page_id": 2511,
+        "revision_id": 4631737,
+        "sha1": "c3c854e5d54b9ddcbe6898c135d601aa8a403a7d"
+      },
+      {
+        "title": "Lapras (Pokémon)",
+        "page_id": 2411,
+        "revision_id": 4637878,
+        "sha1": "118283c1e5fc1cb20f691e9d39118dcdc54d6a4a"
+      },
+      {
+        "title": "Larvesta (Pokémon)",
+        "page_id": 116003,
+        "revision_id": 4619638,
+        "sha1": "0725d9ed92e99d68d0011278bcf5829bd658c4b3"
+      },
+      {
+        "title": "Larvitar (Pokémon)",
+        "page_id": 2539,
+        "revision_id": 4627543,
+        "sha1": "7dee652d5c6bb06696340498905cef3e8f796a21"
+      },
+      {
+        "title": "Latias (Pokémon)",
+        "page_id": 2574,
+        "revision_id": 4635390,
+        "sha1": "fe0553dcf4d56ca1c3b28f373aebde2ffe0277cc"
+      },
+      {
+        "title": "Latios (Pokémon)",
+        "page_id": 2566,
+        "revision_id": 4635391,
+        "sha1": "7f593e02afbd37ff63306e6b2ec6df44ec86f3eb"
+      },
+      {
+        "title": "Leafeon (Pokémon)",
+        "page_id": 13567,
+        "revision_id": 4626519,
+        "sha1": "c2f9ce811a89c981aabb4792037cf3ab1ad24ec0"
+      },
+      {
+        "title": "Leavanny (Pokémon)",
+        "page_id": 116135,
+        "revision_id": 4636296,
+        "sha1": "944c243816cbab021c4e53b5714af1a05f8d2fa3"
+      },
+      {
+        "title": "Lechonk (Pokémon)",
+        "page_id": 271965,
+        "revision_id": 4642909,
+        "sha1": "1cbc4bf54f17d696089c63aa9e173fa6a3fd45f8"
+      },
+      {
+        "title": "Ledian (Pokémon)",
+        "page_id": 2497,
+        "revision_id": 4634664,
+        "sha1": "86277de321795539108f7a3cc57b0846124cc06e"
+      },
+      {
+        "title": "Ledyba (Pokémon)",
+        "page_id": 2498,
+        "revision_id": 4634663,
+        "sha1": "2be67bfc52e2b3bbd3a7ebde4d02a160179f7bfb"
+      },
+      {
+        "title": "Lickilicky (Pokémon)",
+        "page_id": 13595,
+        "revision_id": 4628510,
+        "sha1": "243e0fe7d9c9db090375271643d7f7680962425c"
+      },
+      {
+        "title": "Lickitung (Pokémon)",
+        "page_id": 2489,
+        "revision_id": 4631769,
+        "sha1": "447d36a1137392ade42afb1e220296491e84bf13"
+      },
+      {
+        "title": "Liepard (Pokémon)",
+        "page_id": 115950,
+        "revision_id": 4628683,
+        "sha1": "854ca1a319309e05cfea36d04c2ef8bf1a606dca"
+      },
+      {
+        "title": "Lileep (Pokémon)",
+        "page_id": 2592,
+        "revision_id": 4611062,
+        "sha1": "2becdadb31092b75bc816c7834215621208b8705"
+      },
+      {
+        "title": "Lilligant (Pokémon)",
+        "page_id": 115001,
+        "revision_id": 4611063,
+        "sha1": "8b4689e8fd46f936da2989dcdf853d3984bb0cb3"
+      },
+      {
+        "title": "Lillipup (Pokémon)",
+        "page_id": 114933,
+        "revision_id": 4611064,
+        "sha1": "14fe48e3464f0cc1f32db593ea0b7eecb29fa4fd"
+      },
+      {
+        "title": "Linoone (Pokémon)",
+        "page_id": 2626,
+        "revision_id": 4630423,
+        "sha1": "019732fd41ae0021a8e80d29f946e4feb25deacb"
+      },
+      {
+        "title": "Litleo (Pokémon)",
+        "page_id": 179014,
+        "revision_id": 4611067,
+        "sha1": "ee04adc803795d21f76dc2ee9033913950c81939"
+      },
+      {
+        "title": "Litten (Pokémon)",
+        "page_id": 213005,
+        "revision_id": 4630065,
+        "sha1": "e3a51d764d269c9f860ed07bb584f55d30de26fc"
+      },
+      {
+        "title": "Litwick (Pokémon)",
+        "page_id": 115889,
+        "revision_id": 4611071,
+        "sha1": "ed092fd29b553c62ee0e066e4566dd0429678c7e"
+      },
+      {
+        "title": "Lokix (Pokémon)",
+        "page_id": 277459,
+        "revision_id": 4623384,
+        "sha1": "e7251ff933277cc890a780eb8604960e0c0181a9"
+      },
+      {
+        "title": "Lombre (Pokémon)",
+        "page_id": 2573,
+        "revision_id": 4611073,
+        "sha1": "c19fef2671599f96d6851a9218eaa25b888b1cfb"
+      },
+      {
+        "title": "Lopunny (Pokémon)",
+        "page_id": 13478,
+        "revision_id": 4643602,
+        "sha1": "df615149e0bfc4980148b1e3631c2095ccee614e"
+      },
+      {
+        "title": "Lotad (Pokémon)",
+        "page_id": 2568,
+        "revision_id": 4611075,
+        "sha1": "81f2fb5c8dbd200c40d387b036a90040c7b46a81"
+      },
+      {
+        "title": "Loudred (Pokémon)",
+        "page_id": 2695,
+        "revision_id": 4630360,
+        "sha1": "afb557e861eda4bdf081dc0ae8e46e939bd873b8"
+      },
+      {
+        "title": "Lucario (Pokémon)",
+        "page_id": 2159,
+        "revision_id": 4636331,
+        "sha1": "8fff94b587105a95269dc6de1dd466fb1ea87160"
+      },
+      {
+        "title": "Ludicolo (Pokémon)",
+        "page_id": 2553,
+        "revision_id": 4643485,
+        "sha1": "d3ccccdfe03759d853a2aa3047d552c41a2736b5"
+      },
+      {
+        "title": "Lugia (Pokémon)",
+        "page_id": 1628,
+        "revision_id": 4621562,
+        "sha1": "354451ddf93a9fa3f6aa6e23067ad651c9d47aa2"
+      },
+      {
+        "title": "Lumineon (Pokémon)",
+        "page_id": 13565,
+        "revision_id": 4613122,
+        "sha1": "ae3a9c063f1a48b4bf0412b7a946bc97efc316d2"
+      },
+      {
+        "title": "Lunala (Pokémon)",
+        "page_id": 213448,
+        "revision_id": 4630062,
+        "sha1": "0973a4a58698f2ab2c2727861ad92006fa51f466"
+      },
+      {
+        "title": "Lunatone (Pokémon)",
+        "page_id": 2634,
+        "revision_id": 4611081,
+        "sha1": "be4a9cfb497c255112255a16777bb7d834257ebe"
+      },
+      {
+        "title": "Lurantis (Pokémon)",
+        "page_id": 214950,
+        "revision_id": 4630108,
+        "sha1": "38f18f99a3e4406d5d8074eb482bf1d109bd618a"
+      },
+      {
+        "title": "Luvdisc (Pokémon)",
+        "page_id": 2692,
+        "revision_id": 4613112,
+        "sha1": "ccd90f6251d1a952d6b7006d6062c04aa69b4c91"
+      },
+      {
+        "title": "Luxio (Pokémon)",
+        "page_id": 13426,
+        "revision_id": 4619722,
+        "sha1": "4a6360f4164d2494fd959e3e0947154a7db81bfb"
+      },
+      {
+        "title": "Luxray (Pokémon)",
+        "page_id": 13427,
+        "revision_id": 4630475,
+        "sha1": "7431beaa83eff199d9173bcc4bd8fe452e2a8050"
+      },
+      {
+        "title": "Lycanroc (Pokémon)",
+        "page_id": 215845,
+        "revision_id": 4634864,
+        "sha1": "857b4c539f4e5a8d9ebdd766c871cdd1605d8d8c"
+      },
+      {
+        "title": "Mabosstiff (Pokémon)",
+        "page_id": 277493,
+        "revision_id": 4638344,
+        "sha1": "a854df8e27438087a740ee73b0ec7ddd8489e3ca"
+      },
+      {
+        "title": "Machamp (Pokémon)",
+        "page_id": 2424,
+        "revision_id": 4637260,
+        "sha1": "c3e7efb59f998cf3403ad91b5e4ada3f0221e1c3"
+      },
+      {
+        "title": "Machoke (Pokémon)",
+        "page_id": 2460,
+        "revision_id": 4638389,
+        "sha1": "09c928f952bbc5a3d03f7c8208d9ff12ec3d3a8b"
+      },
+      {
+        "title": "Machop (Pokémon)",
+        "page_id": 2484,
+        "revision_id": 4623334,
+        "sha1": "38bd222b51644bdd360084b6325fc25a0df4d312"
+      },
+      {
+        "title": "Magby (Pokémon)",
+        "page_id": 2627,
+        "revision_id": 4611091,
+        "sha1": "f8b06fb859086132268c69a282b716893ae6b006"
+      },
+      {
+        "title": "Magcargo (Pokémon)",
+        "page_id": 2631,
+        "revision_id": 4611092,
+        "sha1": "0e402a40f3fc6966a60d28f9a3bd093f315d981b"
+      },
+      {
+        "title": "Magearna (Pokémon)",
+        "page_id": 210030,
+        "revision_id": 4630100,
+        "sha1": "d573ede41916394fd4296e7adcf23393753cebf7"
+      },
+      {
+        "title": "Magikarp (Pokémon)",
+        "page_id": 2364,
+        "revision_id": 4632005,
+        "sha1": "a5c1e8a9328c7459ab96496be547a3de0214ebe5"
+      },
+      {
+        "title": "Magmar (Pokémon)",
+        "page_id": 2415,
+        "revision_id": 4632002,
+        "sha1": "701af3efdc78582b89f12f6f39e48e2e0146dc54"
+      },
+      {
+        "title": "Magmortar (Pokémon)",
+        "page_id": 13568,
+        "revision_id": 4611095,
+        "sha1": "6286ac35e230045f824c84ff3a21a5dd1d744130"
+      },
+      {
+        "title": "Magnemite (Pokémon)",
+        "page_id": 2395,
+        "revision_id": 4631727,
+        "sha1": "acd2e8c5ceac7744644a91e20be72801cc9ce8d7"
+      },
+      {
+        "title": "Magneton (Pokémon)",
+        "page_id": 2434,
+        "revision_id": 4631728,
+        "sha1": "71a1062311e0238b21826ebd1999dd1a52ed9f4c"
+      },
+      {
+        "title": "Magnezone (Pokémon)",
+        "page_id": 13571,
+        "revision_id": 4643832,
+        "sha1": "3ea800bacead408f8b0bd3d52c769f474b024557"
+      },
+      {
+        "title": "Makuhita (Pokémon)",
+        "page_id": 2676,
+        "revision_id": 4611099,
+        "sha1": "5139caf37e8cdebacc032285f21766a24eba2b79"
+      },
+      {
+        "title": "Malamar (Pokémon)",
+        "page_id": 180245,
+        "revision_id": 4643320,
+        "sha1": "74ed63b754cad16d34138a16f90fb1f2033dfdb4"
+      },
+      {
+        "title": "Mamoswine (Pokémon)",
+        "page_id": 13606,
+        "revision_id": 4632650,
+        "sha1": "1a965788051bce5b2992cfc0d03590b557c3be8c"
+      },
+      {
+        "title": "Manaphy (Pokémon)",
+        "page_id": 9034,
+        "revision_id": 4613561,
+        "sha1": "9b8fb7d71ffa118c10da82d8a119b6a6ea730414"
+      },
+      {
+        "title": "Mandibuzz (Pokémon)",
+        "page_id": 116074,
+        "revision_id": 4637181,
+        "sha1": "a68ee76c3daba66a0f48607a8a8f545ea7c00978"
+      },
+      {
+        "title": "Manectric (Pokémon)",
+        "page_id": 2652,
+        "revision_id": 4635524,
+        "sha1": "5c9f59873f2bccb23e2b0dfbbdccd89ca007da31"
+      },
+      {
+        "title": "Mankey (Pokémon)",
+        "page_id": 2404,
+        "revision_id": 4632314,
+        "sha1": "7cd10743cc2a07b5a260b1ec95c901ea5398aca0"
+      },
+      {
+        "title": "Mantine (Pokémon)",
+        "page_id": 2569,
+        "revision_id": 4630464,
+        "sha1": "162c6e8fad3d62e9b6a663057b13d1d0352616d7"
+      },
+      {
+        "title": "Mantyke (Pokémon)",
+        "page_id": 9146,
+        "revision_id": 4612451,
+        "sha1": "ba309f50254ef08c0f544f1c2b6124b325ccb1ca"
+      },
+      {
+        "title": "Maractus (Pokémon)",
+        "page_id": 116006,
+        "revision_id": 4637182,
+        "sha1": "84f307f76491a8e53ee6194060ebd9b71494ae47"
+      },
+      {
+        "title": "Mareanie (Pokémon)",
+        "page_id": 218156,
+        "revision_id": 4630113,
+        "sha1": "dd329b87a8bd7b4000e94c582974be7c65372026"
+      },
+      {
+        "title": "Mareep (Pokémon)",
+        "page_id": 2518,
+        "revision_id": 4634917,
+        "sha1": "1d93854717bd6d7f9eacdddecb08545796ce22bc"
+      },
+      {
+        "title": "Marill (Pokémon)",
+        "page_id": 2522,
+        "revision_id": 4634923,
+        "sha1": "0b0431f4d553eed80ca9799e6d7752a67c8a8169"
+      },
+      {
+        "title": "Marowak (Pokémon)",
+        "page_id": 2475,
+        "revision_id": 4631762,
+        "sha1": "c31f341eadfd14c807a76b1c25c914fa8bb6f204"
+      },
+      {
+        "title": "Marshadow (Pokémon)",
+        "page_id": 218199,
+        "revision_id": 4633359,
+        "sha1": "9cb4b5874081047b2d2f70d95af604f3c1f7fb8c"
+      },
+      {
+        "title": "Marshtomp (Pokémon)",
+        "page_id": 2576,
+        "revision_id": 4630320,
+        "sha1": "f575f87c1bafa6f13ddf0e7b4cbdf5ffbf508d09"
+      },
+      {
+        "title": "Maschiff (Pokémon)",
+        "page_id": 277492,
+        "revision_id": 4638343,
+        "sha1": "8a14f283103c3615ffbb09ab0902ed116a05f1a8"
+      },
+      {
+        "title": "Masquerain (Pokémon)",
+        "page_id": 2690,
+        "revision_id": 4642179,
+        "sha1": "a0f4652935ac27c903de9704321cc02f066bc322"
+      },
+      {
+        "title": "Maushold (Pokémon)",
+        "page_id": 277489,
+        "revision_id": 4614000,
+        "sha1": "f6b6c6c8cd01c3d040c67ff56c9e2609460450e6"
+      },
+      {
+        "title": "Mawile (Pokémon)",
+        "page_id": 2694,
+        "revision_id": 4635229,
+        "sha1": "3246e9e2db14b8996721c33fc4bccaa3dbe08a01"
+      },
+      {
+        "title": "Medicham (Pokémon)",
+        "page_id": 2675,
+        "revision_id": 4641118,
+        "sha1": "1169914eb32f2e6f7abd8fc169d2188854c2b140"
+      },
+      {
+        "title": "Meditite (Pokémon)",
+        "page_id": 2644,
+        "revision_id": 4611117,
+        "sha1": "4ed7cb4e73d64446b1c9da79c258c6e2bc4b4d6e"
+      },
+      {
+        "title": "Meganium (Pokémon)",
+        "page_id": 2500,
+        "revision_id": 4643854,
+        "sha1": "9e8ebb823e2ee4003b56d7284b885f57dc23a060"
+      },
+      {
+        "title": "Melmetal (Pokémon)",
+        "page_id": 232946,
+        "revision_id": 4637547,
+        "sha1": "66890b1d0384139873cd965eaf1b76d46dfdf859"
+      },
+      {
+        "title": "Meloetta (Pokémon)",
+        "page_id": 116008,
+        "revision_id": 4631106,
+        "sha1": "9400ddb4ded0939afc22c4ebef0ed64d8448e273"
+      },
+      {
+        "title": "Meltan (Pokémon)",
+        "page_id": 232479,
+        "revision_id": 4629689,
+        "sha1": "36a1ca587afa47047027e26597725fb59f908dd2"
+      },
+      {
+        "title": "Meowscarada (Pokémon)",
+        "page_id": 277427,
+        "revision_id": 4622761,
+        "sha1": "a606d6e87fe87d7f17b2c42042f35e10a830f24d"
+      },
+      {
+        "title": "Meowstic (Pokémon)",
+        "page_id": 182721,
+        "revision_id": 4635190,
+        "sha1": "d647a2ba0dbf0686b018e1f9737bd27ed71bb240"
+      },
+      {
+        "title": "Meowth (Pokémon)",
+        "page_id": 2382,
+        "revision_id": 4637642,
+        "sha1": "3c1e728219db65e98d8c08a0d8653400886f7034"
+      },
+      {
+        "title": "Mesprit (Pokémon)",
+        "page_id": 13442,
+        "revision_id": 4612705,
+        "sha1": "055fff93f98039b4bef21fa357df43041f4df046"
+      },
+      {
+        "title": "Metagross (Pokémon)",
+        "page_id": 2578,
+        "revision_id": 4616460,
+        "sha1": "e1bb29917bf39de8a9db42abb9afcc3e408ca7d7"
+      },
+      {
+        "title": "Metang (Pokémon)",
+        "page_id": 2584,
+        "revision_id": 4611124,
+        "sha1": "d137069d0d52d25f82a1d4bde41a55d00a285376"
+      },
+      {
+        "title": "Metapod (Pokémon)",
+        "page_id": 2429,
+        "revision_id": 4622426,
+        "sha1": "a477808671eb10f21461ff9bd64ac844803880c8"
+      },
+      {
+        "title": "Mew (Pokémon)",
+        "page_id": 2286,
+        "revision_id": 4629213,
+        "sha1": "5fae06d6cc3739d6f04ab763ca08403a3f5e1c81"
+      },
+      {
+        "title": "Mewtwo (Pokémon)",
+        "page_id": 2285,
+        "revision_id": 4642013,
+        "sha1": "75cf7befcb04d8ddc466e789f0802d0774b37762"
+      },
+      {
+        "title": "Mienfoo (Pokémon)",
+        "page_id": 116035,
+        "revision_id": 4611127,
+        "sha1": "377efba2ae452abd7bcaa5d2fdca267320eaddd5"
+      },
+      {
+        "title": "Mienshao (Pokémon)",
+        "page_id": 116046,
+        "revision_id": 4610469,
+        "sha1": "f7a7db8432960d087fa2e43ab3a8021b6ae05e53"
+      },
+      {
+        "title": "Mightyena (Pokémon)",
+        "page_id": 2593,
+        "revision_id": 4631489,
+        "sha1": "61da955061d5a3cb98f67d2bea7218c585226796"
+      },
+      {
+        "title": "Milcery (Pokémon)",
+        "page_id": 244072,
+        "revision_id": 4611129,
+        "sha1": "0b35dde7511c527f211954af98d5a6abdf224433"
+      },
+      {
+        "title": "Milotic (Pokémon)",
+        "page_id": 2598,
+        "revision_id": 4634482,
+        "sha1": "c31d65bebe87de8aacdda912f14ee96985ae4f8a"
+      },
+      {
+        "title": "Miltank (Pokémon)",
+        "page_id": 2632,
+        "revision_id": 4625634,
+        "sha1": "83e9e0d51b0c37ed950d54108c8bdff911de4f0d"
+      },
+      {
+        "title": "Mime Jr. (Pokémon)",
+        "page_id": 4547,
+        "revision_id": 4627614,
+        "sha1": "223e41f797a8af86145f650596e4b974ea426012"
+      },
+      {
+        "title": "Mimikyu (Pokémon)",
+        "page_id": 214462,
+        "revision_id": 4630084,
+        "sha1": "c4fa321759b12accc5d55a82059e6bf6b81017b6"
+      },
+      {
+        "title": "Minccino (Pokémon)",
+        "page_id": 106843,
+        "revision_id": 4619764,
+        "sha1": "9d72259e2004ece5d217723ee1b00d86892da5bb"
+      },
+      {
+        "title": "Minior (Pokémon)",
+        "page_id": 214945,
+        "revision_id": 4640880,
+        "sha1": "f19992d3258eb2497b803cb64af328b86391e99b"
+      },
+      {
+        "title": "Minun (Pokémon)",
+        "page_id": 2702,
+        "revision_id": 4611134,
+        "sha1": "44b48f85e9e5b665c68ed9c9344f88e872ae668e"
+      },
+      {
+        "title": "Miraidon (Pokémon)",
+        "page_id": 271971,
+        "revision_id": 4625208,
+        "sha1": "45fb53b257ee65a0474934e6679d1d85375db3de"
+      },
+      {
+        "title": "Misdreavus (Pokémon)",
+        "page_id": 2530,
+        "revision_id": 4639820,
+        "sha1": "c44a3321c97bf38d0cff56b0c27a6ed56e645b68"
+      },
+      {
+        "title": "Mismagius (Pokémon)",
+        "page_id": 13489,
+        "revision_id": 4621542,
+        "sha1": "d52746da649bfbf389a5f1afc8f84e12bde15f9c"
+      },
+      {
+        "title": "Moltres (Pokémon)",
+        "page_id": 2359,
+        "revision_id": 4619168,
+        "sha1": "1784dc2084315e2d59f386c8e53d722752175bf5"
+      },
+      {
+        "title": "Monferno (Pokémon)",
+        "page_id": 13392,
+        "revision_id": 4611138,
+        "sha1": "c9177ea63891d7ed5c0acbe277bd2460be05c06c"
+      },
+      {
+        "title": "Morelull (Pokémon)",
+        "page_id": 215239,
+        "revision_id": 4630160,
+        "sha1": "2710bbeca3f5db5e0e5f3b5e92a77a861c7e1920"
+      },
+      {
+        "title": "Morgrem (Pokémon)",
+        "page_id": 244066,
+        "revision_id": 4611141,
+        "sha1": "a36c8812a2c479e7dfc93b89d906a60e74ab3aad"
+      },
+      {
+        "title": "Morpeko (Pokémon)",
+        "page_id": 240147,
+        "revision_id": 4628725,
+        "sha1": "8e3e4f462a8fdc4978bb9fc7074b045546d04297"
+      },
+      {
+        "title": "Mothim (Pokémon)",
+        "page_id": 13449,
+        "revision_id": 4613286,
+        "sha1": "cd089fb8c993bf70a0bea7f24afabc0ddfb01e2d"
+      },
+      {
+        "title": "Mr. Mime (Pokémon)",
+        "page_id": 2507,
+        "revision_id": 4627611,
+        "sha1": "cabfaa1179786d842a5402099ca1a4a5d1cac184"
+      },
+      {
+        "title": "Mr. Rime (Pokémon)",
+        "page_id": 244070,
+        "revision_id": 4627612,
+        "sha1": "044f6281a3ab457a06950f2c3cb48ebfb0292981"
+      },
+      {
+        "title": "Mudbray (Pokémon)",
+        "page_id": 214944,
+        "revision_id": 4630101,
+        "sha1": "7bb357fa0ab32c74b313e6f6de6de428313b24f9"
+      },
+      {
+        "title": "Mudkip (Pokémon)",
+        "page_id": 2081,
+        "revision_id": 4633360,
+        "sha1": "1cd3dceb5805fcc2073ff15e62fc84e640a09f02"
+      },
+      {
+        "title": "Mudsdale (Pokémon)",
+        "page_id": 214590,
+        "revision_id": 4630086,
+        "sha1": "d32119aca9046c78829202011ddd23ff41eac4d3"
+      },
+      {
+        "title": "Muk (Pokémon)",
+        "page_id": 61567,
+        "revision_id": 4631744,
+        "sha1": "87c541158ba15551e5d03eb4443ae3874c127777"
+      },
+      {
+        "title": "Munchlax (Pokémon)",
+        "page_id": 2995,
+        "revision_id": 4626996,
+        "sha1": "0e6c955366e07ee37b003f27a656284ef8004b80"
+      },
+      {
+        "title": "Munkidori (Pokémon)",
+        "page_id": 281872,
+        "revision_id": 4643945,
+        "sha1": "d3e3c3202c7bdd9205403ffd8a22fa91e0046fe2"
+      },
+      {
+        "title": "Munna (Pokémon)",
+        "page_id": 106846,
+        "revision_id": 4627574,
+        "sha1": "2d126890052e1190bc11f87b5f36029a7ae7815f"
+      },
+      {
+        "title": "Murkrow (Pokémon)",
+        "page_id": 2537,
+        "revision_id": 4619773,
+        "sha1": "a50d5f6b315e763a2705f6295d60c74cf7671583"
+      },
+      {
+        "title": "Musharna (Pokémon)",
+        "page_id": 108959,
+        "revision_id": 4627609,
+        "sha1": "546e33eda2c69d56c35b4eb50a08f49bfc813a00"
+      },
+      {
+        "title": "Nacli (Pokémon)",
+        "page_id": 277501,
+        "revision_id": 4628747,
+        "sha1": "099ea31381ce4da4125710134fd5e239578a11e4"
+      },
+      {
+        "title": "Naclstack (Pokémon)",
+        "page_id": 277502,
+        "revision_id": 4638342,
+        "sha1": "93dd4aec11b5400fb29f0db9af113b7fabbfb95a"
+      },
+      {
+        "title": "Naganadel (Pokémon)",
+        "page_id": 226653,
+        "revision_id": 4639325,
+        "sha1": "939c83143323883c9b53b8f96b44ba0b16b6dfaa"
+      },
+      {
+        "title": "Natu (Pokémon)",
+        "page_id": 2516,
+        "revision_id": 4637289,
+        "sha1": "37af99834cb426f458edff953b352ea3aeb35d5c"
+      },
+      {
+        "title": "Necrozma (Pokémon)",
+        "page_id": 218197,
+        "revision_id": 4636314,
+        "sha1": "2345c887cdec55bd5d5ef5eb773c23b8a8bcf984"
+      },
+      {
+        "title": "Nickit (Pokémon)",
+        "page_id": 244042,
+        "revision_id": 4633650,
+        "sha1": "839dbe474132f061b0771f007baebc69ccdf908e"
+      },
+      {
+        "title": "Nidoking (Pokémon)",
+        "page_id": 2430,
+        "revision_id": 4623278,
+        "sha1": "e1151ac9fe420fa069b07af52c2d5e9c419c4d7c"
+      },
+      {
+        "title": "Nidoqueen (Pokémon)",
+        "page_id": 2398,
+        "revision_id": 4623266,
+        "sha1": "4439ded0ffdf17c9241b3e3e5d026dcb915a78f8"
+      },
+      {
+        "title": "Nidoran♀ (Pokémon)",
+        "page_id": 2478,
+        "revision_id": 4632318,
+        "sha1": "798a302ecf2aa823a0ad8b069461e887e46b4d4f"
+      },
+      {
+        "title": "Nidoran♂ (Pokémon)",
+        "page_id": 61579,
+        "revision_id": 4632317,
+        "sha1": "bbe373a5e4355db6466426d14b6d73037538b384"
+      },
+      {
+        "title": "Nidorina (Pokémon)",
+        "page_id": 2480,
+        "revision_id": 4623265,
+        "sha1": "05bb6b8d91139b4c6e11baf34cc129c14621b089"
+      },
+      {
+        "title": "Nidorino (Pokémon)",
+        "page_id": 2406,
+        "revision_id": 4623277,
+        "sha1": "7773abbab39b85a3c75135fe11dac1e69bd20e35"
+      },
+      {
+        "title": "Nihilego (Pokémon)",
+        "page_id": 218183,
+        "revision_id": 4630171,
+        "sha1": "04a36619937391cc922262efb1b434a880f32b58"
+      },
+      {
+        "title": "Nincada (Pokémon)",
+        "page_id": 2655,
+        "revision_id": 4642870,
+        "sha1": "6f8bd22611a917d3600eb857f03e340a4b2e6e93"
+      },
+      {
+        "title": "Ninetales (Pokémon)",
+        "page_id": 2407,
+        "revision_id": 4635990,
+        "sha1": "615d0fe33c16ed00770217735b8532a31030ebce"
+      },
+      {
+        "title": "Ninjask (Pokémon)",
+        "page_id": 2656,
+        "revision_id": 4611176,
+        "sha1": "79d7f965f24f88cae8b2502db99dfe30a74c5121"
+      },
+      {
+        "title": "Noctowl (Pokémon)",
+        "page_id": 2504,
+        "revision_id": 4634662,
+        "sha1": "57a7bec7661b62a44aa75e866593e29638d12822"
+      },
+      {
+        "title": "Noibat (Pokémon)",
+        "page_id": 184608,
+        "revision_id": 4626552,
+        "sha1": "75b7d468dfb19855f8d750d8edddb7d73d873e36"
+      },
+      {
+        "title": "Noivern (Pokémon)",
+        "page_id": 178892,
+        "revision_id": 4626551,
+        "sha1": "8929b80c5f11de03751f597bf2a24a2cd07810b3"
+      },
+      {
+        "title": "Nosepass (Pokémon)",
+        "page_id": 2696,
+        "revision_id": 4611181,
+        "sha1": "ef9fb15ace04b20b9f8848d4923bd03158a4f1da"
+      },
+      {
+        "title": "Numel (Pokémon)",
+        "page_id": 2667,
+        "revision_id": 4630381,
+        "sha1": "3bb763ea9e1d10b8a433bd9e836e23257508028e"
+      },
+      {
+        "title": "Nuzleaf (Pokémon)",
+        "page_id": 2668,
+        "revision_id": 4613234,
+        "sha1": "19abebbfaa3692f438ddaa969dc4bf321a1b1412"
+      },
+      {
+        "title": "Nymble (Pokémon)",
+        "page_id": 277458,
+        "revision_id": 4611570,
+        "sha1": "8c63b8b1cfa4f60d4c4153011ecb505cd59612d1"
+      },
+      {
+        "title": "Obstagoon (Pokémon)",
+        "page_id": 240146,
+        "revision_id": 4611186,
+        "sha1": "3d185b0a2f41abe10210ff998e77ab499ba46b79"
+      },
+      {
+        "title": "Octillery (Pokémon)",
+        "page_id": 2587,
+        "revision_id": 4643489,
+        "sha1": "5dc484f31bc533dd49293fd40828448bdf05487c"
+      },
+      {
+        "title": "Oddish (Pokémon)",
+        "page_id": 2388,
+        "revision_id": 4632334,
+        "sha1": "1fc0ff35a67b0b23c4fffbe548cda210fbf627e7"
+      },
+      {
+        "title": "Ogerpon (Pokémon)",
+        "page_id": 281863,
+        "revision_id": 4644055,
+        "sha1": "132954c7cf77ac4ad4ff3535542b3d1aa514b2f9"
+      },
+      {
+        "title": "Oinkologne (Pokémon)",
+        "page_id": 277523,
+        "revision_id": 4628385,
+        "sha1": "8c547df0039eeff84bbf5ab3fff1df73bc2ce61b"
+      },
+      {
+        "title": "Okidogi (Pokémon)",
+        "page_id": 281871,
+        "revision_id": 4643946,
+        "sha1": "17549490cdecda3c04f616095f5a0ba4d1ce93a1"
+      },
+      {
+        "title": "Omanyte (Pokémon)",
+        "page_id": 2390,
+        "revision_id": 4632014,
+        "sha1": "096b94341a7a9c4903fdb63f56ada0b9dc03f4ac"
+      },
+      {
+        "title": "Omastar (Pokémon)",
+        "page_id": 2435,
+        "revision_id": 4632015,
+        "sha1": "0237485e165eea58535d54e2dc05cdc3026b603c"
+      },
+      {
+        "title": "Onix (Pokémon)",
+        "page_id": 2371,
+        "revision_id": 4627535,
+        "sha1": "0efba16c0017f5e332d4981fb7642915897407d4"
+      },
+      {
+        "title": "Oranguru (Pokémon)",
+        "page_id": 216031,
+        "revision_id": 4632667,
+        "sha1": "10c919beadb6954195102a83e45a364d463cb8bc"
+      },
+      {
+        "title": "Orbeetle (Pokémon)",
+        "page_id": 244041,
+        "revision_id": 4637702,
+        "sha1": "9ae37635129f2aa073c4097cc3bb416802e7f7d1"
+      },
+      {
+        "title": "Oricorio (Pokémon)",
+        "page_id": 214943,
+        "revision_id": 4630104,
+        "sha1": "a30952a61d772aba54327d52a6c18db9c7cc4d72"
+      },
+      {
+        "title": "Orthworm (Pokémon)",
+        "page_id": 277487,
+        "revision_id": 4620853,
+        "sha1": "b3d14a7fd8d0a463bf4d78ecc10beec075e58ef4"
+      },
+      {
+        "title": "Oshawott (Pokémon)",
+        "page_id": 104204,
+        "revision_id": 4611203,
+        "sha1": "959af2a2fd846c57c798d18a08bfe3b963264d55"
+      },
+      {
+        "title": "Overqwil (Pokémon)",
+        "page_id": 268001,
+        "revision_id": 4626613,
+        "sha1": "44952ad3e53c9682ecf4bf3318f052aeecdb3f12"
+      },
+      {
+        "title": "Pachirisu (Pokémon)",
+        "page_id": 11999,
+        "revision_id": 4644040,
+        "sha1": "e3d33b40ca5dbe2cbd50ce204e4fb187f779d1d0"
+      },
+      {
+        "title": "Palafin (Pokémon)",
+        "page_id": 277482,
+        "revision_id": 4611206,
+        "sha1": "41a3e8febc2420bd92018f795ad817a4d1ed4aca"
+      },
+      {
+        "title": "Palkia (Pokémon)",
+        "page_id": 62981,
+        "revision_id": 4629139,
+        "sha1": "939530ff397326ffb51c49118df9df226ea5ac37"
+      },
+      {
+        "title": "Palossand (Pokémon)",
+        "page_id": 215210,
+        "revision_id": 4630135,
+        "sha1": "f8968ca3e8cbf7631a681ba01a8ad0eac4591998"
+      },
+      {
+        "title": "Palpitoad (Pokémon)",
+        "page_id": 116132,
+        "revision_id": 4611209,
+        "sha1": "6aaaecb80798f07ff59c7c54b244b14e5f0a08ab"
+      },
+      {
+        "title": "Pancham (Pokémon)",
+        "page_id": 177477,
+        "revision_id": 4632133,
+        "sha1": "8353c371cf15b04e6b870fa884e113bbac1cc749"
+      },
+      {
+        "title": "Pangoro (Pokémon)",
+        "page_id": 180247,
+        "revision_id": 4632136,
+        "sha1": "99960ea59f96509b046b462e80bbeca2f3400e2f"
+      },
+      {
+        "title": "Panpour (Pokémon)",
+        "page_id": 114354,
+        "revision_id": 4628700,
+        "sha1": "56f6c1156aa372624d91d53ff69d21f8d3c1d96a"
+      },
+      {
+        "title": "Pansage (Pokémon)",
+        "page_id": 112978,
+        "revision_id": 4637153,
+        "sha1": "cc89b786c86290f996c40fd7f58490e37fde66c7"
+      },
+      {
+        "title": "Pansear (Pokémon)",
+        "page_id": 114353,
+        "revision_id": 4611215,
+        "sha1": "86df9fff97c6cf04dca59450e9951a138502b992"
+      },
+      {
+        "title": "Paras (Pokémon)",
+        "page_id": 8655,
+        "revision_id": 4632955,
+        "sha1": "9632b303866c585d10e62f01952d672055aa5df2"
+      },
+      {
+        "title": "Parasect (Pokémon)",
+        "page_id": 2421,
+        "revision_id": 4632336,
+        "sha1": "e17225bf26efa18a01512bf05a91a440c543e538"
+      },
+      {
+        "title": "Passimian (Pokémon)",
+        "page_id": 216030,
+        "revision_id": 4630072,
+        "sha1": "2c8413e05ed5ecdf402141d3a48f39374397d430"
+      },
+      {
+        "title": "Patrat (Pokémon)",
+        "page_id": 108956,
+        "revision_id": 4611219,
+        "sha1": "e80bd8afb3abaf696219b65b78f2f2b67d8c0092"
+      },
+      {
+        "title": "Pawmi (Pokémon)",
+        "page_id": 271968,
+        "revision_id": 4634064,
+        "sha1": "6ba644d2820e9f43a6275104655b482e69cba3f2"
+      },
+      {
+        "title": "Pawmo (Pokémon)",
+        "page_id": 277475,
+        "revision_id": 4619898,
+        "sha1": "3815874a71f1d3caf00e705dbfe75fc6402753f4"
+      },
+      {
+        "title": "Pawmot (Pokémon)",
+        "page_id": 277476,
+        "revision_id": 4611222,
+        "sha1": "cee6c441f4f11d4226529272449579d9ca5949b4"
+      },
+      {
+        "title": "Pawniard (Pokémon)",
+        "page_id": 116069,
+        "revision_id": 4611223,
+        "sha1": "b4133c0d0d1d4e61881cd144a221821038b54480"
+      },
+      {
+        "title": "Pecharunt (Pokémon)",
+        "page_id": 300802,
+        "revision_id": 4642386,
+        "sha1": "2a9279716f67dac63084a849183e36c4bae2aa89"
+      },
+      {
+        "title": "Pelipper (Pokémon)",
+        "page_id": 2625,
+        "revision_id": 4610413,
+        "sha1": "5a38010cee79b263b95219dd2bc8a99a3d9a311e"
+      },
+      {
+        "title": "Perrserker (Pokémon)",
+        "page_id": 244068,
+        "revision_id": 4624984,
+        "sha1": "71f9de8af52fbd1a857dcb73d1f93ac01cc54b49"
+      },
+      {
+        "title": "Persian (Pokémon)",
+        "page_id": 2367,
+        "revision_id": 4630068,
+        "sha1": "a3001b3c1a587bfe4403c907a46c7018d40119a7"
+      },
+      {
+        "title": "Petilil (Pokémon)",
+        "page_id": 114929,
+        "revision_id": 4611226,
+        "sha1": "b3eb4c4953cc09b6134ed8e7c3bdc87fd62f3f3a"
+      },
+      {
+        "title": "Phanpy (Pokémon)",
+        "page_id": 2705,
+        "revision_id": 4634928,
+        "sha1": "a7b29b03d61934cb11c19e16e4ba0e75efa62f53"
+      },
+      {
+        "title": "Phantump (Pokémon)",
+        "page_id": 184609,
+        "revision_id": 4611229,
+        "sha1": "b06b062d6c3824a8f8b00fd0f8a3abe0086f3dc5"
+      },
+      {
+        "title": "Pheromosa (Pokémon)",
+        "page_id": 218187,
+        "revision_id": 4630162,
+        "sha1": "a678cb0faa3381e0651144d3acde66ab37b241bd"
+      },
+      {
+        "title": "Phione (Pokémon)",
+        "page_id": 13599,
+        "revision_id": 4613560,
+        "sha1": "a5527bb9d791ed21bcc8b707b3ecbe6d618cee46"
+      },
+      {
+        "title": "Pichu (Pokémon)",
+        "page_id": 2510,
+        "revision_id": 4640520,
+        "sha1": "6255565b2920a19a13625aa1102d8e420dfdf989"
+      },
+      {
+        "title": "Pidgeot (Pokémon)",
+        "page_id": 1620,
+        "revision_id": 4632249,
+        "sha1": "2f9efee26cfcd1249752a49a82b8aae0fc948bd7"
+      },
+      {
+        "title": "Pidgeotto (Pokémon)",
+        "page_id": 2370,
+        "revision_id": 4622515,
+        "sha1": "d03ff7963ca84641ba6cf022eefb6da483e42520"
+      },
+      {
+        "title": "Pidgey (Pokémon)",
+        "page_id": 2071,
+        "revision_id": 4632306,
+        "sha1": "3482b426985c1fcc28c4b969f6262293d82fc444"
+      },
+      {
+        "title": "Pidove (Pokémon)",
+        "page_id": 106845,
+        "revision_id": 4611237,
+        "sha1": "d7c685b76cfd613a565ddeb0c0c34791be594632"
+      },
+      {
+        "title": "Pignite (Pokémon)",
+        "page_id": 114971,
+        "revision_id": 4611238,
+        "sha1": "fbebb3525c565460f9d9cf14126e219d94a58da1"
+      },
+      {
+        "title": "Pikachu (Pokémon)",
+        "page_id": 80910,
+        "revision_id": 4644033,
+        "sha1": "61f9440296ec7662304ffd10e238b821267e7d81"
+      },
+      {
+        "title": "Pikipek (Pokémon)",
+        "page_id": 213754,
+        "revision_id": 4630142,
+        "sha1": "7277eb8030afb792c670bc4d410a967de35bc323"
+      },
+      {
+        "title": "Piloswine (Pokémon)",
+        "page_id": 2616,
+        "revision_id": 4611242,
+        "sha1": "ceece2d160093d382f9742b187bf90a099ff1ce0"
+      },
+      {
+        "title": "Pincurchin (Pokémon)",
+        "page_id": 244074,
+        "revision_id": 4629153,
+        "sha1": "495c681c1dbe4700d3bc8f4d9b6a78c12d361745"
+      },
+      {
+        "title": "Pineco (Pokémon)",
+        "page_id": 2589,
+        "revision_id": 4611245,
+        "sha1": "d96d064109cd8f88820fbbc817e3de7d3ff85a02"
+      },
+      {
+        "title": "Pinsir (Pokémon)",
+        "page_id": 2490,
+        "revision_id": 4635187,
+        "sha1": "beb039713ef0bcb2d8c1598c9b07684fff7b26b3"
+      },
+      {
+        "title": "Piplup (Pokémon)",
+        "page_id": 12372,
+        "revision_id": 4626287,
+        "sha1": "54d7926dbfbe38512c93ebf412fcdceb0ce1e0ea"
+      },
+      {
+        "title": "Plusle (Pokémon)",
+        "page_id": 2557,
+        "revision_id": 4611247,
+        "sha1": "351a0a5aa5475949ee5dc6d45755e3d2077466a4"
+      },
+      {
+        "title": "Poipole (Pokémon)",
+        "page_id": 226063,
+        "revision_id": 4630178,
+        "sha1": "03888b75847466b578a69f66ab438b6ea023c2ce"
+      },
+      {
+        "title": "Politoed (Pokémon)",
+        "page_id": 2526,
+        "revision_id": 4610390,
+        "sha1": "d4dd3a45bdb7b0a8fcadf893efc43c6a10f7f243"
+      },
+      {
+        "title": "Poliwag (Pokémon)",
+        "page_id": 2387,
+        "revision_id": 4632319,
+        "sha1": "54653c2da9f03b68aab531060a28a3b7c0f9390e"
+      },
+      {
+        "title": "Poliwhirl (Pokémon)",
+        "page_id": 8839,
+        "revision_id": 4632331,
+        "sha1": "7cf6702b4ca15269653ebf144b9257a245154fc7"
+      },
+      {
+        "title": "Poliwrath (Pokémon)",
+        "page_id": 2458,
+        "revision_id": 4623327,
+        "sha1": "efef6fe64053c828fd80624a90c741c4adef435f"
+      },
+      {
+        "title": "Poltchageist (Pokémon)",
+        "page_id": 294984,
+        "revision_id": 4611250,
+        "sha1": "7abfad1cba68612b702c9126f708fba2b653342a"
+      },
+      {
+        "title": "Polteageist (Pokémon)",
+        "page_id": 240793,
+        "revision_id": 4643657,
+        "sha1": "c40fef480e323265588878e27471aa1fa9f6dc8f"
+      },
+      {
+        "title": "Pombon (Pokémon)",
+        "page_id": 352933,
+        "revision_id": 4593348,
+        "sha1": "88954e46c5a75055d3e934cac4fddfced671b947"
+      },
+      {
+        "title": "Ponyta (Pokémon)",
+        "page_id": 2461,
+        "revision_id": 4632329,
+        "sha1": "1af3a387fb355614225206dd6e536d1867ae3b67"
+      },
+      {
+        "title": "Poochyena (Pokémon)",
+        "page_id": 1512,
+        "revision_id": 4611253,
+        "sha1": "12aa425ab56987a7fa458a06c312718a11193fdb"
+      },
+      {
+        "title": "Popplio (Pokémon)",
+        "page_id": 213006,
+        "revision_id": 4630066,
+        "sha1": "830ac9aae66ea55585ce24cf19a712958ad4ed72"
+      },
+      {
+        "title": "Porygon (Pokémon)",
+        "page_id": 2401,
+        "revision_id": 4632013,
+        "sha1": "ab3e80521f7adbbc268abbb245f834cc2e094562"
+      },
+      {
+        "title": "Porygon-Z (Pokémon)",
+        "page_id": 13597,
+        "revision_id": 4639269,
+        "sha1": "a0f99d96356c9a76186a722c2ae9e97f7a1d9d75"
+      },
+      {
+        "title": "Porygon2 (Pokémon)",
+        "page_id": 2586,
+        "revision_id": 4639268,
+        "sha1": "6587da2ae1983d502bc2e1bc653da0b189f3d902"
+      },
+      {
+        "title": "Primarina (Pokémon)",
+        "page_id": 216813,
+        "revision_id": 4630078,
+        "sha1": "81c8a62370e5104ecbeab036eb5b02b8e84f9830"
+      },
+      {
+        "title": "Primeape (Pokémon)",
+        "page_id": 2472,
+        "revision_id": 4628106,
+        "sha1": "9a95becb3a3b9426689187935a2e0d79837b8a0c"
+      },
+      {
+        "title": "Prinplup (Pokémon)",
+        "page_id": 13394,
+        "revision_id": 4611258,
+        "sha1": "0f08db11ab23a48bcc8b93ec36e4a18196494471"
+      },
+      {
+        "title": "Probopass (Pokémon)",
+        "page_id": 13572,
+        "revision_id": 4611259,
+        "sha1": "a8afd8cb25257c415ab6f61b3a61344f9b41bcb6"
+      },
+      {
+        "title": "Psyduck (Pokémon)",
+        "page_id": 60222,
+        "revision_id": 4628873,
+        "sha1": "51a841633808cb97a2240ddc2cff8b9e54a18d3d"
+      },
+      {
+        "title": "Pumpkaboo (Pokémon)",
+        "page_id": 184613,
+        "revision_id": 4638293,
+        "sha1": "0a4ea3e1b4e147491dee12651af1584a05986a83"
+      },
+      {
+        "title": "Pupitar (Pokémon)",
+        "page_id": 2540,
+        "revision_id": 4627544,
+        "sha1": "b76298a16b8ad463096f9bf4d6af01ac0ba5d03d"
+      },
+      {
+        "title": "Purrloin (Pokémon)",
+        "page_id": 114948,
+        "revision_id": 4628682,
+        "sha1": "7f5cd98e7add1c87c19dd9a00c99786ca96bc906"
+      },
+      {
+        "title": "Purugly (Pokémon)",
+        "page_id": 13497,
+        "revision_id": 4631287,
+        "sha1": "6231b4ef5ccc170651e7fb82f7a287ef007173c1"
+      },
+      {
+        "title": "Pyroar (Pokémon)",
+        "page_id": 182802,
+        "revision_id": 4611265,
+        "sha1": "2e7d9f7780e504bf13ccf5ce108ba998bc89b269"
+      },
+      {
+        "title": "Pyukumuku (Pokémon)",
+        "page_id": 215231,
+        "revision_id": 4630096,
+        "sha1": "40c7157722b798cb7944a50dffacb3b6354920c8"
+      },
+      {
+        "title": "Quagsire (Pokémon)",
+        "page_id": 1510,
+        "revision_id": 4625847,
+        "sha1": "562b33bddc8059ce93c28403835b76ccc641b766"
+      },
+      {
+        "title": "Quaquaval (Pokémon)",
+        "page_id": 277432,
+        "revision_id": 4631987,
+        "sha1": "d8c2b1ca86fccb45ae425dd9e436d3b4e933427b"
+      },
+      {
+        "title": "Quaxly (Pokémon)",
+        "page_id": 269674,
+        "revision_id": 4611269,
+        "sha1": "3b5337377a3204069ce4594a8794648dd8ac488d"
+      },
+      {
+        "title": "Quaxwell (Pokémon)",
+        "page_id": 277431,
+        "revision_id": 4612342,
+        "sha1": "e19b11f97c1e1abc1a92ed3d52429517335d828a"
+      },
+      {
+        "title": "Quilava (Pokémon)",
+        "page_id": 2501,
+        "revision_id": 4611271,
+        "sha1": "c0aa15f71c9d657c84bdba6ea302fca08b262bf0"
+      },
+      {
+        "title": "Quilladin (Pokémon)",
+        "page_id": 182727,
+        "revision_id": 4626540,
+        "sha1": "3af68485f38afe451f5837803ac164e1c3579fe7"
+      },
+      {
+        "title": "Qwilfish (Pokémon)",
+        "page_id": 2572,
+        "revision_id": 4626612,
+        "sha1": "e835b19d8ca54828365178a8c05b2ab1ee6e241a"
+      },
+      {
+        "title": "Raboot (Pokémon)",
+        "page_id": 244015,
+        "revision_id": 4611736,
+        "sha1": "34d2fdd9870901bfe9318b4e19e57190e4430755"
+      },
+      {
+        "title": "Rabsca (Pokémon)",
+        "page_id": 277461,
+        "revision_id": 4611275,
+        "sha1": "b49dc6fbdc05597cef0a316ceae55b11d7823f19"
+      },
+      {
+        "title": "Raging Bolt (Pokémon)",
+        "page_id": 294168,
+        "revision_id": 4636817,
+        "sha1": "f044a556ed38808b9df60030482c1b3f83a8c3ba"
+      },
+      {
+        "title": "Raichu (Pokémon)",
+        "page_id": 8558,
+        "revision_id": 4641912,
+        "sha1": "3f5a8528ea165447bcd08155a9300ede8cd38ca9"
+      },
+      {
+        "title": "Raikou (Pokémon)",
+        "page_id": 2066,
+        "revision_id": 4613306,
+        "sha1": "9cafdb55338ed8f0d880a0ddb81d3cea1bdd8b73"
+      },
+      {
+        "title": "Ralts (Pokémon)",
+        "page_id": 2621,
+        "revision_id": 4611277,
+        "sha1": "1ad175f658722fa8b27c22d8758cc4306beb10dc"
+      },
+      {
+        "title": "Rampardos (Pokémon)",
+        "page_id": 13429,
+        "revision_id": 4611278,
+        "sha1": "a3e8b7c387e477b63a8faf215e53b4d353c82d83"
+      },
+      {
+        "title": "Rapidash (Pokémon)",
+        "page_id": 2450,
+        "revision_id": 4632328,
+        "sha1": "23653a2207203483983d15c496236f8d1a318d28"
+      },
+      {
+        "title": "Raticate (Pokémon)",
+        "page_id": 2477,
+        "revision_id": 4642315,
+        "sha1": "4521e8ed5a66bc9d410edde9a91a9479a9e3682e"
+      },
+      {
+        "title": "Rattata (Pokémon)",
+        "page_id": 2428,
+        "revision_id": 4637303,
+        "sha1": "40474f96fb7bc2637c796498b15a226a51410824"
+      },
+      {
+        "title": "Rayquaza (Pokémon)",
+        "page_id": 2560,
+        "revision_id": 4623234,
+        "sha1": "486981ee68feb5b4c98973a9af1174ebf3e3c6fd"
+      },
+      {
+        "title": "Regice (Pokémon)",
+        "page_id": 2648,
+        "revision_id": 4613313,
+        "sha1": "de9f291bbdfa697a52361f9dd885f0fc4ecfd20d"
+      },
+      {
+        "title": "Regidrago (Pokémon)",
+        "page_id": 252161,
+        "revision_id": 4611763,
+        "sha1": "cd2e684f40c71a70f2d39dd329ec63d03f98cc42"
+      },
+      {
+        "title": "Regieleki (Pokémon)",
+        "page_id": 252160,
+        "revision_id": 4611775,
+        "sha1": "3996524186da38a3aa98bd474d06affc84c26cbe"
+      },
+      {
+        "title": "Regigigas (Pokémon)",
+        "page_id": 13517,
+        "revision_id": 4623600,
+        "sha1": "c698912d8522cb472dfbaab2098a5fb4bf9f11e2"
+      },
+      {
+        "title": "Regirock (Pokémon)",
+        "page_id": 2643,
+        "revision_id": 4613312,
+        "sha1": "1d5c629668a878c28bbfac5b7ee7dbcd781ade91"
+      },
+      {
+        "title": "Registeel (Pokémon)",
+        "page_id": 2649,
+        "revision_id": 4613314,
+        "sha1": "1816f87075a4ee5dc3dd63e5af69d806cfa98527"
+      },
+      {
+        "title": "Relicanth (Pokémon)",
+        "page_id": 2651,
+        "revision_id": 4611288,
+        "sha1": "3a89dd2b687f8da8b970d37df677575de8172370"
+      },
+      {
+        "title": "Rellor (Pokémon)",
+        "page_id": 277460,
+        "revision_id": 4611289,
+        "sha1": "3152880ab96dda6d5a3441e2ad57a221200eb4c0"
+      },
+      {
+        "title": "Remoraid (Pokémon)",
+        "page_id": 2559,
+        "revision_id": 4611290,
+        "sha1": "ff6144343d046b0df40d7683a9bb424d73267416"
+      },
+      {
+        "title": "Reshiram (Pokémon)",
+        "page_id": 105913,
+        "revision_id": 4611291,
+        "sha1": "69c6aea12a8669c17e543a39cc5637ad32ba96b4"
+      },
+      {
+        "title": "Reuniclus (Pokémon)",
+        "page_id": 108700,
+        "revision_id": 4616410,
+        "sha1": "852a8f6d183966352e9e72d0a695bcaa8915ac10"
+      },
+      {
+        "title": "Revavroom (Pokémon)",
+        "page_id": 277486,
+        "revision_id": 4611292,
+        "sha1": "4670d5945218c6acb96811f5b811d2f26b993142"
+      },
+      {
+        "title": "Rhydon (Pokémon)",
+        "page_id": 2377,
+        "revision_id": 4631775,
+        "sha1": "6e80e0f98d82d6d7a67c71be79443ab3575fc1d1"
+      },
+      {
+        "title": "Rhyhorn (Pokémon)",
+        "page_id": 2397,
+        "revision_id": 4632324,
+        "sha1": "9b837a0148901466e8a8d04eaad5aaab4211d69b"
+      },
+      {
+        "title": "Rhyperior (Pokémon)",
+        "page_id": 13591,
+        "revision_id": 4611294,
+        "sha1": "4791e429c87e5298e9d2376c844895c3422504e5"
+      },
+      {
+        "title": "Ribombee (Pokémon)",
+        "page_id": 216479,
+        "revision_id": 4630087,
+        "sha1": "0f10c25f39d381a626f52fd94c3f27c985d249e3"
+      },
+      {
+        "title": "Rillaboom (Pokémon)",
+        "page_id": 244012,
+        "revision_id": 4643481,
+        "sha1": "fe8b6d17abf038ea8b8ee5456ef587c195853f27"
+      },
+      {
+        "title": "Riolu (Pokémon)",
+        "page_id": 13519,
+        "revision_id": 4626536,
+        "sha1": "b6891f23539df8226b07ae97664e76ac887152d0"
+      },
+      {
+        "title": "Roaring Moon (Pokémon)",
+        "page_id": 277440,
+        "revision_id": 4610537,
+        "sha1": "edb175c07a67103cbb641189f609fec0111bcf35"
+      },
+      {
+        "title": "Rockruff (Pokémon)",
+        "page_id": 213641,
+        "revision_id": 4630067,
+        "sha1": "314e49c037e9126c46326f60cadfd2ebabfcf096"
+      },
+      {
+        "title": "Roggenrola (Pokémon)",
+        "page_id": 114945,
+        "revision_id": 4611297,
+        "sha1": "61e3de60734e203987dd92d15e4dba3d286cc42f"
+      },
+      {
+        "title": "Rolycoly (Pokémon)",
+        "page_id": 239622,
+        "revision_id": 4611298,
+        "sha1": "12075a2ca98ea3c16b0d9fb871604fde5fc1d0f0"
+      },
+      {
+        "title": "Rookidee (Pokémon)",
+        "page_id": 244037,
+        "revision_id": 4632339,
+        "sha1": "65cb04a00b0fb333b48afc05c0e8a5f9baf62e09"
+      },
+      {
+        "title": "Roselia (Pokémon)",
+        "page_id": 2650,
+        "revision_id": 4626596,
+        "sha1": "5d60f30947187230772ec156d2afd3d2e4d41682"
+      },
+      {
+        "title": "Roserade (Pokémon)",
+        "page_id": 12177,
+        "revision_id": 4635783,
+        "sha1": "cd7ff46eefa419ce95ba5fb25cd2d1d1496d1036"
+      },
+      {
+        "title": "Rotom (Pokémon)",
+        "page_id": 13612,
+        "revision_id": 4628727,
+        "sha1": "4cb73e9d9bbb47e34be575d7655e2bc9cef0bd32"
+      },
+      {
+        "title": "Rowlet (Pokémon)",
+        "page_id": 213004,
+        "revision_id": 4630058,
+        "sha1": "21e55749a4f3ca2acd54f722b8b55d40db89cba7"
+      },
+      {
+        "title": "Rufflet (Pokémon)",
+        "page_id": 115999,
+        "revision_id": 4632386,
+        "sha1": "66c352d409c46b8bbc6aa684c55292815e086568"
+      },
+      {
+        "title": "Runerigus (Pokémon)",
+        "page_id": 244071,
+        "revision_id": 4616413,
+        "sha1": "1e54859e6e0fa56c8e57d7d7048199b802666d2a"
+      },
+      {
+        "title": "Sableye (Pokémon)",
+        "page_id": 2687,
+        "revision_id": 4636645,
+        "sha1": "e18a6616fbe703143a2b556b55b23fd5c9300c19"
+      },
+      {
+        "title": "Salamence (Pokémon)",
+        "page_id": 2603,
+        "revision_id": 4630476,
+        "sha1": "acbdcd09a9068fae6b3a0cb30f4ff75c03888cdb"
+      },
+      {
+        "title": "Salandit (Pokémon)",
+        "page_id": 214304,
+        "revision_id": 4630112,
+        "sha1": "c505fba93aa42236846a7e66f3a8d4541679bf5e"
+      },
+      {
+        "title": "Salazzle (Pokémon)",
+        "page_id": 218166,
+        "revision_id": 4630111,
+        "sha1": "914880489244975f10d06207e494c847505c6d72"
+      },
+      {
+        "title": "Samurott (Pokémon)",
+        "page_id": 115752,
+        "revision_id": 4610459,
+        "sha1": "9cae94fa8b3e800ca4a021afc9719de062b58c2a"
+      },
+      {
+        "title": "Sandaconda (Pokémon)",
+        "page_id": 244053,
+        "revision_id": 4637447,
+        "sha1": "6a09a53f28ccd27eb62c123b3318a7e46318bc80"
+      },
+      {
+        "title": "Sandile (Pokémon)",
+        "page_id": 106868,
+        "revision_id": 4611307,
+        "sha1": "10642fcb4290a55e1a19966e7e6387b6e338ae78"
+      },
+      {
+        "title": "Sandshrew (Pokémon)",
+        "page_id": 2408,
+        "revision_id": 4630048,
+        "sha1": "87216d54b3bca7f302653e16e7c4cb46d028f503"
+      },
+      {
+        "title": "Sandslash (Pokémon)",
+        "page_id": 1520,
+        "revision_id": 4631544,
+        "sha1": "aa707012a8a85cffdc19937794aa4daf832429a1"
+      },
+      {
+        "title": "Sandy Shocks (Pokémon)",
+        "page_id": 277436,
+        "revision_id": 4611310,
+        "sha1": "dce798069c90fe5d1b3619172b0a7120783584fb"
+      },
+      {
+        "title": "Sandygast (Pokémon)",
+        "page_id": 215209,
+        "revision_id": 4630148,
+        "sha1": "d6d6e87104ad478aea658ec8ff35e6a90ee0c33e"
+      },
+      {
+        "title": "Sawk (Pokémon)",
+        "page_id": 115816,
+        "revision_id": 4622765,
+        "sha1": "4612a886f1ace6a4fc954d644725f3f90afd0a34"
+      },
+      {
+        "title": "Sawsbuck (Pokémon)",
+        "page_id": 114951,
+        "revision_id": 4611314,
+        "sha1": "4675837b10612f6909b010cfc9a147cf5c25855b"
+      },
+      {
+        "title": "Scatterbug (Pokémon)",
+        "page_id": 179015,
+        "revision_id": 4624770,
+        "sha1": "906dd8916480061f0794c00be67aec1aebb28544"
+      },
+      {
+        "title": "Sceptile (Pokémon)",
+        "page_id": 2653,
+        "revision_id": 4628718,
+        "sha1": "ed5271cb2de17ef0672567d8752eb8ccbd185263"
+      },
+      {
+        "title": "Scizor (Pokémon)",
+        "page_id": 60759,
+        "revision_id": 4635231,
+        "sha1": "dc4b107bcdba7639592918b110e1e4f9629f9314"
+      },
+      {
+        "title": "Scolipede (Pokémon)",
+        "page_id": 116124,
+        "revision_id": 4628049,
+        "sha1": "272fd20b80fdc76389196bb06393cb17a2bc9dfc"
+      },
+      {
+        "title": "Scorbunny (Pokémon)",
+        "page_id": 236045,
+        "revision_id": 4611317,
+        "sha1": "55ff77f57d54e8682bf89aaf2266519402580037"
+      },
+      {
+        "title": "Scovillain (Pokémon)",
+        "page_id": 277484,
+        "revision_id": 4637955,
+        "sha1": "ec65c50c25e5a595063bc6ce65a8c337de9c053d"
+      },
+      {
+        "title": "Scrafty (Pokémon)",
+        "page_id": 116012,
+        "revision_id": 4626534,
+        "sha1": "5a424e2e66ddb022286b0c350a587dd4ac373d82"
+      },
+      {
+        "title": "Scraggy (Pokémon)",
+        "page_id": 116010,
+        "revision_id": 4626533,
+        "sha1": "618cbbc09a977670c4e2df5283a098d9c59e2b95"
+      },
+      {
+        "title": "Scream Tail (Pokémon)",
+        "page_id": 277437,
+        "revision_id": 4611321,
+        "sha1": "f7e02140492e3248dca2487727a19b629480ca30"
+      },
+      {
+        "title": "Scyther (Pokémon)",
+        "page_id": 2427,
+        "revision_id": 4641641,
+        "sha1": "bb8cf901ea9735c6ee9ca874e5b7ed328917154a"
+      },
+      {
+        "title": "Seadra (Pokémon)",
+        "page_id": 2474,
+        "revision_id": 4631784,
+        "sha1": "a7272f0a830ec74b962f881292fe87e6393c76ef"
+      },
+      {
+        "title": "Seaking (Pokémon)",
+        "page_id": 2492,
+        "revision_id": 4631787,
+        "sha1": "a02b460da22069edd885ed123bc57cd4ae844fee"
+      },
+      {
+        "title": "Sealeo (Pokémon)",
+        "page_id": 2601,
+        "revision_id": 4611325,
+        "sha1": "4314e6d53a24666ba2d9cedd9437de1a2c2b9edc"
+      },
+      {
+        "title": "Seedot (Pokémon)",
+        "page_id": 2686,
+        "revision_id": 4611326,
+        "sha1": "033425145eca255f4a3be6d0a6a733329728f9c8"
+      },
+      {
+        "title": "Seel (Pokémon)",
+        "page_id": 2464,
+        "revision_id": 4631735,
+        "sha1": "b74a5bfc9ec993795687619774164925b1b8a8c4"
+      },
+      {
+        "title": "Seismitoad (Pokémon)",
+        "page_id": 116133,
+        "revision_id": 4610462,
+        "sha1": "385616a0aec1cf03ce10e88f1265c0df16320210"
+      },
+      {
+        "title": "Sentret (Pokémon)",
+        "page_id": 2502,
+        "revision_id": 4632026,
+        "sha1": "8e8a642cb3147c6289ac931c9f888d5538a98089"
+      },
+      {
+        "title": "Serperior (Pokémon)",
+        "page_id": 115753,
+        "revision_id": 4611744,
+        "sha1": "4e60752e798085ad15a4e00a16f85a11573acb3c"
+      },
+      {
+        "title": "Servine (Pokémon)",
+        "page_id": 114965,
+        "revision_id": 4611329,
+        "sha1": "566a18b177ff4bf645ecf97c809af0f1e5d5c21e"
+      },
+      {
+        "title": "Seviper (Pokémon)",
+        "page_id": 2548,
+        "revision_id": 4626601,
+        "sha1": "d75efc7a67a4631a9ea5489fb85564b40b3cdba1"
+      },
+      {
+        "title": "Sewaddle (Pokémon)",
+        "page_id": 111602,
+        "revision_id": 4635051,
+        "sha1": "7c423d061e22924c247afd9c0e7a908cb5c0dcfb"
+      },
+      {
+        "title": "Sharpedo (Pokémon)",
+        "page_id": 2662,
+        "revision_id": 4613080,
+        "sha1": "1787e0881d27cf5a24ca096b0d74ef20384df664"
+      },
+      {
+        "title": "Shaymin (Pokémon)",
+        "page_id": 13541,
+        "revision_id": 4611333,
+        "sha1": "0aba47e4cf5154dfb134359927c1378caa9c1643"
+      },
+      {
+        "title": "Shedinja (Pokémon)",
+        "page_id": 2663,
+        "revision_id": 4617542,
+        "sha1": "8638d56198c257f14f178b6f5f5ab0ce1c79489a"
+      },
+      {
+        "title": "Shelgon (Pokémon)",
+        "page_id": 2691,
+        "revision_id": 4615975,
+        "sha1": "399229c536de7b19cf07b8ca1629ca53a49776bc"
+      },
+      {
+        "title": "Shellder (Pokémon)",
+        "page_id": 2431,
+        "revision_id": 4642258,
+        "sha1": "3ef85d46bf3bc8f8c3e2948cbf936949d61449ab"
+      },
+      {
+        "title": "Shellos (Pokémon)",
+        "page_id": 13455,
+        "revision_id": 4643548,
+        "sha1": "ec2d4ff35f495b742b7cead17d032f713844a82c"
+      },
+      {
+        "title": "Shelmet (Pokémon)",
+        "page_id": 116007,
+        "revision_id": 4611338,
+        "sha1": "ff8fff851ae05ee245481a807fb2db710c68a397"
+      },
+      {
+        "title": "Shieldon (Pokémon)",
+        "page_id": 13181,
+        "revision_id": 4636263,
+        "sha1": "d712d3b0fa2033da8b6c17e24e8284b8c54a6d25"
+      },
+      {
+        "title": "Shiftry (Pokémon)",
+        "page_id": 2599,
+        "revision_id": 4611340,
+        "sha1": "f400cb5d86fa29615e1d91a8f3c708dfa48479d8"
+      },
+      {
+        "title": "Shiinotic (Pokémon)",
+        "page_id": 218164,
+        "revision_id": 4630149,
+        "sha1": "ce14e41f314eef6d9c348ee237827d7ed9539906"
+      },
+      {
+        "title": "Shinx (Pokémon)",
+        "page_id": 13155,
+        "revision_id": 4626299,
+        "sha1": "7347fee9cc86fa4370e028669ce0338316299079"
+      },
+      {
+        "title": "Shroodle (Pokémon)",
+        "page_id": 277470,
+        "revision_id": 4620925,
+        "sha1": "712cefa16468ea38af3ed6754758ca7642ca37f4"
+      },
+      {
+        "title": "Shroomish (Pokémon)",
+        "page_id": 2684,
+        "revision_id": 4612336,
+        "sha1": "ef1e5d27ffe47a9aaac1c5003a8311391748dc55"
+      },
+      {
+        "title": "Shuckle (Pokémon)",
+        "page_id": 2558,
+        "revision_id": 4611345,
+        "sha1": "441f2462e56d313fac84d8962f8bdb44924fb09b"
+      },
+      {
+        "title": "Shuppet (Pokémon)",
+        "page_id": 2703,
+        "revision_id": 4611346,
+        "sha1": "13490f42f8f0c73145e035644268e56d61a34b58"
+      },
+      {
+        "title": "Sigilyph (Pokémon)",
+        "page_id": 116013,
+        "revision_id": 4616409,
+        "sha1": "bb7147ed404875d1fcd64e53c6890798f1651f73"
+      },
+      {
+        "title": "Silcoon (Pokémon)",
+        "page_id": 2562,
+        "revision_id": 4611348,
+        "sha1": "9760dc92f165b287bb53031c6680ec66855799c5"
+      },
+      {
+        "title": "Silicobra (Pokémon)",
+        "page_id": 244052,
+        "revision_id": 4611349,
+        "sha1": "33100d3bf50234b8a923839f667ebca33a14f541"
+      },
+      {
+        "title": "Silvally (Pokémon)",
+        "page_id": 216457,
+        "revision_id": 4630103,
+        "sha1": "b25928d0765d824319890f52d2b06827bbbc732d"
+      },
+      {
+        "title": "Simipour (Pokémon)",
+        "page_id": 115974,
+        "revision_id": 4628701,
+        "sha1": "3d4fa6bdadc1b578f4971c1f6f1a873a256986db"
+      },
+      {
+        "title": "Simisage (Pokémon)",
+        "page_id": 115971,
+        "revision_id": 4628713,
+        "sha1": "1967f6085f816fc68c2d9315a70e6ebc1cfe54e2"
+      },
+      {
+        "title": "Simisear (Pokémon)",
+        "page_id": 115973,
+        "revision_id": 4628692,
+        "sha1": "b4458879e24ece5e88b4a2bfddcd501a06dc14e6"
+      },
+      {
+        "title": "Sinistcha (Pokémon)",
+        "page_id": 295831,
+        "revision_id": 4610540,
+        "sha1": "24e1ed22334346b3d5082de2ce9a21090214ef74"
+      },
+      {
+        "title": "Sinistea (Pokémon)",
+        "page_id": 244062,
+        "revision_id": 4643656,
+        "sha1": "49984e43cd387cf4f187c5923ffb038eb1198eb0"
+      },
+      {
+        "title": "Sirfetch'd (Pokémon)",
+        "page_id": 240982,
+        "revision_id": 4643592,
+        "sha1": "540ac97607fa652e53883f3c4bcb64a29a8a7c90"
+      },
+      {
+        "title": "Sizzlipede (Pokémon)",
+        "page_id": 244058,
+        "revision_id": 4611356,
+        "sha1": "7807aaf4adc7d19b9ab3bc126bf8b07a4f054776"
+      },
+      {
+        "title": "Skarmory (Pokémon)",
+        "page_id": 2570,
+        "revision_id": 4621552,
+        "sha1": "7c864bccfaac2724284b2b5f21a000666bacb8b4"
+      },
+      {
+        "title": "Skeledirge (Pokémon)",
+        "page_id": 277430,
+        "revision_id": 4628840,
+        "sha1": "acec75cb0f28895204bb0a2d00f0fe41dad0a0aa"
+      },
+      {
+        "title": "Skiddo (Pokémon)",
+        "page_id": 181564,
+        "revision_id": 4611501,
+        "sha1": "21c6c9a8492e46b48c97cb815937f6e86d5d7a4b"
+      },
+      {
+        "title": "Skiploom (Pokémon)",
+        "page_id": 2528,
+        "revision_id": 4623360,
+        "sha1": "e6440ba3269c8a61c2e5673dd2f578b1734732c8"
+      },
+      {
+        "title": "Skitty (Pokémon)",
+        "page_id": 2678,
+        "revision_id": 4619737,
+        "sha1": "91b679da96a1bfd040d22b64bfd7dd4a2c270c8c"
+      },
+      {
+        "title": "Skorupi (Pokémon)",
+        "page_id": 13536,
+        "revision_id": 4620362,
+        "sha1": "7e41ccfd9c48fd759d3870050ae2d08c1feb1c8f"
+      },
+      {
+        "title": "Skrelp (Pokémon)",
+        "page_id": 178960,
+        "revision_id": 4615955,
+        "sha1": "f2092957a7cad4eceb40bb3ce0289c68c17ab0d5"
+      },
+      {
+        "title": "Skuntank (Pokémon)",
+        "page_id": 13398,
+        "revision_id": 4643171,
+        "sha1": "d67f3d32a20027a85172d40ac6e29507667488cf"
+      },
+      {
+        "title": "Skwovet (Pokémon)",
+        "page_id": 244034,
+        "revision_id": 4626999,
+        "sha1": "c90e0be188114eb41c0c61b6114723ee6329043a"
+      },
+      {
+        "title": "Slaking (Pokémon)",
+        "page_id": 2657,
+        "revision_id": 4617714,
+        "sha1": "692f10a45935ad271826c53a3dfae68c55696b0a"
+      },
+      {
+        "title": "Slakoth (Pokémon)",
+        "page_id": 2681,
+        "revision_id": 4615110,
+        "sha1": "6b1147e5aed046dc4236a2f99402920f25463b81"
+      },
+      {
+        "title": "Sliggoo (Pokémon)",
+        "page_id": 184565,
+        "revision_id": 4628759,
+        "sha1": "8d945ffd7cdd375c028e4f5a4faa122c0de20c49"
+      },
+      {
+        "title": "Slither Wing (Pokémon)",
+        "page_id": 277439,
+        "revision_id": 4624154,
+        "sha1": "be6258c52fb38f9d51a75b2885878802e861d745"
+      },
+      {
+        "title": "Slowbro (Pokémon)",
+        "page_id": 2373,
+        "revision_id": 4632255,
+        "sha1": "f01306fa45d73002b9fe0e762656cd79bcfa6360"
+      },
+      {
+        "title": "Slowking (Pokémon)",
+        "page_id": 2538,
+        "revision_id": 4630319,
+        "sha1": "0c83160ae455fab3493d09dbd28f2e6e8bc6b704"
+      },
+      {
+        "title": "Slowpoke (Pokémon)",
+        "page_id": 2062,
+        "revision_id": 4632775,
+        "sha1": "9ca280fcfc32ba2f3cbcc4c7f773454fcb620661"
+      },
+      {
+        "title": "Slugma (Pokémon)",
+        "page_id": 2637,
+        "revision_id": 4611368,
+        "sha1": "7bb3d2dcc123770008cce1c6036dd559d04803ad"
+      },
+      {
+        "title": "Slurpuff (Pokémon)",
+        "page_id": 183541,
+        "revision_id": 4628729,
+        "sha1": "a7aaf9e55d0ef46b741a10f11ed9127ca77a3a1f"
+      },
+      {
+        "title": "Smeargle (Pokémon)",
+        "page_id": 2591,
+        "revision_id": 4628888,
+        "sha1": "e89fde0d78a813f5a5e8e6cfae23191f8cbf545a"
+      },
+      {
+        "title": "Smoliv (Pokémon)",
+        "page_id": 271966,
+        "revision_id": 4638674,
+        "sha1": "3d4931a1551d6e0d41c681dbe211e3cb23094c03"
+      },
+      {
+        "title": "Smoochum (Pokémon)",
+        "page_id": 2612,
+        "revision_id": 4630404,
+        "sha1": "84bdce0dbf5524c16484d054d845a9c2f139c30c"
+      },
+      {
+        "title": "Sneasel (Pokémon)",
+        "page_id": 2088,
+        "revision_id": 4611374,
+        "sha1": "ad3e6260adc0ec2764f77c4297fe33513aa0bc4a"
+      },
+      {
+        "title": "Sneasler (Pokémon)",
+        "page_id": 268003,
+        "revision_id": 4611375,
+        "sha1": "909e1e1f54c0f16bd3731a4ebcabc7ebbdf4dcd7"
+      },
+      {
+        "title": "Snivy (Pokémon)",
+        "page_id": 104203,
+        "revision_id": 4611376,
+        "sha1": "ef3bfe4879b12dba88e5a4c7222f8d6db0c9f8f9"
+      },
+      {
+        "title": "Snom (Pokémon)",
+        "page_id": 244075,
+        "revision_id": 4629154,
+        "sha1": "5622160a4582c3c7d4239ac8bfdce067a286f4c9"
+      },
+      {
+        "title": "Snorlax (Pokémon)",
+        "page_id": 63004,
+        "revision_id": 4637372,
+        "sha1": "987f6252da5aa784b00d138cff04a5d563ac6e21"
+      },
+      {
+        "title": "Snorunt (Pokémon)",
+        "page_id": 2711,
+        "revision_id": 4611378,
+        "sha1": "5725b88e48cc81dfbdb4a62f884c8ebfddb61ebd"
+      },
+      {
+        "title": "Snover (Pokémon)",
+        "page_id": 13580,
+        "revision_id": 4611379,
+        "sha1": "e70fd78106c695db98b6fd1c23ca8af6770a75f0"
+      },
+      {
+        "title": "Snubbull (Pokémon)",
+        "page_id": 2666,
+        "revision_id": 4611380,
+        "sha1": "9f27d673e1627433a169781ad0d92cfc6ce558f3"
+      },
+      {
+        "title": "Sobble (Pokémon)",
+        "page_id": 236047,
+        "revision_id": 4630660,
+        "sha1": "fe29168048a905c0afb7e43a2bbf12eaa5e3b7e7"
+      },
+      {
+        "title": "Solgaleo (Pokémon)",
+        "page_id": 213447,
+        "revision_id": 4630060,
+        "sha1": "62a6c71c6edaba949f3c179a8b0729837a271ee9"
+      },
+      {
+        "title": "Solosis (Pokémon)",
+        "page_id": 115876,
+        "revision_id": 4611383,
+        "sha1": "6eb93ef323f6148ca311e1c3eb9b2532de745328"
+      },
+      {
+        "title": "Solrock (Pokémon)",
+        "page_id": 2636,
+        "revision_id": 4611385,
+        "sha1": "b68d6308e22af7b6b964d1f47c027f4f9b060e4a"
+      },
+      {
+        "title": "Spearow (Pokémon)",
+        "page_id": 2365,
+        "revision_id": 4622999,
+        "sha1": "a7ef08e5618a7c64893bf1dfb91e1df4d9d0b202"
+      },
+      {
+        "title": "Spectrier (Pokémon)",
+        "page_id": 257887,
+        "revision_id": 4611387,
+        "sha1": "fc4a09e74a3b5e04e303d90ee998079db57184a0"
+      },
+      {
+        "title": "Spewpa (Pokémon)",
+        "page_id": 178895,
+        "revision_id": 4624771,
+        "sha1": "d06ec13fbb24b9adc9bf9ec2fbabe4d7783b529d"
+      },
+      {
+        "title": "Spheal (Pokémon)",
+        "page_id": 2709,
+        "revision_id": 4611389,
+        "sha1": "8a05030c1a765eaa0c08e77c3d3cbc58bc789349"
+      },
+      {
+        "title": "Spidops (Pokémon)",
+        "page_id": 277457,
+        "revision_id": 4611390,
+        "sha1": "818ec7c7b8ec395b0be20499ba23d445a29c8412"
+      },
+      {
+        "title": "Spinarak (Pokémon)",
+        "page_id": 2496,
+        "revision_id": 4634904,
+        "sha1": "1a59b014ec93fb40c063a62845d4e92601d431a0"
+      },
+      {
+        "title": "Spinda (Pokémon)",
+        "page_id": 2714,
+        "revision_id": 4611393,
+        "sha1": "2f53e7f8fe2742d129abbb49b31eeccfe50c9f97"
+      },
+      {
+        "title": "Spiritomb (Pokémon)",
+        "page_id": 13513,
+        "revision_id": 4611394,
+        "sha1": "096990781a81bc99ffdb714b2a19bfea83571b98"
+      },
+      {
+        "title": "Spoink (Pokémon)",
+        "page_id": 2707,
+        "revision_id": 4627599,
+        "sha1": "b505c4cea69e13c1dec227b96b825f9784d7adfd"
+      },
+      {
+        "title": "Sprigatito (Pokémon)",
+        "page_id": 269686,
+        "revision_id": 4617894,
+        "sha1": "e764c41389c6b8402465d99e13aa735958a9dc21"
+      },
+      {
+        "title": "Spritzee (Pokémon)",
+        "page_id": 180248,
+        "revision_id": 4611398,
+        "sha1": "fd3a6da5824964dd0474457e463457e0733e5537"
+      },
+      {
+        "title": "Squawkabilly (Pokémon)",
+        "page_id": 277500,
+        "revision_id": 4641999,
+        "sha1": "ba4436c51a34995807da9958410b711eb838a8f2"
+      },
+      {
+        "title": "Squirtle (Pokémon)",
+        "page_id": 2283,
+        "revision_id": 4633966,
+        "sha1": "7d983019916c9ec83d126ce77a31e2be96b5249d"
+      },
+      {
+        "title": "Stakataka (Pokémon)",
+        "page_id": 225652,
+        "revision_id": 4630184,
+        "sha1": "353dee6fdb4d44e333892aabea99610f2a996590"
+      },
+      {
+        "title": "Stantler (Pokémon)",
+        "page_id": 2583,
+        "revision_id": 4611403,
+        "sha1": "30fe52ff61095f4e826e19ae0516d806da2efc2c"
+      },
+      {
+        "title": "Staraptor (Pokémon)",
+        "page_id": 13416,
+        "revision_id": 4635261,
+        "sha1": "3425094fd1585be0e31110f0d941b20302a2bb5d"
+      },
+      {
+        "title": "Staravia (Pokémon)",
+        "page_id": 13408,
+        "revision_id": 4620878,
+        "sha1": "6d610bf82b18a9577fe0a7459bf25c7e74a68033"
+      },
+      {
+        "title": "Starly (Pokémon)",
+        "page_id": 12460,
+        "revision_id": 4620876,
+        "sha1": "071787d014cff906238c263f68a160adb9ba0681"
+      },
+      {
+        "title": "Starmie (Pokémon)",
+        "page_id": 2405,
+        "revision_id": 4631791,
+        "sha1": "4e475621f6fc6fae39b43f508097909f2e9e0a28"
+      },
+      {
+        "title": "Staryu (Pokémon)",
+        "page_id": 2417,
+        "revision_id": 4631790,
+        "sha1": "a43c71b93e273811fc9819bb347f62cbc95bc391"
+      },
+      {
+        "title": "Steelix (Pokémon)",
+        "page_id": 2567,
+        "revision_id": 4629254,
+        "sha1": "dc06499e7b0d0b36f8d398f1cc55dd30f8b9e63c"
+      },
+      {
+        "title": "Steenee (Pokémon)",
+        "page_id": 216477,
+        "revision_id": 4630143,
+        "sha1": "791e9898b36cdebb47192b1cbbb6e976219a69f3"
+      },
+      {
+        "title": "Stonjourner (Pokémon)",
+        "page_id": 244077,
+        "revision_id": 4616438,
+        "sha1": "a6ebc24cffddd9e50643e2f3f418fb588c588fa1"
+      },
+      {
+        "title": "Stoutland (Pokémon)",
+        "page_id": 115942,
+        "revision_id": 4611410,
+        "sha1": "2ab0e5de50d17be9f52600ccf339d570bddbb567"
+      },
+      {
+        "title": "Stufful (Pokémon)",
+        "page_id": 215211,
+        "revision_id": 4630099,
+        "sha1": "9c3ea33ad35fffac377c907de98374b05aff068d"
+      },
+      {
+        "title": "Stunfisk (Pokémon)",
+        "page_id": 116020,
+        "revision_id": 4625719,
+        "sha1": "d09b85223cb06ef1ffbe95cc5407b03610d73231"
+      },
+      {
+        "title": "Stunky (Pokémon)",
+        "page_id": 13499,
+        "revision_id": 4625269,
+        "sha1": "d73bf1a2a986587cc3604f74991c3c06405ef085"
+      },
+      {
+        "title": "Sudowoodo (Pokémon)",
+        "page_id": 2525,
+        "revision_id": 4634924,
+        "sha1": "f11be38a88247a4e87ba9148954daaba82a5db99"
+      },
+      {
+        "title": "Suicune (Pokémon)",
+        "page_id": 871,
+        "revision_id": 4613308,
+        "sha1": "1b6e9e0abdf671da2de48458c1e185b61cd31c96"
+      },
+      {
+        "title": "Sunflora (Pokémon)",
+        "page_id": 2532,
+        "revision_id": 4611415,
+        "sha1": "f00567d4a4c0dfa21c761c8c61f7e392ab611022"
+      },
+      {
+        "title": "Sunkern (Pokémon)",
+        "page_id": 2531,
+        "revision_id": 4611416,
+        "sha1": "77d6246963f9bb38e1aee8ae41d9e46b99f05fdb"
+      },
+      {
+        "title": "Surskit (Pokémon)",
+        "page_id": 2679,
+        "revision_id": 4611417,
+        "sha1": "870f9f3522f6c3d1255e58dbfc9cdc8f9fbb03ad"
+      },
+      {
+        "title": "Swablu (Pokémon)",
+        "page_id": 2624,
+        "revision_id": 4626547,
+        "sha1": "0b6b07aadcb8fbdda95bf512b68b3f8f344ad604"
+      },
+      {
+        "title": "Swadloon (Pokémon)",
+        "page_id": 116134,
+        "revision_id": 4611419,
+        "sha1": "6a2aeb0fe5a1bd889870c807ccc8c2528fb17b67"
+      },
+      {
+        "title": "Swalot (Pokémon)",
+        "page_id": 2693,
+        "revision_id": 4626512,
+        "sha1": "c3404ff8ba68059afc1ea3fa77ff637f0a4fa8aa"
+      },
+      {
+        "title": "Swampert (Pokémon)",
+        "page_id": 2564,
+        "revision_id": 4633689,
+        "sha1": "c1e2e1ab87a95e26fd7c7b8208915c0689ce69fe"
+      },
+      {
+        "title": "Swanna (Pokémon)",
+        "page_id": 111665,
+        "revision_id": 4611422,
+        "sha1": "8dfa96c14b0681da5f969b12eea173a765513c67"
+      },
+      {
+        "title": "Swellow (Pokémon)",
+        "page_id": 2638,
+        "revision_id": 4611423,
+        "sha1": "b557202d6c7d5154d0a532ab59a39edd36bddb4e"
+      },
+      {
+        "title": "Swinub (Pokémon)",
+        "page_id": 2629,
+        "revision_id": 4611424,
+        "sha1": "beaab2a9fc354a83ef7afb120fb6dc051cf88e5e"
+      },
+      {
+        "title": "Swirlix (Pokémon)",
+        "page_id": 180244,
+        "revision_id": 4628730,
+        "sha1": "e0380a208fa9ca204c9898040b335b6c8938e022"
+      },
+      {
+        "title": "Swoobat (Pokémon)",
+        "page_id": 115994,
+        "revision_id": 4611426,
+        "sha1": "62e5e9d9751b50651b0880c906912fcc69732ca2"
+      },
+      {
+        "title": "Sylveon (Pokémon)",
+        "page_id": 173687,
+        "revision_id": 4626521,
+        "sha1": "fc90e8035f5f8ce4d1bcd5d2739fdc070b39eb04"
+      },
+      {
+        "title": "Tadbulb (Pokémon)",
+        "page_id": 277468,
+        "revision_id": 4612602,
+        "sha1": "9cf4afdaaea83e083f84a03f2fbd4f7772919d12"
+      },
+      {
+        "title": "Taillow (Pokémon)",
+        "page_id": 2549,
+        "revision_id": 4611429,
+        "sha1": "1d8c1beba365ade4b9dc7ce7053278a38fc226d4"
+      },
+      {
+        "title": "Talonflame (Pokémon)",
+        "page_id": 178958,
+        "revision_id": 4626455,
+        "sha1": "793c3fc666380ded6f2619237ee716af600e9df2"
+      },
+      {
+        "title": "Tandemaus (Pokémon)",
+        "page_id": 277488,
+        "revision_id": 4619069,
+        "sha1": "89a788389c8ce9b8762204e340923d62585791d4"
+      },
+      {
+        "title": "Tangela (Pokémon)",
+        "page_id": 2375,
+        "revision_id": 4631778,
+        "sha1": "8524d470ae64e377a22d38abf74d522379fa9858"
+      },
+      {
+        "title": "Tangrowth (Pokémon)",
+        "page_id": 13596,
+        "revision_id": 4624023,
+        "sha1": "2c9b057117425cc94bf4e416eccc1c61ad0ab7cf"
+      },
+      {
+        "title": "Tapu Bulu (Pokémon)",
+        "page_id": 216814,
+        "revision_id": 4630125,
+        "sha1": "a7243e793624457a2f8b72736e3105860c9b0816"
+      },
+      {
+        "title": "Tapu Fini (Pokémon)",
+        "page_id": 216816,
+        "revision_id": 4635529,
+        "sha1": "b6d5ec878791425ffe04ecb2cafe0d00fe65fa77"
+      },
+      {
+        "title": "Tapu Koko (Pokémon)",
+        "page_id": 214111,
+        "revision_id": 4630122,
+        "sha1": "e114bce64d597024630e421eae704b2a181a5722"
+      },
+      {
+        "title": "Tapu Lele (Pokémon)",
+        "page_id": 216815,
+        "revision_id": 4630124,
+        "sha1": "ab490bc99f6d2bb5b617402216940f1f420bce8f"
+      },
+      {
+        "title": "Tarountula (Pokémon)",
+        "page_id": 277456,
+        "revision_id": 4611432,
+        "sha1": "59c8b4a282c94e70dfacb57bc127812dc9240a36"
+      },
+      {
+        "title": "Tatsugiri (Pokémon)",
+        "page_id": 277496,
+        "revision_id": 4628711,
+        "sha1": "19275cbb1afb9a978396ce7cd0afaa307d9a0037"
+      },
+      {
+        "title": "Tauros (Pokémon)",
+        "page_id": 2445,
+        "revision_id": 4632330,
+        "sha1": "053bf5b8e247a49ffaf70366e0ee4757d4a3c249"
+      },
+      {
+        "title": "Teddiursa (Pokémon)",
+        "page_id": 2661,
+        "revision_id": 4630130,
+        "sha1": "a13fce967fddcf04431e35f0356c264a95f9d05c"
+      },
+      {
+        "title": "Tentacool (Pokémon)",
+        "page_id": 2391,
+        "revision_id": 4633967,
+        "sha1": "37f8e51add0909619419873295ff9eaf7c735241"
+      },
+      {
+        "title": "Tentacruel (Pokémon)",
+        "page_id": 2392,
+        "revision_id": 4623367,
+        "sha1": "f5da8f60d27cb5c0148368aa2ed1fc5151fcb092"
+      },
+      {
+        "title": "Tepig (Pokémon)",
+        "page_id": 104205,
+        "revision_id": 4623729,
+        "sha1": "2d5c18285fc6b59de6a5bd12d963c6ed03b9d8b4"
+      },
+      {
+        "title": "Terapagos (Pokémon)",
+        "page_id": 281862,
+        "revision_id": 4623663,
+        "sha1": "2ea88bdba90187aae700b06ea263ed3b4c55e43b"
+      },
+      {
+        "title": "Terrakion (Pokémon)",
+        "page_id": 116034,
+        "revision_id": 4610474,
+        "sha1": "b2166c9642817a7a48fea07f0c0118a9b5e54f54"
+      },
+      {
+        "title": "Thievul (Pokémon)",
+        "page_id": 244043,
+        "revision_id": 4628685,
+        "sha1": "f46f9514799e9eff6187cd378f0ad0528fb2c73f"
+      },
+      {
+        "title": "Throh (Pokémon)",
+        "page_id": 116084,
+        "revision_id": 4622766,
+        "sha1": "f3357ae5cd31fdaf250806d89ba5bacef2c517d5"
+      },
+      {
+        "title": "Thundurus (Pokémon)",
+        "page_id": 116023,
+        "revision_id": 4610476,
+        "sha1": "8f5cef72135368e6b0dd16cf4338f00974ac710c"
+      },
+      {
+        "title": "Thwackey (Pokémon)",
+        "page_id": 244009,
+        "revision_id": 4611439,
+        "sha1": "b6d7fd01aefcf93759e2ab5332d1f5d212d5f478"
+      },
+      {
+        "title": "Timburr (Pokémon)",
+        "page_id": 116015,
+        "revision_id": 4629306,
+        "sha1": "4516373a60159159b811bc2e755e10cdd7126885"
+      },
+      {
+        "title": "Ting-Lu (Pokémon)",
+        "page_id": 277462,
+        "revision_id": 4632130,
+        "sha1": "60234c5831e463e61e019f1c859f909f512ed31c"
+      },
+      {
+        "title": "Tinkatink (Pokémon)",
+        "page_id": 277447,
+        "revision_id": 4628689,
+        "sha1": "4c56b5e7b12435c53cc889bc185a86be256e8173"
+      },
+      {
+        "title": "Tinkaton (Pokémon)",
+        "page_id": 277449,
+        "revision_id": 4628691,
+        "sha1": "3bae4eac403d346fd1cf8493e93315317b3e9aed"
+      },
+      {
+        "title": "Tinkatuff (Pokémon)",
+        "page_id": 277448,
+        "revision_id": 4628690,
+        "sha1": "1b9fe4f0abba6e52fc3b29e9b4ed50f6d4e4d4ec"
+      },
+      {
+        "title": "Tirtouga (Pokémon)",
+        "page_id": 116016,
+        "revision_id": 4611443,
+        "sha1": "124f0980145d961e0ec0a38483d370014b3944df"
+      },
+      {
+        "title": "Toedscool (Pokémon)",
+        "page_id": 277451,
+        "revision_id": 4632675,
+        "sha1": "e52fddb2cc7ca2169704c7f58fbd719b84c56e31"
+      },
+      {
+        "title": "Toedscruel (Pokémon)",
+        "page_id": 277452,
+        "revision_id": 4618768,
+        "sha1": "ae8a9c49f8572e1dd988655acb52b26ff28b82b2"
+      },
+      {
+        "title": "Togedemaru (Pokémon)",
+        "page_id": 214110,
+        "revision_id": 4630037,
+        "sha1": "037aaf110522dd2e096226f755fd011f9d0169b3"
+      },
+      {
+        "title": "Togekiss (Pokémon)",
+        "page_id": 13598,
+        "revision_id": 4630463,
+        "sha1": "9a5ad9bb92e62835261b12fd610fd9be40e95fed"
+      },
+      {
+        "title": "Togepi (Pokémon)",
+        "page_id": 2514,
+        "revision_id": 4637944,
+        "sha1": "7f26dcd5bc99b48339e409475bfa8d9383769667"
+      },
+      {
+        "title": "Togetic (Pokémon)",
+        "page_id": 2515,
+        "revision_id": 4634912,
+        "sha1": "0f213f53b9c4ad3fbd34fd7509c3422f3e0f6d7d"
+      },
+      {
+        "title": "Torchic (Pokémon)",
+        "page_id": 2073,
+        "revision_id": 4626542,
+        "sha1": "e3fb24072592a00f9764cb63fe4fc99b4cf1fb67"
+      },
+      {
+        "title": "Torkoal (Pokémon)",
+        "page_id": 2706,
+        "revision_id": 4610421,
+        "sha1": "38d186649982ac6fcde8a1a70460575c098e61fa"
+      },
+      {
+        "title": "Tornadus (Pokémon)",
+        "page_id": 116029,
+        "revision_id": 4620820,
+        "sha1": "582e00f6d8975dd46b37b5da6c275d3058dc5dd2"
+      },
+      {
+        "title": "Torracat (Pokémon)",
+        "page_id": 216298,
+        "revision_id": 4630098,
+        "sha1": "ef50bffc83d13a170a24aa9097f0c2815629993f"
+      },
+      {
+        "title": "Torterra (Pokémon)",
+        "page_id": 13391,
+        "revision_id": 4611757,
+        "sha1": "942e65b685784ce18ff48d25aca75735fc52529a"
+      },
+      {
+        "title": "Totodile (Pokémon)",
+        "page_id": 2078,
+        "revision_id": 4626278,
+        "sha1": "fbbcf52a2ee9c93ed655dc35405ef87810eca531"
+      },
+      {
+        "title": "Toucannon (Pokémon)",
+        "page_id": 218150,
+        "revision_id": 4630138,
+        "sha1": "a1eeb54b80d54dba1f7739c097d96bf35ef8ccce"
+      },
+      {
+        "title": "Toxapex (Pokémon)",
+        "page_id": 218158,
+        "revision_id": 4630129,
+        "sha1": "2c747d3f888d2f851f8a1eae5ea58fcba290d2af"
+      },
+      {
+        "title": "Toxel (Pokémon)",
+        "page_id": 244056,
+        "revision_id": 4628720,
+        "sha1": "74529d6a36939621b20152d68bb5575e48cda5fa"
+      },
+      {
+        "title": "Toxicroak (Pokémon)",
+        "page_id": 13554,
+        "revision_id": 4631289,
+        "sha1": "883a8b5c9846ab1d5b0e878a08df59020a5e6f3d"
+      },
+      {
+        "title": "Toxtricity (Pokémon)",
+        "page_id": 244057,
+        "revision_id": 4637903,
+        "sha1": "6ca6809c5c0efe63d425a2ce7be0f3cec680eb44"
+      },
+      {
+        "title": "Tranquill (Pokémon)",
+        "page_id": 111735,
+        "revision_id": 4611456,
+        "sha1": "bb99ed7d7194930f13a24e21ba57c908d7bebe6e"
+      },
+      {
+        "title": "Trapinch (Pokémon)",
+        "page_id": 61589,
+        "revision_id": 4611457,
+        "sha1": "5174725ede82077e86a283a439f8a40c2201e450"
+      },
+      {
+        "title": "Treecko (Pokémon)",
+        "page_id": 2080,
+        "revision_id": 4628717,
+        "sha1": "38118526296f1704b0685a6914408d13394256d1"
+      },
+      {
+        "title": "Trevenant (Pokémon)",
+        "page_id": 181302,
+        "revision_id": 4611459,
+        "sha1": "7d8ccb913f9d15d5a2fd442e7c99a12ab7b1e55c"
+      },
+      {
+        "title": "Tropius (Pokémon)",
+        "page_id": 2645,
+        "revision_id": 4621699,
+        "sha1": "e1e091749d8e8e6218003a43af7c1bbb7bbec75c"
+      },
+      {
+        "title": "Trubbish (Pokémon)",
+        "page_id": 115822,
+        "revision_id": 4611461,
+        "sha1": "7fee47f8ccfa90dcbef09ceb1c23e55a293fd985"
+      },
+      {
+        "title": "Trumbeak (Pokémon)",
+        "page_id": 218148,
+        "revision_id": 4630202,
+        "sha1": "b49abb9c599a3682894498bcbef500c8aad6270e"
+      },
+      {
+        "title": "Tsareena (Pokémon)",
+        "page_id": 216478,
+        "revision_id": 4630114,
+        "sha1": "fc59f79dfc38b3776df852b7855e3e7db9b4e99f"
+      },
+      {
+        "title": "Turtonator (Pokémon)",
+        "page_id": 215336,
+        "revision_id": 4630097,
+        "sha1": "05c85c9b5d40ff8abb250b976f0904a0ade55b83"
+      },
+      {
+        "title": "Turtwig (Pokémon)",
+        "page_id": 12364,
+        "revision_id": 4611739,
+        "sha1": "a2f422b2b166a9c55d3a28cc1e7ccb515f5aeb0f"
+      },
+      {
+        "title": "Tympole (Pokémon)",
+        "page_id": 115817,
+        "revision_id": 4637150,
+        "sha1": "207e9d212165eca99af4cc4ae1aa9c9dc89b2d69"
+      },
+      {
+        "title": "Tynamo (Pokémon)",
+        "page_id": 116045,
+        "revision_id": 4631654,
+        "sha1": "50c621e4feb68d7c2164f48f64d2d2251d46c60f"
+      },
+      {
+        "title": "Type: Null (Pokémon)",
+        "page_id": 215674,
+        "revision_id": 4630139,
+        "sha1": "4c239dc346cb7b86fb17717aba8027bb77566302"
+      },
+      {
+        "title": "Typhlosion (Pokémon)",
+        "page_id": 2503,
+        "revision_id": 4632025,
+        "sha1": "71c5aafe0a3045bf378532f9bfeb02a6d6b87112"
+      },
+      {
+        "title": "Tyranitar (Pokémon)",
+        "page_id": 2541,
+        "revision_id": 4635230,
+        "sha1": "037c80e5ab08246268a583859c5fe89e86290d03"
+      },
+      {
+        "title": "Tyrantrum (Pokémon)",
+        "page_id": 183143,
+        "revision_id": 4628742,
+        "sha1": "c15290917bb4dafcd5f0b64cf4999b031dee21ca"
+      },
+      {
+        "title": "Tyrogue (Pokémon)",
+        "page_id": 2600,
+        "revision_id": 4636683,
+        "sha1": "c9b16e124ec37edab27232a1942c2092a345368c"
+      },
+      {
+        "title": "Tyrunt (Pokémon)",
+        "page_id": 182722,
+        "revision_id": 4635994,
+        "sha1": "b8499c307a2c96a0edc5e87cac3fe2821a0697f8"
+      },
+      {
+        "title": "Umbreon (Pokémon)",
+        "page_id": 2536,
+        "revision_id": 4626517,
+        "sha1": "7221dfae72c586e9d11711f4db4fd72c86cff031"
+      },
+      {
+        "title": "Unfezant (Pokémon)",
+        "page_id": 115978,
+        "revision_id": 4611474,
+        "sha1": "a12f0bc5bd8711798eac98f8ce51edb3883f8aab"
+      },
+      {
+        "title": "Unown (Pokémon)",
+        "page_id": 80905,
+        "revision_id": 4630741,
+        "sha1": "ec83823b92b2b04a77ac1cdfdf4046d64778833e"
+      },
+      {
+        "title": "Ursaluna (Pokémon)",
+        "page_id": 268002,
+        "revision_id": 4632437,
+        "sha1": "5fd78f7d3022fb413639d1f237d0277c16f2fce4"
+      },
+      {
+        "title": "Ursaring (Pokémon)",
+        "page_id": 2646,
+        "revision_id": 4637293,
+        "sha1": "d535a387561ebe8720e3d6de46dbb7460e90b2fe"
+      },
+      {
+        "title": "Urshifu (Pokémon)",
+        "page_id": 246819,
+        "revision_id": 4637443,
+        "sha1": "0bde92817db0797137d3f1236565f2571b66a968"
+      },
+      {
+        "title": "Uxie (Pokémon)",
+        "page_id": 13443,
+        "revision_id": 4633133,
+        "sha1": "2a3f89aabcc89ca4413f4bc56f36b9cad96a0cca"
+      },
+      {
+        "title": "Vanillish (Pokémon)",
+        "page_id": 116106,
+        "revision_id": 4611477,
+        "sha1": "7c571c768c0492fa65fff0c39a050b9cbf1b0aba"
+      },
+      {
+        "title": "Vanillite (Pokémon)",
+        "page_id": 116058,
+        "revision_id": 4611478,
+        "sha1": "73f4f13356bcc2bff085cc87ac941f117f27047b"
+      },
+      {
+        "title": "Vanilluxe (Pokémon)",
+        "page_id": 116107,
+        "revision_id": 4625864,
+        "sha1": "36be0d49a002ae76a458b7cd967cf05d8cb2d5ea"
+      },
+      {
+        "title": "Vaporeon (Pokémon)",
+        "page_id": 2456,
+        "revision_id": 4632010,
+        "sha1": "2a327f57b60309b76fd5d17805583a5f1d449611"
+      },
+      {
+        "title": "Varoom (Pokémon)",
+        "page_id": 277485,
+        "revision_id": 4611480,
+        "sha1": "3da38743d87927c9b355a3d3524b179142ec045e"
+      },
+      {
+        "title": "Veluza (Pokémon)",
+        "page_id": 277480,
+        "revision_id": 4638390,
+        "sha1": "3bb8452776f87557d6a26b919f09f92cf60d26ff"
+      },
+      {
+        "title": "Venipede (Pokémon)",
+        "page_id": 115865,
+        "revision_id": 4624807,
+        "sha1": "ce2b218585ed899d165e680bf1762033d5862fc5"
+      },
+      {
+        "title": "Venomoth (Pokémon)",
+        "page_id": 2393,
+        "revision_id": 4632340,
+        "sha1": "63bdf7b80c0bfb1b270fe63bf6d94495d041e553"
+      },
+      {
+        "title": "Venonat (Pokémon)",
+        "page_id": 2394,
+        "revision_id": 4623298,
+        "sha1": "3416bc32c6ee4d33e41f55e9f6854564975f8a80"
+      },
+      {
+        "title": "Venusaur (Pokémon)",
+        "page_id": 1538,
+        "revision_id": 4637687,
+        "sha1": "4d6c5584715d9fa3a15ef87aa60e1b5e8f77bbb2"
+      },
+      {
+        "title": "Vespiquen (Pokémon)",
+        "page_id": 13451,
+        "revision_id": 4630107,
+        "sha1": "edcd7e5a688a8f46c3bc47216721ff7e91976405"
+      },
+      {
+        "title": "Vibrava (Pokémon)",
+        "page_id": 2619,
+        "revision_id": 4611487,
+        "sha1": "9ef9a19cb3d71a32e4397fc6bc75fb0bf29303b0"
+      },
+      {
+        "title": "Victini (Pokémon)",
+        "page_id": 109941,
+        "revision_id": 4610457,
+        "sha1": "7a0ebb8c84fb1469da6c8551fbd5f644f0962ac5"
+      },
+      {
+        "title": "Victreebel (Pokémon)",
+        "page_id": 2409,
+        "revision_id": 4631661,
+        "sha1": "e18f9ca4d34625d5b26ad3e5c41f35e93465f9ae"
+      },
+      {
+        "title": "Vigoroth (Pokémon)",
+        "page_id": 2685,
+        "revision_id": 4611488,
+        "sha1": "1ef709003623d3cc94f05a5072a906820a04bed9"
+      },
+      {
+        "title": "Vikavolt (Pokémon)",
+        "page_id": 214118,
+        "revision_id": 4630095,
+        "sha1": "91457c92f72f254c6f53dd9958c0bfdda05953e1"
+      },
+      {
+        "title": "Vileplume (Pokémon)",
+        "page_id": 2385,
+        "revision_id": 4632333,
+        "sha1": "35ef8c9618efb96c2760bc400fb6926f64d866f2"
+      },
+      {
+        "title": "Virizion (Pokémon)",
+        "page_id": 116032,
+        "revision_id": 4611491,
+        "sha1": "cf543e45eebd988826e9d718f7934959a6bcc148"
+      },
+      {
+        "title": "Vivillon (Pokémon)",
+        "page_id": 178891,
+        "revision_id": 4624772,
+        "sha1": "e04ae0878b5ebfb2bfc0b31bdc7d4017a4e32f61"
+      },
+      {
+        "title": "Volbeat (Pokémon)",
+        "page_id": 2701,
+        "revision_id": 4634159,
+        "sha1": "6d3ff1a50ea7025d15d2a83c917e525d3cc5726c"
+      },
+      {
+        "title": "Volcanion (Pokémon)",
+        "page_id": 201081,
+        "revision_id": 4610491,
+        "sha1": "b6c62ef55cdc98b44573b08eecfd25b622d496f8"
+      },
+      {
+        "title": "Volcarona (Pokémon)",
+        "page_id": 116004,
+        "revision_id": 4610473,
+        "sha1": "8cf3edb5c1227a0fd6d53a7be849b98d1e9f365b"
+      },
+      {
+        "title": "Voltorb (Pokémon)",
+        "page_id": 2438,
+        "revision_id": 4631756,
+        "sha1": "9eb6dd3124e51a4fe63b3a1cd92a27cf821cb2a4"
+      },
+      {
+        "title": "Vullaby (Pokémon)",
+        "page_id": 116071,
+        "revision_id": 4632388,
+        "sha1": "bce0b8c5f2329139afef2ec166f33e909f436ffb"
+      },
+      {
+        "title": "Vulpix (Pokémon)",
+        "page_id": 2469,
+        "revision_id": 4643486,
+        "sha1": "fee3555d85b097044ec5d872319ab970da0e0270"
+      },
+      {
+        "title": "Wailmer (Pokémon)",
+        "page_id": 2673,
+        "revision_id": 4611506,
+        "sha1": "36c5fc7757d08eff8615cf9573e676c8e09cfb70"
+      },
+      {
+        "title": "Wailord (Pokémon)",
+        "page_id": 2689,
+        "revision_id": 4611507,
+        "sha1": "d7edf2e15f7665d041843c6d2a1f496ffb73c6b0"
+      },
+      {
+        "title": "Walking Wake (Pokémon)",
+        "page_id": 281857,
+        "revision_id": 4643542,
+        "sha1": "5980a4f9edb481c21ab8c666574ef1325508d753"
+      },
+      {
+        "title": "Walrein (Pokémon)",
+        "page_id": 2565,
+        "revision_id": 4631238,
+        "sha1": "464bfe4054fd8997414d001cb799e48e78799cee"
+      },
+      {
+        "title": "Wartortle (Pokémon)",
+        "page_id": 2453,
+        "revision_id": 4618679,
+        "sha1": "4a81e6dc0b1684a87c8e86948feeed288116769e"
+      },
+      {
+        "title": "Watchog (Pokémon)",
+        "page_id": 110518,
+        "revision_id": 4611510,
+        "sha1": "c64b78370167e8ab974901db78d2f9c5c5088019"
+      },
+      {
+        "title": "Wattrel (Pokémon)",
+        "page_id": 277497,
+        "revision_id": 4611511,
+        "sha1": "7b7e7d8615ce1b20ea115dacaf68712a59f1df00"
+      },
+      {
+        "title": "Weavile (Pokémon)",
+        "page_id": 61474,
+        "revision_id": 4631286,
+        "sha1": "d041fd4cfa6086f9aefcea70f4b2dfebb88dbde2"
+      },
+      {
+        "title": "Weedle (Pokémon)",
+        "page_id": 2376,
+        "revision_id": 4622430,
+        "sha1": "e06605a16b1d4090f6379b458d551763deb6a7a9"
+      },
+      {
+        "title": "Weepinbell (Pokémon)",
+        "page_id": 2369,
+        "revision_id": 4626598,
+        "sha1": "33843440cdb5de346ed56b1faabd079dc27c64f8"
+      },
+      {
+        "title": "Weezing (Pokémon)",
+        "page_id": 2432,
+        "revision_id": 4643632,
+        "sha1": "a2015be9a248f1228b15c80c95ae57dca5924f51"
+      },
+      {
+        "title": "Whimsicott (Pokémon)",
+        "page_id": 116000,
+        "revision_id": 4618220,
+        "sha1": "f7fedf0b0d594ab11b2f2fbd3fa25e133fb34089"
+      },
+      {
+        "title": "Whirlipede (Pokémon)",
+        "page_id": 116136,
+        "revision_id": 4624808,
+        "sha1": "42c2331974437790f43a81800f407931b78195fe"
+      },
+      {
+        "title": "Whiscash (Pokémon)",
+        "page_id": 2595,
+        "revision_id": 4613093,
+        "sha1": "f5478a1ada980817fa911906a424192a69f9f03d"
+      },
+      {
+        "title": "Whismur (Pokémon)",
+        "page_id": 2682,
+        "revision_id": 4630359,
+        "sha1": "f4b7cfab41e8bb05186d2fcce25abf3a233a3d73"
+      },
+      {
+        "title": "Wigglytuff (Pokémon)",
+        "page_id": 2422,
+        "revision_id": 4638688,
+        "sha1": "154bc06f0cfab2763b0c13c4efb6020ef4eca93a"
+      },
+      {
+        "title": "Wiglett (Pokémon)",
+        "page_id": 274922,
+        "revision_id": 4632669,
+        "sha1": "224f93f58c01d87bd203b16c82c7dc0c2b7d9c84"
+      },
+      {
+        "title": "Wimpod (Pokémon)",
+        "page_id": 214587,
+        "revision_id": 4634867,
+        "sha1": "75796ef74a4ea65bd9875c36bb89db63032e329d"
+      },
+      {
+        "title": "Wingull (Pokémon)",
+        "page_id": 2640,
+        "revision_id": 4611521,
+        "sha1": "25ce3c0bf20b4fb4f4c63fa14a9bfd17f40e09b4"
+      },
+      {
+        "title": "Wishiwashi (Pokémon)",
+        "page_id": 215208,
+        "revision_id": 4630127,
+        "sha1": "b6a06c83141386466f7d7db34aa14e6af175f2b5"
+      },
+      {
+        "title": "Wo-Chien (Pokémon)",
+        "page_id": 277464,
+        "revision_id": 4632128,
+        "sha1": "d20143cd5ce52b89bf2cf9dca8654b2a252398c0"
+      },
+      {
+        "title": "Wobbuffet (Pokémon)",
+        "page_id": 2545,
+        "revision_id": 4611524,
+        "sha1": "66782d123ad4b098f553b883010c66a9a7a0b555"
+      },
+      {
+        "title": "Woobat (Pokémon)",
+        "page_id": 108775,
+        "revision_id": 4611525,
+        "sha1": "886d8f8dd448e153249297a51a6a81f2d5d05491"
+      },
+      {
+        "title": "Wooloo (Pokémon)",
+        "page_id": 238710,
+        "revision_id": 4611526,
+        "sha1": "a62b3fa1f9b151a163e57a110752451901861e3b"
+      },
+      {
+        "title": "Wooper (Pokémon)",
+        "page_id": 2534,
+        "revision_id": 4626280,
+        "sha1": "63917ac52550ed83b1a307bfc77e8cfe7bcbf710"
+      },
+      {
+        "title": "Wormadam (Pokémon)",
+        "page_id": 13448,
+        "revision_id": 4611530,
+        "sha1": "f336f39cd3d51d6534937be6f670acd5688f0934"
+      },
+      {
+        "title": "Wugtrio (Pokémon)",
+        "page_id": 277467,
+        "revision_id": 4613158,
+        "sha1": "dac6b7d834bf01ca0580625d46b73230585b4f06"
+      },
+      {
+        "title": "Wurmple (Pokémon)",
+        "page_id": 2551,
+        "revision_id": 4611533,
+        "sha1": "340667ae5d6c5873dfdc04800788628cc8d41870"
+      },
+      {
+        "title": "Wynaut (Pokémon)",
+        "page_id": 2674,
+        "revision_id": 4636251,
+        "sha1": "99ec24460ce915baa71d88d7dd6c872a3ab6e80c"
+      },
+      {
+        "title": "Wyrdeer (Pokémon)",
+        "page_id": 263748,
+        "revision_id": 4611539,
+        "sha1": "aa5d6ada5b2ba966646c5607f8b170733c0a2833"
+      },
+      {
+        "title": "Xatu (Pokémon)",
+        "page_id": 2517,
+        "revision_id": 4634915,
+        "sha1": "6930ff47483323c2ec6f1055edbf45de51e295b7"
+      },
+      {
+        "title": "Xerneas (Pokémon)",
+        "page_id": 172605,
+        "revision_id": 4630338,
+        "sha1": "9156c8c76136e57ca2266cf2503ab84ce542218c"
+      },
+      {
+        "title": "Xurkitree (Pokémon)",
+        "page_id": 218189,
+        "revision_id": 4630169,
+        "sha1": "00018db54d27509ec6b94f3d1cc45a67d8f7cdc3"
+      },
+      {
+        "title": "Yamask (Pokémon)",
+        "page_id": 116014,
+        "revision_id": 4634380,
+        "sha1": "df651f0e99011741df2344ec0db5e6eb15163661"
+      },
+      {
+        "title": "Yamper (Pokémon)",
+        "page_id": 238908,
+        "revision_id": 4619739,
+        "sha1": "6ab33bdff35f370d110934b9fb755791ce49129c"
+      },
+      {
+        "title": "Yanma (Pokémon)",
+        "page_id": 2533,
+        "revision_id": 4611553,
+        "sha1": "0bba3a8eaf9db7c372916555e4f7937630722a27"
+      },
+      {
+        "title": "Yanmega (Pokémon)",
+        "page_id": 13600,
+        "revision_id": 4622140,
+        "sha1": "0abf39bd78a20f8a653e64cf0517c05fa40e8c90"
+      },
+      {
+        "title": "Yungoos (Pokémon)",
+        "page_id": 213751,
+        "revision_id": 4630092,
+        "sha1": "567b4b27c8dae8cdb9675062c0e679777a8595cc"
+      },
+      {
+        "title": "Yveltal (Pokémon)",
+        "page_id": 172606,
+        "revision_id": 4636814,
+        "sha1": "f3ac321e473f74c58768419aa85ea6b4a7ad164b"
+      },
+      {
+        "title": "Zacian (Pokémon)",
+        "page_id": 238715,
+        "revision_id": 4616439,
+        "sha1": "68258cabf99d6cc51e8ea87109b0f5f4c6a20b57"
+      },
+      {
+        "title": "Zamazenta (Pokémon)",
+        "page_id": 238716,
+        "revision_id": 4621687,
+        "sha1": "b535b91a2b4016fdf60fd72018dec1802e2a95fb"
+      },
+      {
+        "title": "Zangoose (Pokémon)",
+        "page_id": 2628,
+        "revision_id": 4620919,
+        "sha1": "3fba4557bd5be62a2253b5b96044f2479801b7b2"
+      },
+      {
+        "title": "Zapdos (Pokémon)",
+        "page_id": 2358,
+        "revision_id": 4631995,
+        "sha1": "21e1c673893f31d06844b99a49defc3de6452675"
+      },
+      {
+        "title": "Zarude (Pokémon)",
+        "page_id": 248381,
+        "revision_id": 4611750,
+        "sha1": "d777bada6084973a656dfb921b88c8e6502a54bd"
+      },
+      {
+        "title": "Zebstrika (Pokémon)",
+        "page_id": 115871,
+        "revision_id": 4611560,
+        "sha1": "1b1a37369dcd3a4cd1946c46436963f67e83e763"
+      },
+      {
+        "title": "Zekrom (Pokémon)",
+        "page_id": 105914,
+        "revision_id": 4624838,
+        "sha1": "eb95b4db628e7f0a849a35db2b56810b6da9084e"
+      },
+      {
+        "title": "Zeraora (Pokémon)",
+        "page_id": 226657,
+        "revision_id": 4633700,
+        "sha1": "841ee9e439e6cd8c03226657e9828aac65ca100f"
+      },
+      {
+        "title": "Zigzagoon (Pokémon)",
+        "page_id": 2615,
+        "revision_id": 4619738,
+        "sha1": "2348d228b236ead16c96a162c2c1a45c28ff97b7"
+      },
+      {
+        "title": "Zoroark (Pokémon)",
+        "page_id": 95376,
+        "revision_id": 4631038,
+        "sha1": "f4edc175a9744547817d4ecf7b3685439be2078c"
+      },
+      {
+        "title": "Zorua (Pokémon)",
+        "page_id": 95628,
+        "revision_id": 4626383,
+        "sha1": "c6456c2893f12670a8676f8616b52c2c5978f0da"
+      },
+      {
+        "title": "Zubat (Pokémon)",
+        "page_id": 61460,
+        "revision_id": 4643555,
+        "sha1": "d6882eed4f27e104debf689decc096c67abb9668"
+      },
+      {
+        "title": "Zweilous (Pokémon)",
+        "page_id": 116128,
+        "revision_id": 4611567,
+        "sha1": "f3d686d2df8d80f6a7873999f6bc1660fab79ff2"
+      },
+      {
+        "title": "Zygarde (Pokémon)",
+        "page_id": 184616,
+        "revision_id": 4635285,
+        "sha1": "b7c7ac3ce910413ec56d951da81ebd0fd53e9729"
+      }
+    ]
+  }
+}
