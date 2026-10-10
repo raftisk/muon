@@ -4,7 +4,7 @@ import pytest
 from rdflib import Graph
 
 from muon.ingestion.batch import GraphBatch, NodeRef, PropertyValue
-from muon.ingestion.runner import MERGE_EDGES, MERGE_NODES_SYNC, PRUNE_EDGES, PRUNE_NODES
+from muon.ingestion.runner import MERGE_EDGES_SYNC, MERGE_NODES_SYNC, PRUNE_EDGES, PRUNE_NODES
 from muon.ingestion.seed import ABoxError, build_abox_batch, read_abox, seed_universe
 from muon.ontology.model import OntologyModel, load_ontology_model
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
@@ -202,7 +202,7 @@ async def test_seed_universe_writes_constraints_then_batch(tmp_path: Path) -> No
         PRUNE_NODES,
         PRUNE_EDGES,
         MERGE_NODES_SYNC,
-        MERGE_EDGES,
+        MERGE_EDGES_SYNC,
     ]
     assert report.constraints_ensured == 2
 
