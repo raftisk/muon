@@ -23,6 +23,7 @@ REAL_ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
 PKMN = "https://muon.dev/ns/pkmn#"
 SPECIES = PKMN + "PokemonSpecies"
 LEARNSET_ENTRY = PKMN + "LearnsetEntry"
+FORM_CHANGE = PKMN + "FormChange"
 EARTHQUAKE_ENTRY_ID = "diglett:earthquake:level:40:scarlet-violet"
 # (class local name, id, name) of every node the page references but does not own.
 STUBS = (
@@ -76,11 +77,10 @@ def build_diglett_batch() -> GraphBatch:
             PKMN + "isDefaultForm": False,
         },
     )
-    # The name is a test value: the species parser sets the name rule for reified nodes.
     earthquake_entry = NodeRecord(
         class_iri=LEARNSET_ENTRY,
         id=EARTHQUAKE_ENTRY_ID,
-        name="Diglett Earthquake level 40",
+        name="Diglett learns Earthquake (level 40, Scarlet-Violet)",
         properties={PKMN + "method": "level", PKMN + "level": 40},
     )
     stubs = tuple(
@@ -111,7 +111,7 @@ def build_diglett_batch() -> GraphBatch:
     )
     return GraphBatch(
         universe="pkmn",
-        scope=frozenset({SPECIES, LEARNSET_ENTRY}),
+        scope=frozenset({SPECIES, LEARNSET_ENTRY, FORM_CHANGE}),
         nodes=(diglett, alolan_diglett, earthquake_entry, *stubs),
         edges=edges,
     )

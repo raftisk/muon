@@ -126,7 +126,7 @@ The pkmn ontology models species and game mechanics. It holds no individual Poke
 
 - Move properties: `power`, `accuracy`, `pp`, `priority`, `target` (targeting code), `critStage`, `minHits`, `maxHits`, `effectText`.
 - Move edges: `hasType`, `hasDamageClass`, `hasFlag`, `hasEffect`, `introducedIn`.
-- `LearnsetEntry` reifies 1 (species, move, version group, method, level) fact. It links `teachesMove`, `inVersionGroup` and, where relevant, `viaMachine` or `viaParent`. `method` is one of level, machine, egg, tutor, evolution, special.
+- `LearnsetEntry` reifies 1 (species, move, version group, method, level) fact. It links `teachesMove`, `inVersionGroup` and, where relevant, `viaMachine` or `viaParent`. `method` is one of level, machine, egg, tutor, evolution, reminder, special.
 - `Machine` is 1 TM, HM or TR in 1 version group, with `machineKind`, `machineNumber`, `isReusable`, `teachesMove` and `inVersionGroup`.
 - `canLearn` is a species-to-move shortcut over the Scarlet/Violet learnset entries.
 

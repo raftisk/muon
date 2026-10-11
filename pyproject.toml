@@ -5,6 +5,7 @@ description = "Multi-universe ontology and GraphRAG engine"
 requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28.1",
+    "mwparserfromhell>=0.7.2",
     "neo4j",
     "pydantic-settings",
     "pyshacl>=0.40.1",
@@ -43,5 +44,6 @@ asyncio_mode = "auto"
 markers = [
     "integration: needs a live Neo4j",
     "network: calls a live external API",
+    "pages: reads the pinned Bulbapedia page cache",
 ]
 addopts = "-m 'not integration and not network' --import-mode=importlib"
