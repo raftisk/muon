@@ -5,11 +5,13 @@ from muon.ingestion.bulbapedia.species.chunks import (
     Block,
     RenderedBlock,
     match_marker,
+    merge_dex_rows,
     merge_short_paragraphs,
     normalize_chunk_text,
     pick_biology_subject,
     read_aspect,
     read_chunks,
+    read_dex_rows,
     remove_tags,
     render_block,
     split_blocks,
@@ -484,3 +486,179 @@ def test_read_chunks_gives_nothing_for_a_page_without_chunk_sections() -> None:
     assert reading.chunks == ()
     assert reading.notes == ()
     assert reading.dropped_templates == {}
+
+
+POKEDEX_PATH = "Game data > Pokédex entries"
+SKIN = "Its skin is very thin. If it is exposed to light, its blood heats up."
+
+
+def read_dex(
+    wikitext: str, forms: tuple[ResolvedForm, ...] = DIGLETT
+) -> tuple[list[tuple[str, str, str, tuple[str, ...]]], list[str]]:
+    section = split_sections(f"==Game data==\n===Pokédex entries===\n{wikitext}")[-1]
+    rows, notes = read_dex_rows(section, forms)
+    flat = [(row.subject_id, row.section_path, row.text, row.versions) for row in rows]
+    return flat, [f"{note.section_path}: {note.detail}" for note in notes]
+
+
+def test_read_dex_rows_reads_1_to_3_versions_in_order() -> None:
+    rows, notes = read_dex(
+        "{{Dex/Entry1|v=Gold|entry=One.}}\n"
+        "{{Dex/Entry2|v=Black|v2=White|entry=Two.}}\n"
+        "{{Dex/Entry3|v=Diamond|v2=Pearl|v3=Platinum|entry=Three.}}"
+    )
+
+    assert rows == [
+        ("diglett", POKEDEX_PATH, "One.", ("Gold",)),
+        ("diglett", POKEDEX_PATH, "Two.", ("Black", "White")),
+        ("diglett", POKEDEX_PATH, "Three.", ("Diamond", "Pearl", "Platinum")),
+    ]
+    assert notes == []
+
+
+def test_read_dex_rows_skips_side_game_rows_without_a_note() -> None:
+    rows, notes = read_dex(
+        "{{Dex/Entry1|v=Stadium|entry=A.}}\n"
+        "{{Dex/Entry1|v=Stadium 2|entry=B.}}\n"
+        "{{Dex/Entry1|v=Pokopia|entry=C.}}\n"
+        "{{Dex/Entry1|v=Colosseum|entry=D.}}\n"
+        "{{Dex/Entry1|v=XD|entry=E.}}\n"
+        "{{Dex/Entry1|v=Battle Revolution|entry=F.}}\n"
+        "{{Dex/Entry1|v=Champions|entry=G.}}"
+    )
+
+    assert rows == []
+    assert notes == []
+
+
+def test_read_dex_rows_drops_only_the_side_game_versions_of_a_mixed_row() -> None:
+    rows, _ = read_dex("{{Dex/Entry2|v=Yellow|v2=Stadium|entry=Mixed.}}")
+
+    assert [row[3] for row in rows] == [("Yellow",)]
+
+
+def test_read_dex_rows_skips_rows_without_entry_text_or_version() -> None:
+    rows, _ = read_dex(
+        "{{Dex/Entry1|v=Gold|entry=}}\n{{Dex/Entry1|v=Gold}}\n{{Dex/Entry1|entry=No version.}}"
+    )
+
+    assert rows == []
+
+
+def test_read_dex_rows_ignores_other_dex_templates_and_stray_text() -> None:
+    rows, _ = read_dex(
+        "{{Dex/Header|type=Ground}}\n{{Dex/Gen/1|gen=I}}\n{{Dex/NE|[[X]]}}\n|}\n|}\n"
+        "{{Dex/Entry1|v=Red|entry=Kept.}}\n{{Dex/Footer}}"
+    )
+
+    assert rows == [("diglett", POKEDEX_PATH, "Kept.", ("Red",))]
+
+
+def test_read_dex_rows_switches_the_subject_at_dex_form_and_keeps_the_label_in_the_path() -> None:
+    rows, notes = read_dex(
+        "{{Dex/Gen/3|gen=VII}}\n"
+        "{{Dex/Entry1|v=Sun|entry=Base.}}\n"
+        "{{Dex/Form|Alolan Form}}\n"
+        "{{Dex/Entry1|v=Sun|entry=Alolan.}}\n"
+        "{{Dex/Entry1|v=Moon|entry=Alolan two.}}"
+    )
+
+    assert rows == [
+        ("diglett", POKEDEX_PATH, "Base.", ("Sun",)),
+        ("diglett-alola", f"{POKEDEX_PATH} > Alolan Form", "Alolan.", ("Sun",)),
+        ("diglett-alola", f"{POKEDEX_PATH} > Alolan Form", "Alolan two.", ("Moon",)),
+    ]
+    assert notes == []
+
+
+def test_read_dex_rows_returns_to_the_base_form_at_the_next_dex_gen() -> None:
+    rows, _ = read_dex(
+        "{{Dex/Form|Alolan Form}}\n{{Dex/Entry1|v=Sun|entry=Alolan.}}\n"
+        "{{Dex/Gen/5|gen=VIII}}\n{{Dex/Entry1|v=Sword|entry=Base again.}}"
+    )
+
+    assert [(row[0], row[1]) for row in rows] == [
+        ("diglett-alola", f"{POKEDEX_PATH} > Alolan Form"),
+        ("diglett", POKEDEX_PATH),
+    ]
+
+
+def test_read_dex_rows_keeps_the_label_and_the_base_form_when_a_label_matches_no_form() -> None:
+    rows, notes = read_dex("{{Dex/Form|Gigantamax}}\n{{Dex/Entry1|v=Sword|entry=Max.}}")
+
+    assert rows == [("diglett", f"{POKEDEX_PATH} > Gigantamax", "Max.", ("Sword",))]
+    assert notes == [f"{POKEDEX_PATH} > Gigantamax: Gigantamax matches no form node"]
+
+
+def test_read_dex_rows_renders_text_templates_and_collects_mentions() -> None:
+    section = split_sections(
+        "==Game data==\n===Pokédex entries===\n"
+        "{{Dex/Entry1|v=Ruby|entry=<sc>Diglett</sc> lives {{tt|one yard|1 meter}} deep "
+        "near {{p|Onix|an Onix}}. {{ScPkmn}}<small>(note)</small>{{roundy|x}}}}"
+    )[-1]
+
+    (row,), _ = read_dex_rows(section, DIGLETT)
+
+    assert row.text == "Diglett lives one yard deep near an Onix. Pokémon"
+    assert row.mentions == (MentionRef(template="p", target="Onix"),)
+    assert row.dropped == ("roundy",)
+
+
+def test_merge_dex_rows_gives_1_chunk_per_subject_and_text_with_the_version_union() -> None:
+    section = split_sections(
+        "==Game data==\n===Pokédex entries===\n"
+        f"{{{{Dex/Gen/2|gen=II}}}}\n{{{{Dex/Entry1|v=Gold|entry={SKIN}}}}}\n"
+        "{{Dex/Entry1|v=Silver|entry=Other text.}}\n"
+        f"{{{{Dex/Gen/2|gen=IV}}}}\n{{{{Dex/Entry1|v=HeartGold|entry={SKIN}}}}}\n"
+        f"{{{{Dex/Gen/1|gen=VI}}}}\n{{{{Dex/Entry2|v=Y|v2=Gold|entry={SKIN}}}}}"
+    )[-1]
+    rows, _ = read_dex_rows(section, DIGLETT)
+
+    chunks = merge_dex_rows(rows)
+
+    assert [(chunk.text, chunk.versions) for chunk in chunks] == [
+        (SKIN, ("Gold", "HeartGold", "Y")),
+        ("Other text.", ("Silver",)),
+    ]
+    assert all(chunk.aspect is ChunkAspect.POKEDEX for chunk in chunks)
+    assert chunks[0].section_path == POKEDEX_PATH
+
+
+def test_merge_dex_rows_keeps_the_same_text_of_2_subjects_apart() -> None:
+    section = split_sections(
+        "==Game data==\n===Pokédex entries===\n"
+        "{{Dex/Entry1|v=Sun|entry=Same.}}\n{{Dex/Form|Alolan Form}}\n"
+        "{{Dex/Entry1|v=Moon|entry=Same.}}"
+    )[-1]
+    rows, _ = read_dex_rows(section, DIGLETT)
+
+    chunks = merge_dex_rows(rows)
+
+    assert [(chunk.subject_id, chunk.versions) for chunk in chunks] == [
+        ("diglett", ("Sun",)),
+        ("diglett-alola", ("Moon",)),
+    ]
+
+
+def test_read_chunks_reads_the_pokedex_section_and_its_subsections() -> None:
+    page = (
+        "==Game data==\n===Pokédex entries===\n{{Dex/Entry1|v=Red|entry=Main.}}\n"
+        "====In side games====\n{{Dex/Entry1|v=Yellow|entry=Side.}}\n"
+        "==Trivia==\n* trivia\n"
+    )
+
+    reading = read_chunks(split_sections(page), DIGLETT)
+
+    assert [(chunk.aspect.value, chunk.section_path, chunk.text) for chunk in reading.chunks] == [
+        ("trivia", "Trivia", "trivia"),
+        ("pokedex", POKEDEX_PATH, "Main."),
+        ("pokedex", f"{POKEDEX_PATH} > In side games", "Side."),
+    ]
+
+
+def test_read_chunks_counts_the_templates_dropped_from_pokedex_rows() -> None:
+    page = "==Game data==\n===Pokédex entries===\n{{Dex/Entry1|v=Red|entry=A {{roundy|x}} b.}}\n"
+
+    reading = read_chunks(split_sections(page), DIGLETT)
+
+    assert reading.dropped_templates == {"roundy": 1}
