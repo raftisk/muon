@@ -8,7 +8,7 @@ could read is a `Residue` item, left for the LLM extractor.
 from collections.abc import Mapping
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PageParseError(Exception):
@@ -50,6 +50,9 @@ class NoteKind(StrEnum):
     OVERRIDE_APPLIED = "override_applied"
     REFERENCE_FALLBACK = "reference_fallback"
     MISSING_LEARNSET = "missing_learnset"
+    UNRESOLVED_MENTION = "unresolved_mention"
+    UNMATCHED_FORM_LABEL = "unmatched_form_label"
+    UNKNOWN_VERSION = "unknown_version"
 
 
 class PageNote(ExtractModel):
@@ -188,8 +191,40 @@ class FormChangeFact(ExtractModel):
     held_item: str
 
 
+class ChunkAspect(StrEnum):
+    BIOLOGY = "biology"
+    ORIGIN = "origin"
+    TRIVIA = "trivia"
+    POKEDEX = "pokedex"
+
+
+class MentionRef(ExtractModel):
+    """A typed template that rendered into a chunk: its name and its raw 1st parameter."""
+
+    template: str
+    target: str
+
+
+class ChunkFact(ExtractModel):
+    """1 chunk in Bulbapedia terms. `subject_id` is a form id of the page.
+
+    `versions` holds the game names of a Pokédex entry, in page order, and is empty for
+    every other aspect.
+    """
+
+    subject_id: str
+    aspect: ChunkAspect
+    section_path: str
+    text: str
+    mentions: tuple[MentionRef, ...]
+    versions: tuple[str, ...] = ()
+
+
 class SpeciesPageExtract(ExtractModel):
-    """Everything 1 pinned page yields. `forms` lists the base node first."""
+    """Everything 1 pinned page yields. `forms` lists the base node first.
+
+    `dropped_templates` counts the templates left out of chunk text, by normalized name.
+    """
 
     title: str
     page_id: int
@@ -201,3 +236,5 @@ class SpeciesPageExtract(ExtractModel):
     evolutions: tuple[EvolutionFact, ...]
     residue: tuple[Residue, ...]
     notes: tuple[PageNote, ...]
+    chunks: tuple[ChunkFact, ...] = ()
+    dropped_templates: Mapping[str, int] = Field(default_factory=dict)
