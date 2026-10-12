@@ -74,7 +74,7 @@ Meta
 | `participatesIn` | Agent -> Event | |
 | `hasSpecies`, `speaks`, `hasPower` | Agent -> Species, Language, Power | |
 | `partOf` | Source -> Source | Transitive. Chapter in a work, work in a series or a larger work |
-| `appearsIn`, `mentionedIn` | Entity -> Source | Depiction, reference |
+| `appearsIn`, `mentionedIn` | Entity -> Source | Depiction in a work. Reference in a work, or by a text chunk that describes another entity |
 | `createdBy` | Series, Work or Universe -> Creator | |
 | `fromWork` | TextChunk -> Work | |
 | `describes` | TextChunk -> Entity | Exactly 1 per chunk |
