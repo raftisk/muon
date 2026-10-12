@@ -44,6 +44,9 @@ TARGET_PARAM = "1"
 POKEMON_PREFIX = "Pokémon "
 TYPE_SUFFIX = "-type"
 EGG_GROUP_SUFFIX = " Egg Group"
+# `{{2v2|Black|White|2}}` shows "Black 2 and White 2": the 3rd parameter follows both names.
+VERSION_PAIR_LAYOUT = "{0} {2} and {1} {2}"
+BLACK_2_WHITE_2 = "Pokémon Black 2 and White 2"
 
 
 @dataclass(frozen=True)
@@ -52,15 +55,19 @@ class TextRule:
 
     `prefix` and `suffix` wrap the value of the last parameter in `params` only. An earlier
     parameter is display text and shows as written, and `literal` is never wrapped.
+    `layout` replaces all of that: a format string over the values of `params`, where `{0}`
+    is the 1st name in `params`, `{1}` the 2nd and so on, and an absent parameter is empty.
     """
 
     params: tuple[str, ...] = ()
     literal: str = ""
     prefix: str = ""
     suffix: str = ""
+    layout: str = ""
 
 
 FIRST_PARAM = TextRule(params=("1",))
+SECOND_PARAM = TextRule(params=("2",))
 SECOND_OR_FIRST_PARAM = TextRule(params=("2", "1"))
 THIRD_OR_FIRST_PARAM = TextRule(params=("3", "1"))
 THIRD_OR_SECOND_PARAM = TextRule(params=("3", "2"))
@@ -90,6 +97,12 @@ TEXT_TEMPLATES: Mapping[str, TextRule] = {
     "egg": FIRST_PARAM,
     "egg3": TextRule(params=("1",), suffix=EGG_GROUP_SUFFIX),
     "shiny": TextRule(literal="Shiny"),
+    "game3": SECOND_PARAM,
+    "2v2": TextRule(params=("1", "2", "3"), layout=VERSION_PAIR_LAYOUT),
+    "b2w2": TextRule(params=("1",), literal=BLACK_2_WHITE_2),
+    "cat": SECOND_OR_FIRST_PARAM,
+    "form": SECOND_OR_FIRST_PARAM,
+    "tcg": SECOND_OR_FIRST_PARAM,
     "scpkmn": TextRule(literal="Pokémon"),
     "!": TextRule(literal="|"),
 }
@@ -186,14 +199,25 @@ def render_template(template: Template, captured_names: frozenset[str]) -> Plain
     return PlainText(shown.text, (CapturedTemplate(name, target), *shown.captured), shown.dropped)
 
 
+def render_param(template: Template, param: str, captured_names: frozenset[str]) -> PlainText:
+    """Render the value of `param`, stripped; an absent or empty parameter gives nothing."""
+    if not template.has(param, ignore_empty=True):
+        return PlainText()
+    value = render_code(template.get(param).value, captured_names)
+    return PlainText(value.text.strip(), value.captured, value.dropped)
+
+
 def render_rule(template: Template, rule: TextRule, captured_names: frozenset[str]) -> PlainText:
+    if rule.layout:
+        values = [render_param(template, param, captured_names) for param in rule.params]
+        joined = join_plain_texts(values)
+        text = rule.layout.format(*(value.text for value in values)).strip()
+        return PlainText(text, joined.captured, joined.dropped)
     for param in rule.params:
         if not template.has(param, ignore_empty=True):
             continue
-        value = render_code(template.get(param).value, captured_names)
-        text = value.text.strip()
-        if param == rule.params[-1]:
-            text = f"{rule.prefix}{text}{rule.suffix}"
+        value = render_param(template, param, captured_names)
+        text = f"{rule.prefix}{value.text}{rule.suffix}" if param == rule.params[-1] else value.text
         return PlainText(text, value.captured, value.dropped)
     return PlainText(rule.literal)
 

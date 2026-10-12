@@ -231,6 +231,20 @@ TEMPLATE_CASES = [
     ("{{egg|Field}}", "Field"),  # API
     ("{{egg3|Flying}}", "Flying Egg Group"),  # API
     ("{{Shiny}}", "Shiny"),  # API
+    ("{{game3|Black and White|Pokémon White|s}}", "Pokémon White"),  # API
+    ("{{game3|FireRed and LeafGreen|FireRed|s}}", "FireRed"),  # API
+    ("{{2v2|HeartGold|SoulSilver}}", "HeartGold and SoulSilver"),  # API
+    ("{{2v2|Black|White|2}}", "Black 2 and White 2"),  # API
+    ("{{B2W2}}", "Pokémon Black 2 and White 2"),  # API
+    ("{{B2W2|Black 2}}", "Black 2"),  # API
+    ("{{cat|Generation I Pokémon}}", "Generation I Pokémon"),  # API
+    (
+        "{{cat|Pokémon with a base stat total of 680|base stat total of 680}}",
+        "base stat total of 680",
+    ),  # API
+    ("{{form|Castform|Sunny Form}}", "Sunny Form"),  # API
+    ("{{TCG|HP}}", "HP"),  # API
+    ("{{TCG|Sword & Shield|Sword & Shield set}}", "Sword & Shield set"),  # API
     ("{{ScPkmn}}", "Pokémon"),
     ("{{!}}", "|"),
 ]
@@ -247,6 +261,12 @@ def test_every_text_template_has_a_case() -> None:
 @pytest.mark.parametrize(("value", "expected"), TEMPLATE_CASES)
 def test_to_plain_text_renders_text_templates(value: str, expected: str) -> None:
     assert to_plain_text(value) == expected
+
+
+def test_to_plain_text_drops_layout_templates_that_carry_no_prose() -> None:
+    value = "a {{bulbanews|On the Origin of Species}} b {{left clear}} c {{aniseries|BW}} d"
+
+    assert to_plain_text(value) == "a b c d"
 
 
 def test_to_plain_text_drops_other_templates() -> None:
