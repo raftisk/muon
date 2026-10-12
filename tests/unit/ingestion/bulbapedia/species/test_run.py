@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from muon.ingestion.bulbapedia.pages import Manifest, Page, PageStore, compute_sha1
-from muon.ingestion.bulbapedia.species import forms
+from muon.ingestion.bulbapedia.species import batches, forms
 from muon.ingestion.bulbapedia.species.extract import NoteKind, ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError, PageOverride
 from muon.ingestion.bulbapedia.species.run import (
@@ -342,3 +342,99 @@ def test_a_title_run_does_not_delete_other_outputs(tmp_path: Path, store: PageSt
     write_outputs(run_parse(store, ALPHA), root, is_full_run=False)
 
     assert (output_dir / "999.json").exists()
+
+
+TRIVIA = (
+    "==Trivia==\n* Alpha meets {{p|Beta}} and {{p|Nobody}} near {{roundy|x}}{{aniseries|BW}}.\n"
+)
+POKEDEX = (
+    "==Game data==\n===Pokédex entries===\n{{Dex/Entry1|v=Gold|entry=First text.}}\n"
+    "{{Dex/Entry1|v=Silver|entry=Second text.}}\n"
+)
+
+
+def chunk_wikitexts(tmp_path: Path, **extras: str) -> PageStore:
+    wikitexts = default_wikitexts()
+    for name, extra in extras.items():
+        title = {"alpha": ALPHA, "beta": BETA}[name]
+        wikitexts[title] = wikitexts[title] + extra
+    return build_store(tmp_path / "data", wikitexts)
+
+
+def test_a_page_with_chunk_sections_gets_a_chunk_batch_and_one_without_gets_none(
+    tmp_path: Path,
+) -> None:
+    run = run_parse(chunk_wikitexts(tmp_path, alpha=TRIVIA))
+
+    alpha = next(o for o in run.outputs if o.page.title == ALPHA)
+    beta = next(o for o in run.outputs if o.page.title == BETA)
+    assert alpha.chunk_batch is not None
+    assert beta.chunk_batch is None
+    assert [n.id for n in alpha.chunk_batch.owner_nodes] == [
+        "bulbapedia:pokemonspecies:alpha:trivia:1"
+    ]
+    assert "beta" in {n.id for n in alpha.chunk_batch.stub_nodes}
+    assert run.report.pages_without_chunks == (BETA,)
+
+
+def test_the_report_counts_chunks_per_class_aspect_and_dropped_template(tmp_path: Path) -> None:
+    trivia_beta = (
+        "==Trivia==\n* One {{roundy|x}}.\n* Two {{aniseries|BW}} {{zeta}} {{zeta}} {{zeta}}.\n"
+    )
+    run = run_parse(chunk_wikitexts(tmp_path, alpha=TRIVIA + POKEDEX, beta=trivia_beta))
+
+    report = run.report
+    assert report.chunk_counts.owner_nodes == {"TextChunk": 5}
+    assert report.chunk_counts.edges["describes"] == 5
+    assert report.chunk_counts.edges["fromWork"] == 2
+    assert report.chunks_per_aspect == {"trivia": 3, "pokedex": 2}
+    assert [(t.name, t.count) for t in report.dropped_templates] == [
+        ("zeta", 3),
+        ("aniseries", 2),
+        ("roundy", 2),
+    ]
+
+
+def test_dropped_templates_are_sorted_by_count_then_name(tmp_path: Path) -> None:
+    run = run_parse(chunk_wikitexts(tmp_path, alpha=TRIVIA))
+
+    assert [(t.name, t.count) for t in run.report.dropped_templates] == [
+        ("aniseries", 1),
+        ("roundy", 1),
+    ]
+
+
+def test_chunk_notes_reach_the_report(tmp_path: Path) -> None:
+    run = run_parse(chunk_wikitexts(tmp_path, alpha=TRIVIA))
+
+    notes = [(n.page_title, n.kind, n.detail) for n in run.report.notes]
+    assert notes == [(ALPHA, NoteKind.UNRESOLVED_MENTION, "{{p|Nobody}} names no species")]
+
+
+def test_a_chunk_id_collision_fails_only_its_page(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(batches, "hash_chunk_text", lambda text: "deadbeef")
+    run = run_parse(chunk_wikitexts(tmp_path, alpha=POKEDEX))
+
+    failed = [r for r in run.report.pages if r.status is PageStatus.FAILED]
+    assert [r.title for r in failed if r.title == ALPHA] == [ALPHA]
+    reason = next(r.reason for r in failed if r.title == ALPHA) or ""
+    assert "First text." in reason
+    assert "Second text." in reason
+    assert [o.page.title for o in run.outputs] == [BETA]
+
+
+def test_the_chunk_batch_is_written_and_a_second_run_is_identical(tmp_path: Path) -> None:
+    store = chunk_wikitexts(tmp_path, alpha=TRIVIA + POKEDEX)
+    first, second = tmp_path / "first", tmp_path / "second"
+    write_outputs(run_parse(store), first, is_full_run=True)
+    write_outputs(run_parse(store), second, is_full_run=True)
+
+    data = json.loads((first / PAGE_OUTPUT_DIR / "101.json").read_text(encoding="utf-8"))
+    assert data["chunk_batch"]["scope"] == ["https://muon.dev/ns/core#TextChunk"]
+    assert data["extract"]["chunks"]
+    assert data["extract"]["dropped_templates"] == {"aniseries": 1, "roundy": 1}
+    assert json.loads((first / PAGE_OUTPUT_DIR / "102.json").read_text())["chunk_batch"] is None
+    for relative in sorted(path.relative_to(first) for path in first.rglob("*.json")):
+        assert (first / relative).read_bytes() == (second / relative).read_bytes()
