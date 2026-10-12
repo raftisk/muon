@@ -132,6 +132,24 @@ def test_remove_tags_removes_a_table_inside_another_element() -> None:
     assert "d" in cleaned
 
 
+def test_remove_tags_unwraps_layout_divs_and_keeps_their_text() -> None:
+    cleaned = remove_tags(
+        'a<div class="box">kept\n\nalso kept</div>b<center>c</center>',
+        frozenset({"table"}),
+        frozenset({"div", "center"}),
+    )
+
+    assert cleaned == "akept\n\nalso keptbc"
+
+
+def test_remove_tags_leaves_nothing_of_a_div_around_a_removed_table() -> None:
+    wikitext = '<div class="scrollbox">\n{|\n|a\n\n|b\n|}\n<div>\n{|\n|c\n|}\n</div></div>'
+
+    cleaned = remove_tags(wikitext, frozenset({"table"}), frozenset({"div"}))
+
+    assert cleaned.strip() == ""
+
+
 def lines(blocks: tuple[Block, ...]) -> list[tuple[bool, tuple[str, ...]]]:
     return [(block.is_bullet, block.lines) for block in blocks]
 
@@ -174,6 +192,14 @@ def test_split_blocks_removes_tables_and_galleries() -> None:
     )
 
     assert lines(blocks) == [(False, ("text",))]
+
+
+def test_split_blocks_leaves_no_div_text_around_a_removed_table() -> None:
+    blocks = split_blocks(
+        'intro\n\n<div class="scrollbox">\n{|\n|cell\n\n|cell\n|}\n</div>\n\nouter'
+    )
+
+    assert lines(blocks) == [(False, ("intro",)), (False, ("outer",))]
 
 
 def test_split_blocks_removes_comments_without_splitting_a_paragraph() -> None:

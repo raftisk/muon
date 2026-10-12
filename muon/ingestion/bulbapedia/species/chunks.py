@@ -22,7 +22,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 import mwparserfromhell
-from mwparserfromhell.nodes import Template
+from mwparserfromhell.nodes import Tag, Template
 
 from muon.ingestion.batch import build_node_id
 from muon.ingestion.bulbapedia.species.extract import (
@@ -61,6 +61,7 @@ SIDE_GAME_VERSIONS = frozenset(
     {"stadium", "stadium 2", "colosseum", "xd", "battle revolution", "pokopia", "champions"}
 )
 REMOVED_TAGS = frozenset({"table", "gallery"})
+UNWRAPPED_TAGS = frozenset({"div", "center"})
 SOFT_HYPHEN = "­"
 BULLET_MARK = "*"
 BULLET_ITEM_DEPTH = 1
@@ -142,19 +143,31 @@ def read_aspect(path: tuple[str, ...]) -> ChunkAspect | None:
     return None
 
 
-def remove_tags(wikitext: str, names: frozenset[str]) -> str:
+def read_tag_name(tag: Tag) -> str:
+    return str(tag.tag).strip().lower()
+
+
+def remove_tags(
+    wikitext: str, names: frozenset[str], unwrapped: frozenset[str] = frozenset()
+) -> str:
     """Return `wikitext` without the elements named in `names`, nested ones included.
 
     A wiki table is the element `table`. Removing the node keeps a table with blank lines
-    inside from splitting into text blocks.
+    inside from splitting into text blocks. The elements named in `unwrapped` keep their
+    contents and lose their tags, so a layout `<div>` around a removed table or around
+    text with blank lines leaves no stray tag in either block.
     """
     code = mwparserfromhell.parse(wikitext)
-    doomed = code.filter_tags(
-        recursive=True, matches=lambda node: str(node.tag).strip().lower() in names
-    )
-    for tag in doomed:
+    for tag in code.filter_tags(recursive=True, matches=lambda node: read_tag_name(node) in names):
         if code.contains(tag):
             code.remove(tag)
+    for tag in code.filter_tags(
+        recursive=True, matches=lambda node: read_tag_name(node) in unwrapped
+    ):
+        if tag.contents is None:
+            code.remove(tag)
+        else:
+            code.replace(tag, tag.contents)
     return str(code)
 
 
@@ -183,10 +196,10 @@ def cut_group(lines: Sequence[str]) -> list[Block]:
 def split_blocks(wikitext: str) -> tuple[Block, ...]:
     """Cut section wikitext into paragraphs and bullet items, in page order.
 
-    Comments, tables and galleries are removed first.
+    Comments, tables and galleries are removed first, and layout `<div>` tags are unwrapped.
     """
     uncommented = COMMENT_PATTERN.sub("", COMMENT_LINE_PATTERN.sub("", wikitext))
-    text = remove_tags(uncommented, REMOVED_TAGS)
+    text = remove_tags(uncommented, REMOVED_TAGS, UNWRAPPED_TAGS)
     blocks: list[Block] = []
     for group in BLANK_LINES_PATTERN.split(text):
         lines = [line.strip() for line in group.split(LINE_BREAK) if line.strip()]
