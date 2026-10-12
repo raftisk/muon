@@ -7,15 +7,24 @@ class label, the universe label and `id`; an edge merges on (start, type, end) a
 carries its properties. A stub merges on the same key as a node and is set on
 create only, so it never changes a node that exists. It also purges a universe:
 every node with the universe label, in one statement.
+
+In upsert mode, a batch with claims first deletes the edges it owns and no longer
+lists. A claim row names an anchor, a relationship type and a direction; its
+statement matches the edges there and deletes those missing from the row's `kept`
+list. A claim that owns its other end also deletes the node at the other end of each
+deleted edge, unless the batch lists that node as an owner record. Matching collects
+the stale edges and nodes before any delete, so a node that 2 claims reach is tested
+before it goes and deleted once. There is 1 statement per direction because Cypher
+takes no relationship direction as a parameter.
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, fields
 from enum import StrEnum
-from typing import Any, LiteralString
+from typing import Any, Final, LiteralString
 
 from muon.graph import GraphClient, Statement, WriteSummary
-from muon.ingestion.batch import GraphBatch, NodeRecord
+from muon.ingestion.batch import ClaimDirection, GraphBatch, NodeRecord, NodeRef
 from muon.ingestion.schema import ensure_id_constraints
 from muon.ontology.materializer import NAME_PROPERTY, LabelMaterializer
 
@@ -66,6 +75,44 @@ WHERE any(label IN labels(a) WHERE label IN $scope_labels)
 DELETE r
 """
 
+# Row keys must match `build_claim_rows`. A stale edge is an edge at the claimed
+# anchor that the batch does not list in `kept`.
+PRUNE_CLAIMED_HEAD: LiteralString = """
+UNWIND $claims AS claim
+"""
+
+PRUNE_CLAIMED_OUT_MATCH: LiteralString = """
+MATCH (anchor:$([claim.anchor_label, $universe]) {id: claim.anchor_id})
+  -[r:$(claim.type)]->(other:$($universe))
+"""
+
+PRUNE_CLAIMED_IN_MATCH: LiteralString = """
+MATCH (anchor:$([claim.anchor_label, $universe]) {id: claim.anchor_id})
+  <-[r:$(claim.type)]-(other:$($universe))
+"""
+
+PRUNE_CLAIMED_TAIL: LiteralString = """
+WHERE (claim.other_label IS NULL OR claim.other_label IN labels(other))
+  AND NOT any(kept IN claim.kept WHERE kept.label IN labels(other) AND kept.id = other.id)
+WITH collect(DISTINCT r) AS stale_edges,
+  collect(DISTINCT CASE
+    WHEN claim.owns_other_end
+      AND NOT any(label IN labels(other) WHERE other.id IN coalesce($owner_ids_by_label[label], []))
+    THEN other
+  END) AS orphans
+FOREACH (stale_edge IN stale_edges | DELETE stale_edge)
+FOREACH (orphan IN orphans | DETACH DELETE orphan)
+"""
+
+PRUNE_CLAIMED_OUT: LiteralString = PRUNE_CLAIMED_HEAD + PRUNE_CLAIMED_OUT_MATCH + PRUNE_CLAIMED_TAIL
+
+PRUNE_CLAIMED_IN: LiteralString = PRUNE_CLAIMED_HEAD + PRUNE_CLAIMED_IN_MATCH + PRUNE_CLAIMED_TAIL
+
+PRUNE_CLAIMED_BY_DIRECTION: Final[Mapping[ClaimDirection, LiteralString]] = {
+    ClaimDirection.OUT: PRUNE_CLAIMED_OUT,
+    ClaimDirection.IN: PRUNE_CLAIMED_IN,
+}
+
 MERGE_NODES_HEAD: LiteralString = """
 UNWIND $nodes AS row
 MERGE (n:$(row.key_labels) {id: row.id})
@@ -109,8 +156,14 @@ class Runner:
         self.client = client
         self.materializer = materializer
 
-    async def write(self, batch: GraphBatch, mode: WriteMode) -> RunReport:
-        """Ensure the scope and stub class constraints, then write the batch in one transaction."""
+    async def write(
+        self, batch: GraphBatch, mode: WriteMode, should_ensure_constraints: bool = True
+    ) -> RunReport:
+        """Ensure the scope and stub class constraints, then write the batch in one transaction.
+
+        A caller that ensured the constraints of every batch up front passes
+        `should_ensure_constraints=False`; the report then counts 0 constraints.
+        """
         if batch.universe != self.materializer.universe_label:
             raise ValueError(
                 f"Batch universe {batch.universe!r} does not match the ontology universe "
@@ -121,13 +174,23 @@ class Runner:
             raise ValueError(
                 f"Sync mode takes no stubs: {stub.class_iri} {stub.id!r} is outside scope"
             )
-        stub_classes = {stub.class_iri for stub in batch.stub_nodes}
-        constraints_ensured = await ensure_id_constraints(
-            self.client, self.materializer, batch.scope | stub_classes
-        )
+        if mode is WriteMode.SYNC and batch.claims:
+            claim = batch.claims[0]
+            raise ValueError(
+                f"Sync mode takes no claims: {claim.property_iri} at "
+                f"{claim.anchor.class_iri} {claim.anchor.id!r}"
+            )
+        constraints_ensured = 0
+        if should_ensure_constraints:
+            stub_classes = {stub.class_iri for stub in batch.stub_nodes}
+            constraints_ensured = await self.ensure_constraints(batch.scope | stub_classes)
         statements = build_statements(batch, mode, self.materializer)
         summaries = await self.client.execute_write_batch(statements)
         return summarize_run(summaries, constraints_ensured)
+
+    async def ensure_constraints(self, class_iris: Iterable[str]) -> int:
+        """Ensure the `id` constraint of each class and return how many classes it covered."""
+        return await ensure_id_constraints(self.client, self.materializer, class_iris)
 
     async def purge(self) -> WriteSummary:
         """Delete every node carrying the universe label, with its relationships.
@@ -158,6 +221,7 @@ def build_statements(
             else []
         )
         return [
+            *build_prune_statements(batch, materializer),
             Statement(MERGE_NODES_UPSERT, node_parameters),
             *stub_statements,
             Statement(MERGE_EDGES_UPSERT, edge_parameters),
@@ -180,6 +244,69 @@ def build_statements(
         Statement(MERGE_NODES_SYNC, node_parameters),
         Statement(MERGE_EDGES_SYNC, edge_parameters),
     ]
+
+
+def build_prune_statements(batch: GraphBatch, materializer: LabelMaterializer) -> list[Statement]:
+    """Return the claim prune of each direction that has claims, `out` first."""
+    parameters = {
+        "universe": materializer.universe_label,
+        "owner_ids_by_label": build_ids_by_label(batch, materializer),
+    }
+    statements: list[Statement] = []
+    for direction, query in PRUNE_CLAIMED_BY_DIRECTION.items():
+        claim_rows = build_claim_rows(batch, materializer, direction)
+        if claim_rows:
+            statements.append(Statement(query, {**parameters, "claims": claim_rows}))
+    return statements
+
+
+def build_claim_rows(
+    batch: GraphBatch, materializer: LabelMaterializer, direction: ClaimDirection
+) -> list[dict[str, Any]]:
+    """Return one row per claim of `direction`, in claim order.
+
+    `kept` lists the other ends of the batch's own edges that the claim matches: same
+    property, anchor at the claimed end and, when the claim names a class, an other
+    end that carries that class label.
+    """
+    other_ends = index_other_ends(batch, direction)
+    rows: list[dict[str, Any]] = []
+    for claim in batch.claims:
+        if claim.direction is not direction:
+            continue
+        other_label = (
+            materializer.map_class_label(claim.other_class_iri) if claim.other_class_iri else None
+        )
+        kept_ends = other_ends.get((claim.property_iri, claim.anchor), [])
+        rows.append(
+            {
+                "anchor_label": materializer.map_class_label(claim.anchor.class_iri),
+                "anchor_id": claim.anchor.id,
+                "type": materializer.map_relationship_type(claim.property_iri),
+                "other_label": other_label,
+                "owns_other_end": claim.owns_other_end,
+                "kept": [
+                    {"label": materializer.map_class_label(end.class_iri), "id": end.id}
+                    for end in kept_ends
+                    if other_label is None
+                    or other_label in materializer.map_class_labels(end.class_iri)
+                ],
+            }
+        )
+    return rows
+
+
+def index_other_ends(
+    batch: GraphBatch, direction: ClaimDirection
+) -> dict[tuple[str, NodeRef], list[NodeRef]]:
+    """Map (property IRI, anchor) to the other ends of the batch edges, in edge order."""
+    other_ends: dict[tuple[str, NodeRef], list[NodeRef]] = {}
+    for edge in batch.edges:
+        anchor, other = (
+            (edge.start, edge.end) if direction is ClaimDirection.OUT else (edge.end, edge.start)
+        )
+        other_ends.setdefault((edge.property_iri, anchor), []).append(other)
+    return other_ends
 
 
 def build_node_rows(
