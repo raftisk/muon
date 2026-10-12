@@ -498,6 +498,10 @@ def build_parse_report(failed_titles: tuple[str, ...] = ()) -> ParseReport:
         pages_failed=len(failed_titles),
         species_counts=build_counts(2, 5, 17),
         evolution_counts=build_counts(1, 2, 3),
+        chunk_counts=build_counts(4, 6, 8),
+        chunks_per_aspect={"biology": 3, "trivia": 1},
+        dropped_templates=(),
+        pages_without_chunks=(),
         form_candidates=(),
         overrides_applied=(),
         notes=(),
@@ -586,6 +590,9 @@ def test_parse_prints_counts_and_residue_per_kind(
         "evolution owner nodes: 1",
         "evolution stubs: 2",
         "evolution edges: 3",
+        "chunk owner nodes: 4",
+        "chunk stubs: 6",
+        "chunk edges: 8",
         "residue evolution: 1",
     ]
     assert lines[-1].startswith("elapsed seconds: ")

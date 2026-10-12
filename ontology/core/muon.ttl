@@ -304,7 +304,7 @@ mo:mentionedIn a owl:ObjectProperty ;
     rdfs:domain mo:Entity ;
     rdfs:range  mo:Source ;
     rdfs:label "mentioned in"@en ;
-    skos:definition "Associates an entity with the source work in which it is mentioned."@en ;
+    skos:definition "Associates an entity with a source that names it: a work, or a text chunk that describes another entity."@en ;
     rdfs:comment "Weaker than appearsIn: used for references, not depictions."@en .
 
 mo:createdBy a owl:ObjectProperty ;

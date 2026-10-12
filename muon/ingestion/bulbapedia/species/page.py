@@ -16,6 +16,7 @@ import mwparserfromhell
 from mwparserfromhell.nodes import Tag, Template
 
 from muon.ingestion.bulbapedia.pages import Page
+from muon.ingestion.bulbapedia.species.chunks import read_chunks
 from muon.ingestion.bulbapedia.species.evolution import (
     FormChangeInputs,
     read_evolutions,
@@ -809,6 +810,7 @@ def parse_species_page(page: Page) -> SpeciesPageExtract | None:
     form_changes, form_change_residue = read_form_changes(
         FormChangeInputs(sections, infobox, forms)
     )
+    chunk_reading = read_chunks(sections, forms.forms)
     return SpeciesPageExtract(
         title=page.title,
         page_id=page.page_id,
@@ -819,5 +821,7 @@ def parse_species_page(page: Page) -> SpeciesPageExtract | None:
         form_changes=form_changes,
         evolutions=evolutions,
         residue=(*fact_residue, *evolution_residue, *form_change_residue),
-        notes=(*forms.notes, *fact_notes, *learnset_notes),
+        notes=(*forms.notes, *fact_notes, *learnset_notes, *chunk_reading.notes),
+        chunks=chunk_reading.chunks,
+        dropped_templates=chunk_reading.dropped_templates,
     )

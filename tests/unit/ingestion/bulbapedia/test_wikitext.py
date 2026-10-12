@@ -5,12 +5,16 @@ from muon.ingestion.bulbapedia.wikitext import (
     LEAD_LEVEL,
     PLAIN_TEXT_SEPARATOR,
     TEXT_TEMPLATES,
+    CapturedTemplate,
+    TextRule,
     find_sections,
     find_templates,
     normalize_heading,
     normalize_template_name,
     read_params,
+    read_plain_text,
     read_small_captions,
+    render_rule,
     split_sections,
     to_plain_text,
 )
@@ -184,6 +188,8 @@ def test_read_params_keeps_the_last_repeat() -> None:
     assert read_params(template) == {"a": "2"}
 
 
+# The cases marked "API" hold the text of Bulbapedia's own rendering of the example, read
+# once through `action=expandtemplates` on 2026-10-12.
 TEMPLATE_CASES = [
     ("{{tt|Evo.|Evolves}}", "Evo."),
     ("{{color2|000|Fire Stone|text}}", "text"),
@@ -194,14 +200,51 @@ TEMPLATE_CASES = [
     ("{{acolor|Sand Veil}}", "Sand Veil"),
     ("{{tcolor|Ground}}", "Ground"),
     ("{{p|Diglett}}", "Diglett"),
-    ("{{m|Earthquake}}", "Earthquake"),
-    ("{{a|Sand Veil}}", "Sand Veil"),
-    ("{{type|Ground}}", "Ground"),
-    ("{{t|Ground}}", "Ground"),
+    ("{{p|Dugtrio|its evolution}}", "its evolution"),  # API
+    ("{{m|Dig}}", "Dig"),  # API
+    ("{{m|Fusion Flare|an enormous flame}}", "an enormous flame"),  # API
+    ("{{a|Tangling Hair}}", "Tangling Hair"),  # API
+    ("{{a|Sturdy|extremely hard}}", "extremely hard"),  # API
+    ("{{type|Ground}}", "Ground-type"),  # API
+    ("{{type|Dragon|Dragon-type}}", "Dragon-type"),  # API
+    ("{{t|Steel}}", "Steel"),  # API
+    ("{{t|Grass|type}}", "type"),  # API
     ("{{gen|VII}}", "VII"),
     ("{{rf|Cite}}", "Cite"),
     ("{{pkmn|breeding}}", "breeding"),
     ("{{OBP|Diglett|Sand}}", "Diglett"),
+    ("{{OBP|Pokémon|species}}", "Pokémon"),  # API
+    ("{{OBP|Ticketed event|GO|Ticketed Special Research}}", "Ticketed Special Research"),  # API
+    ("{{wp|mole (animal)|mole}}", "mole"),  # API
+    ("{{wp|skunk}}", "skunk"),  # API
+    ("{{g|Sun and Moon}}", "Pokémon Sun and Moon"),  # API
+    ("{{g|Black 2 and White 2|s}}", "Pokémon Black 2 and White 2"),  # API
+    ("{{game|Red and Blue|s}}", "Pokémon Red and Blue"),  # API
+    ("{{game|Black and White|s|Pokémon Black}}", "Pokémon Black"),  # API
+    ("{{game|Platinum||Platinum}}", "Platinum"),  # API
+    ("{{DL|List of Pokémon by habitat|Cave Pokémon|caves}}", "caves"),  # API
+    ("{{DL|PML arc|Chapter 1: New Adventure}}", "Chapter 1: New Adventure"),  # API
+    ("{{stat|Special Attack}}", "Special Attack"),  # API
+    ("{{stat|Attack|physically}}", "physically"),  # API
+    ("{{pkmn2|event}}", "event"),  # API
+    ("{{pkmn2|Talking|talk}}", "talk"),  # API
+    ("{{egg|Field}}", "Field"),  # API
+    ("{{egg3|Flying}}", "Flying Egg Group"),  # API
+    ("{{Shiny}}", "Shiny"),  # API
+    ("{{game3|Black and White|Pokémon White|s}}", "Pokémon White"),  # API
+    ("{{game3|FireRed and LeafGreen|FireRed|s}}", "FireRed"),  # API
+    ("{{2v2|HeartGold|SoulSilver}}", "HeartGold and SoulSilver"),  # API
+    ("{{2v2|Black|White|2}}", "Black 2 and White 2"),  # API
+    ("{{B2W2}}", "Pokémon Black 2 and White 2"),  # API
+    ("{{B2W2|Black 2}}", "Black 2"),  # API
+    ("{{cat|Generation I Pokémon}}", "Generation I Pokémon"),  # API
+    (
+        "{{cat|Pokémon with a base stat total of 680|base stat total of 680}}",
+        "base stat total of 680",
+    ),  # API
+    ("{{form|Castform|Sunny Form}}", "Sunny Form"),  # API
+    ("{{TCG|HP}}", "HP"),  # API
+    ("{{TCG|Sword & Shield|Sword & Shield set}}", "Sword & Shield set"),  # API
     ("{{ScPkmn}}", "Pokémon"),
     ("{{!}}", "|"),
 ]
@@ -220,12 +263,103 @@ def test_to_plain_text_renders_text_templates(value: str, expected: str) -> None
     assert to_plain_text(value) == expected
 
 
+def test_to_plain_text_drops_layout_templates_that_carry_no_prose() -> None:
+    value = "a {{bulbanews|On the Origin of Species}} b {{left clear}} c {{aniseries|BW}} d"
+
+    assert to_plain_text(value) == "a b c d"
+
+
 def test_to_plain_text_drops_other_templates() -> None:
     assert to_plain_text("a {{bag/s|Fire Stone}} b") == "a b"
 
 
 def test_to_plain_text_renders_nested_template_values() -> None:
     assert to_plain_text("{{tt|{{p|Diglett}}|caption}}") == "Diglett"
+
+
+def test_read_plain_text_captures_typed_templates_with_their_targets() -> None:
+    value = (
+        "{{p|Dugtrio|its evolution}} learns {{m|Dig}}, has {{a|Sand Veil}}, "
+        "{{type|Ground}} {{t|Steel}}"
+    )
+
+    result = read_plain_text(value, frozenset({"p", "m", "a", "type", "t"}))
+
+    assert result.text == "its evolution learns Dig, has Sand Veil, Ground-type Steel"
+    assert result.captured == (
+        CapturedTemplate("p", "Dugtrio"),
+        CapturedTemplate("m", "Dig"),
+        CapturedTemplate("a", "Sand Veil"),
+        CapturedTemplate("type", "Ground"),
+        CapturedTemplate("t", "Steel"),
+    )
+
+
+def test_read_plain_text_captures_only_the_requested_names() -> None:
+    result = read_plain_text("{{p|Onix}} and {{m|Dig}}", frozenset({"m"}))
+
+    assert result.captured == (CapturedTemplate("m", "Dig"),)
+
+
+def test_read_plain_text_strips_the_target_and_skips_an_empty_one() -> None:
+    result = read_plain_text("{{p| Onix }} {{p|}} {{p}}", frozenset({"p"}))
+
+    assert result.captured == (CapturedTemplate("p", "Onix"),)
+
+
+def test_read_plain_text_captures_a_template_nested_in_a_displayed_value() -> None:
+    result = read_plain_text("{{wp|Mole|the {{p|Diglett}}}}", frozenset({"p"}))
+
+    assert result.text == "the Diglett"
+    assert result.captured == (CapturedTemplate("p", "Diglett"),)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "x<ref>{{p|Onix}}</ref>y",
+        "x<small>{{p|Onix}}</small>y",
+        "x<sup>{{p|Onix}}</sup>y",
+        "x<!-- {{p|Onix}} -->y",
+        "x[[File:Onix.png|thumb|{{p|Onix}}]]y",
+        "x{{bag/s|{{p|Onix}}}}y",
+    ],
+)
+def test_read_plain_text_ignores_templates_in_removed_parts(value: str) -> None:
+    result = read_plain_text(value, frozenset({"p"}))
+
+    assert result.text == "xy"
+    assert result.captured == ()
+
+
+def test_read_plain_text_lists_dropped_templates_in_page_order_with_repeats() -> None:
+    result = read_plain_text("a {{roundy|x}} b {{aniseries|BW}} c {{Roundy|y}} {{p|Onix}}")
+
+    assert result.text == "a b c Onix"
+    assert result.dropped == ("roundy", "aniseries", "roundy")
+
+
+def test_read_plain_text_does_not_list_templates_inside_removed_parts() -> None:
+    result = read_plain_text("x<ref>{{roundy}}</ref>[[File:A.png|{{aniseries|BW}}]]y")
+
+    assert result.dropped == ()
+
+
+def test_read_plain_text_matches_to_plain_text() -> None:
+    value = "{{p|Dugtrio|its evolution}}<br>{{m|Dig}}  [[File:A.png]] {{roundy}}"
+
+    assert read_plain_text(value).text == to_plain_text(value)
+
+
+def test_render_rule_wraps_only_the_last_parameter() -> None:
+    rule = TextRule(params=("2", "1"), literal="none", prefix="Pre ", suffix=" post")
+    wrapped = mwparserfromhell.parse("{{x|Named}}").filter_templates()[0]
+    shown = mwparserfromhell.parse("{{x|Named|Shown}}").filter_templates()[0]
+    bare = mwparserfromhell.parse("{{x}}").filter_templates()[0]
+
+    assert render_rule(wrapped, rule, frozenset()).text == "Pre Named post"
+    assert render_rule(shown, rule, frozenset()).text == "Shown"
+    assert render_rule(bare, rule, frozenset()).text == "none"
 
 
 @pytest.mark.parametrize(

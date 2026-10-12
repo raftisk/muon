@@ -207,6 +207,7 @@ def format_parse_report(report: ParseReport, elapsed_seconds: float) -> str:
     for label, counts in (
         ("species", report.species_counts),
         ("evolution", report.evolution_counts),
+        ("chunk", report.chunk_counts),
     ):
         lines.append(f"{label} owner nodes: {sum(counts.owner_nodes.values())}")
         lines.append(f"{label} stubs: {sum(counts.stubs.values())}")

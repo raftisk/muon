@@ -1,4 +1,4 @@
-"""Batch builders: a species page extract becomes its pass-1 and pass-2 `GraphBatch`.
+"""Batch builders: a species page extract becomes its pass-1, pass-2 and pass-3 `GraphBatch`.
 
 Pass 1 (`build_species_batch`) owns the species nodes, their learnset entries and the Mega
 and Primal form changes, which all belong to 1 page. Pass 2 (`build_evolution_batch`) owns
@@ -8,10 +8,17 @@ A-Box owns resolve through `AboxIndex`, and a miss fails the page. Evolution ref
 resolve through `SpeciesIndex`, and a miss drops the evolution; neither creates a stub for
 an id nothing owns.
 
+Pass 3 (`build_chunk_batch`) owns the text chunks of the page. A chunk describes a species
+node of the page and is mentioned by the entities its typed templates name, so the batch
+holds species, move, ability, type and version stubs. A mention that resolves to nothing is
+noted and never fails the page.
+
 This module knows the pkmn universe, as every ingestion module of a source does.
 """
 
-from collections.abc import Iterable, Mapping
+import hashlib
+from collections import Counter
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from muon.ingestion.batch import (
@@ -25,11 +32,14 @@ from muon.ingestion.batch import (
 from muon.ingestion.bulbapedia.species.evolution import EVOLUTION_PATH
 from muon.ingestion.bulbapedia.species.extract import (
     BaseStats,
+    ChunkAspect,
+    ChunkFact,
     EvolutionFact,
     FormChangeFact,
     FormFacts,
     LearnMethod,
     LearnsetRow,
+    MentionRef,
     NoteKind,
     PageNote,
     Requirement,
@@ -40,6 +50,7 @@ from muon.ingestion.bulbapedia.species.extract import (
 from muon.ingestion.bulbapedia.species.learnset import LEARNSET_PATH
 from muon.ingestion.bulbapedia.species.page import INFOBOX_LABEL
 from muon.ingestion.bulbapedia.wikitext import PATH_SEPARATOR
+from muon.ontology.model import extract_local_name
 
 UNIVERSE = "pkmn"
 PKMN = "https://muon.dev/ns/pkmn#"
@@ -60,6 +71,8 @@ MACHINE = PKMN + "Machine"
 HELD_ITEM = PKMN + "HeldItem"
 ITEM = PKMN + "Item"
 REGION = CORE + "Region"
+TEXT_CHUNK = CORE + "TextChunk"
+VERSION = PKMN + "Version"
 
 HAS_TYPE = PKMN + "hasType"
 HAS_ABILITY = PKMN + "hasAbility"
@@ -76,6 +89,9 @@ FROM_SPECIES = PKMN + "fromSpecies"
 TO_SPECIES = PKMN + "toSpecies"
 REQUIRES = PKMN + "requires"
 EVOLVES_TO = PKMN + "evolvesTo"
+DESCRIBES = CORE + "describes"
+MENTIONED_IN = CORE + "mentionedIn"
+FROM_WORK = CORE + "fromWork"
 
 POKEDEX_NUMBER = PKMN + "pokedexNumber"
 IS_DEFAULT_FORM = PKMN + "isDefaultForm"
@@ -111,9 +127,29 @@ MIN_LEVEL = PKMN + "minLevel"
 TIME_OF_DAY = PKMN + "timeOfDay"
 GENDER = PKMN + "gender"
 CONDITION = PKMN + "condition"
+TEXT = CORE + "text"
+ASPECT = CORE + "aspect"
+SOURCE = CORE + "source"
+SECTION = CORE + "section"
+SOURCE_URL = CORE + "sourceUrl"
 
 SPECIES_SCOPE = frozenset({POKEMON_SPECIES, LEARNSET_ENTRY, FORM_CHANGE})
 EVOLUTION_SCOPE = frozenset({EVOLUTION})
+CHUNK_SCOPE = frozenset({TEXT_CHUNK})
+CHUNK_SOURCE = "bulbapedia"
+CHUNK_ID_TEMPLATE = "{source}:{label}:{subject}:{aspect}:{n}"
+CHUNK_NAME_TEMPLATE = "{subject} {aspect} {n}"
+TEXT_HASH_LENGTH = 8
+SPECIES_MENTION = "p"
+MENTION_CLASSES: Mapping[str, str] = {"m": MOVE, "a": ABILITY, "type": TYPE, "t": TYPE}
+MENTION_NOUNS: Mapping[str, str] = {
+    SPECIES_MENTION: "species",
+    "m": "move",
+    "a": "ability",
+    "type": "A-Box Type",
+    "t": "A-Box Type",
+}
+ROW_DROPPED_SUFFIX = "; row dropped"
 SNAPSHOT_VERSION_GROUP = "Scarlet-Violet"
 GENERATION_LABEL = "Generation {numeral}"
 ROMAN_NUMERALS = ((10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"))
@@ -708,3 +744,177 @@ def build_evolution_batch(
     structured = sum(fact.condition is None for fact in seen.values())
     batch = assemble_batch(EVOLUTION_SCOPE, join_parts(parts))
     return EvolutionBuild(batch=batch, notes=tuple(notes), structured=structured, total=len(seen))
+
+
+class ChunkBuildError(Exception):
+    """2 different Pokédex texts of 1 subject share a chunk id. The message holds both."""
+
+    def __init__(self, page_title: str, digest: str, first: str, second: str) -> None:
+        super().__init__(
+            f"{page_title}: Pokédex texts share the hash {digest}: {first!r}, {second!r}"
+        )
+        self.page_title = page_title
+        self.digest = digest
+
+
+@dataclass(frozen=True)
+class ChunkInputs:
+    abox: AboxIndex
+    species: SpeciesIndex
+    source_url: str
+
+
+@dataclass(frozen=True)
+class ChunkBuild:
+    """The pass-3 batch of a page (`None` when it holds no chunk) and the notes."""
+
+    batch: GraphBatch | None
+    notes: tuple[PageNote, ...]
+
+
+def hash_chunk_text(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()[:TEXT_HASH_LENGTH]
+
+
+def number_chunks(page_title: str, facts: Sequence[ChunkFact]) -> tuple[tuple[ChunkFact, str], ...]:
+    """Pair each fact with the last segment of its id.
+
+    The segment counts per (subject, aspect) from 1 in page order, and for `pokedex` it is
+    the hash of the text. Raises `ChunkBuildError` when 2 texts of 1 subject share a hash.
+    """
+    counts: Counter[tuple[str, ChunkAspect]] = Counter()
+    texts_by_hash: dict[tuple[str, str], str] = {}
+    numbered: list[tuple[ChunkFact, str]] = []
+    for fact in facts:
+        if fact.aspect is ChunkAspect.POKEDEX:
+            digest = hash_chunk_text(fact.text)
+            earlier = texts_by_hash.setdefault((fact.subject_id, digest), fact.text)
+            if earlier != fact.text:
+                raise ChunkBuildError(page_title, digest, earlier, fact.text)
+            numbered.append((fact, digest))
+            continue
+        counts[(fact.subject_id, fact.aspect)] += 1
+        numbered.append((fact, str(counts[(fact.subject_id, fact.aspect)])))
+    return tuple(numbered)
+
+
+def build_chunk_record(
+    fact: ChunkFact, label: str, subject: NodeRecord, source_url: str
+) -> NodeRecord:
+    """Build the chunk node. Pokédex chunks name their origin through `fromWork` and carry
+    no `source`."""
+    chunk_id = CHUNK_ID_TEMPLATE.format(
+        source=CHUNK_SOURCE,
+        label=extract_local_name(subject.class_iri).lower(),
+        subject=subject.id,
+        aspect=fact.aspect.value,
+        n=label,
+    )
+    properties: dict[str, PropertyValue] = {
+        TEXT: fact.text,
+        ASPECT: fact.aspect.value,
+        SECTION: fact.section_path,
+        SOURCE_URL: source_url,
+    }
+    if fact.aspect is not ChunkAspect.POKEDEX:
+        properties[SOURCE] = CHUNK_SOURCE
+    name = CHUNK_NAME_TEMPLATE.format(subject=subject.name, aspect=fact.aspect.value, n=label)
+    return NodeRecord(class_iri=TEXT_CHUNK, id=chunk_id, name=name, properties=properties)
+
+
+def resolve_mention(mention: MentionRef, context: PageContext) -> NodeRecord | None:
+    """Return the stub that a mention names, or `None` when nothing owns the target.
+
+    A species goes through the species index and a type through the A-Box. A move or an
+    ability is trusted as written, since its page may not be in the run yet.
+    """
+    if mention.template == SPECIES_MENTION:
+        resolved = resolve_species(context.species, SpeciesRef(name=mention.target, code=""))
+        return None if resolved is None else build_species_stub(context, resolved[0])
+    class_iri = MENTION_CLASSES[mention.template]
+    if class_iri == TYPE:
+        try:
+            return resolve_abox(context.abox, class_iri, mention.target)
+        except AboxMissError:
+            return None
+    return build_stub(class_iri, mention.target) if build_node_id(mention.target) else None
+
+
+def build_unresolved_note(mention: MentionRef, section_path: str) -> PageNote:
+    noun = MENTION_NOUNS[mention.template]
+    return PageNote(
+        kind=NoteKind.UNRESOLVED_MENTION,
+        section_path=section_path,
+        detail="{{" + f"{mention.template}|{mention.target}" + "}} names no " + noun,
+    )
+
+
+def build_mention_parts(
+    fact: ChunkFact, chunk: NodeRecord, subject: NodeRecord, context: PageContext
+) -> tuple[Parts, tuple[PageNote, ...]]:
+    """Build the `mentionedIn` edges of a chunk. The subject never mentions itself."""
+    nodes: list[NodeRecord] = []
+    edges: list[EdgeRecord] = []
+    notes: list[PageNote] = []
+    for mention in fact.mentions:
+        entity = resolve_mention(mention, context)
+        if entity is None:
+            notes.append(build_unresolved_note(mention, fact.section_path))
+        elif entity.node_ref != subject.node_ref:
+            nodes.append(entity)
+            edges.append(build_edge(MENTIONED_IN, entity, chunk))
+    return Parts(tuple(nodes), tuple(edges)), tuple(notes)
+
+
+def build_version_parts(
+    fact: ChunkFact, chunk: NodeRecord, context: PageContext
+) -> tuple[Parts, tuple[PageNote, ...]]:
+    """Build the `fromWork` edges of a Pokédex chunk. A version the A-Box lacks is dropped
+    with a note, and the notes say so when no version is left."""
+    nodes: list[NodeRecord] = []
+    edges: list[EdgeRecord] = []
+    missing: list[str] = []
+    for name in fact.versions:
+        try:
+            version = resolve_abox(context.abox, VERSION, name)
+        except AboxMissError:
+            missing.append(name)
+            continue
+        nodes.append(version)
+        edges.append(build_edge(FROM_WORK, chunk, version))
+    suffix = "" if edges else ROW_DROPPED_SUFFIX
+    notes = tuple(
+        PageNote(
+            kind=NoteKind.UNKNOWN_VERSION,
+            section_path=fact.section_path,
+            detail=f"{name} is no A-Box Version{suffix}",
+        )
+        for name in missing
+    )
+    return Parts(tuple(nodes), tuple(edges)), notes
+
+
+def build_chunk_batch(extract: SpeciesPageExtract, inputs: ChunkInputs) -> ChunkBuild:
+    """Build the pass-3 batch of a page. Raises `ChunkBuildError` for a chunk id collision.
+
+    A Pokédex chunk with no version the A-Box knows is dropped.
+    """
+    context = PageContext(extract.title, inputs.abox, inputs.species)
+    parts: list[Parts] = []
+    notes: list[PageNote] = []
+    for fact, label in number_chunks(extract.title, extract.chunks):
+        subject = build_species_stub(context, fact.subject_id)
+        chunk = build_chunk_record(fact, label, subject, inputs.source_url)
+        chunk_parts = [Parts((chunk, subject), (build_edge(DESCRIBES, chunk, subject),))]
+        if fact.aspect is ChunkAspect.POKEDEX:
+            version_parts, version_notes = build_version_parts(fact, chunk, context)
+            notes.extend(version_notes)
+            if not version_parts.edges:
+                continue
+            chunk_parts.append(version_parts)
+        mention_parts, mention_notes = build_mention_parts(fact, chunk, subject, context)
+        notes.extend(mention_notes)
+        parts.extend([*chunk_parts, mention_parts])
+    if not parts:
+        return ChunkBuild(batch=None, notes=tuple(notes))
+    return ChunkBuild(batch=assemble_batch(CHUNK_SCOPE, join_parts(parts)), notes=tuple(notes))

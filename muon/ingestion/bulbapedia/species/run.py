@@ -1,4 +1,4 @@
-"""A parse run over the pinned species pages: extracts, batches, residue, report and files.
+"""A parse run over the pinned species pages: extracts, 3 batches, residue, report and files.
 
 `parse_species_pages` reads the page cache only. It parses every pinned page, because the
 species index that resolves evolution references needs all of them, and keeps the outputs
@@ -6,6 +6,10 @@ and report entries of the requested titles. A page that breaks a rule fails alon
 run goes on; an override that matches nothing and an unknown `--title` stop the run before
 anything is written. Output files are byte-identical across runs: sets are sorted, JSON
 keys are sorted and the report holds no time.
+
+A page gives 3 batches. The species batch and the evolution batch come first and are
+independent of the chunk batch, which needs the species index of the whole run to resolve
+the species a chunk mentions.
 """
 
 import json
@@ -26,15 +30,20 @@ from muon.ingestion.bulbapedia.pages import (
     write_text_atomically,
 )
 from muon.ingestion.bulbapedia.species.batches import (
+    ASPECT,
     CONDITION,
     POKEMON_SPECIES,
     UNIVERSE,
     AboxIndex,
     BatchBuildError,
+    ChunkBuild,
+    ChunkBuildError,
+    ChunkInputs,
     EvolutionBuild,
     SpeciesIndex,
     build_abox_index,
     build_change_id,
+    build_chunk_batch,
     build_evolution_batch,
     build_species_batch,
     build_species_index,
@@ -124,6 +133,13 @@ class UnownedPair(ReportModel):
     evolution_id: str
 
 
+class TemplateCount(ReportModel):
+    """A template left out of chunk text and how often."""
+
+    name: str
+    count: int
+
+
 class BatchCounts(ReportModel):
     """Counts by class local name (owner nodes and stubs) and property local name (edges)."""
 
@@ -139,6 +155,10 @@ class ParseReport(ReportModel):
     pages_failed: int
     species_counts: BatchCounts
     evolution_counts: BatchCounts
+    chunk_counts: BatchCounts
+    chunks_per_aspect: Mapping[str, int]
+    dropped_templates: tuple[TemplateCount, ...]
+    pages_without_chunks: tuple[str, ...]
     form_candidates: tuple[FormCandidateEntry, ...]
     overrides_applied: tuple[ReportNote, ...]
     notes: tuple[ReportNote, ...]
@@ -165,8 +185,16 @@ class PageOutput:
     extract: SpeciesPageExtract
     species_batch: GraphBatch
     evolution_batch: GraphBatch | None
+    chunk_batch: GraphBatch | None
     notes: tuple[PageNote, ...]
     residue: tuple[ResidueItem, ...]
+
+
+@dataclass(frozen=True)
+class PageBatches:
+    species: GraphBatch
+    evolution: EvolutionBuild
+    chunks: ChunkBuild
 
 
 @dataclass(frozen=True)
@@ -264,6 +292,25 @@ def build_species_batches(
     return batches, failures
 
 
+def build_chunk_batches(
+    extracts: Mapping[str, SpeciesPageExtract],
+    pages: Mapping[str, Page],
+    shared: tuple[AboxIndex, SpeciesIndex],
+) -> tuple[dict[str, ChunkBuild], dict[str, str]]:
+    """Build pass 3 for every page. Returns the builds and the reason of each failed page."""
+    abox, index = shared
+    builds: dict[str, ChunkBuild] = {}
+    failures: dict[str, str] = {}
+    for title, extract in extracts.items():
+        try:
+            builds[title] = build_chunk_batch(
+                extract, ChunkInputs(abox, index, pages[title].permalink)
+            )
+        except ChunkBuildError as error:
+            failures[title] = str(error)
+    return builds, failures
+
+
 def find_unowned_pairs(
     extracts: Mapping[str, SpeciesPageExtract],
     builds: Mapping[str, EvolutionBuild],
@@ -345,6 +392,22 @@ def count_stub_misses(outputs: Iterable[PageOutput], context: ReportContext) -> 
     return abox_misses, species_misses
 
 
+def count_dropped_templates(outputs: Iterable[PageOutput]) -> tuple[TemplateCount, ...]:
+    """Sum the templates left out of chunk text over the pages, most used first."""
+    totals: Counter[str] = Counter()
+    for output in outputs:
+        totals.update(output.extract.dropped_templates)
+    ranked = sorted(totals.items(), key=lambda item: (-item[1], item[0]))
+    return tuple(TemplateCount(name=name, count=count) for name, count in ranked)
+
+
+def count_chunks_per_aspect(chunk_batches: Iterable[GraphBatch]) -> dict[str, int]:
+    aspects: Counter[str] = Counter()
+    for batch in chunk_batches:
+        aspects.update(str(node.properties[ASPECT]) for node in batch.owner_nodes)
+    return dict(aspects)
+
+
 def to_report_notes(title: str, notes: Iterable[PageNote]) -> list[ReportNote]:
     return [
         ReportNote(
@@ -361,6 +424,7 @@ def build_report(
     notes = [n for o in outputs for n in to_report_notes(o.extract.title, o.notes)]
     abox_misses, species_misses = count_stub_misses(outputs, context)
     evolution_batches = [o.evolution_batch for o in outputs if o.evolution_batch is not None]
+    chunk_batches = [o.chunk_batch for o in outputs if o.chunk_batch is not None]
     evolutions = [node for batch in evolution_batches for node in batch.owner_nodes]
     structured = sum(CONDITION not in node.properties for node in evolutions)
     return ParseReport(
@@ -370,6 +434,10 @@ def build_report(
         pages_failed=sum(r.status is PageStatus.FAILED for r in results),
         species_counts=count_batch(o.species_batch for o in outputs),
         evolution_counts=count_batch(evolution_batches),
+        chunk_counts=count_batch(chunk_batches),
+        chunks_per_aspect=count_chunks_per_aspect(chunk_batches),
+        dropped_templates=count_dropped_templates(outputs),
+        pages_without_chunks=tuple(o.extract.title for o in outputs if o.chunk_batch is None),
         form_candidates=tuple(
             FormCandidateEntry(page_title=o.extract.title, candidate=candidate)
             for o in outputs
@@ -398,22 +466,20 @@ def build_report(
     )
 
 
-def build_output(
-    page: Page, extract: SpeciesPageExtract, batches: tuple[GraphBatch, EvolutionBuild]
-) -> PageOutput:
-    species_batch, build = batches
+def build_output(page: Page, extract: SpeciesPageExtract, batches: PageBatches) -> PageOutput:
     return PageOutput(
         page=page,
         extract=extract,
-        species_batch=species_batch,
-        evolution_batch=build.batch,
-        notes=(*extract.notes, *build.notes),
+        species_batch=batches.species,
+        evolution_batch=batches.evolution.batch,
+        chunk_batch=batches.chunks.batch,
+        notes=(*extract.notes, *batches.evolution.notes, *batches.chunks.notes),
         residue=build_residue_items(extract),
     )
 
 
 def parse_species_pages(inputs: RunInputs) -> ParseRun:
-    """Parse the pinned species pages and build both batches of each.
+    """Parse the pinned species pages and build the 3 batches of each.
 
     Raises `ParseRunError` for a title that is not pinned and `OverrideError` for an
     override that matches nothing, both before any page is read. The caller writes the
@@ -433,10 +499,12 @@ def parse_species_pages(inputs: RunInputs) -> ParseRun:
     builds = {
         title: build_evolution_batch(extract, abox, index) for title, extract in extracts.items()
     }
+    chunk_builds, chunk_failures = build_chunk_batches(extracts, pages, (abox, index))
     results = {**parsed.results}
     for title, page in pages.items():
-        if title in failures:
-            results[title] = build_result(page, PageStatus.FAILED, failures[title])
+        if title in failures or title in chunk_failures:
+            reason = failures.get(title) or chunk_failures[title]
+            results[title] = build_result(page, PageStatus.FAILED, reason)
         elif title in extracts:
             results[title] = build_result(page, PageStatus.PARSED)
     context = ReportContext(
@@ -454,9 +522,13 @@ def parse_species_pages(inputs: RunInputs) -> ParseRun:
         ),
     )
     outputs = tuple(
-        build_output(pages[title], extracts[title], (species_batches[title], builds[title]))
+        build_output(
+            pages[title],
+            extracts[title],
+            PageBatches(species_batches[title], builds[title], chunk_builds[title]),
+        )
         for title in pages
-        if title in requested and title in extracts
+        if title in requested and title in extracts and title not in chunk_failures
     )
     ordered_results = tuple(results[title] for title in pages if title in requested)
     return ParseRun(outputs, build_report(outputs, ordered_results, context))
@@ -484,6 +556,7 @@ def serialize_output(output: PageOutput) -> str:
             "extract": output.extract.model_dump(mode="json"),
             "species_batch": serialize_batch(output.species_batch),
             "evolution_batch": serialize_batch(output.evolution_batch),
+            "chunk_batch": serialize_batch(output.chunk_batch),
             "residue": [item.model_dump(mode="json") for item in output.residue],
         }
     )
