@@ -17,17 +17,27 @@ EMPTY_SUMMARY = WriteSummary(
 
 
 class RecordingGraphClient:
-    """Records writes in call order and answers each statement with `summary`.
+    """Records writes in call order and answers them from canned results.
 
     `calls` holds the query of an `execute_write` or the statement list of an
     `execute_write_batch`. `write_parameters` holds the parameters of each
-    `execute_write`, in the same order as `writes`.
+    `execute_write`, in the same order as `writes`. An `execute_write` answers from
+    `summaries` in order, then with `summary`. An `execute_read` records its query and
+    parameters in `reads` and answers from `read_records` in order, then with `[]`.
     """
 
-    def __init__(self, summary: WriteSummary = EMPTY_SUMMARY) -> None:
+    def __init__(
+        self,
+        summary: WriteSummary = EMPTY_SUMMARY,
+        summaries: Sequence[WriteSummary] = (),
+        read_records: Sequence[list[dict[str, Any]]] = (),
+    ) -> None:
         self.summary = summary
+        self.queued_summaries = list(summaries)
+        self.queued_read_records = list(read_records)
         self.calls: list[str | list[Statement]] = []
         self.write_parameters: list[Mapping[str, Any] | None] = []
+        self.reads: list[tuple[str, Mapping[str, Any] | None]] = []
 
     @property
     def writes(self) -> list[str]:
@@ -40,14 +50,15 @@ class RecordingGraphClient:
     async def execute_read(
         self, query: LiteralString, parameters: Mapping[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        return []
+        self.reads.append((query, parameters))
+        return self.queued_read_records.pop(0) if self.queued_read_records else []
 
     async def execute_write(
         self, query: LiteralString, parameters: Mapping[str, Any] | None = None
     ) -> WriteSummary:
         self.calls.append(query)
         self.write_parameters.append(parameters)
-        return self.summary
+        return self.queued_summaries.pop(0) if self.queued_summaries else self.summary
 
     async def execute_write_batch(self, statements: Sequence[Statement]) -> list[WriteSummary]:
         self.calls.append(list(statements))

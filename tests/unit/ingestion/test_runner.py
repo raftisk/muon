@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -6,6 +7,7 @@ from muon.graph import WriteSummary
 from muon.ingestion import runner
 from muon.ingestion.batch import ClaimDirection, EdgeClaim, EdgeRecord, GraphBatch, NodeRecord
 from muon.ingestion.runner import (
+    PURGE_BATCH_SIZE,
     Runner,
     WriteMode,
     build_claim_rows,
@@ -18,7 +20,7 @@ from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import load_ontology_model
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
-from tests.unit.ingestion.recording_client import RecordingGraphClient
+from tests.unit.ingestion.recording_client import EMPTY_SUMMARY, RecordingGraphClient
 
 TOY_SUMMARY = WriteSummary(
     nodes_created=1,
@@ -175,19 +177,39 @@ async def test_other_universe_batch_raises(materializer: LabelMaterializer) -> N
     assert client.calls == []
 
 
-async def test_purge_sends_the_universe_label(materializer: LabelMaterializer) -> None:
-    client = RecordingGraphClient(TOY_SUMMARY)
+def build_deleted_summary(nodes_deleted: int) -> WriteSummary:
+    return replace(
+        EMPTY_SUMMARY, nodes_deleted=nodes_deleted, relationships_deleted=nodes_deleted * 2
+    )
+
+
+async def test_purge_sends_the_universe_label_until_a_call_deletes_nothing(
+    materializer: LabelMaterializer,
+) -> None:
+    summaries = [build_deleted_summary(count) for count in (3, 2, 0)]
+    client = RecordingGraphClient(summaries=summaries)
+
+    summary = await Runner(client, materializer).purge(batch_size=3)
+
+    assert client.writes == [runner.PURGE_UNIVERSE] * 3
+    assert client.batches == []
+    assert client.write_parameters == [{"universe": TOY_UNIVERSE, "batch_size": 3}] * 3
+    assert summary == build_deleted_summary(5)
+
+
+async def test_purge_of_an_empty_universe_makes_one_call(materializer: LabelMaterializer) -> None:
+    client = RecordingGraphClient()
 
     summary = await Runner(client, materializer).purge()
 
     assert client.writes == [runner.PURGE_UNIVERSE]
-    assert client.batches == []
-    assert client.write_parameters == [{"universe": TOY_UNIVERSE}]
-    assert summary == TOY_SUMMARY
+    assert client.write_parameters == [{"universe": TOY_UNIVERSE, "batch_size": PURGE_BATCH_SIZE}]
+    assert summary == EMPTY_SUMMARY
 
 
-def test_purge_statement_takes_the_label_as_parameter_and_keeps_the_schema() -> None:
+def test_purge_statement_takes_the_label_and_size_as_parameters_and_keeps_the_schema() -> None:
     assert "$universe" in runner.PURGE_UNIVERSE
+    assert "LIMIT $batch_size" in runner.PURGE_UNIVERSE
     assert "DROP" not in runner.PURGE_UNIVERSE
     assert "CONSTRAINT" not in runner.PURGE_UNIVERSE
 
@@ -481,3 +503,45 @@ async def test_ensure_constraints_returns_the_class_count(materializer: LabelMat
     assert ensured == 2
     assert any("id_unique_ToyGadget" in write for write in client.writes)
     assert any("id_unique_ToyColor" in write for write in client.writes)
+
+
+async def test_count_universe_sorts_the_counts_by_name(materializer: LabelMaterializer) -> None:
+    client = RecordingGraphClient(
+        read_records=[
+            [{"label": "ToyGadget", "count": 4}, {"label": "Entity", "count": 6}],
+            [{"type": "PAIRS_WITH", "count": 2}, {"type": "HAS_COLOR", "count": 3}],
+        ]
+    )
+
+    census = await Runner(client, materializer).count_universe()
+
+    assert list(census.labels.items()) == [("Entity", 6), ("ToyGadget", 4)]
+    assert list(census.relationship_types.items()) == [("HAS_COLOR", 3), ("PAIRS_WITH", 2)]
+    assert client.reads == [
+        (runner.COUNT_LABELS, {"universe": TOY_UNIVERSE}),
+        (runner.COUNT_RELATIONSHIP_TYPES, {"universe": TOY_UNIVERSE}),
+    ]
+
+
+async def test_count_universe_of_an_empty_universe_is_empty(
+    materializer: LabelMaterializer,
+) -> None:
+    census = await Runner(RecordingGraphClient(), materializer).count_universe()
+
+    assert census.labels == {}
+    assert census.relationship_types == {}
+
+
+def test_add_summaries_sums_every_field() -> None:
+    total = runner.add_summaries([TOY_SUMMARY, TOY_SUMMARY, EMPTY_SUMMARY])
+
+    assert total == WriteSummary(
+        nodes_created=2,
+        nodes_deleted=4,
+        relationships_created=6,
+        relationships_deleted=8,
+        labels_added=10,
+        labels_removed=12,
+        properties_set=14,
+    )
+    assert runner.add_summaries([]) == EMPTY_SUMMARY

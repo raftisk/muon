@@ -5,8 +5,8 @@ transaction. Labels and relationship types travel as parameters through dynamic
 labels (`$(...)`), with names from the label materializer. A node merges on its
 class label, the universe label and `id`; an edge merges on (start, type, end) and
 carries its properties. A stub merges on the same key as a node and is set on
-create only, so it never changes a node that exists. It also purges a universe:
-every node with the universe label, in one statement.
+create only, so it never changes a node that exists. It also purges a universe in
+transactions of at most `PURGE_BATCH_SIZE` nodes and counts what the universe holds.
 
 In upsert mode, a batch with claims first deletes the edges it owns and no longer
 lists. A claim row names an anchor, a relationship type and a direction; its
@@ -19,7 +19,7 @@ takes no relationship direction as a parameter.
 """
 
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, fields
+from dataclasses import asdict, dataclass, fields
 from enum import StrEnum
 from typing import Any, Final, LiteralString
 
@@ -29,6 +29,7 @@ from muon.ingestion.schema import ensure_id_constraints
 from muon.ontology.materializer import NAME_PROPERTY, LabelMaterializer
 
 ID_PROPERTY = "id"
+PURGE_BATCH_SIZE = 10_000
 
 
 class WriteMode(StrEnum):
@@ -41,6 +42,17 @@ class WriteMode(StrEnum):
 
     UPSERT = "upsert"
     SYNC = "sync"
+
+
+@dataclass(frozen=True)
+class UniverseCensus:
+    """What a universe holds: nodes per label and relationships per type, sorted by name.
+
+    A relationship counts by its start node, so one that ends outside the universe counts too.
+    """
+
+    labels: Mapping[str, int]
+    relationship_types: Mapping[str, int]
 
 
 @dataclass(frozen=True)
@@ -145,7 +157,19 @@ MERGE_EDGES_UPSERT: LiteralString = MERGE_EDGES_HEAD + "SET r += row.properties\
 
 PURGE_UNIVERSE: LiteralString = """
 MATCH (n:$($universe))
+WITH n LIMIT $batch_size
 DETACH DELETE n
+"""
+
+COUNT_LABELS: LiteralString = """
+MATCH (n:$($universe))
+UNWIND labels(n) AS label
+RETURN label, count(*) AS count
+"""
+
+COUNT_RELATIONSHIP_TYPES: LiteralString = """
+MATCH (:$($universe))-[r]->()
+RETURN type(r) AS type, count(*) AS count
 """
 
 
@@ -192,14 +216,33 @@ class Runner:
         """Ensure the `id` constraint of each class and return how many classes it covered."""
         return await ensure_id_constraints(self.client, self.materializer, class_iris)
 
-    async def purge(self) -> WriteSummary:
+    async def purge(self, batch_size: int = PURGE_BATCH_SIZE) -> WriteSummary:
         """Delete every node carrying the universe label, with its relationships.
 
-        Constraints, indexes and the nodes of other universes stay. A relationship
-        between a purged node and a node of another universe goes with the purged node.
+        Each transaction deletes at most `batch_size` nodes, and the loop ends after a
+        transaction that deletes none. An interrupted purge leaves part of the
+        universe; running it again finishes the job. Constraints, indexes and the
+        nodes of other universes stay. A relationship between a purged node and a
+        node of another universe goes with the purged node.
         """
-        return await self.client.execute_write(
-            PURGE_UNIVERSE, {"universe": self.materializer.universe_label}
+        parameters = {"universe": self.materializer.universe_label, "batch_size": batch_size}
+        summaries: list[WriteSummary] = []
+        while not summaries or summaries[-1].nodes_deleted > 0:
+            summaries.append(await self.client.execute_write(PURGE_UNIVERSE, parameters))
+        return add_summaries(summaries)
+
+    async def count_universe(self) -> UniverseCensus:
+        """Count the nodes per label and the relationships per type of the universe."""
+        parameters = {"universe": self.materializer.universe_label}
+        label_records = await self.client.execute_read(COUNT_LABELS, parameters)
+        type_records = await self.client.execute_read(COUNT_RELATIONSHIP_TYPES, parameters)
+        return UniverseCensus(
+            labels={
+                record["label"]: record["count"] for record in sort_records(label_records, "label")
+            },
+            relationship_types={
+                record["type"]: record["count"] for record in sort_records(type_records, "type")
+            },
         )
 
 
@@ -362,9 +405,20 @@ def build_ids_by_label(batch: GraphBatch, materializer: LabelMaterializer) -> di
     return ids_by_label
 
 
+def sort_records(records: Iterable[dict[str, Any]], key: str) -> list[dict[str, Any]]:
+    return sorted(records, key=lambda record: record[key])
+
+
+def add_summaries(summaries: Iterable[WriteSummary]) -> WriteSummary:
+    """Return the field-wise sum of the summaries."""
+    summary_list = list(summaries)
+    return WriteSummary(
+        **{
+            field.name: sum(getattr(summary, field.name) for summary in summary_list)
+            for field in fields(WriteSummary)
+        }
+    )
+
+
 def summarize_run(summaries: list[WriteSummary], constraints_ensured: int) -> RunReport:
-    totals = {
-        field.name: sum(getattr(summary, field.name) for summary in summaries)
-        for field in fields(WriteSummary)
-    }
-    return RunReport(constraints_ensured=constraints_ensured, **totals)
+    return RunReport(constraints_ensured=constraints_ensured, **asdict(add_summaries(summaries)))
