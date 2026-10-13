@@ -40,6 +40,8 @@ from muon.ingestion.runner import WriteMode, build_statements
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
+from tests.unit.ingestion.bulbapedia.species.claim_summary import ClaimPattern, claims_by_anchor
+from tests.unit.ingestion.bulbapedia.species.test_batches import build_facts
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 SOURCE_URL_VALUE = (
@@ -426,3 +428,32 @@ def test_chunk_properties_are_the_core_text_properties_only(inputs: ChunkInputs)
     keys = {key for node in batch.owner_nodes for key in node.properties}
 
     assert keys == {TEXT, ASPECT, SECTION, SOURCE_URL, SOURCE}
+
+
+ANCHOR_PATTERNS: set[ClaimPattern] = {("describes", "in", "TextChunk", True)}
+CHUNK_PATTERNS: set[ClaimPattern] = {
+    ("fromWork", "out", "Version", False),
+    ("mentionedIn", "in", None, False),
+}
+
+
+def test_a_chunk_batch_claims_describes_at_every_form_and_two_patterns_at_each_chunk(
+    inputs: ChunkInputs,
+) -> None:
+    forms = (
+        build_facts("diglett", "Diglett"),
+        build_facts("diglett-alola", "Alolan Diglett", form_index=2, is_default=False),
+    )
+    extract = build_extract(build_fact("One."), pokedex_fact(("Gold",))).model_copy(
+        update={"forms": forms}
+    )
+
+    batch = build_chunk_batch(extract, inputs).batch
+
+    assert batch is not None
+    chunk_ids = {node.id for node in batch.owner_nodes}
+    assert len(chunk_ids) == 2
+    claims = claims_by_anchor(batch)
+    assert set(claims) == {"diglett", "diglett-alola", *chunk_ids}
+    assert claims["diglett"] == claims["diglett-alola"] == ANCHOR_PATTERNS
+    assert all(claims[chunk_id] == CHUNK_PATTERNS for chunk_id in chunk_ids)

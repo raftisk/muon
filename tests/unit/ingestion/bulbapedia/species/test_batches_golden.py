@@ -34,6 +34,12 @@ from muon.ingestion.runner import WriteMode, build_statements
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
+from tests.unit.ingestion.bulbapedia.species.claim_summary import claims_by_anchor
+from tests.unit.ingestion.bulbapedia.species.test_batches import (
+    ENTRY_CLAIMS,
+    EVOLUTION_ANCHOR_PATTERNS,
+    SPECIES_CLAIMS,
+)
 from tests.unit.ingestion.test_species_batch import build_diglett_batch
 
 pytestmark = pytest.mark.pages
@@ -298,3 +304,52 @@ def test_every_species_stub_of_the_pilot_evolutions_has_an_owner_in_the_run(
         if build.batch is not None
         for node in build.batch.owner_nodes
     }
+
+
+def test_diglett_species_batch_claims_the_9_patterns_per_species_and_viamachine_per_entry(
+    species_batches: dict[str, GraphBatch],
+) -> None:
+    batch = species_batches[title_of("Diglett")]
+    entry_ids = {n.id for n in batch.owner_nodes if n.class_iri == LEARNSET_ENTRY}
+
+    claims = claims_by_anchor(batch)
+
+    assert claims["diglett"] == claims["diglett-alola"] == SPECIES_CLAIMS
+    assert entry_ids
+    assert all(claims[entry_id] == ENTRY_CLAIMS for entry_id in entry_ids)
+    assert len(batch.claims) == 2 * len(SPECIES_CLAIMS) + len(entry_ids)
+
+
+def test_diglett_evolution_batch_claims_2_patterns_per_form_and_requires_per_evolution(
+    evolution_builds: dict[str, EvolutionBuild],
+) -> None:
+    batch = evolution_builds[title_of("Diglett")].batch
+
+    assert batch is not None
+    assert claims_by_anchor(batch) == {
+        "diglett": EVOLUTION_ANCHOR_PATTERNS,
+        "diglett-alola": EVOLUTION_ANCHOR_PATTERNS,
+        "diglett:dugtrio": {("requires", "out", None, False)},
+        "diglett-alola:dugtrio-alola": {("requires", "out", None, False)},
+    }
+
+
+def test_charizard_species_batch_claims_requires_at_each_mega_form_change(
+    species_batches: dict[str, GraphBatch],
+) -> None:
+    claims = claims_by_anchor(species_batches[title_of("Charizard")])
+
+    assert claims["charizard:charizard-mega-x"] == {("requires", "out", None, False)}
+    assert claims["charizard:charizard-mega-y"] == {("requires", "out", None, False)}
+
+
+def test_every_pilot_claim_anchors_at_a_node_of_its_batch(
+    species_batches: dict[str, GraphBatch], evolution_builds: dict[str, EvolutionBuild]
+) -> None:
+    batches: list[GraphBatch] = list(species_batches.values())
+    batches.extend(b.batch for b in evolution_builds.values() if b.batch is not None)
+
+    for batch in batches:
+        refs = {node.node_ref for node in batch.nodes}
+        assert batch.claims
+        assert {claim.anchor for claim in batch.claims} <= refs
