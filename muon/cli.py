@@ -1,5 +1,6 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
-`muon fetch bulbapedia <page-type>` and `muon parse bulbapedia species`."""
+`muon fetch bulbapedia <page-type>`, `muon parse bulbapedia species` and
+`muon ingest bulbapedia species`."""
 
 import argparse
 import asyncio
@@ -25,6 +26,14 @@ from muon.ingestion.bulbapedia.fetch import (
 )
 from muon.ingestion.bulbapedia.pages import PageStore, PageStoreError
 from muon.ingestion.bulbapedia.species.forms import OverrideError
+from muon.ingestion.bulbapedia.species.ingest import (
+    IngestRequest,
+    IngestRun,
+    MissingSeedError,
+    PassProgress,
+    ingest_species,
+    write_ingest_report,
+)
 from muon.ingestion.bulbapedia.species.run import (
     DEFAULT_OUTPUT_ROOT,
     PageStatus,
@@ -51,6 +60,7 @@ SEED_COMMAND = "seed"
 PURGE_COMMAND = "purge"
 FETCH_COMMAND = "fetch"
 PARSE_COMMAND = "parse"
+INGEST_COMMAND = "ingest"
 BULBAPEDIA_SOURCE = "bulbapedia"
 PASSWORD_PROMPT = "Neo4j password: "
 PASSWORD_ENCODING = "utf-8"
@@ -99,7 +109,28 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="TITLE",
         help="write outputs for only this page (repeatable)",
     )
+    ingest = commands.add_parser(
+        INGEST_COMMAND,
+        help="parse pinned source pages and write their batches into Neo4j, then report",
+    )
+    ingest.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to ingest")
+    ingest.add_argument("page_type", choices=(PARSE_PAGE_TYPE,), help="the set of pages to ingest")
+    ingest.add_argument(
+        "--title",
+        action="append",
+        default=[],
+        dest="titles",
+        metavar="TITLE",
+        help="ingest only this page (repeatable)",
+    )
     return parser
+
+
+def describe_target(arguments: argparse.Namespace) -> str:
+    """Name what a command works on: the universe prefix, or the source and page type."""
+    if arguments.command == INGEST_COMMAND:
+        return f"{arguments.source} {arguments.page_type}"
+    return str(arguments.prefix)
 
 
 def build_failure_prefix(command: str, prefix: str) -> str:
@@ -236,6 +267,74 @@ def execute_parse(request: ParseRequest) -> int:
     return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
 
 
+def format_progress(progress: PassProgress) -> str:
+    return (
+        f"{progress.ingest_pass.value}: {progress.done}/{progress.total} batches, "
+        f"{progress.elapsed_seconds:.1f} s"
+    )
+
+
+def print_progress(progress: PassProgress) -> None:
+    print(format_progress(progress), flush=True)
+
+
+async def run_ingest(settings: Settings, run: ParseRun, titles: tuple[str, ...]) -> IngestRun:
+    request = IngestRequest(
+        ontology_dir=settings.ontology.ontology_dir, titles=titles, on_progress=print_progress
+    )
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        return await ingest_species(client, run, request)
+
+
+def format_ingest_report(ingest_run: IngestRun) -> str:
+    """The counters and seconds of each pass, the failed pages, the stop and the census."""
+    report = ingest_run.report
+    status = "stopped" if report.stop is not None else "done"
+    lines = [f"{INGEST_COMMAND} {BULBAPEDIA_SOURCE} {PARSE_PAGE_TYPE}: {status}"]
+    for totals in report.passes:
+        name = totals.ingest_pass.value
+        seconds = ingest_run.elapsed_seconds[totals.ingest_pass]
+        lines.append(f"{name}: {totals.batches_written} batches in {seconds:.1f} s")
+        lines.extend(
+            f"{name} {counter.replace('_', ' ')}: {count}"
+            for counter, count in totals.counters.items()
+        )
+    lines.extend(f"failed: {page.page_title}: {page.reason}" for page in report.failed_pages)
+    if report.stop is not None:
+        stop = report.stop
+        lines.append(f"stopped: {stop.page_title} ({stop.ingest_pass.value}): {stop.error}")
+    if report.census is not None:
+        lines.extend(f"nodes {label}: {count}" for label, count in report.census.labels.items())
+        lines.extend(
+            f"relationships {name}: {count}"
+            for name, count in report.census.relationship_types.items()
+        )
+    return "\n".join(lines)
+
+
+def execute_ingest(settings: Settings, request: ParseRequest) -> int:
+    failure_prefix = build_failure_prefix(INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {PARSE_PAGE_TYPE}")
+    started = time.monotonic()
+    try:
+        run = run_parse(request)
+    except (ParseRunError, OverrideError, OntologyError, ABoxError, PageStoreError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+    parse_seconds = time.monotonic() - started
+
+    try:
+        ingest_run = asyncio.run(run_ingest(settings, run, request.titles))
+    except (MissingSeedError, GraphError, OntologyError, ABoxError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    write_ingest_report(ingest_run.report)
+    print(format_parse_report(run.report, parse_seconds))
+    print(format_ingest_report(ingest_run))
+    is_clean = not run.report.pages_failed and ingest_run.report.stop is None
+    return EXIT_SUCCESS if is_clean else EXIT_FAILURE
+
+
 def execute_seed(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_seed(settings, prefix))
@@ -285,10 +384,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         settings = get_settings()
     except ValidationError as error:
-        failure_prefix = build_failure_prefix(arguments.command, arguments.prefix)
+        failure_prefix = build_failure_prefix(arguments.command, describe_target(arguments))
         print(f"{failure_prefix} invalid settings: {error}", file=sys.stderr)
         return EXIT_FAILURE
 
+    if arguments.command == INGEST_COMMAND:
+        return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
     if arguments.command == PURGE_COMMAND:
         return execute_purge(settings, arguments.prefix)
     return execute_seed(settings, arguments.prefix)
