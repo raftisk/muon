@@ -5,7 +5,15 @@ from rdflib import Graph
 
 from muon.ingestion.batch import GraphBatch, NodeRef, PropertyValue
 from muon.ingestion.runner import MERGE_EDGES_SYNC, MERGE_NODES_SYNC, PRUNE_EDGES, PRUNE_NODES
-from muon.ingestion.seed import ABoxError, build_abox_batch, read_abox, seed_universe
+from muon.ingestion.seed import (
+    FIND_MISSING_NODES,
+    ABoxError,
+    build_abox_batch,
+    find_missing_seed_nodes,
+    read_abox,
+    seed_universe,
+)
+from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.unit.ingestion.recording_client import RecordingGraphClient
@@ -217,3 +225,65 @@ async def test_seed_universe_with_invalid_abox_writes_nothing(tmp_path: Path) ->
         await seed_universe(client, ontology_dir, TOY_UNIVERSE)
 
     assert client.calls == []
+
+
+async def test_presence_rows_carry_label_universe_and_id_of_every_node(
+    toy_model: OntologyModel, toy_ontology_dir: Path
+) -> None:
+    batch = read_abox(toy_model, toy_ontology_dir)
+    client = RecordingGraphClient()
+
+    await find_missing_seed_nodes(client, LabelMaterializer(toy_model), batch)
+
+    ((query, parameters),) = client.reads
+    assert query is FIND_MISSING_NODES
+    assert parameters is not None
+    assert parameters["universe"] == TOY_UNIVERSE
+    assert parameters["nodes"] == [
+        {
+            "label": node.class_iri.removeprefix(TOY),
+            "class_iri": node.class_iri,
+            "id": node.id,
+        }
+        for node in batch.nodes
+    ]
+
+
+async def test_missing_nodes_come_back_sorted(
+    toy_model: OntologyModel, toy_ontology_dir: Path
+) -> None:
+    batch = read_abox(toy_model, toy_ontology_dir)
+    client = RecordingGraphClient(
+        read_records=[
+            [
+                {"class_iri": TOY + "ToyGadget", "id": "beta-unit"},
+                {"class_iri": TOY + "ToyColor", "id": "red"},
+                {"class_iri": TOY + "ToyColor", "id": "blue"},
+            ]
+        ]
+    )
+
+    missing = await find_missing_seed_nodes(client, LabelMaterializer(toy_model), batch)
+
+    assert missing == [
+        NodeRef(class_iri=TOY + "ToyColor", id="blue"),
+        NodeRef(class_iri=TOY + "ToyColor", id="red"),
+        NodeRef(class_iri=TOY + "ToyGadget", id="beta-unit"),
+    ]
+
+
+async def test_no_missing_records_give_an_empty_list(
+    toy_model: OntologyModel, toy_ontology_dir: Path
+) -> None:
+    batch = read_abox(toy_model, toy_ontology_dir)
+
+    missing = await find_missing_seed_nodes(
+        RecordingGraphClient(), LabelMaterializer(toy_model), batch
+    )
+
+    assert missing == []
+
+
+def test_presence_statement_matches_on_label_universe_and_id() -> None:
+    assert "$([row.label, $universe])" in FIND_MISSING_NODES
+    assert "{id: row.id}" in FIND_MISSING_NODES
