@@ -19,6 +19,11 @@ from muon.ingestion.bulbapedia.species.run import (
     parse_species_pages,
     write_outputs,
 )
+from tests.unit.ingestion.bulbapedia.species.claim_summary import (
+    CHUNK_ANCHOR_PATTERNS,
+    EVOLUTION_ANCHOR_PATTERNS,
+    claims_by_anchor,
+)
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 PAGE_TYPE = "species"
@@ -162,9 +167,9 @@ def test_the_evolution_batch_resolves_species_of_other_pages(store: PageStore) -
     alpha = next(o for o in run.outputs if o.page.title == ALPHA)
     beta = next(o for o in run.outputs if o.page.title == BETA)
 
-    assert alpha.evolution_batch is not None
     assert [n.id for n in alpha.evolution_batch.owner_nodes] == ["alpha:beta"]
-    assert beta.evolution_batch is None
+    assert not beta.evolution_batch.owner_nodes
+    assert claims_by_anchor(beta.evolution_batch) == {"beta": EVOLUTION_ANCHOR_PATTERNS}
     assert run.report.evolution_species_stub_misses == 0
     assert run.report.abox_stub_misses == 0
     assert (run.report.evolutions_total, run.report.evolutions_structured) == (1, 1)
@@ -179,7 +184,7 @@ def test_a_title_run_keeps_the_requested_page_and_still_indexes_every_page(
 
     assert [o.page.title for o in run.outputs] == [ALPHA]
     assert [r.title for r in run.report.pages] == [ALPHA]
-    assert run.outputs[0].evolution_batch is not None
+    assert run.outputs[0].evolution_batch.owner_nodes
     assert run.report.evolution_species_stub_misses == 0
 
 
@@ -277,7 +282,10 @@ def test_outputs_are_written_with_sorted_keys_and_sorted_scope(
     assert data["species_batch"]["scope"] == sorted(data["species_batch"]["scope"])
     assert data["evolution_batch"]["scope"] == ["https://muon.dev/ns/pkmn#Evolution"]
     assert data["residue"][0]["id"] == "101:evolution:1"
-    assert json.loads((root / PAGE_OUTPUT_DIR / "102.json").read_text())["evolution_batch"] is None
+    beta = json.loads((root / PAGE_OUTPUT_DIR / "102.json").read_text())
+    assert beta["evolution_batch"]["scope"] == ["https://muon.dev/ns/pkmn#Evolution"]
+    assert [node["id"] for node in beta["evolution_batch"]["nodes"]] == ["beta"]
+    assert len(beta["evolution_batch"]["claims"]) == len(EVOLUTION_ANCHOR_PATTERNS)
     report = json.loads((root / REPORT_FILE_NAME).read_text(encoding="utf-8"))
     assert report["pages_failed"] == 1
 
@@ -361,19 +369,20 @@ def chunk_wikitexts(tmp_path: Path, **extras: str) -> PageStore:
     return build_store(tmp_path / "data", wikitexts)
 
 
-def test_a_page_with_chunk_sections_gets_a_chunk_batch_and_one_without_gets_none(
+def test_a_page_with_chunk_sections_gets_chunks_and_one_without_gets_anchors_and_claims(
     tmp_path: Path,
 ) -> None:
     run = run_parse(chunk_wikitexts(tmp_path, alpha=TRIVIA))
 
     alpha = next(o for o in run.outputs if o.page.title == ALPHA)
     beta = next(o for o in run.outputs if o.page.title == BETA)
-    assert alpha.chunk_batch is not None
-    assert beta.chunk_batch is None
     assert [n.id for n in alpha.chunk_batch.owner_nodes] == [
         "bulbapedia:pokemonspecies:alpha:trivia:1"
     ]
     assert "beta" in {n.id for n in alpha.chunk_batch.stub_nodes}
+    assert not beta.chunk_batch.owner_nodes
+    assert [n.id for n in beta.chunk_batch.stub_nodes] == ["beta"]
+    assert claims_by_anchor(beta.chunk_batch) == {"beta": CHUNK_ANCHOR_PATTERNS}
     assert run.report.pages_without_chunks == (BETA,)
 
 
@@ -388,6 +397,7 @@ def test_the_report_counts_chunks_per_class_aspect_and_dropped_template(tmp_path
     assert report.chunk_counts.edges["describes"] == 5
     assert report.chunk_counts.edges["fromWork"] == 2
     assert report.chunks_per_aspect == {"trivia": 3, "pokedex": 2}
+    assert report.chunk_counts.claims == {"describes": 2, "fromWork": 5, "mentionedIn": 5}
     assert [(t.name, t.count) for t in report.dropped_templates] == [
         ("zeta", 3),
         ("aniseries", 2),
@@ -435,6 +445,30 @@ def test_the_chunk_batch_is_written_and_a_second_run_is_identical(tmp_path: Path
     assert data["chunk_batch"]["scope"] == ["https://muon.dev/ns/core#TextChunk"]
     assert data["extract"]["chunks"]
     assert data["extract"]["dropped_templates"] == {"aniseries": 1, "roundy": 1}
-    assert json.loads((first / PAGE_OUTPUT_DIR / "102.json").read_text())["chunk_batch"] is None
+    beta = json.loads((first / PAGE_OUTPUT_DIR / "102.json").read_text())
+    assert [node["id"] for node in beta["chunk_batch"]["nodes"]] == ["beta"]
+    assert len(beta["chunk_batch"]["claims"]) == len(CHUNK_ANCHOR_PATTERNS)
     for relative in sorted(path.relative_to(first) for path in first.rglob("*.json")):
         assert (first / relative).read_bytes() == (second / relative).read_bytes()
+
+
+def test_the_report_counts_the_claims_of_each_pass_by_property(store: PageStore) -> None:
+    report = run_parse(store).report
+
+    assert report.species_counts.claims == {
+        name: 2
+        for name in (
+            "canLearn",
+            "hasAbility",
+            "hasType",
+            "inEggGroup",
+            "introducedIn",
+            "yieldsEv",
+            "hasLearnsetEntry",
+            "hasForm",
+            "fromSpecies",
+            "viaMachine",
+        )
+    }
+    assert report.evolution_counts.claims == {"evolvesTo": 2, "fromSpecies": 2, "requires": 1}
+    assert report.chunk_counts.claims == {"describes": 2}

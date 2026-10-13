@@ -78,7 +78,13 @@ from muon.ingestion.runner import (
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
-from tests.unit.ingestion.bulbapedia.species.claim_summary import ClaimPattern, claims_by_anchor
+from tests.unit.ingestion.bulbapedia.species.claim_summary import (
+    ENTRY_CLAIM_PATTERNS,
+    EVOLUTION_ANCHOR_PATTERNS,
+    REQUIRES_CLAIM_PATTERNS,
+    SPECIES_CLAIM_PATTERNS,
+    claims_by_anchor,
+)
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 STATS = BaseStats(hp=10, attack=55, defense=25, sp_attack=35, sp_defense=45, speed=95)
@@ -607,7 +613,6 @@ def build_index() -> SpeciesIndex:
 def test_evolution_batch_owns_the_evolutions_of_the_page(abox: AboxIndex) -> None:
     build = build_evolution_batch(build_diglett_extract(), abox, build_index())
 
-    assert build.batch is not None
     assert build.batch.scope == EVOLUTION_SCOPE
     assert (build.structured, build.total, build.notes) == (1, 1, ())
     (owner,) = build.batch.owner_nodes
@@ -633,7 +638,6 @@ def test_evolution_batch_owns_the_evolutions_of_the_page(abox: AboxIndex) -> Non
 
 def test_evolution_batch_compiles(abox: AboxIndex, model: OntologyModel) -> None:
     build = build_evolution_batch(build_diglett_extract(), abox, build_index())
-    assert build.batch is not None
 
     statements = build_statements(build.batch, WriteMode.UPSERT, LabelMaterializer(model))
 
@@ -646,6 +650,17 @@ def test_evolution_batch_compiles(abox: AboxIndex, model: OntologyModel) -> None
     ]
 
 
+def assert_batch_of_anchors_only(batch: GraphBatch, species_ids: set[str]) -> None:
+    """The batch of a page with no evolution: the page species as stubs, their claims, no owner."""
+    assert batch.scope == EVOLUTION_SCOPE
+    assert not batch.owner_nodes
+    assert {(n.class_iri, n.id) for n in batch.stub_nodes} == {
+        (POKEMON_SPECIES, species_id) for species_id in species_ids
+    }
+    assert batch.edges == ()
+    assert claims_by_anchor(batch) == dict.fromkeys(species_ids, EVOLUTION_ANCHOR_PATTERNS)
+
+
 def test_evolutions_of_other_pages_are_cross_checks_and_skipped(abox: AboxIndex) -> None:
     extract = build_extract(
         "Dugtrio (Pokémon)", build_dugtrio_extract().forms, evolutions=(level_26(),)
@@ -653,7 +668,8 @@ def test_evolutions_of_other_pages_are_cross_checks_and_skipped(abox: AboxIndex)
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert (build.batch, build.notes, build.total) == (None, (), 0)
+    assert (build.notes, build.total) == ((), 0)
+    assert_batch_of_anchors_only(build.batch, {"dugtrio"})
 
 
 def test_an_unknown_target_drops_the_evolution_and_creates_no_stub(abox: AboxIndex) -> None:
@@ -662,7 +678,7 @@ def test_an_unknown_target_drops_the_evolution_and_creates_no_stub(abox: AboxInd
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is None
+    assert_batch_of_anchors_only(build.batch, {"diglett"})
     assert [n.kind for n in build.notes] == [NoteKind.DROPPED_VALUE]
     assert "Missingno" in build.notes[0].detail
 
@@ -675,7 +691,6 @@ def test_a_cosmetic_form_reference_falls_back_to_the_base_id_and_is_noted(
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is not None
     assert build.batch.owner_nodes[0].id == "diglett:dugtrio"
     assert [n.kind for n in build.notes] == [NoteKind.REFERENCE_FALLBACK]
     assert "Sandy" in build.notes[0].detail
@@ -705,7 +720,6 @@ def test_an_unstructured_evolution_keeps_its_condition(abox: AboxIndex) -> None:
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is not None
     assert build.batch.owner_nodes[0].properties == {
         PKMN + "condition": "Level 20 (Attack > Defense)"
     }
@@ -734,7 +748,6 @@ def test_requirement_stubs_follow_their_role(
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is not None
     assert (stub_class, stub_id) in node_keys(build.batch)
     assert edge_properties(build.batch, REQUIRES, "diglett:dugtrio", stub_id) == {
         "role": role.value
@@ -753,7 +766,6 @@ def test_a_required_species_resolves_through_the_index(abox: AboxIndex) -> None:
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is not None
     assert edge_properties(build.batch, REQUIRES, "diglett:dugtrio", "dugtrio") == {
         "role": "partySpecies"
     }
@@ -771,7 +783,7 @@ def test_an_unknown_required_species_drops_the_evolution(abox: AboxIndex) -> Non
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is None
+    assert_batch_of_anchors_only(build.batch, {"diglett"})
     assert [n.kind for n in build.notes] == [NoteKind.DROPPED_VALUE]
 
 
@@ -785,25 +797,6 @@ def test_a_requirement_type_the_abox_lacks_fails_the_page(abox: AboxIndex) -> No
         build_evolution_batch(extract, abox, build_index())
 
 
-SPECIES_CLAIMS: set[ClaimPattern] = {
-    ("canLearn", "out", "Move", False),
-    ("hasAbility", "out", "Ability", False),
-    ("hasType", "out", "Type", False),
-    ("inEggGroup", "out", "EggGroup", False),
-    ("introducedIn", "out", "Generation", False),
-    ("yieldsEv", "out", "Stat", False),
-    ("hasLearnsetEntry", "out", "LearnsetEntry", True),
-    ("hasForm", "out", "PokemonSpecies", True),
-    ("fromSpecies", "in", "FormChange", True),
-}
-ENTRY_CLAIMS: set[ClaimPattern] = {("viaMachine", "out", "Machine", False)}
-CHANGE_CLAIMS: set[ClaimPattern] = {("requires", "out", None, False)}
-EVOLUTION_ANCHOR_PATTERNS: set[ClaimPattern] = {
-    ("evolvesTo", "out", "PokemonSpecies", False),
-    ("fromSpecies", "in", "Evolution", True),
-}
-
-
 def test_the_species_batch_claims_9_patterns_at_each_species_and_1_at_each_entry(
     abox: AboxIndex,
 ) -> None:
@@ -814,9 +807,9 @@ def test_the_species_batch_claims_9_patterns_at_each_species_and_1_at_each_entry
 
     assert len(entry_ids) == 4
     assert set(claims) == {"diglett", "diglett-alola", *entry_ids}
-    assert claims["diglett"] == claims["diglett-alola"] == SPECIES_CLAIMS
-    assert all(claims[entry_id] == ENTRY_CLAIMS for entry_id in entry_ids)
-    assert len(batch.claims) == 2 * len(SPECIES_CLAIMS) + len(entry_ids)
+    assert claims["diglett"] == claims["diglett-alola"] == SPECIES_CLAIM_PATTERNS
+    assert all(claims[entry_id] == ENTRY_CLAIM_PATTERNS for entry_id in entry_ids)
+    assert len(batch.claims) == 2 * len(SPECIES_CLAIM_PATTERNS) + len(entry_ids)
 
 
 def test_the_species_batch_claims_requires_at_each_form_change(abox: AboxIndex) -> None:
@@ -824,8 +817,8 @@ def test_the_species_batch_claims_requires_at_each_form_change(abox: AboxIndex) 
 
     claims = claims_by_anchor(batch)
 
-    assert claims["charizard:charizard-mega-x"] == CHANGE_CLAIMS
-    assert claims["charizard"] == claims["charizard-mega-x"] == SPECIES_CLAIMS
+    assert claims["charizard:charizard-mega-x"] == REQUIRES_CLAIM_PATTERNS
+    assert claims["charizard"] == claims["charizard-mega-x"] == SPECIES_CLAIM_PATTERNS
 
 
 def test_a_species_with_no_learnset_still_claims_its_patterns(abox: AboxIndex) -> None:
@@ -833,7 +826,7 @@ def test_a_species_with_no_learnset_still_claims_its_patterns(abox: AboxIndex) -
 
     batch = build_species_batch(extract, abox)
 
-    assert claims_by_anchor(batch) == {"dugtrio": SPECIES_CLAIMS}
+    assert claims_by_anchor(batch) == {"dugtrio": SPECIES_CLAIM_PATTERNS}
 
 
 def test_the_evolution_batch_claims_every_species_of_the_page_and_every_evolution(
@@ -841,11 +834,10 @@ def test_the_evolution_batch_claims_every_species_of_the_page_and_every_evolutio
 ) -> None:
     build = build_evolution_batch(build_diglett_extract(), abox, build_index())
 
-    assert build.batch is not None
     assert claims_by_anchor(build.batch) == {
         "diglett": EVOLUTION_ANCHOR_PATTERNS,
         "diglett-alola": EVOLUTION_ANCHOR_PATTERNS,
-        "diglett:dugtrio": CHANGE_CLAIMS,
+        "diglett:dugtrio": REQUIRES_CLAIM_PATTERNS,
     }
 
 

@@ -17,7 +17,9 @@ Each batch also claims the edge patterns its page owns, so a re-ingest deletes w
 page no longer gives. The claim tables below say which patterns each pass claims. The
 edges that a node id fixes (`teachesMove`, `inVersionGroup`, `toSpecies`, `describes`
 of a chunk and the `fromSpecies` of a change) are not claimed, since they cannot go
-stale. Passes 2 and 3 anchor their claims at a stub of every form of the page.
+stale. Passes 2 and 3 anchor their claims at a stub of every form of the page, and a
+page that gives no evolution or no chunk still gets that batch, with the anchors, their
+claims and no owner record, so a re-ingest deletes what the page gave before.
 
 This module knows the pkmn universe, as every ingestion module of a source does.
 """
@@ -281,10 +283,10 @@ class PageContext:
 
 @dataclass(frozen=True)
 class EvolutionBuild:
-    """The pass-2 batch of a page (`None` when it owns no evolution), what was dropped or
-    substituted, and how many of its evolutions a rule structured."""
+    """The pass-2 batch of a page (with no owner record when it owns no evolution), what was
+    dropped or substituted, and how many of its evolutions a rule structured."""
 
-    batch: GraphBatch | None
+    batch: GraphBatch
     notes: tuple[PageNote, ...]
     structured: int
     total: int
@@ -834,8 +836,6 @@ def build_evolution_batch(
         seen[evolution_id] = fact
         parts.append(built)
         notes.extend(ends[2])
-    if not parts:
-        return EvolutionBuild(batch=None, notes=tuple(notes), structured=0, total=0)
     structured = sum(fact.condition is None for fact in seen.values())
     anchors = build_page_anchors(extract, context)
     joined = join_parts([*parts, anchors])
@@ -867,9 +867,9 @@ class ChunkInputs:
 
 @dataclass(frozen=True)
 class ChunkBuild:
-    """The pass-3 batch of a page (`None` when it holds no chunk) and the notes."""
+    """The pass-3 batch of a page (with no owner record when it holds no chunk) and the notes."""
 
-    batch: GraphBatch | None
+    batch: GraphBatch
     notes: tuple[PageNote, ...]
 
 
@@ -1016,8 +1016,6 @@ def build_chunk_batch(extract: SpeciesPageExtract, inputs: ChunkInputs) -> Chunk
         mention_parts, mention_notes = build_mention_parts(fact, chunk, subject, context)
         notes.extend(mention_notes)
         parts.extend([*chunk_parts, mention_parts])
-    if not parts:
-        return ChunkBuild(batch=None, notes=tuple(notes))
     anchors = build_page_anchors(extract, context)
     joined = join_parts([*parts, anchors])
     claims = (

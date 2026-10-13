@@ -51,10 +51,10 @@ from muon.ingestion.runner import build_claim_rows, build_ids_by_label
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
-from tests.unit.ingestion.bulbapedia.species.claim_summary import claims_by_anchor
-from tests.unit.ingestion.bulbapedia.species.test_chunk_batches import (
-    ANCHOR_PATTERNS,
-    CHUNK_PATTERNS,
+from tests.unit.ingestion.bulbapedia.species.claim_summary import (
+    CHUNK_ANCHOR_PATTERNS,
+    CHUNK_CLAIM_PATTERNS,
+    claims_by_anchor,
 )
 
 pytestmark = pytest.mark.pages
@@ -428,6 +428,6 @@ def test_the_diglett_chunk_batch_claims_describes_at_both_forms_and_2_patterns_p
     claims = claims_by_anchor(diglett_chunks)
 
     assert len(find_edges(diglett_chunks, DESCRIBES)) == len(chunk_ids) == DIGLETT_CHUNK_COUNT
-    assert claims["diglett"] == claims["diglett-alola"] == ANCHOR_PATTERNS
-    assert all(claims[chunk_id] == CHUNK_PATTERNS for chunk_id in chunk_ids)
+    assert claims["diglett"] == claims["diglett-alola"] == CHUNK_ANCHOR_PATTERNS
+    assert all(claims[chunk_id] == CHUNK_CLAIM_PATTERNS for chunk_id in chunk_ids)
     assert len(diglett_chunks.claims) == 2 + 2 * len(chunk_ids)

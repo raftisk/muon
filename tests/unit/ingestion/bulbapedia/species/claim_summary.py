@@ -25,3 +25,28 @@ def claims_by_anchor(batch: GraphBatch) -> dict[str, set[ClaimPattern]]:
             )
         )
     return dict(patterns)
+
+
+# What each pass claims: the tables of the spec, as readable patterns.
+SPECIES_CLAIM_PATTERNS: set[ClaimPattern] = {
+    ("canLearn", "out", "Move", False),
+    ("hasAbility", "out", "Ability", False),
+    ("hasType", "out", "Type", False),
+    ("inEggGroup", "out", "EggGroup", False),
+    ("introducedIn", "out", "Generation", False),
+    ("yieldsEv", "out", "Stat", False),
+    ("hasLearnsetEntry", "out", "LearnsetEntry", True),
+    ("hasForm", "out", "PokemonSpecies", True),
+    ("fromSpecies", "in", "FormChange", True),
+}
+ENTRY_CLAIM_PATTERNS: set[ClaimPattern] = {("viaMachine", "out", "Machine", False)}
+REQUIRES_CLAIM_PATTERNS: set[ClaimPattern] = {("requires", "out", None, False)}
+EVOLUTION_ANCHOR_PATTERNS: set[ClaimPattern] = {
+    ("evolvesTo", "out", "PokemonSpecies", False),
+    ("fromSpecies", "in", "Evolution", True),
+}
+CHUNK_ANCHOR_PATTERNS: set[ClaimPattern] = {("describes", "in", "TextChunk", True)}
+CHUNK_CLAIM_PATTERNS: set[ClaimPattern] = {
+    ("fromWork", "out", "Version", False),
+    ("mentionedIn", "in", None, False),
+}
