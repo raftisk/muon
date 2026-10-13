@@ -2,6 +2,8 @@
 
 `seed_universe` reads the T-Box and `individuals/<prefix>.ttl`, then writes the
 batch in sync mode, so the graph mirrors the file after every run.
+`find_missing_seed_nodes` tells a later run which A-Box nodes the graph lacks, with
+1 read and no write.
 
 `read_abox` maps the A-Box with no knowledge of the universe:
 every typed subject becomes a node, every datatype literal a node property and
@@ -12,6 +14,7 @@ every object property value an edge. It collects every problem into one
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import LiteralString
 
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import RDF, RDFS, SKOS, XSD
@@ -37,6 +40,14 @@ IGNORED_PREDICATES = frozenset({str(RDFS.comment), str(SKOS.definition)})
 RESERVED_PREDICATES = frozenset({str(RDF.type), str(RDFS.label)})
 # Core properties that hold a list even when the A-Box gives 1 value.
 REPEATED_PROPERTIES = frozenset({"https://muon.dev/ns/core#aliases"})
+# Row keys must match `build_presence_rows`.
+FIND_MISSING_NODES: LiteralString = """
+UNWIND $nodes AS row
+OPTIONAL MATCH (n:$([row.label, $universe]) {id: row.id})
+WITH row, n
+WHERE n IS NULL
+RETURN row.class_iri AS class_iri, row.id AS id
+"""
 LITERAL_CONVERTERS: Mapping[URIRef | None, Callable[[Literal], PropertyValue]] = {
     None: str,
     XSD.string: str,
@@ -72,6 +83,29 @@ async def seed_universe(client: GraphClient, ontology_dir: Path, universe: str) 
     model = load_ontology_model(ontology_dir, universe)
     batch = read_abox(model, ontology_dir)
     return await Runner(client, LabelMaterializer(model)).write(batch, WriteMode.SYNC)
+
+
+async def find_missing_seed_nodes(
+    client: GraphClient, materializer: LabelMaterializer, abox: GraphBatch
+) -> list[NodeRef]:
+    """Return the A-Box nodes with no node in the graph, sorted by class IRI and `id`.
+
+    A node counts as present when one carries its asserted class label, the universe
+    label and its `id`. Properties and edges are not compared.
+    """
+    rows = [
+        {
+            "label": materializer.map_class_label(node.class_iri),
+            "class_iri": node.class_iri,
+            "id": node.id,
+        }
+        for node in abox.nodes
+    ]
+    records = await client.execute_read(
+        FIND_MISSING_NODES, {"universe": materializer.universe_label, "nodes": rows}
+    )
+    missing = [NodeRef(class_iri=record["class_iri"], id=record["id"]) for record in records]
+    return sorted(missing, key=lambda node_ref: (node_ref.class_iri, node_ref.id))
 
 
 def read_abox(model: OntologyModel, ontology_dir: Path) -> GraphBatch:

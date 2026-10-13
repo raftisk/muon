@@ -13,6 +13,14 @@ node of the page and is mentioned by the entities its typed templates name, so t
 holds species, move, ability, type and version stubs. A mention that resolves to nothing is
 noted and never fails the page.
 
+Each batch also claims the edge patterns its page owns, so a re-ingest deletes what the
+page no longer gives. The claim tables below say which patterns each pass claims. The
+edges that a node id fixes (`teachesMove`, `inVersionGroup`, `toSpecies`, `describes`
+of a chunk and the `fromSpecies` of a change) are not claimed, since they cannot go
+stale. Passes 2 and 3 anchor their claims at a stub of every form of the page, and a
+page that gives no evolution or no chunk still gets that batch, with the anchors, their
+claims and no owner record, so a re-ingest deletes what the page gave before.
+
 This module knows the pkmn universe, as every ingestion module of a source does.
 """
 
@@ -22,6 +30,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from muon.ingestion.batch import (
+    ClaimDirection,
+    EdgeClaim,
     EdgeRecord,
     GraphBatch,
     NodeRecord,
@@ -184,6 +194,50 @@ LEARNSET_SECTION = PATH_SEPARATOR.join(LEARNSET_PATH)
 EVOLUTION_SECTION = PATH_SEPARATOR.join(EVOLUTION_PATH)
 
 
+@dataclass(frozen=True)
+class ClaimRule:
+    """An edge pattern that a batch claims at every anchor of a class."""
+
+    property_iri: str
+    direction: ClaimDirection
+    other_class_iri: str | None
+    owns_other_end: bool
+
+
+OUT = ClaimDirection.OUT
+IN = ClaimDirection.IN
+
+SPECIES_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
+    POKEMON_SPECIES: (
+        ClaimRule(CAN_LEARN, OUT, MOVE, False),
+        ClaimRule(HAS_ABILITY, OUT, ABILITY, False),
+        ClaimRule(HAS_TYPE, OUT, TYPE, False),
+        ClaimRule(IN_EGG_GROUP, OUT, EGG_GROUP, False),
+        ClaimRule(INTRODUCED_IN, OUT, GENERATION, False),
+        ClaimRule(YIELDS_EV, OUT, STAT, False),
+        ClaimRule(HAS_LEARNSET_ENTRY, OUT, LEARNSET_ENTRY, True),
+        ClaimRule(HAS_FORM, OUT, POKEMON_SPECIES, True),
+        ClaimRule(FROM_SPECIES, IN, FORM_CHANGE, True),
+    ),
+    LEARNSET_ENTRY: (ClaimRule(VIA_MACHINE, OUT, MACHINE, False),),
+    FORM_CHANGE: (ClaimRule(REQUIRES, OUT, None, False),),
+}
+EVOLUTION_ANCHOR_CLAIMS: tuple[ClaimRule, ...] = (
+    ClaimRule(EVOLVES_TO, OUT, POKEMON_SPECIES, False),
+    ClaimRule(FROM_SPECIES, IN, EVOLUTION, True),
+)
+EVOLUTION_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
+    EVOLUTION: (ClaimRule(REQUIRES, OUT, None, False),),
+}
+CHUNK_ANCHOR_CLAIMS: tuple[ClaimRule, ...] = (ClaimRule(DESCRIBES, IN, TEXT_CHUNK, True),)
+CHUNK_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
+    TEXT_CHUNK: (
+        ClaimRule(FROM_WORK, OUT, VERSION, False),
+        ClaimRule(MENTIONED_IN, IN, None, False),
+    ),
+}
+
+
 class BatchBuildError(Exception):
     """A page names something the A-Box lacks. The message names all 4 fields."""
 
@@ -229,10 +283,10 @@ class PageContext:
 
 @dataclass(frozen=True)
 class EvolutionBuild:
-    """The pass-2 batch of a page (`None` when it owns no evolution), what was dropped or
-    substituted, and how many of its evolutions a rule structured."""
+    """The pass-2 batch of a page (with no owner record when it owns no evolution), what was
+    dropped or substituted, and how many of its evolutions a rule structured."""
 
-    batch: GraphBatch | None
+    batch: GraphBatch
     notes: tuple[PageNote, ...]
     structured: int
     total: int
@@ -537,15 +591,48 @@ def join_parts(parts: Iterable[Parts]) -> Parts:
     )
 
 
-def assemble_batch(scope: frozenset[str], parts: Parts) -> GraphBatch:
+def build_claims(anchors: Iterable[NodeRef], rules: Sequence[ClaimRule]) -> tuple[EdgeClaim, ...]:
+    """Return every rule as a claim at every anchor, anchor by anchor."""
+    return tuple(
+        EdgeClaim(
+            anchor=anchor,
+            property_iri=rule.property_iri,
+            direction=rule.direction,
+            other_class_iri=rule.other_class_iri,
+            owns_other_end=rule.owns_other_end,
+        )
+        for anchor in anchors
+        for rule in rules
+    )
+
+
+def build_owner_claims(
+    nodes: Iterable[NodeRecord], rules_by_class: Mapping[str, tuple[ClaimRule, ...]]
+) -> tuple[EdgeClaim, ...]:
+    """Claim, at each owner record, the rules of its class. A class with no rules claims nothing."""
+    return tuple(
+        claim
+        for node in nodes
+        for claim in build_claims([node.node_ref], rules_by_class.get(node.class_iri, ()))
+    )
+
+
+def list_owner_records(parts: Parts, scope: frozenset[str]) -> list[NodeRecord]:
+    return [node for node in parts.nodes if node.class_iri in scope]
+
+
+def assemble_batch(
+    scope: frozenset[str], parts: Parts, claims: Iterable[EdgeClaim] = ()
+) -> GraphBatch:
     """Build a sorted batch. A node or edge repeated across parts is kept once, and an owner
-    record wins over a stub of the same key."""
+    record wins over a stub of the same key. A repeated claim is kept once."""
     nodes: dict[NodeRef, NodeRecord] = {}
     for node in parts.nodes:
         kept = nodes.get(node.node_ref)
         if kept is None or (node.class_iri in scope and kept.class_iri not in scope):
             nodes[node.node_ref] = node
     edges = {(e.property_iri, e.start, e.end): e for e in reversed(parts.edges)}
+    claims_by_key = {claim.sort_key: claim for claim in reversed(tuple(claims))}
     return GraphBatch(
         universe=UNIVERSE,
         scope=scope,
@@ -562,6 +649,7 @@ def assemble_batch(scope: frozenset[str], parts: Parts) -> GraphBatch:
                 ),
             )
         ),
+        claims=tuple(claims_by_key[key] for key in sorted(claims_by_key)),
     )
 
 
@@ -579,7 +667,11 @@ def build_species_batch(extract: SpeciesPageExtract, abox: AboxIndex) -> GraphBa
             parts.append(build_form_edge(base, form, species))
     parts.append(build_learnset_parts(extract, records, context))
     parts.extend(build_form_change_parts(change, records) for change in extract.form_changes)
-    return assemble_batch(SPECIES_SCOPE, join_parts(parts))
+    joined = join_parts(parts)
+    owner_claims = build_owner_claims(
+        list_owner_records(joined, SPECIES_SCOPE), SPECIES_OWNER_CLAIMS
+    )
+    return assemble_batch(SPECIES_SCOPE, joined, owner_claims)
 
 
 def resolve_ends(
@@ -622,6 +714,11 @@ def build_species_stub(context: PageContext, species_id: str) -> NodeRecord:
     return NodeRecord(
         class_iri=POKEMON_SPECIES, id=species_id, name=context.species.names[species_id]
     )
+
+
+def build_page_anchors(extract: SpeciesPageExtract, context: PageContext) -> Parts:
+    """Return a species stub of every form of the page, the anchors of passes 2 and 3."""
+    return Parts(nodes=tuple(build_species_stub(context, form.id) for form in extract.forms))
 
 
 def build_requirement_parts(
@@ -739,10 +836,14 @@ def build_evolution_batch(
         seen[evolution_id] = fact
         parts.append(built)
         notes.extend(ends[2])
-    if not parts:
-        return EvolutionBuild(batch=None, notes=tuple(notes), structured=0, total=0)
     structured = sum(fact.condition is None for fact in seen.values())
-    batch = assemble_batch(EVOLUTION_SCOPE, join_parts(parts))
+    anchors = build_page_anchors(extract, context)
+    joined = join_parts([*parts, anchors])
+    claims = (
+        *build_claims([anchor.node_ref for anchor in anchors.nodes], EVOLUTION_ANCHOR_CLAIMS),
+        *build_owner_claims(list_owner_records(joined, EVOLUTION_SCOPE), EVOLUTION_OWNER_CLAIMS),
+    )
+    batch = assemble_batch(EVOLUTION_SCOPE, joined, claims)
     return EvolutionBuild(batch=batch, notes=tuple(notes), structured=structured, total=len(seen))
 
 
@@ -766,9 +867,9 @@ class ChunkInputs:
 
 @dataclass(frozen=True)
 class ChunkBuild:
-    """The pass-3 batch of a page (`None` when it holds no chunk) and the notes."""
+    """The pass-3 batch of a page (with no owner record when it holds no chunk) and the notes."""
 
-    batch: GraphBatch | None
+    batch: GraphBatch
     notes: tuple[PageNote, ...]
 
 
@@ -915,6 +1016,10 @@ def build_chunk_batch(extract: SpeciesPageExtract, inputs: ChunkInputs) -> Chunk
         mention_parts, mention_notes = build_mention_parts(fact, chunk, subject, context)
         notes.extend(mention_notes)
         parts.extend([*chunk_parts, mention_parts])
-    if not parts:
-        return ChunkBuild(batch=None, notes=tuple(notes))
-    return ChunkBuild(batch=assemble_batch(CHUNK_SCOPE, join_parts(parts)), notes=tuple(notes))
+    anchors = build_page_anchors(extract, context)
+    joined = join_parts([*parts, anchors])
+    claims = (
+        *build_claims([anchor.node_ref for anchor in anchors.nodes], CHUNK_ANCHOR_CLAIMS),
+        *build_owner_claims(list_owner_records(joined, CHUNK_SCOPE), CHUNK_OWNER_CLAIMS),
+    )
+    return ChunkBuild(batch=assemble_batch(CHUNK_SCOPE, joined, claims), notes=tuple(notes))

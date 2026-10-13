@@ -40,6 +40,12 @@ from muon.ingestion.runner import WriteMode, build_statements
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
+from tests.unit.ingestion.bulbapedia.species.claim_summary import (
+    CHUNK_ANCHOR_PATTERNS,
+    CHUNK_CLAIM_PATTERNS,
+    claims_by_anchor,
+)
+from tests.unit.ingestion.bulbapedia.species.test_batches import build_facts
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 SOURCE_URL_VALUE = (
@@ -79,12 +85,18 @@ def build_fact(text: str = "Diglett digs.", **fields: object) -> ChunkFact:
     return ChunkFact.model_validate({**values, **fields})
 
 
+DIGLETT_FORMS = (
+    build_facts("diglett", "Diglett"),
+    build_facts("diglett-alola", "Alolan Diglett", form_index=2, is_default=False),
+)
+
+
 def build_extract(*chunks: ChunkFact) -> SpeciesPageExtract:
     return SpeciesPageExtract(
         title="Diglett (Pokémon)",
         page_id=2482,
         revision_id=1,
-        forms=(),
+        forms=DIGLETT_FORMS,
         candidates=(),
         learnset=(),
         form_changes=(),
@@ -97,7 +109,6 @@ def build_extract(*chunks: ChunkFact) -> SpeciesPageExtract:
 
 def build_batch(inputs: ChunkInputs, *chunks: ChunkFact) -> GraphBatch:
     batch = build_chunk_batch(build_extract(*chunks), inputs).batch
-    assert batch is not None
     return batch
 
 
@@ -278,7 +289,6 @@ def test_an_unknown_species_is_noted_with_no_edge_and_no_stub(inputs: ChunkInput
 
     build = build_chunk_build(inputs, fact)
 
-    assert build.batch is not None
     assert edges_of(build.batch, MENTIONED_IN) == []
     assert "nidoran" not in {node.id for node in build.batch.nodes}
     (note,) = build.notes
@@ -295,7 +305,6 @@ def test_an_unknown_type_is_noted_and_does_not_fail_the_page(
 
     build = build_chunk_build(inputs, fact)
 
-    assert build.batch is not None
     assert edges_of(build.batch, MENTIONED_IN) == []
     (note,) = build.notes
     assert note.detail == "{{" + template + "|Shadow}} names no A-Box Type"
@@ -315,7 +324,6 @@ def test_a_move_target_with_no_letter_is_noted_not_failed(inputs: ChunkInputs) -
 
     build = build_chunk_build(inputs, fact)
 
-    assert build.batch is not None
     assert [note.kind for note in build.notes] == [NoteKind.UNRESOLVED_MENTION]
 
 
@@ -335,7 +343,6 @@ def pokedex_fact(versions: tuple[str, ...], text: str = "Entry text.") -> ChunkF
 def test_an_unknown_version_gets_no_edge_and_a_note(inputs: ChunkInputs) -> None:
     build = build_chunk_build(inputs, pokedex_fact(("Gold", "Pokémon Mansion")))
 
-    assert build.batch is not None
     assert edges_of(build.batch, FROM_WORK)[0][1] == "gold"
     assert len(edges_of(build.batch, FROM_WORK)) == 1
     (note,) = build.notes
@@ -346,7 +353,6 @@ def test_an_unknown_version_gets_no_edge_and_a_note(inputs: ChunkInputs) -> None
 def test_a_pokedex_chunk_with_no_known_version_is_dropped_with_a_note(inputs: ChunkInputs) -> None:
     build = build_chunk_build(inputs, pokedex_fact(("Pokémon Mansion",)), build_fact("Kept."))
 
-    assert build.batch is not None
     assert [node.id for node in build.batch.owner_nodes] == [
         "bulbapedia:pokemonspecies:diglett:biology:1"
     ]
@@ -354,17 +360,31 @@ def test_a_pokedex_chunk_with_no_known_version_is_dropped_with_a_note(inputs: Ch
     assert note.detail == "Pokémon Mansion is no A-Box Version; row dropped"
 
 
-def test_a_page_without_a_chunk_has_no_batch(inputs: ChunkInputs) -> None:
+def assert_batch_of_anchors_only(batch: GraphBatch) -> None:
+    """The batch of a page with no chunk: the page species as stubs, their claims, no owner."""
+    assert batch.scope == CHUNK_SCOPE
+    assert not batch.owner_nodes
+    assert {node.id for node in batch.stub_nodes} == {"diglett", "diglett-alola"}
+    assert batch.edges == ()
+    assert claims_by_anchor(batch) == {
+        "diglett": CHUNK_ANCHOR_PATTERNS,
+        "diglett-alola": CHUNK_ANCHOR_PATTERNS,
+    }
+
+
+def test_a_page_without_a_chunk_gets_a_batch_of_anchors_and_claims(inputs: ChunkInputs) -> None:
     build = build_chunk_build(inputs)
 
-    assert build.batch is None
+    assert_batch_of_anchors_only(build.batch)
     assert build.notes == ()
 
 
-def test_a_page_whose_chunks_are_all_dropped_has_no_batch(inputs: ChunkInputs) -> None:
+def test_a_page_whose_chunks_are_all_dropped_gets_a_batch_of_anchors_and_claims(
+    inputs: ChunkInputs,
+) -> None:
     build = build_chunk_build(inputs, pokedex_fact(("Pokémon Mansion",)))
 
-    assert build.batch is None
+    assert_batch_of_anchors_only(build.batch)
     assert len(build.notes) == 1
 
 
@@ -426,3 +446,16 @@ def test_chunk_properties_are_the_core_text_properties_only(inputs: ChunkInputs)
     keys = {key for node in batch.owner_nodes for key in node.properties}
 
     assert keys == {TEXT, ASPECT, SECTION, SOURCE_URL, SOURCE}
+
+
+def test_a_chunk_batch_claims_describes_at_every_form_and_two_patterns_at_each_chunk(
+    inputs: ChunkInputs,
+) -> None:
+    batch = build_batch(inputs, build_fact("One."), pokedex_fact(("Gold",)))
+
+    chunk_ids = {node.id for node in batch.owner_nodes}
+    assert len(chunk_ids) == 2
+    claims = claims_by_anchor(batch)
+    assert set(claims) == {"diglett", "diglett-alola", *chunk_ids}
+    assert claims["diglett"] == claims["diglett-alola"] == CHUNK_ANCHOR_PATTERNS
+    assert all(claims[chunk_id] == CHUNK_CLAIM_PATTERNS for chunk_id in chunk_ids)

@@ -1,11 +1,9 @@
 """Runner writes of stubs and edge properties, against the live Neo4j in `.env`.
 
-Every test writes `muontoy` nodes only, and the `toy_runner` fixture purges that
+Every test writes `muontoy` nodes only, and the shared `toy_runner` fixture purges that
 universe afterwards.
 """
 
-from collections.abc import AsyncIterator
-from pathlib import Path
 from typing import Any, LiteralString
 
 import pytest
@@ -13,9 +11,7 @@ import pytest
 from muon.graph import Neo4jGraphClient
 from muon.ingestion.batch import EdgeRecord, GraphBatch, NodeRecord, PropertyValue
 from muon.ingestion.runner import Runner, WriteMode
-from muon.ontology.materializer import LabelMaterializer
-from muon.ontology.model import load_ontology_model
-from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
+from tests.fixtures.toy_ontology import TOY_UNIVERSE
 
 pytestmark = pytest.mark.integration
 
@@ -35,14 +31,6 @@ READ_COLOR_EDGE: LiteralString = """
 MATCH (:$($universe) {id: $start_id})-[r:HAS_COLOR]->(:$($universe) {id: $end_id})
 RETURN properties(r) AS properties
 """
-
-
-@pytest.fixture
-async def toy_runner(graph_client: Neo4jGraphClient, tmp_path: Path) -> AsyncIterator[Runner]:
-    model = load_ontology_model(copy_toy_ontology(tmp_path), TOY_UNIVERSE)
-    runner = Runner(graph_client, LabelMaterializer(model))
-    yield runner
-    await runner.purge()
 
 
 async def read_node(client: Neo4jGraphClient, label: str, node_id: str) -> dict[str, Any]:

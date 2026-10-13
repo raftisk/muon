@@ -1,13 +1,16 @@
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from muon.graph import WriteSummary
 from muon.ingestion import runner
-from muon.ingestion.batch import EdgeRecord, GraphBatch, NodeRecord
+from muon.ingestion.batch import ClaimDirection, EdgeClaim, EdgeRecord, GraphBatch, NodeRecord
 from muon.ingestion.runner import (
+    PURGE_BATCH_SIZE,
     Runner,
     WriteMode,
+    build_claim_rows,
     build_edge_rows,
     build_ids_by_label,
     build_node_rows,
@@ -17,7 +20,7 @@ from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import load_ontology_model
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
-from tests.unit.ingestion.recording_client import RecordingGraphClient
+from tests.unit.ingestion.recording_client import EMPTY_SUMMARY, RecordingGraphClient
 
 TOY_SUMMARY = WriteSummary(
     nodes_created=1,
@@ -31,8 +34,10 @@ TOY_SUMMARY = WriteSummary(
 SYNC_STATEMENT_COUNT = 4
 TOY = "https://muon.dev/ns/muontoy#"
 TOY_GADGET = TOY + "ToyGadget"
+TOY_WIDGET = TOY + "ToyWidget"
 TOY_COLOR = TOY + "ToyColor"
 TOY_HAS_COLOR = TOY + "hasColor"
+TOY_PAIRS_WITH = TOY + "pairsWith"
 
 
 @pytest.fixture(scope="module")
@@ -172,19 +177,39 @@ async def test_other_universe_batch_raises(materializer: LabelMaterializer) -> N
     assert client.calls == []
 
 
-async def test_purge_sends_the_universe_label(materializer: LabelMaterializer) -> None:
-    client = RecordingGraphClient(TOY_SUMMARY)
+def build_deleted_summary(nodes_deleted: int) -> WriteSummary:
+    return replace(
+        EMPTY_SUMMARY, nodes_deleted=nodes_deleted, relationships_deleted=nodes_deleted * 2
+    )
+
+
+async def test_purge_sends_the_universe_label_until_a_call_deletes_nothing(
+    materializer: LabelMaterializer,
+) -> None:
+    summaries = [build_deleted_summary(count) for count in (3, 2, 0)]
+    client = RecordingGraphClient(summaries=summaries)
+
+    summary = await Runner(client, materializer).purge(batch_size=3)
+
+    assert client.writes == [runner.PURGE_UNIVERSE] * 3
+    assert client.batches == []
+    assert client.write_parameters == [{"universe": TOY_UNIVERSE, "batch_size": 3}] * 3
+    assert summary == build_deleted_summary(5)
+
+
+async def test_purge_of_an_empty_universe_makes_one_call(materializer: LabelMaterializer) -> None:
+    client = RecordingGraphClient()
 
     summary = await Runner(client, materializer).purge()
 
     assert client.writes == [runner.PURGE_UNIVERSE]
-    assert client.batches == []
-    assert client.write_parameters == [{"universe": TOY_UNIVERSE}]
-    assert summary == TOY_SUMMARY
+    assert client.write_parameters == [{"universe": TOY_UNIVERSE, "batch_size": PURGE_BATCH_SIZE}]
+    assert summary == EMPTY_SUMMARY
 
 
-def test_purge_statement_takes_the_label_as_parameter_and_keeps_the_schema() -> None:
+def test_purge_statement_takes_the_label_and_size_as_parameters_and_keeps_the_schema() -> None:
     assert "$universe" in runner.PURGE_UNIVERSE
+    assert "LIMIT $batch_size" in runner.PURGE_UNIVERSE
     assert "DROP" not in runner.PURGE_UNIVERSE
     assert "CONSTRAINT" not in runner.PURGE_UNIVERSE
 
@@ -267,3 +292,256 @@ async def test_upsert_write_ensures_stub_class_constraints(
 
     assert report.constraints_ensured == 2
     assert any("id_unique_ToyColor" in write for write in client.writes)
+
+
+def build_claim_batch(
+    *claims: EdgeClaim, scope: frozenset[str] = frozenset({TOY_WIDGET})
+) -> GraphBatch:
+    """Return a batch of gadget `alpha`, widget `w1`, gadget `beta` and 2 colors.
+
+    The default scope owns the widget only, so the rest are stubs.
+
+    Edges: alpha has red and blue, alpha pairs with w1 and with beta, w1 has red.
+    """
+    alpha = NodeRecord(class_iri=TOY_GADGET, id="alpha", name="Alpha")
+    widget = NodeRecord(class_iri=TOY_WIDGET, id="w1", name="W1")
+    beta = NodeRecord(class_iri=TOY_GADGET, id="beta", name="Beta")
+    red = NodeRecord(class_iri=TOY_COLOR, id="red", name="Red")
+    blue = NodeRecord(class_iri=TOY_COLOR, id="blue", name="Blue")
+    edges = (
+        EdgeRecord(property_iri=TOY_HAS_COLOR, start=alpha.node_ref, end=red.node_ref),
+        EdgeRecord(property_iri=TOY_HAS_COLOR, start=alpha.node_ref, end=blue.node_ref),
+        EdgeRecord(property_iri=TOY_PAIRS_WITH, start=alpha.node_ref, end=widget.node_ref),
+        EdgeRecord(property_iri=TOY_PAIRS_WITH, start=alpha.node_ref, end=beta.node_ref),
+        EdgeRecord(property_iri=TOY_HAS_COLOR, start=widget.node_ref, end=red.node_ref),
+    )
+    return GraphBatch(
+        universe=TOY_UNIVERSE,
+        scope=scope,
+        nodes=(alpha, widget, beta, red, blue),
+        edges=edges,
+        claims=claims,
+    )
+
+
+ALPHA = NodeRecord(class_iri=TOY_GADGET, id="alpha", name="Alpha").node_ref
+COLOR_CLAIM = EdgeClaim(
+    anchor=ALPHA,
+    property_iri=TOY_HAS_COLOR,
+    direction=ClaimDirection.OUT,
+    other_class_iri=TOY_COLOR,
+)
+WIDGET_CLAIM = EdgeClaim(
+    anchor=ALPHA,
+    property_iri=TOY_PAIRS_WITH,
+    direction=ClaimDirection.IN,
+    other_class_iri=TOY_WIDGET,
+    owns_other_end=True,
+)
+
+
+def test_prune_statements_come_before_merges(materializer: LabelMaterializer) -> None:
+    batch = build_claim_batch(WIDGET_CLAIM, COLOR_CLAIM)
+
+    statements = build_statements(batch, WriteMode.UPSERT, materializer)
+
+    assert [statement.query for statement in statements] == [
+        runner.PRUNE_CLAIMED_OUT,
+        runner.PRUNE_CLAIMED_IN,
+        runner.MERGE_NODES_UPSERT,
+        runner.MERGE_STUBS,
+        runner.MERGE_EDGES_UPSERT,
+    ]
+
+
+def test_prune_statements_get_only_their_parameters(materializer: LabelMaterializer) -> None:
+    batch = build_claim_batch(COLOR_CLAIM)
+
+    prune = build_statements(batch, WriteMode.UPSERT, materializer)[0]
+
+    assert set(prune.parameters) == {"universe", "claims", "owner_ids_by_label"}
+    assert prune.parameters["universe"] == TOY_UNIVERSE
+    assert prune.parameters["owner_ids_by_label"] == {"ToyWidget": ["w1"]}
+
+
+def test_direction_without_claims_sends_no_statement(materializer: LabelMaterializer) -> None:
+    only_in = build_statements(build_claim_batch(WIDGET_CLAIM), WriteMode.UPSERT, materializer)
+    only_out = build_statements(build_claim_batch(COLOR_CLAIM), WriteMode.UPSERT, materializer)
+
+    assert only_in[0].query is runner.PRUNE_CLAIMED_IN
+    assert runner.PRUNE_CLAIMED_OUT not in [statement.query for statement in only_in]
+    assert only_out[0].query is runner.PRUNE_CLAIMED_OUT
+    assert runner.PRUNE_CLAIMED_IN not in [statement.query for statement in only_out]
+
+
+def test_batch_without_claims_compiles_as_before(materializer: LabelMaterializer) -> None:
+    statements = build_statements(build_claim_batch(), WriteMode.UPSERT, materializer)
+
+    assert [statement.query for statement in statements] == [
+        runner.MERGE_NODES_UPSERT,
+        runner.MERGE_STUBS,
+        runner.MERGE_EDGES_UPSERT,
+    ]
+
+
+def test_claim_row_keeps_the_other_ends_of_matching_edges(materializer: LabelMaterializer) -> None:
+    batch = build_claim_batch(COLOR_CLAIM)
+
+    rows = build_claim_rows(batch, materializer, ClaimDirection.OUT)
+
+    assert rows == [
+        {
+            "anchor_label": "ToyGadget",
+            "anchor_id": "alpha",
+            "type": "HAS_COLOR",
+            "other_label": "ToyColor",
+            "owns_other_end": False,
+            "kept": [{"label": "ToyColor", "id": "red"}, {"label": "ToyColor", "id": "blue"}],
+        }
+    ]
+
+
+def test_claim_row_for_any_class_has_null_other_label(materializer: LabelMaterializer) -> None:
+    claim = COLOR_CLAIM.model_copy(update={"other_class_iri": None})
+
+    rows = build_claim_rows(build_claim_batch(claim), materializer, ClaimDirection.OUT)
+
+    assert rows[0]["other_label"] is None
+    assert rows[0]["kept"] == [
+        {"label": "ToyColor", "id": "red"},
+        {"label": "ToyColor", "id": "blue"},
+    ]
+
+
+def test_claim_row_kept_follows_the_class_closure(materializer: LabelMaterializer) -> None:
+    claim = EdgeClaim(
+        anchor=ALPHA,
+        property_iri=TOY_PAIRS_WITH,
+        direction=ClaimDirection.OUT,
+        other_class_iri=TOY_GADGET,
+    )
+
+    rows = build_claim_rows(build_claim_batch(claim), materializer, ClaimDirection.OUT)
+
+    # w1 is a ToyWidget, which carries the ToyGadget label; beta is a ToyGadget.
+    assert rows[0]["kept"] == [
+        {"label": "ToyWidget", "id": "w1"},
+        {"label": "ToyGadget", "id": "beta"},
+    ]
+
+
+def test_claim_row_in_direction_keeps_the_start_nodes(materializer: LabelMaterializer) -> None:
+    claim = EdgeClaim(
+        anchor=NodeRecord(class_iri=TOY_COLOR, id="red", name="Red").node_ref,
+        property_iri=TOY_HAS_COLOR,
+        direction=ClaimDirection.IN,
+        other_class_iri=TOY_GADGET,
+    )
+
+    rows = build_claim_rows(build_claim_batch(claim), materializer, ClaimDirection.IN)
+
+    assert rows[0]["kept"] == [
+        {"label": "ToyGadget", "id": "alpha"},
+        {"label": "ToyWidget", "id": "w1"},
+    ]
+
+
+def test_claim_row_without_matching_edges_keeps_nothing(materializer: LabelMaterializer) -> None:
+    claim = EdgeClaim(
+        anchor=NodeRecord(class_iri=TOY_GADGET, id="beta", name="Beta").node_ref,
+        property_iri=TOY_HAS_COLOR,
+        direction=ClaimDirection.OUT,
+        other_class_iri=TOY_COLOR,
+    )
+
+    rows = build_claim_rows(build_claim_batch(claim), materializer, ClaimDirection.OUT)
+
+    assert rows[0]["kept"] == []
+
+
+def test_prune_statements_differ_only_in_the_arrow() -> None:
+    assert "]->(other" in runner.PRUNE_CLAIMED_OUT
+    assert "<-[r" in runner.PRUNE_CLAIMED_IN
+    assert runner.PRUNE_CLAIMED_OUT.endswith(runner.PRUNE_CLAIMED_TAIL)
+    assert runner.PRUNE_CLAIMED_IN.endswith(runner.PRUNE_CLAIMED_TAIL)
+
+
+async def test_sync_write_with_claims_raises_before_any_call(
+    materializer: LabelMaterializer,
+) -> None:
+    client = RecordingGraphClient()
+    scope = frozenset({TOY_GADGET, TOY_WIDGET, TOY_COLOR})
+    batch = build_claim_batch(COLOR_CLAIM, scope=scope)
+    message = f"Sync mode takes no claims: {TOY_HAS_COLOR} at {TOY_GADGET} 'alpha'"
+
+    with pytest.raises(ValueError, match=message):
+        await Runner(client, materializer).write(batch, WriteMode.SYNC)
+
+    assert client.calls == []
+
+
+async def test_write_can_skip_the_constraint_step(materializer: LabelMaterializer) -> None:
+    client = RecordingGraphClient(TOY_SUMMARY)
+
+    report = await Runner(client, materializer).write(
+        build_claim_batch(COLOR_CLAIM), WriteMode.UPSERT, should_ensure_constraints=False
+    )
+
+    assert client.writes == []
+    assert len(client.batches) == 1
+    assert report.constraints_ensured == 0
+    assert report.nodes_created == TOY_SUMMARY.nodes_created * len(client.batches[0])
+
+
+async def test_ensure_constraints_returns_the_class_count(materializer: LabelMaterializer) -> None:
+    client = RecordingGraphClient()
+
+    ensured = await Runner(client, materializer).ensure_constraints(
+        [TOY_GADGET, TOY_COLOR, TOY_GADGET]
+    )
+
+    assert ensured == 2
+    assert any("id_unique_ToyGadget" in write for write in client.writes)
+    assert any("id_unique_ToyColor" in write for write in client.writes)
+
+
+async def test_count_universe_sorts_the_counts_by_name(materializer: LabelMaterializer) -> None:
+    client = RecordingGraphClient(
+        read_records=[
+            [{"label": "ToyGadget", "count": 4}, {"label": "Entity", "count": 6}],
+            [{"type": "PAIRS_WITH", "count": 2}, {"type": "HAS_COLOR", "count": 3}],
+        ]
+    )
+
+    census = await Runner(client, materializer).count_universe()
+
+    assert list(census.labels.items()) == [("Entity", 6), ("ToyGadget", 4)]
+    assert list(census.relationship_types.items()) == [("HAS_COLOR", 3), ("PAIRS_WITH", 2)]
+    assert client.reads == [
+        (runner.COUNT_LABELS, {"universe": TOY_UNIVERSE}),
+        (runner.COUNT_RELATIONSHIP_TYPES, {"universe": TOY_UNIVERSE}),
+    ]
+
+
+async def test_count_universe_of_an_empty_universe_is_empty(
+    materializer: LabelMaterializer,
+) -> None:
+    census = await Runner(RecordingGraphClient(), materializer).count_universe()
+
+    assert census.labels == {}
+    assert census.relationship_types == {}
+
+
+def test_add_summaries_sums_every_field() -> None:
+    total = runner.add_summaries([TOY_SUMMARY, TOY_SUMMARY, EMPTY_SUMMARY])
+
+    assert total == WriteSummary(
+        nodes_created=2,
+        nodes_deleted=4,
+        relationships_created=6,
+        relationships_deleted=8,
+        labels_added=10,
+        labels_removed=12,
+        properties_set=14,
+    )
+    assert runner.add_summaries([]) == EMPTY_SUMMARY

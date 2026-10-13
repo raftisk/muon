@@ -4,12 +4,15 @@ A test that needs a page the cache lacks skips with the fetch hint, as on a fres
 """
 
 from collections.abc import Callable
+from pathlib import Path
 
 import pytest
 
 from muon.ingestion.bulbapedia.pages import FETCH_HINT, Page, PageStore
+from muon.ingestion.bulbapedia.species import forms
 from muon.ingestion.bulbapedia.species.extract import SpeciesPageExtract
 from muon.ingestion.bulbapedia.species.page import parse_species_page
+from tests.unit.ingestion.bulbapedia.species.synthetic_pages import build_store, default_wikitexts
 
 SPECIES = "species"
 
@@ -80,3 +83,15 @@ def pilot_extracts(read_pinned_page: Callable[[str], Page]) -> dict[str, Species
         assert extract is not None, f"{title} has no Pokémon Infobox"
         extracts[title] = extract
     return extracts
+
+
+@pytest.fixture
+def no_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The committed overrides name real pages, which the synthetic store lacks."""
+    monkeypatch.setattr(forms, "FORM_OVERRIDES", {})
+
+
+@pytest.fixture
+def store(tmp_path: Path, no_overrides: None) -> PageStore:
+    """The synthetic store of `synthetic_pages`, with the overrides switched off."""
+    return build_store(tmp_path / "data", default_wikitexts())

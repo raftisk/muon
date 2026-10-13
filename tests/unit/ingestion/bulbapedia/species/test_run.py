@@ -1,10 +1,9 @@
 import json
-from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
-from muon.ingestion.bulbapedia.pages import Manifest, Page, PageStore, compute_sha1
+from muon.ingestion.bulbapedia.pages import PageStore
 from muon.ingestion.bulbapedia.species import batches, forms
 from muon.ingestion.bulbapedia.species.extract import NoteKind, ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError, PageOverride
@@ -12,112 +11,26 @@ from muon.ingestion.bulbapedia.species.run import (
     PAGE_OUTPUT_DIR,
     REPORT_FILE_NAME,
     PageStatus,
-    ParseRequest,
-    ParseRun,
     ParseRunError,
-    RunInputs,
-    parse_species_pages,
     write_outputs,
 )
+from tests.unit.ingestion.bulbapedia.species.claim_summary import (
+    CHUNK_ANCHOR_PATTERNS,
+    EVOLUTION_ANCHOR_PATTERNS,
+    claims_by_anchor,
+)
+from tests.unit.ingestion.bulbapedia.species.synthetic_pages import (
+    ALPHA,
+    BETA,
+    DELTA,
+    GAMMA,
+    build_store,
+    default_wikitexts,
+    run_parse,
+    species_wikitext,
+)
 
-ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
-PAGE_TYPE = "species"
-TIMESTAMP = datetime(2026, 10, 10, tzinfo=UTC)
-ALPHA = "Alpha (Pokémon)"
-BETA = "Beta (Pokémon)"
-GAMMA = "Gamma (Pokémon)"
-DELTA = "Delta (Pokémon)"
-PAGE_IDS = {ALPHA: 101, BETA: 102, GAMMA: 103, DELTA: 104}
-LEVEL_16 = "{{Bag/s|Rare Candy|SV}}<br>{{color2|000|Level|Level 16}}"
-STATS = "{{Stats|HP=10|Attack=55|Defense=25|SpAtk=35|SpDef=45|Speed=95}}"
-
-
-def species_wikitext(
-    name: str, ndex: int, evolution: str = "", egg_group: str = "Field", extra: str = ""
-) -> str:
-    return f"""{{{{Pokémon Infobox
-|name={name}
-|ndex={ndex:04d}
-|type1=Ground
-|egggroup1={egg_group}
-|eggcycles=20
-|catchrate=255
-|expyield=53
-|lv100exp=1,000,000
-|gendercode=127
-|friendship=70
-|color=Brown
-|body=05
-|generation=1
-|height-m=0.2
-|weight-kg=0.8
-|category=Mole
-|evsp=1
-}}}}
-==Game data==
-===Stats===
-====Base stats====
-{STATS}
-===Learnset===
-====By leveling up====
-{{{{learnlist/level9|1|Sand Attack|Ground|Status|—|100|15}}}}
-===Evolution data===
-{evolution}
-{extra}
-"""
-
-
-def evolution_box(first: str, second: str, method: str = LEVEL_16) -> str:
-    return f"{{{{Evobox-2|no1=0001|name1={first}|evo1={method}|no2=0002|name2={second}}}}}"
-
-
-def build_page(title: str, wikitext: str) -> Page:
-    return Page(
-        title=title,
-        page_id=PAGE_IDS[title],
-        revision_id=PAGE_IDS[title] * 10,
-        timestamp=TIMESTAMP,
-        sha1=compute_sha1(wikitext),
-        page_type=PAGE_TYPE,
-        wikitext=wikitext,
-    )
-
-
-def build_store(root: Path, wikitexts: dict[str, str]) -> PageStore:
-    store = PageStore(root)
-    pages = [build_page(title, wikitext) for title, wikitext in wikitexts.items()]
-    for page in pages:
-        store.write_page(page)
-    store.write_manifest(Manifest().replace_pins(PAGE_TYPE, [page.pin for page in pages]))
-    return store
-
-
-def default_wikitexts() -> dict[str, str]:
-    return {
-        ALPHA: species_wikitext(
-            "Alpha",
-            1,
-            evolution_box("Alpha", "Beta") + "\n{{Evobox/Setup|1Alpha|Alpha}}",
-        ),
-        BETA: species_wikitext("Beta", 2, evolution_box("Alpha", "Beta")),
-        GAMMA: species_wikitext("Gamma", 3, egg_group="Imaginary"),
-        DELTA: "{{New Pokémon Infobox|name=Delta}}\n==Game data==\n",
-    }
-
-
-@pytest.fixture(autouse=True)
-def no_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The committed overrides name real pages, which the synthetic store lacks."""
-    monkeypatch.setattr(forms, "FORM_OVERRIDES", {})
-
-
-@pytest.fixture
-def store(tmp_path: Path) -> PageStore:
-    return build_store(tmp_path / "data", default_wikitexts())
-
-
-def run_parse(store: PageStore, *titles: str) -> ParseRun:
-    return parse_species_pages(RunInputs(ParseRequest(titles), store, ONTOLOGY_DIR))
+pytestmark = pytest.mark.usefixtures("no_overrides")
 
 
 def test_every_pinned_page_gets_a_result(store: PageStore) -> None:
@@ -162,9 +75,9 @@ def test_the_evolution_batch_resolves_species_of_other_pages(store: PageStore) -
     alpha = next(o for o in run.outputs if o.page.title == ALPHA)
     beta = next(o for o in run.outputs if o.page.title == BETA)
 
-    assert alpha.evolution_batch is not None
     assert [n.id for n in alpha.evolution_batch.owner_nodes] == ["alpha:beta"]
-    assert beta.evolution_batch is None
+    assert not beta.evolution_batch.owner_nodes
+    assert claims_by_anchor(beta.evolution_batch) == {"beta": EVOLUTION_ANCHOR_PATTERNS}
     assert run.report.evolution_species_stub_misses == 0
     assert run.report.abox_stub_misses == 0
     assert (run.report.evolutions_total, run.report.evolutions_structured) == (1, 1)
@@ -179,7 +92,7 @@ def test_a_title_run_keeps_the_requested_page_and_still_indexes_every_page(
 
     assert [o.page.title for o in run.outputs] == [ALPHA]
     assert [r.title for r in run.report.pages] == [ALPHA]
-    assert run.outputs[0].evolution_batch is not None
+    assert run.outputs[0].evolution_batch.owner_nodes
     assert run.report.evolution_species_stub_misses == 0
 
 
@@ -277,7 +190,10 @@ def test_outputs_are_written_with_sorted_keys_and_sorted_scope(
     assert data["species_batch"]["scope"] == sorted(data["species_batch"]["scope"])
     assert data["evolution_batch"]["scope"] == ["https://muon.dev/ns/pkmn#Evolution"]
     assert data["residue"][0]["id"] == "101:evolution:1"
-    assert json.loads((root / PAGE_OUTPUT_DIR / "102.json").read_text())["evolution_batch"] is None
+    beta = json.loads((root / PAGE_OUTPUT_DIR / "102.json").read_text())
+    assert beta["evolution_batch"]["scope"] == ["https://muon.dev/ns/pkmn#Evolution"]
+    assert [node["id"] for node in beta["evolution_batch"]["nodes"]] == ["beta"]
+    assert len(beta["evolution_batch"]["claims"]) == len(EVOLUTION_ANCHOR_PATTERNS)
     report = json.loads((root / REPORT_FILE_NAME).read_text(encoding="utf-8"))
     assert report["pages_failed"] == 1
 
@@ -361,19 +277,20 @@ def chunk_wikitexts(tmp_path: Path, **extras: str) -> PageStore:
     return build_store(tmp_path / "data", wikitexts)
 
 
-def test_a_page_with_chunk_sections_gets_a_chunk_batch_and_one_without_gets_none(
+def test_a_page_with_chunk_sections_gets_chunks_and_one_without_gets_anchors_and_claims(
     tmp_path: Path,
 ) -> None:
     run = run_parse(chunk_wikitexts(tmp_path, alpha=TRIVIA))
 
     alpha = next(o for o in run.outputs if o.page.title == ALPHA)
     beta = next(o for o in run.outputs if o.page.title == BETA)
-    assert alpha.chunk_batch is not None
-    assert beta.chunk_batch is None
     assert [n.id for n in alpha.chunk_batch.owner_nodes] == [
         "bulbapedia:pokemonspecies:alpha:trivia:1"
     ]
     assert "beta" in {n.id for n in alpha.chunk_batch.stub_nodes}
+    assert not beta.chunk_batch.owner_nodes
+    assert [n.id for n in beta.chunk_batch.stub_nodes] == ["beta"]
+    assert claims_by_anchor(beta.chunk_batch) == {"beta": CHUNK_ANCHOR_PATTERNS}
     assert run.report.pages_without_chunks == (BETA,)
 
 
@@ -388,6 +305,7 @@ def test_the_report_counts_chunks_per_class_aspect_and_dropped_template(tmp_path
     assert report.chunk_counts.edges["describes"] == 5
     assert report.chunk_counts.edges["fromWork"] == 2
     assert report.chunks_per_aspect == {"trivia": 3, "pokedex": 2}
+    assert report.chunk_counts.claims == {"describes": 2, "fromWork": 5, "mentionedIn": 5}
     assert [(t.name, t.count) for t in report.dropped_templates] == [
         ("zeta", 3),
         ("aniseries", 2),
@@ -435,6 +353,30 @@ def test_the_chunk_batch_is_written_and_a_second_run_is_identical(tmp_path: Path
     assert data["chunk_batch"]["scope"] == ["https://muon.dev/ns/core#TextChunk"]
     assert data["extract"]["chunks"]
     assert data["extract"]["dropped_templates"] == {"aniseries": 1, "roundy": 1}
-    assert json.loads((first / PAGE_OUTPUT_DIR / "102.json").read_text())["chunk_batch"] is None
+    beta = json.loads((first / PAGE_OUTPUT_DIR / "102.json").read_text())
+    assert [node["id"] for node in beta["chunk_batch"]["nodes"]] == ["beta"]
+    assert len(beta["chunk_batch"]["claims"]) == len(CHUNK_ANCHOR_PATTERNS)
     for relative in sorted(path.relative_to(first) for path in first.rglob("*.json")):
         assert (first / relative).read_bytes() == (second / relative).read_bytes()
+
+
+def test_the_report_counts_the_claims_of_each_pass_by_property(store: PageStore) -> None:
+    report = run_parse(store).report
+
+    assert report.species_counts.claims == {
+        name: 2
+        for name in (
+            "canLearn",
+            "hasAbility",
+            "hasType",
+            "inEggGroup",
+            "introducedIn",
+            "yieldsEv",
+            "hasLearnsetEntry",
+            "hasForm",
+            "fromSpecies",
+            "viaMachine",
+        )
+    }
+    assert report.evolution_counts.claims == {"evolvesTo": 2, "fromSpecies": 2, "requires": 1}
+    assert report.chunk_counts.claims == {"describes": 2}

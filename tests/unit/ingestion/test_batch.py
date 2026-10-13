@@ -5,6 +5,8 @@ from pydantic import ValidationError
 
 from muon.ingestion.batch import (
     NODE_ID_PATTERN,
+    ClaimDirection,
+    EdgeClaim,
     EdgeRecord,
     GraphBatch,
     NodeRecord,
@@ -137,3 +139,116 @@ def test_batch_is_immutable() -> None:
 
     with pytest.raises(ValidationError):
         batch.universe = "other"  # type: ignore[misc]
+
+
+GADGET_STUB = NodeRecord(class_iri=GADGET, id="beta", name="Beta")
+OWNER_CLAIM = EdgeClaim(
+    anchor=WIDGET_NODE.node_ref,
+    property_iri=HAS_COLOR,
+    direction=ClaimDirection.OUT,
+    other_class_iri=COLOR,
+)
+STUB_CLAIM = EdgeClaim(
+    anchor=GADGET_STUB.node_ref,
+    property_iri=HAS_COLOR,
+    direction=ClaimDirection.IN,
+    other_class_iri=WIDGET,
+    owns_other_end=True,
+)
+
+
+def build_claim_batch(*claims: EdgeClaim) -> GraphBatch:
+    return GraphBatch(
+        universe="ex",
+        scope=frozenset({WIDGET, COLOR}),
+        nodes=(WIDGET_NODE, COLOR_NODE, GADGET_STUB),
+        edges=(),
+        claims=claims,
+    )
+
+
+def test_claims_default_empty() -> None:
+    assert build_batch((WIDGET_NODE,)).claims == ()
+
+
+def test_claim_on_owner_and_on_stub() -> None:
+    batch = build_claim_batch(OWNER_CLAIM, STUB_CLAIM)
+
+    assert batch.claims == (OWNER_CLAIM, STUB_CLAIM)
+    assert OWNER_CLAIM.owns_other_end is False
+    assert OWNER_CLAIM.sort_key == (WIDGET, "alpha", HAS_COLOR, "out", COLOR)
+
+
+def test_claim_with_any_class_sorts_with_empty_other_class() -> None:
+    claim = EdgeClaim(
+        anchor=WIDGET_NODE.node_ref, property_iri=HAS_COLOR, direction=ClaimDirection.IN
+    )
+
+    assert claim.other_class_iri is None
+    assert claim.sort_key == (WIDGET, "alpha", HAS_COLOR, "in", "")
+
+
+def test_claim_without_anchor_node_raises() -> None:
+    claim = EdgeClaim(
+        anchor=NodeRef(class_iri=WIDGET, id="missing"),
+        property_iri=HAS_COLOR,
+        direction=ClaimDirection.OUT,
+    )
+    message = f"Claim {HAS_COLOR} at {WIDGET} 'missing' refers to a missing anchor node"
+
+    with pytest.raises(ValidationError, match=re.escape(message)):
+        build_claim_batch(claim)
+
+
+def test_duplicate_claim_raises() -> None:
+    duplicate = EdgeClaim(
+        anchor=WIDGET_NODE.node_ref,
+        property_iri=HAS_COLOR,
+        direction=ClaimDirection.OUT,
+        other_class_iri=COLOR,
+        owns_other_end=True,
+    )
+    message = f"Duplicate claim {HAS_COLOR} at {WIDGET} 'alpha'"
+
+    with pytest.raises(ValidationError, match=re.escape(message)):
+        build_claim_batch(OWNER_CLAIM, duplicate)
+
+
+def test_claims_differing_in_direction_or_class_are_distinct() -> None:
+    inbound = OWNER_CLAIM.model_copy(update={"direction": ClaimDirection.IN})
+    any_class = OWNER_CLAIM.model_copy(update={"other_class_iri": None})
+
+    batch = build_claim_batch(OWNER_CLAIM, inbound, any_class)
+
+    assert len(batch.claims) == 3
+
+
+@pytest.mark.parametrize("other_class_iri", [None, GADGET])
+def test_owned_other_end_outside_scope_raises(other_class_iri: str | None) -> None:
+    claim = EdgeClaim(
+        anchor=WIDGET_NODE.node_ref,
+        property_iri=HAS_COLOR,
+        direction=ClaimDirection.OUT,
+        other_class_iri=other_class_iri,
+        owns_other_end=True,
+    )
+    message = f"Claim {HAS_COLOR} at {WIDGET} 'alpha' owns its other end"
+
+    with pytest.raises(ValidationError, match=re.escape(message)):
+        build_claim_batch(claim)
+
+
+def test_claims_survive_json_round_trip() -> None:
+    batch = build_claim_batch(OWNER_CLAIM, STUB_CLAIM)
+
+    restored = GraphBatch.model_validate(batch.model_dump(mode="json"))
+
+    assert restored == batch
+    assert restored.claims[1].direction is ClaimDirection.IN
+
+
+def test_json_without_claims_key_loads_with_no_claims() -> None:
+    payload = build_batch((WIDGET_NODE,)).model_dump(mode="json")
+    del payload["claims"]
+
+    assert GraphBatch.model_validate(payload).claims == ()

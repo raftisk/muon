@@ -7,9 +7,10 @@ run goes on; an override that matches nothing and an unknown `--title` stop the 
 anything is written. Output files are byte-identical across runs: sets are sorted, JSON
 keys are sorted and the report holds no time.
 
-A page gives 3 batches. The species batch and the evolution batch come first and are
-independent of the chunk batch, which needs the species index of the whole run to resolve
-the species a chunk mentions.
+A page gives 3 batches, even when the evolution batch or the chunk batch has no owner
+record: its anchors and claims still delete what the page gave before. The species batch
+and the evolution batch come first and are independent of the chunk batch, which needs the
+species index of the whole run to resolve the species a chunk mentions.
 """
 
 import json
@@ -19,7 +20,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from muon.ingestion.batch import GraphBatch, NodeRef
 from muon.ingestion.bulbapedia.pages import (
@@ -141,11 +142,13 @@ class TemplateCount(ReportModel):
 
 
 class BatchCounts(ReportModel):
-    """Counts by class local name (owner nodes and stubs) and property local name (edges)."""
+    """Counts by class local name (owner nodes and stubs) and property local name (edges
+    and claims)."""
 
     owner_nodes: Mapping[str, int]
     stubs: Mapping[str, int]
     edges: Mapping[str, int]
+    claims: Mapping[str, int] = Field(default_factory=dict)
 
 
 class ParseReport(ReportModel):
@@ -184,8 +187,8 @@ class PageOutput:
     page: Page
     extract: SpeciesPageExtract
     species_batch: GraphBatch
-    evolution_batch: GraphBatch | None
-    chunk_batch: GraphBatch | None
+    evolution_batch: GraphBatch
+    chunk_batch: GraphBatch
     notes: tuple[PageNote, ...]
     residue: tuple[ResidueItem, ...]
 
@@ -317,12 +320,7 @@ def find_unowned_pairs(
     index: SpeciesIndex,
 ) -> tuple[UnownedPair, ...]:
     """Find the evolutions a page shows for another page's species that no page emitted."""
-    emitted = {
-        node.id
-        for build in builds.values()
-        if build.batch is not None
-        for node in build.batch.owner_nodes
-    }
+    emitted = {node.id for build in builds.values() for node in build.batch.owner_nodes}
     unowned: set[tuple[str, str]] = set()
     for title, extract in extracts.items():
         own_ids = {form.id for form in extract.forms}
@@ -341,11 +339,15 @@ def count_batch(batches: Iterable[GraphBatch]) -> BatchCounts:
     owners: Counter[str] = Counter()
     stubs: Counter[str] = Counter()
     edges: Counter[str] = Counter()
+    claims: Counter[str] = Counter()
     for batch in batches:
         owners.update(extract_local_name(node.class_iri) for node in batch.owner_nodes)
         stubs.update(extract_local_name(node.class_iri) for node in batch.stub_nodes)
         edges.update(extract_local_name(edge.property_iri) for edge in batch.edges)
-    return BatchCounts(owner_nodes=dict(owners), stubs=dict(stubs), edges=dict(edges))
+        claims.update(extract_local_name(claim.property_iri) for claim in batch.claims)
+    return BatchCounts(
+        owner_nodes=dict(owners), stubs=dict(stubs), edges=dict(edges), claims=dict(claims)
+    )
 
 
 def count_mega_forms_with_stone(page: Page, extract: SpeciesPageExtract) -> int:
@@ -383,12 +385,11 @@ def count_stub_misses(outputs: Iterable[PageOutput], context: ReportContext) -> 
             stub.class_iri in abox_classes and stub.node_ref not in context.seed_refs
             for stub in output.species_batch.stub_nodes
         )
-        if output.evolution_batch is not None:
-            species_misses += sum(
-                stub.node_ref not in context.owner_refs
-                for stub in output.evolution_batch.stub_nodes
-                if stub.class_iri == POKEMON_SPECIES
-            )
+        species_misses += sum(
+            stub.node_ref not in context.owner_refs
+            for stub in output.evolution_batch.stub_nodes
+            if stub.class_iri == POKEMON_SPECIES
+        )
     return abox_misses, species_misses
 
 
@@ -423,8 +424,8 @@ def build_report(
     """Collect the outcomes, notes, residue and counts of the requested pages."""
     notes = [n for o in outputs for n in to_report_notes(o.extract.title, o.notes)]
     abox_misses, species_misses = count_stub_misses(outputs, context)
-    evolution_batches = [o.evolution_batch for o in outputs if o.evolution_batch is not None]
-    chunk_batches = [o.chunk_batch for o in outputs if o.chunk_batch is not None]
+    evolution_batches = [o.evolution_batch for o in outputs]
+    chunk_batches = [o.chunk_batch for o in outputs]
     evolutions = [node for batch in evolution_batches for node in batch.owner_nodes]
     structured = sum(CONDITION not in node.properties for node in evolutions)
     return ParseReport(
@@ -437,7 +438,9 @@ def build_report(
         chunk_counts=count_batch(chunk_batches),
         chunks_per_aspect=count_chunks_per_aspect(chunk_batches),
         dropped_templates=count_dropped_templates(outputs),
-        pages_without_chunks=tuple(o.extract.title for o in outputs if o.chunk_batch is None),
+        pages_without_chunks=tuple(
+            o.extract.title for o in outputs if not o.chunk_batch.owner_nodes
+        ),
         form_candidates=tuple(
             FormCandidateEntry(page_title=o.extract.title, candidate=candidate)
             for o in outputs
@@ -538,10 +541,8 @@ def dump_json(data: object) -> str:
     return json.dumps(data, sort_keys=True, ensure_ascii=False, indent=JSON_INDENT) + "\n"
 
 
-def serialize_batch(batch: GraphBatch | None) -> dict[str, object] | None:
+def serialize_batch(batch: GraphBatch) -> dict[str, object]:
     """Dump a batch with its scope sorted: pydantic dumps a frozenset in hash order."""
-    if batch is None:
-        return None
     data = batch.model_dump(mode="json")
     data["scope"] = sorted(batch.scope)
     return data

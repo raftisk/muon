@@ -1,13 +1,19 @@
 from collections.abc import Mapping
+from itertools import chain
 from pathlib import Path
 
 import pytest
 
-from muon.ingestion.batch import GraphBatch
+from muon.ingestion.batch import ClaimDirection, GraphBatch, NodeRecord
 from muon.ingestion.bulbapedia.species import batches
 from muon.ingestion.bulbapedia.species.batches import (
     CAN_LEARN,
+    CHUNK_ANCHOR_CLAIMS,
+    CHUNK_OWNER_CLAIMS,
+    CHUNK_SCOPE,
     EVOLUTION,
+    EVOLUTION_ANCHOR_CLAIMS,
+    EVOLUTION_OWNER_CLAIMS,
     EVOLUTION_SCOPE,
     FORM_CHANGE,
     HAS_FORM,
@@ -20,20 +26,26 @@ from muon.ingestion.bulbapedia.species.batches import (
     PKMN,
     POKEMON_SPECIES,
     REQUIRES,
+    SPECIES_OWNER_CLAIMS,
     SPECIES_SCOPE,
     TYPE,
     VERSION_GROUP,
     AboxIndex,
     AboxMissError,
     BatchBuildError,
+    ClaimRule,
+    Parts,
     SpeciesIndex,
+    assemble_batch,
     build_abox_index,
     build_change_id,
     build_change_name,
+    build_claims,
     build_entry_id,
     build_entry_name,
     build_evolution_batch,
     build_machine_stub,
+    build_owner_claims,
     build_species_batch,
     build_species_index,
     resolve_abox,
@@ -58,12 +70,21 @@ from muon.ingestion.runner import (
     MERGE_EDGES_UPSERT,
     MERGE_NODES_UPSERT,
     MERGE_STUBS,
+    PRUNE_CLAIMED_IN,
+    PRUNE_CLAIMED_OUT,
     WriteMode,
     build_statements,
 )
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
+from tests.unit.ingestion.bulbapedia.species.claim_summary import (
+    ENTRY_CLAIM_PATTERNS,
+    EVOLUTION_ANCHOR_PATTERNS,
+    REQUIRES_CLAIM_PATTERNS,
+    SPECIES_CLAIM_PATTERNS,
+    claims_by_anchor,
+)
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 STATS = BaseStats(hp=10, attack=55, defense=25, sp_attack=35, sp_defense=45, speed=95)
@@ -428,7 +449,7 @@ def test_a_page_without_a_learnset_has_no_version_group_stub(abox: AboxIndex) ->
     assert CAN_LEARN not in {e.property_iri for e in batch.edges}
 
 
-def test_mega_form_change_sits_in_the_species_batch(abox: AboxIndex) -> None:
+def build_mega_extract() -> SpeciesPageExtract:
     charizard = build_facts("charizard", "Charizard", types=("Fire", "Flying"))
     mega = build_facts(
         "charizard-mega-x",
@@ -446,9 +467,11 @@ def test_mega_form_change_sits_in_the_species_batch(abox: AboxIndex) -> None:
         trigger=None,
         held_item="Charizardite X",
     )
-    extract = build_extract("Charizard (Pokémon)", (charizard, mega), form_changes=(change,))
+    return build_extract("Charizard (Pokémon)", (charizard, mega), form_changes=(change,))
 
-    batch = build_species_batch(extract, abox)
+
+def test_mega_form_change_sits_in_the_species_batch(abox: AboxIndex) -> None:
+    batch = build_species_batch(build_mega_extract(), abox)
 
     record = next(n for n in batch.owner_nodes if n.class_iri == FORM_CHANGE)
     assert (record.id, record.name) == (
@@ -552,7 +575,13 @@ def test_the_species_batch_compiles_into_upsert_statements(
 
     statements = build_statements(batch, WriteMode.UPSERT, LabelMaterializer(model))
 
-    assert [s.query for s in statements] == [MERGE_NODES_UPSERT, MERGE_STUBS, MERGE_EDGES_UPSERT]
+    assert [s.query for s in statements] == [
+        PRUNE_CLAIMED_OUT,
+        PRUNE_CLAIMED_IN,
+        MERGE_NODES_UPSERT,
+        MERGE_STUBS,
+        MERGE_EDGES_UPSERT,
+    ]
 
 
 def test_species_index_and_reference_resolution() -> None:
@@ -584,7 +613,6 @@ def build_index() -> SpeciesIndex:
 def test_evolution_batch_owns_the_evolutions_of_the_page(abox: AboxIndex) -> None:
     build = build_evolution_batch(build_diglett_extract(), abox, build_index())
 
-    assert build.batch is not None
     assert build.batch.scope == EVOLUTION_SCOPE
     assert (build.structured, build.total, build.notes) == (1, 1, ())
     (owner,) = build.batch.owner_nodes
@@ -596,6 +624,7 @@ def test_evolution_batch_owns_the_evolutions_of_the_page(abox: AboxIndex) -> Non
     assert owner.properties == {PKMN + "evoTrigger": "level", PKMN + "minLevel": 26}
     assert {(n.class_iri, n.id, n.name) for n in build.batch.stub_nodes} == {
         (POKEMON_SPECIES, "diglett", "Diglett"),
+        (POKEMON_SPECIES, "diglett-alola", "Alolan Diglett"),
         (POKEMON_SPECIES, "dugtrio", "Dugtrio"),
     }
     assert {
@@ -609,11 +638,27 @@ def test_evolution_batch_owns_the_evolutions_of_the_page(abox: AboxIndex) -> Non
 
 def test_evolution_batch_compiles(abox: AboxIndex, model: OntologyModel) -> None:
     build = build_evolution_batch(build_diglett_extract(), abox, build_index())
-    assert build.batch is not None
 
     statements = build_statements(build.batch, WriteMode.UPSERT, LabelMaterializer(model))
 
-    assert [s.query for s in statements] == [MERGE_NODES_UPSERT, MERGE_STUBS, MERGE_EDGES_UPSERT]
+    assert [s.query for s in statements] == [
+        PRUNE_CLAIMED_OUT,
+        PRUNE_CLAIMED_IN,
+        MERGE_NODES_UPSERT,
+        MERGE_STUBS,
+        MERGE_EDGES_UPSERT,
+    ]
+
+
+def assert_batch_of_anchors_only(batch: GraphBatch, species_ids: set[str]) -> None:
+    """The batch of a page with no evolution: the page species as stubs, their claims, no owner."""
+    assert batch.scope == EVOLUTION_SCOPE
+    assert not batch.owner_nodes
+    assert {(n.class_iri, n.id) for n in batch.stub_nodes} == {
+        (POKEMON_SPECIES, species_id) for species_id in species_ids
+    }
+    assert batch.edges == ()
+    assert claims_by_anchor(batch) == dict.fromkeys(species_ids, EVOLUTION_ANCHOR_PATTERNS)
 
 
 def test_evolutions_of_other_pages_are_cross_checks_and_skipped(abox: AboxIndex) -> None:
@@ -623,7 +668,8 @@ def test_evolutions_of_other_pages_are_cross_checks_and_skipped(abox: AboxIndex)
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert (build.batch, build.notes, build.total) == (None, (), 0)
+    assert (build.notes, build.total) == ((), 0)
+    assert_batch_of_anchors_only(build.batch, {"dugtrio"})
 
 
 def test_an_unknown_target_drops_the_evolution_and_creates_no_stub(abox: AboxIndex) -> None:
@@ -632,7 +678,7 @@ def test_an_unknown_target_drops_the_evolution_and_creates_no_stub(abox: AboxInd
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is None
+    assert_batch_of_anchors_only(build.batch, {"diglett"})
     assert [n.kind for n in build.notes] == [NoteKind.DROPPED_VALUE]
     assert "Missingno" in build.notes[0].detail
 
@@ -645,7 +691,6 @@ def test_a_cosmetic_form_reference_falls_back_to_the_base_id_and_is_noted(
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is not None
     assert build.batch.owner_nodes[0].id == "diglett:dugtrio"
     assert [n.kind for n in build.notes] == [NoteKind.REFERENCE_FALLBACK]
     assert "Sandy" in build.notes[0].detail
@@ -675,7 +720,6 @@ def test_an_unstructured_evolution_keeps_its_condition(abox: AboxIndex) -> None:
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is not None
     assert build.batch.owner_nodes[0].properties == {
         PKMN + "condition": "Level 20 (Attack > Defense)"
     }
@@ -704,7 +748,6 @@ def test_requirement_stubs_follow_their_role(
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is not None
     assert (stub_class, stub_id) in node_keys(build.batch)
     assert edge_properties(build.batch, REQUIRES, "diglett:dugtrio", stub_id) == {
         "role": role.value
@@ -723,7 +766,6 @@ def test_a_required_species_resolves_through_the_index(abox: AboxIndex) -> None:
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is not None
     assert edge_properties(build.batch, REQUIRES, "diglett:dugtrio", "dugtrio") == {
         "role": "partySpecies"
     }
@@ -741,7 +783,7 @@ def test_an_unknown_required_species_drops_the_evolution(abox: AboxIndex) -> Non
 
     build = build_evolution_batch(extract, abox, build_index())
 
-    assert build.batch is None
+    assert_batch_of_anchors_only(build.batch, {"diglett"})
     assert [n.kind for n in build.notes] == [NoteKind.DROPPED_VALUE]
 
 
@@ -753,3 +795,106 @@ def test_a_requirement_type_the_abox_lacks_fails_the_page(abox: AboxIndex) -> No
 
     with pytest.raises(BatchBuildError, match="Cosmic"):
         build_evolution_batch(extract, abox, build_index())
+
+
+def test_the_species_batch_claims_9_patterns_at_each_species_and_1_at_each_entry(
+    abox: AboxIndex,
+) -> None:
+    batch = build_species_batch(build_diglett_extract(), abox)
+    entry_ids = {n.id for n in batch.owner_nodes if n.class_iri == LEARNSET_ENTRY}
+
+    claims = claims_by_anchor(batch)
+
+    assert len(entry_ids) == 4
+    assert set(claims) == {"diglett", "diglett-alola", *entry_ids}
+    assert claims["diglett"] == claims["diglett-alola"] == SPECIES_CLAIM_PATTERNS
+    assert all(claims[entry_id] == ENTRY_CLAIM_PATTERNS for entry_id in entry_ids)
+    assert len(batch.claims) == 2 * len(SPECIES_CLAIM_PATTERNS) + len(entry_ids)
+
+
+def test_the_species_batch_claims_requires_at_each_form_change(abox: AboxIndex) -> None:
+    batch = build_species_batch(build_mega_extract(), abox)
+
+    claims = claims_by_anchor(batch)
+
+    assert claims["charizard:charizard-mega-x"] == REQUIRES_CLAIM_PATTERNS
+    assert claims["charizard"] == claims["charizard-mega-x"] == SPECIES_CLAIM_PATTERNS
+
+
+def test_a_species_with_no_learnset_still_claims_its_patterns(abox: AboxIndex) -> None:
+    extract = build_extract("Dugtrio (Pokémon)", (build_facts("dugtrio", "Dugtrio"),))
+
+    batch = build_species_batch(extract, abox)
+
+    assert claims_by_anchor(batch) == {"dugtrio": SPECIES_CLAIM_PATTERNS}
+
+
+def test_the_evolution_batch_claims_every_species_of_the_page_and_every_evolution(
+    abox: AboxIndex,
+) -> None:
+    build = build_evolution_batch(build_diglett_extract(), abox, build_index())
+
+    assert claims_by_anchor(build.batch) == {
+        "diglett": EVOLUTION_ANCHOR_PATTERNS,
+        "diglett-alola": EVOLUTION_ANCHOR_PATTERNS,
+        "diglett:dugtrio": REQUIRES_CLAIM_PATTERNS,
+    }
+
+
+def test_the_batch_claims_are_sorted_and_repeat_on_every_build(abox: AboxIndex) -> None:
+    first = build_species_batch(build_diglett_extract(), abox)
+    second = build_species_batch(build_diglett_extract(), abox)
+
+    keys = [claim.sort_key for claim in first.claims]
+    assert keys == sorted(keys)
+    assert len(set(keys)) == len(keys)
+    assert first.claims == second.claims
+
+
+def test_every_claim_rule_names_declared_iris(model: OntologyModel) -> None:
+    owner_tables = (SPECIES_OWNER_CLAIMS, EVOLUTION_OWNER_CLAIMS, CHUNK_OWNER_CLAIMS)
+    rules = [
+        *chain.from_iterable(chain.from_iterable(table.values() for table in owner_tables)),
+        *EVOLUTION_ANCHOR_CLAIMS,
+        *CHUNK_ANCHOR_CLAIMS,
+    ]
+
+    assert len(rules) == 9 + 1 + 1 + 2 + 1 + 1 + 2
+    for rule in rules:
+        assert rule.property_iri in model.object_properties, rule
+        assert rule.other_class_iri is None or rule.other_class_iri in model.classes, rule
+    for table in owner_tables:
+        assert set(table) <= model.classes
+
+
+def test_a_rule_that_owns_its_other_end_names_a_class_of_its_pass_scope() -> None:
+    passes = (
+        (SPECIES_SCOPE, [r for rules in SPECIES_OWNER_CLAIMS.values() for r in rules]),
+        (EVOLUTION_SCOPE, list(EVOLUTION_ANCHOR_CLAIMS)),
+        (CHUNK_SCOPE, list(CHUNK_ANCHOR_CLAIMS)),
+    )
+
+    for scope, rules in passes:
+        owning = [rule for rule in rules if rule.owns_other_end]
+        assert owning
+        assert all(rule.other_class_iri in scope for rule in owning)
+
+
+def test_build_owner_claims_skips_classes_without_rules() -> None:
+    move = NodeRecord(class_iri=MOVE, id="earthquake", name="Earthquake")
+    entry = NodeRecord(class_iri=LEARNSET_ENTRY, id="e", name="E")
+
+    claims = build_owner_claims([move, entry], SPECIES_OWNER_CLAIMS)
+
+    assert [claim.anchor.id for claim in claims] == ["e"]
+
+
+def test_assemble_batch_keeps_a_repeated_claim_once_and_sorts_claims() -> None:
+    first = NodeRecord(class_iri=POKEMON_SPECIES, id="a", name="A")
+    second = NodeRecord(class_iri=POKEMON_SPECIES, id="b", name="B")
+    rules = [ClaimRule(HAS_FORM, ClaimDirection.OUT, POKEMON_SPECIES, True)]
+    claims = build_claims([second.node_ref, first.node_ref, second.node_ref], rules)
+
+    batch = assemble_batch(SPECIES_SCOPE, Parts(nodes=(second, first)), claims)
+
+    assert [claim.anchor.id for claim in batch.claims] == ["a", "b"]

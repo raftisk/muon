@@ -1,18 +1,34 @@
+import argparse
 import os
 from collections.abc import Callable
 from dataclasses import fields
 from pathlib import Path
+from types import TracebackType
+from typing import Any
 
 import pytest
 
 from muon import cli
 from muon.config import Neo4jSettings, OntologySettings, Settings
 from muon.graph import GraphConnectionError, WriteSummary
+from muon.ingestion.batch import NodeRef
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
 from muon.ingestion.bulbapedia.pages import PageStoreError
 from muon.ingestion.bulbapedia.species.extract import ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError
+from muon.ingestion.bulbapedia.species.ingest import (
+    CensusReport,
+    IngestPass,
+    IngestReport,
+    IngestRequest,
+    IngestRun,
+    IngestStop,
+    MissingSeedError,
+    PageFailure,
+    PassProgress,
+    PassTotals,
+)
 from muon.ingestion.bulbapedia.species.run import (
     BatchCounts,
     PageResult,
@@ -653,3 +669,304 @@ def test_parse_rejects_unknown_choices(
     assert exit_info.value.code == 2
     assert f"invalid choice: {invalid}" in capsys.readouterr().err
     assert parse.requests == []
+
+
+def build_ingest_run(
+    stop: IngestStop | None = None, failed_titles: tuple[str, ...] = ()
+) -> IngestRun:
+    passes = tuple(
+        PassTotals(
+            ingest_pass=ingest_pass,
+            batches_written=2,
+            counters={"nodes_created": 7, "nodes_deleted": 0},
+        )
+        for ingest_pass in IngestPass
+    )
+    report = IngestReport(
+        titles=(),
+        is_full_run=True,
+        passes=passes,
+        changed_pages=(),
+        failed_pages=tuple(PageFailure(page_title=title, reason="bad") for title in failed_titles),
+        stop=stop,
+        census=None
+        if stop
+        else CensusReport(
+            labels={"Entity": 5, "PokemonSpecies": 2}, relationship_types={"HAS_TYPE": 2}
+        ),
+    )
+    return IngestRun(report=report, elapsed_seconds=dict.fromkeys(IngestPass, 1.5))
+
+
+class RecordingIngest:
+    """Stands in for `cli.run_ingest` and `cli.write_ingest_report`, and records both."""
+
+    def __init__(self, outcome: IngestRun | Exception) -> None:
+        self.outcome = outcome
+        self.titles: list[tuple[str, ...]] = []
+        self.reports: list[IngestReport] = []
+
+    async def run(self, settings: Settings, run: ParseRun, titles: tuple[str, ...]) -> IngestRun:
+        self.titles.append(titles)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return self.outcome
+
+    def write_report(self, report: IngestReport) -> Path:
+        self.reports.append(report)
+        return Path("species-ingest-report.json")
+
+
+def arrange_ingest(
+    monkeypatch: pytest.MonkeyPatch,
+    outcome: IngestRun | Exception,
+    parse_outcome: ParseReport | Exception | None = None,
+) -> tuple[RecordingParse, RecordingIngest]:
+    parse = arrange_parse(monkeypatch, parse_outcome or build_parse_report())
+    ingest = RecordingIngest(outcome)
+    monkeypatch.setattr(cli, "run_ingest", ingest.run)
+    monkeypatch.setattr(cli, "write_ingest_report", ingest.write_report)
+    return parse, ingest
+
+
+INGEST_ARGV = ["ingest", "bulbapedia", "species"]
+
+
+@pytest.mark.usefixtures("settings")
+def test_ingest_passes_its_titles_to_the_parse_and_the_ingest(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parse, ingest = arrange_ingest(monkeypatch, build_ingest_run())
+
+    cli.main([*INGEST_ARGV, "--title", "A (Pokémon)", "--title", "B (Pokémon)"])
+    cli.main(INGEST_ARGV)
+
+    titles = ("A (Pokémon)", "B (Pokémon)")
+    assert parse.requests == [ParseRequest(titles=titles), ParseRequest()]
+    assert ingest.titles == [titles, ()]
+
+
+@pytest.mark.usefixtures("settings")
+def test_ingest_prints_the_parse_counts_the_pass_rows_and_the_census(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ingest_run = build_ingest_run()
+    _, ingest = arrange_ingest(monkeypatch, ingest_run)
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    lines = capsys.readouterr().out.splitlines()
+    assert exit_code == cli.EXIT_SUCCESS
+    assert ingest.reports == [ingest_run.report]
+    assert lines.index("parse bulbapedia species: done") < lines.index(
+        "ingest bulbapedia species: done"
+    )
+    assert "pages parsed: 1" in lines
+    assert lines[lines.index("ingest bulbapedia species: done") + 1 :] == [
+        "species: 2 batches in 1.5 s",
+        "species nodes created: 7",
+        "species nodes deleted: 0",
+        "evolution: 2 batches in 1.5 s",
+        "evolution nodes created: 7",
+        "evolution nodes deleted: 0",
+        "chunk: 2 batches in 1.5 s",
+        "chunk nodes created: 7",
+        "chunk nodes deleted: 0",
+        "nodes Entity: 5",
+        "nodes PokemonSpecies: 2",
+        "relationships HAS_TYPE: 2",
+    ]
+
+
+@pytest.mark.usefixtures("settings")
+def test_ingest_exits_1_for_a_stopped_run_and_still_writes_the_report(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    stop = IngestStop(page_title="Beta (Pokémon)", ingest_pass=IngestPass.EVOLUTION, error="boom")
+    ingest_run = build_ingest_run(stop=stop)
+    _, ingest = arrange_ingest(monkeypatch, ingest_run)
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    out = capsys.readouterr().out
+    assert exit_code == cli.EXIT_FAILURE
+    assert "ingest bulbapedia species: stopped" in out
+    assert "stopped: Beta (Pokémon) (evolution): boom" in out
+    assert "nodes Entity" not in out
+    assert ingest.reports == [ingest_run.report]
+
+
+@pytest.mark.usefixtures("settings")
+def test_ingest_exits_1_when_a_page_failed_to_parse_and_names_it(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ingest_run = build_ingest_run(failed_titles=("Gamma (Pokémon)",))
+    arrange_ingest(monkeypatch, ingest_run, build_parse_report(failed_titles=("Gamma (Pokémon)",)))
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    out = capsys.readouterr().out
+    assert exit_code == cli.EXIT_FAILURE
+    assert "failed: Gamma (Pokémon): bad" in out
+    assert "failed: Gamma (Pokémon): no A-Box node for type1" in out
+
+
+@pytest.mark.usefixtures("settings")
+def test_ingest_tells_the_user_to_seed_when_the_seed_is_missing(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    missing = MissingSeedError([NodeRef(class_iri="https://muon.dev/ns/pkmn#Type", id="fire")])
+    _, ingest = arrange_ingest(monkeypatch, missing)
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_FAILURE
+    assert captured.err.startswith("ingest bulbapedia species failed: 1 A-Box nodes are missing")
+    assert "`muon seed pkmn`" in captured.err
+    assert captured.out == ""
+    assert ingest.reports == []
+
+
+@pytest.mark.usefixtures("settings")
+@pytest.mark.parametrize(
+    "error",
+    [
+        GraphConnectionError(CONNECTION_MESSAGE),
+        OntologyError("Missing universe T-Box"),
+        ABoxError("pkmn.ttl", ["bad"]),
+    ],
+)
+def test_ingest_reports_run_errors_with_exit_1(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    _, ingest = arrange_ingest(monkeypatch, error)
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_FAILURE
+    assert captured.err.startswith("ingest bulbapedia species failed:")
+    assert SECRET not in captured.err
+    assert captured.out == ""
+    assert ingest.reports == []
+
+
+@pytest.mark.usefixtures("settings")
+@pytest.mark.parametrize(
+    "error",
+    [ParseRunError("Titles that are not pinned: ['Ghost']"), PageStoreError("No page file")],
+)
+def test_ingest_stops_on_a_parse_error_before_the_graph(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    _, ingest = arrange_ingest(monkeypatch, build_ingest_run(), parse_outcome=error)
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    assert exit_code == cli.EXIT_FAILURE
+    assert capsys.readouterr().err.startswith("ingest bulbapedia species failed:")
+    assert ingest.titles == []
+
+
+def test_ingest_stops_on_invalid_settings_before_the_parse(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    for name in list(os.environ):
+        if name.startswith("NEO4J_"):
+            monkeypatch.delenv(name)
+    monkeypatch.setattr(cli, "get_settings", lambda: Neo4jSettings(_env_file=None))
+    parse, ingest = arrange_ingest(monkeypatch, build_ingest_run())
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    assert exit_code == cli.EXIT_FAILURE
+    assert "ingest bulbapedia species failed: invalid settings" in capsys.readouterr().err
+    assert parse.requests == []
+    assert ingest.titles == []
+
+
+@pytest.mark.parametrize(
+    ("argv", "invalid"),
+    [
+        (["ingest", "bulbapedia", "ability"], "'ability'"),
+        (["ingest", "serebii", "species"], "'serebii'"),
+    ],
+)
+def test_ingest_rejects_unknown_choices(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    argv: list[str],
+    invalid: str,
+) -> None:
+    parse, _ = arrange_ingest(monkeypatch, build_ingest_run())
+
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(argv)
+
+    assert exit_info.value.code == 2
+    assert f"invalid choice: {invalid}" in capsys.readouterr().err
+    assert parse.requests == []
+
+
+def test_describe_target_names_the_prefix_or_the_source_and_page_type() -> None:
+    seed = argparse.Namespace(command="seed", prefix=PREFIX)
+    ingest = argparse.Namespace(command="ingest", source="bulbapedia", page_type="species")
+
+    assert cli.describe_target(seed) == PREFIX
+    assert cli.describe_target(ingest) == "bulbapedia species"
+
+
+def test_a_progress_line_names_the_pass_the_batches_and_the_seconds() -> None:
+    progress = PassProgress(IngestPass.CHUNK, done=100, total=1025, elapsed_seconds=3.14)
+
+    assert cli.format_progress(progress) == "chunk: 100/1025 batches, 3.1 s"
+
+
+class FakeClient:
+    """A stand-in for `Neo4jGraphClient` that records its settings and closes cleanly."""
+
+    def __init__(self, neo4j: Neo4jSettings) -> None:
+        self.neo4j = neo4j
+        self.is_closed = False
+
+    async def __aenter__(self) -> "FakeClient":
+        return self
+
+    async def __aexit__(
+        self,
+        error_type: type[BaseException] | None,
+        error: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self.is_closed = True
+
+
+async def test_run_ingest_gives_the_run_a_client_the_titles_and_the_progress_printer(
+    monkeypatch: pytest.MonkeyPatch, settings: Settings
+) -> None:
+    clients: list[FakeClient] = []
+    requests: list[IngestRequest] = []
+    ingest_run = build_ingest_run()
+
+    def build_client(neo4j: Neo4jSettings) -> FakeClient:
+        clients.append(FakeClient(neo4j))
+        return clients[-1]
+
+    async def fake_ingest_species(client: Any, run: ParseRun, request: IngestRequest) -> IngestRun:
+        requests.append(request)
+        assert client is clients[0]
+        return ingest_run
+
+    monkeypatch.setattr(cli, "Neo4jGraphClient", build_client)
+    monkeypatch.setattr(cli, "ingest_species", fake_ingest_species)
+    run = ParseRun(outputs=(), report=build_parse_report())
+
+    result = await cli.run_ingest(settings, run, ("A (Pokémon)",))
+
+    assert result is ingest_run
+    assert clients[0].neo4j == settings.neo4j
+    assert clients[0].is_closed
+    assert requests[0].titles == ("A (Pokémon)",)
+    assert requests[0].ontology_dir == settings.ontology.ontology_dir
+    assert requests[0].on_progress is cli.print_progress

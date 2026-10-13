@@ -10,6 +10,7 @@ derives from the English name.
 import re
 import unicodedata
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import Final, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -75,6 +76,43 @@ class EdgeRecord(BaseModel):
     properties: Mapping[str, PropertyValue] = Field(default_factory=dict)
 
 
+class ClaimDirection(StrEnum):
+    """Which end of the claimed edges the anchor sits at."""
+
+    OUT = "out"
+    IN = "in"
+
+
+class EdgeClaim(BaseModel):
+    """The edges of one property at one anchor that a batch owns.
+
+    The batch lists every edge of `property_iri` at `anchor`, in `direction`, whose
+    other end carries the label of `other_class_iri`; `None` means any node of the
+    universe. A write in upsert mode deletes the matching edges that the batch does
+    not list. With `owns_other_end`, it also deletes the node at the other end of
+    each deleted edge, unless the batch lists that node as an owner record.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    anchor: NodeRef
+    property_iri: str
+    direction: ClaimDirection
+    other_class_iri: str | None = None
+    owns_other_end: bool = False
+
+    @property
+    def sort_key(self) -> tuple[str, str, str, str, str]:
+        """The identity of a claim and the order a producer sorts claims in."""
+        return (
+            self.anchor.class_iri,
+            self.anchor.id,
+            self.property_iri,
+            self.direction.value,
+            self.other_class_iri or "",
+        )
+
+
 class GraphBatch(BaseModel):
     """One unit of validation and one write transaction.
 
@@ -82,6 +120,11 @@ class GraphBatch(BaseModel):
     stub: a node the batch references but does not own, with `name` and no
     properties. Node keys and edge keys (property IRI, start, end) are unique, and
     every edge end matches a node record, owner or stub.
+
+    `claims` name the edge patterns the batch is complete for, so a re-write can
+    delete what the batch no longer lists. A claim anchors at a node record of the
+    batch, and its identity is its `sort_key`. The batch checks claim keys, not
+    their order; a claim that owns its other end names a class in `scope`.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -90,6 +133,7 @@ class GraphBatch(BaseModel):
     scope: frozenset[str]
     nodes: tuple[NodeRecord, ...]
     edges: tuple[EdgeRecord, ...]
+    claims: tuple[EdgeClaim, ...] = ()
 
     @property
     def owner_nodes(self) -> tuple[NodeRecord, ...]:
@@ -134,4 +178,26 @@ class GraphBatch(BaseModel):
                     f"{edge.start.id!r} to {edge.end.class_iri} {edge.end.id!r}"
                 )
             edge_keys.add(edge_key)
+        return self
+
+    @model_validator(mode="after")
+    def check_claims(self) -> Self:
+        node_refs = {node.node_ref for node in self.nodes}
+        claim_keys: set[tuple[str, str, str, str, str]] = set()
+        for claim in self.claims:
+            anchor = claim.anchor
+            label = f"{claim.property_iri} at {anchor.class_iri} {anchor.id!r}"
+            if anchor not in node_refs:
+                raise ValueError(f"Claim {label} refers to a missing anchor node")
+            if claim.sort_key in claim_keys:
+                raise ValueError(
+                    f"Duplicate claim {label} ({claim.direction.value}, "
+                    f"{claim.other_class_iri or 'any class'})"
+                )
+            claim_keys.add(claim.sort_key)
+            if claim.owns_other_end and claim.other_class_iri not in self.scope:
+                raise ValueError(
+                    f"Claim {label} owns its other end, which needs an other class in "
+                    f"scope; got {claim.other_class_iri}"
+                )
         return self
