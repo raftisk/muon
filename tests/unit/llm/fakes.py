@@ -46,6 +46,32 @@ def chat_completion_body(content: str) -> dict[str, Any]:
     }
 
 
+def batch_body(batch_id: str, status: str, **fields: Any) -> dict[str, Any]:
+    """Return a `Batch` response; `fields` adds or overrides keys such as `errors`."""
+    return {
+        "id": batch_id,
+        "object": "batch",
+        "endpoint": "/v1/chat/completions",
+        "input_file_id": "file-input",
+        "completion_window": "24h",
+        "created_at": 0,
+        "status": status,
+        **fields,
+    }
+
+
+def file_body(file_id: str) -> dict[str, Any]:
+    return {
+        "id": file_id,
+        "object": "file",
+        "bytes": 0,
+        "created_at": 0,
+        "filename": "batch-input.jsonl",
+        "purpose": "batch",
+        "status": "processed",
+    }
+
+
 def embedding_body(vectors: list[list[float]]) -> dict[str, Any]:
     return {
         "object": "list",
