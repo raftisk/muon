@@ -2,22 +2,28 @@
 
 Map: `build_chat_line` and `build_embedding_line` turn the params of a direct call into
 `BatchLine`s, and `submit_batch` uploads them as 1 JSONL file and creates 1 batch.
+`wait_for_batch` polls a batch id until the batch ends, `fetch_batch_results` reads 1
+`BatchOutput` per line, and `parse_chat_output` and `parse_embedding_output` turn an
+output into the SDK type a direct call returns.
 
-Hazard: structured lines use the private SDK function behind `chat.completions.parse`,
-so a batch sends the same `response_format` as a direct call. The parity tests in
-`tests/unit/llm/` fail when an SDK upgrade changes it.
+Hazard: structured lines and outputs use the private SDK functions behind
+`chat.completions.parse`, so a batch sends the same `response_format` and parses the
+same way as a direct call. The parity tests in `tests/unit/llm/` fail when an SDK
+upgrade changes either one.
 """
 
+import asyncio
 from collections import Counter
 from collections.abc import Sequence
-from typing import Any, Final, Literal
+from typing import Any, Final, Literal, overload
 
 import openai
-from openai import AsyncOpenAI
-from openai.lib._parsing._completions import type_to_response_format_param
-from openai.types import Batch, EmbeddingCreateParams
+from openai import AsyncOpenAI, omit
+from openai.lib._parsing._completions import parse_chat_completion, type_to_response_format_param
+from openai.types import Batch, CreateEmbeddingResponse, EmbeddingCreateParams
+from openai.types.chat import ChatCompletion, ParsedChatCompletion
 from openai.types.chat.completion_create_params import CompletionCreateParamsNonStreaming
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 BatchEndpoint = Literal["/v1/chat/completions", "/v1/embeddings"]
 
@@ -26,6 +32,12 @@ EMBEDDING_ENDPOINT: Final = "/v1/embeddings"
 COMPLETION_WINDOW: Final = "24h"
 BATCH_FILE_PURPOSE: Final = "batch"
 BATCH_INPUT_FILENAME = "batch-input.jsonl"
+
+TERMINAL_STATUSES = frozenset({"completed", "failed", "expired", "cancelled"})
+FAILED_STATUS = "failed"
+DEFAULT_POLL_INTERVAL_SECONDS = 30.0
+SUCCESS_STATUS_CODES = range(200, 300)
+UNKNOWN_FAILURE = "no message from the provider"
 
 
 class LLMBatchError(Exception):
@@ -51,6 +63,37 @@ class BatchLine(BaseModel):
     method: Literal["POST"] = "POST"
     url: BatchEndpoint
     body: dict[str, Any]
+
+
+class BatchOutputResponse(BaseModel):
+    status_code: int
+    request_id: str | None = None
+    body: dict[str, Any]
+
+
+class BatchOutputFailure(BaseModel):
+    code: str | None = None
+    message: str | None = None
+
+
+class BatchOutput(BaseModel):
+    """1 line of a batch output or error file.
+
+    A line that reached the model has a `response`, with an HTTP status that may be an
+    error. A line that never ran, such as one cut by expiry, has an `error` instead.
+    """
+
+    custom_id: str
+    response: BatchOutputResponse | None = None
+    error: BatchOutputFailure | None = None
+
+    @property
+    def is_success(self) -> bool:
+        return (
+            self.error is None
+            and self.response is not None
+            and self.response.status_code in SUCCESS_STATUS_CODES
+        )
 
 
 def build_chat_line(
@@ -117,3 +160,124 @@ async def submit_batch(client: AsyncOpenAI, lines: Sequence[BatchLine]) -> Batch
             f"Failed to create a batch on {endpoint} at {client.base_url} "
             f"from file {input_file.id}: {error}"
         ) from error
+
+
+async def wait_for_batch(
+    client: AsyncOpenAI, batch_id: str, poll_interval: float = DEFAULT_POLL_INTERVAL_SECONDS
+) -> Batch:
+    """Poll `batch_id` every `poll_interval` seconds and return it once it has ended.
+
+    A batch ends as `completed`, `failed`, `expired` or `cancelled`. There is no own
+    deadline, because the provider ends every batch within its completion window; wrap
+    the call in `asyncio.timeout` for a shorter one.
+    """
+    while True:
+        try:
+            batch = await client.batches.retrieve(batch_id)
+        except openai.APIError as error:
+            raise LLMBatchError(
+                f"Failed to read batch {batch_id} from {client.base_url}: {error}"
+            ) from error
+        if batch.status in TERMINAL_STATUSES:
+            return batch
+        await asyncio.sleep(poll_interval)
+
+
+async def fetch_batch_results(client: AsyncOpenAI, batch: Batch) -> list[BatchOutput]:
+    """Return 1 output per line of an ended batch, from its output file then its error file.
+
+    Outputs keep the provider's order, which need not match the input; `custom_id` is
+    the join key. An expired or cancelled batch gives its finished lines as successes
+    and the others as error outputs.
+    """
+    check_batch_readable(batch)
+    file_ids = [file_id for file_id in (batch.output_file_id, batch.error_file_id) if file_id]
+    texts = [await read_batch_file(client, batch.id, file_id) for file_id in file_ids]
+    return [
+        output
+        for file_id, text in zip(file_ids, texts, strict=True)
+        for output in decode_batch_file(batch.id, file_id, text)
+    ]
+
+
+def check_batch_readable(batch: Batch) -> None:
+    if batch.status not in TERMINAL_STATUSES:
+        raise BatchStateError(f"Batch {batch.id} is still {batch.status}; no results yet")
+    if batch.status == FAILED_STATUS:
+        errors = batch.errors.data if batch.errors and batch.errors.data else []
+        messages = [f"{error.code}: {error.message}" for error in errors]
+        raise BatchStateError(f"Batch {batch.id} failed: {messages}")
+
+
+async def read_batch_file(client: AsyncOpenAI, batch_id: str, file_id: str) -> str:
+    try:
+        content = await client.files.content(file_id)
+    except openai.APIError as error:
+        raise LLMBatchError(
+            f"Failed to download file {file_id} of batch {batch_id} from {client.base_url}: {error}"
+        ) from error
+    return content.text
+
+
+def decode_batch_file(batch_id: str, file_id: str, text: str) -> list[BatchOutput]:
+    outputs = []
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            outputs.append(BatchOutput.model_validate_json(line))
+        except ValidationError as error:
+            raise LLMBatchError(
+                f"Malformed line {line_number} in file {file_id} of batch {batch_id}: {error}"
+            ) from error
+    return outputs
+
+
+def require_success(output: BatchOutput) -> dict[str, Any]:
+    """Return the response body of a successful output, or raise `BatchOutputError`."""
+    if output.is_success and output.response is not None:
+        return output.response.body
+    status = output.response.status_code if output.response is not None else None
+    raise BatchOutputError(
+        f"Batch line {output.custom_id} failed with status {status}: {describe_failure(output)}"
+    )
+
+
+def describe_failure(output: BatchOutput) -> str:
+    if output.error is not None:
+        return f"{output.error.code}: {output.error.message or UNKNOWN_FAILURE}"
+    body_error = output.response.body.get("error") if output.response is not None else None
+    if isinstance(body_error, dict) and isinstance(body_error.get("message"), str):
+        return str(body_error["message"])
+    return UNKNOWN_FAILURE
+
+
+@overload
+def parse_chat_output(output: BatchOutput) -> ChatCompletion: ...
+
+
+@overload
+def parse_chat_output[ModelT: BaseModel](
+    output: BatchOutput, response_model: type[ModelT]
+) -> ParsedChatCompletion[ModelT]: ...
+
+
+def parse_chat_output[ModelT: BaseModel](
+    output: BatchOutput, response_model: type[ModelT] | None = None
+) -> ChatCompletion | ParsedChatCompletion[ModelT]:
+    """Return the chat completion of a successful output.
+
+    With `response_model`, the result is the `ParsedChatCompletion` that
+    `chat.completions.parse` returns for the same response body.
+    """
+    completion = ChatCompletion.model_validate(require_success(output))
+    if response_model is None:
+        return completion
+    return parse_chat_completion(
+        response_format=response_model, input_tools=omit, chat_completion=completion
+    )
+
+
+def parse_embedding_output(output: BatchOutput) -> CreateEmbeddingResponse:
+    """Return the embedding response of a successful output."""
+    return CreateEmbeddingResponse.model_validate(require_success(output))

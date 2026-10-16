@@ -3,6 +3,7 @@
 openai 3.x sends requests through `httpx2`, so the mocks use `httpx2.MockTransport`.
 """
 
+import json
 from collections.abc import Callable
 from typing import Any
 
@@ -70,6 +71,20 @@ def file_body(file_id: str) -> dict[str, Any]:
         "purpose": "batch",
         "status": "processed",
     }
+
+
+def output_line(custom_id: str, status_code: int, body: dict[str, Any]) -> str:
+    """Return 1 line of a batch output file, for a request that reached the model."""
+    response = {"status_code": status_code, "request_id": f"req-{custom_id}", "body": body}
+    return json.dumps({"id": f"line-{custom_id}", "custom_id": custom_id, "response": response})
+
+
+def error_line(custom_id: str, code: str, message: str) -> str:
+    """Return 1 line of a batch error file, for a request that never ran."""
+    error = {"code": code, "message": message}
+    return json.dumps(
+        {"id": f"line-{custom_id}", "custom_id": custom_id, "response": None, "error": error}
+    )
 
 
 def embedding_body(vectors: list[list[float]]) -> dict[str, Any]:
