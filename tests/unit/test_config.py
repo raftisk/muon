@@ -5,10 +5,22 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from muon.config import PROJECT_ROOT, Neo4jSettings, OntologySettings, get_settings
+from muon.config import (
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_REQUEST_TIMEOUT_SECONDS,
+    PROJECT_ROOT,
+    EmbeddingSettings,
+    LLMSettings,
+    Neo4jSettings,
+    OntologySettings,
+    Settings,
+    get_settings,
+)
 
 ENV_PREFIXES = ("NEO4J_", "MUON_")
 PASSWORD = "file-secret"
+LLM_KEY = "llm-secret"
+EMBEDDING_KEY = "embedding-secret"
 
 
 @pytest.fixture(autouse=True)
@@ -91,3 +103,95 @@ def test_ontology_dir_env_var_overrides_default(
     settings = OntologySettings(_env_file=tmp_path / ".env")
 
     assert settings.ontology_dir == tmp_path
+
+
+@pytest.fixture
+def provider_env_file(tmp_path: Path) -> Path:
+    path = tmp_path / ".env"
+    path.write_text(
+        "MUON_LLM_BASE_URL=https://chat.test/v1\n"
+        f"MUON_LLM_API_KEY={LLM_KEY}\n"
+        "MUON_LLM_MODEL=chat-model\n"
+        "MUON_EMBEDDING_BASE_URL=https://embed.test/v1\n"
+        f"MUON_EMBEDDING_API_KEY={EMBEDDING_KEY}\n"
+        "MUON_EMBEDDING_MODEL=embed-model\n"
+    )
+    return path
+
+
+def test_llm_settings_load_from_env_file(provider_env_file: Path) -> None:
+    settings = LLMSettings(_env_file=provider_env_file)
+
+    assert settings.base_url == "https://chat.test/v1"
+    assert settings.api_key.get_secret_value() == LLM_KEY
+    assert settings.model == "chat-model"
+
+
+def test_provider_settings_default_to_sdk_timeout_and_retries(provider_env_file: Path) -> None:
+    settings = LLMSettings(_env_file=provider_env_file)
+
+    assert settings.timeout == DEFAULT_REQUEST_TIMEOUT_SECONDS
+    assert settings.max_retries == DEFAULT_MAX_RETRIES
+
+
+def test_provider_api_keys_hidden_in_repr(provider_env_file: Path) -> None:
+    llm = LLMSettings(_env_file=provider_env_file)
+    embedding = EmbeddingSettings(_env_file=provider_env_file)
+
+    assert LLM_KEY not in repr(llm)
+    assert EMBEDDING_KEY not in repr(embedding)
+
+
+def test_missing_llm_model_names_it(tmp_path: Path) -> None:
+    path = tmp_path / ".env"
+    path.write_text("MUON_LLM_BASE_URL=https://chat.test/v1\nMUON_LLM_API_KEY=key\n")
+
+    with pytest.raises(ValidationError, match="model"):
+        LLMSettings(_env_file=path)
+
+
+def test_embedding_dimensions_unset_is_none(provider_env_file: Path) -> None:
+    settings = EmbeddingSettings(_env_file=provider_env_file)
+
+    assert settings.dimensions is None
+
+
+def test_embedding_dimensions_read_from_env(
+    provider_env_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MUON_EMBEDDING_DIMENSIONS", "1024")
+
+    settings = EmbeddingSettings(_env_file=provider_env_file)
+
+    assert settings.dimensions == 1024
+
+
+def test_embedding_dimensions_reject_zero(
+    provider_env_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MUON_EMBEDDING_DIMENSIONS", "0")
+
+    with pytest.raises(ValidationError, match="dimensions"):
+        EmbeddingSettings(_env_file=provider_env_file)
+
+
+def test_chat_and_embeddings_load_separate_providers(provider_env_file: Path) -> None:
+    llm = LLMSettings(_env_file=provider_env_file)
+    embedding = EmbeddingSettings(_env_file=provider_env_file)
+
+    assert (llm.base_url, llm.api_key.get_secret_value()) == ("https://chat.test/v1", LLM_KEY)
+    assert (embedding.base_url, embedding.api_key.get_secret_value()) == (
+        "https://embed.test/v1",
+        EMBEDDING_KEY,
+    )
+
+
+def test_settings_aggregate_holds_no_provider_group(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NEO4J_URI", "neo4j://env-host:7687")
+    monkeypatch.setenv("NEO4J_USERNAME", "env-user")
+    monkeypatch.setenv("NEO4J_PASSWORD", "env-secret")
+
+    settings = Settings()
+
+    assert set(Settings.model_fields) == {"neo4j", "ontology"}
+    assert settings.neo4j.uri == "neo4j://env-host:7687"

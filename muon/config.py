@@ -18,6 +18,10 @@ DEFAULT_DATABASE = "neo4j"
 DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30.0
 DEFAULT_MAX_CONNECTION_POOL_SIZE = 100
 
+# Equal to the openai SDK defaults, so unset values behave like a plain client.
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 600.0
+DEFAULT_MAX_RETRIES = 2
+
 
 class Neo4jSettings(BaseSettings):
     """Connection settings for the Neo4j instance, read from `NEO4J_*` variables."""
@@ -40,7 +44,43 @@ class OntologySettings(BaseSettings):
     ontology_dir: Path = DEFAULT_ONTOLOGY_DIR
 
 
+class ProviderSettings(BaseSettings):
+    """Where requests to 1 OpenAI-compatible endpoint go: URL, key and model."""
+
+    base_url: str
+    api_key: SecretStr
+    model: str
+    timeout: float = DEFAULT_REQUEST_TIMEOUT_SECONDS  # seconds
+    max_retries: int = DEFAULT_MAX_RETRIES
+
+
+class LLMSettings(ProviderSettings):
+    """Chat provider, read from `MUON_LLM_*` variables."""
+
+    model_config = SettingsConfigDict(env_prefix="MUON_LLM_", env_file=ENV_FILE, extra="ignore")
+
+
+class EmbeddingSettings(ProviderSettings):
+    """Embedding provider, read from `MUON_EMBEDDING_*` variables.
+
+    `dimensions` is `None` when unset, so callers omit the parameter for models that
+    reject it.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="MUON_EMBEDDING_", env_file=ENV_FILE, extra="ignore"
+    )
+
+    dimensions: int | None = Field(default=None, gt=0)
+
+
 class Settings(BaseModel):
+    """Settings every graph command needs.
+
+    `LLMSettings` and `EmbeddingSettings` stay out, so a command that calls no model
+    runs without `MUON_LLM_*` or `MUON_EMBEDDING_*` variables.
+    """
+
     neo4j: Neo4jSettings = Field(default_factory=Neo4jSettings)
     ontology: OntologySettings = Field(default_factory=OntologySettings)
 
