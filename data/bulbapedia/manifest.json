@@ -1,5 +1,5755 @@
 {
   "page_types": {
+    "move": [
+      {
+        "title": "10,000,000 Volt Thunderbolt (move)",
+        "page_id": 218757,
+        "revision_id": 4642923,
+        "sha1": "a110f2e268ee4ba2e5989384d5e14c10b65492cd"
+      },
+      {
+        "title": "Absorb (move)",
+        "page_id": 6003,
+        "revision_id": 4620914,
+        "sha1": "15e2545569124ccd3aa20483d2ea2631328e66bc"
+      },
+      {
+        "title": "Accelerock (move)",
+        "page_id": 216051,
+        "revision_id": 4621883,
+        "sha1": "2a9dc2d5ffd11f85da49230cee6df49959725149"
+      },
+      {
+        "title": "Acid (move)",
+        "page_id": 3660,
+        "revision_id": 4623874,
+        "sha1": "9437d534561919856e2b6bc5ca05e254fc2ca79f"
+      },
+      {
+        "title": "Acid Armor (move)",
+        "page_id": 3760,
+        "revision_id": 4644657,
+        "sha1": "bddb8cfdd91d1d389e125bacb511a6c44c632737"
+      },
+      {
+        "title": "Acid Downpour (move)",
+        "page_id": 218468,
+        "revision_id": 4614726,
+        "sha1": "aef366a989ec0d4818b7d4336087dec677aa1001"
+      },
+      {
+        "title": "Acid Spray (move)",
+        "page_id": 117520,
+        "revision_id": 4627967,
+        "sha1": "324367405c49c57466b251752b0a9fed49ef8f9c"
+      },
+      {
+        "title": "Acrobatics (move)",
+        "page_id": 112983,
+        "revision_id": 4627935,
+        "sha1": "15eeee83e64fb3a322e77d60772e6dc63d9a202c"
+      },
+      {
+        "title": "Acupressure (move)",
+        "page_id": 14451,
+        "revision_id": 4632910,
+        "sha1": "0750d7cfdee7ebdde502939d3d25311993906586"
+      },
+      {
+        "title": "Aerial Ace (move)",
+        "page_id": 3943,
+        "revision_id": 4636933,
+        "sha1": "b5188c989ef39b111d4dba96fc42b33e6cb09fea"
+      },
+      {
+        "title": "Aeroblast (move)",
+        "page_id": 3787,
+        "revision_id": 4638229,
+        "sha1": "db0b4469a015b1cd1c9b42da18dbff18d31d2388"
+      },
+      {
+        "title": "After You (move)",
+        "page_id": 117608,
+        "revision_id": 4627969,
+        "sha1": "4301d3e67f1b783ef5e7eda45942f120897697f2"
+      },
+      {
+        "title": "Agility (move)",
+        "page_id": 3706,
+        "revision_id": 4627972,
+        "sha1": "43eefdf935cb229b52ca9c8a9f5a00184cec135c"
+      },
+      {
+        "title": "Air Cutter (move)",
+        "page_id": 3925,
+        "revision_id": 4645372,
+        "sha1": "ff1f0cbe811c655fa2be68d9acbe26f345605f4e"
+      },
+      {
+        "title": "Air Slash (move)",
+        "page_id": 17458,
+        "revision_id": 4634738,
+        "sha1": "627be94e220e7681afaeb71e117088a1336e2ca8"
+      },
+      {
+        "title": "All-Out Pummeling (move)",
+        "page_id": 216398,
+        "revision_id": 4511387,
+        "sha1": "e1d53cf6fdf06afe575e33a4fdf503102ce0bac5"
+      },
+      {
+        "title": "Alluring Voice (move)",
+        "page_id": 300835,
+        "revision_id": 4627948,
+        "sha1": "e139718b0b2fdd6158213c7b96e2fa198ef3c925"
+      },
+      {
+        "title": "Ally Switch (move)",
+        "page_id": 117493,
+        "revision_id": 4639959,
+        "sha1": "d86853fe6c067bbefb6b64cd4d50fc6b7a96fd36"
+      },
+      {
+        "title": "Amnesia (move)",
+        "page_id": 3742,
+        "revision_id": 4646667,
+        "sha1": "506fd5d0935c3f025c0369a85da0eba1503ba819"
+      },
+      {
+        "title": "Anchor Shot (move)",
+        "page_id": 218204,
+        "revision_id": 4623032,
+        "sha1": "31ff7bf70cf37bd2f157b4c875bbf6bf84772466"
+      },
+      {
+        "title": "Ancient Power (move)",
+        "page_id": 3857,
+        "revision_id": 4643390,
+        "sha1": "6087c83c33378b19136f6d427bd5a7ac9c88fbd3"
+      },
+      {
+        "title": "Apple Acid (move)",
+        "page_id": 244338,
+        "revision_id": 4614728,
+        "sha1": "834a45e215d07dde8e6e15882801a56bd67fb18c"
+      },
+      {
+        "title": "Aqua Cutter (move)",
+        "page_id": 277801,
+        "revision_id": 4647586,
+        "sha1": "2f14f4abc2a01e67ac322adcc4001a687ac465d4"
+      },
+      {
+        "title": "Aqua Jet (move)",
+        "page_id": 12424,
+        "revision_id": 4647573,
+        "sha1": "18d787e7801b339e93422ac5df103460e54f6472"
+      },
+      {
+        "title": "Aqua Ring (move)",
+        "page_id": 18881,
+        "revision_id": 4636322,
+        "sha1": "dc1be1ae7a67b6cdd5576fab070f362a31466005"
+      },
+      {
+        "title": "Aqua Step (move)",
+        "page_id": 277775,
+        "revision_id": 4647581,
+        "sha1": "4a48aee25fcdc93f615d2557c029beaf94ebbdb4"
+      },
+      {
+        "title": "Aqua Tail (move)",
+        "page_id": 18883,
+        "revision_id": 4647551,
+        "sha1": "d4c0aa8606f81fa207f6feaefbe500297ba0212c"
+      },
+      {
+        "title": "Arm Thrust (move)",
+        "page_id": 3903,
+        "revision_id": 4632497,
+        "sha1": "b9e20aa60216117de84587de482da36cc24ac2b8"
+      },
+      {
+        "title": "Armor Cannon (move)",
+        "page_id": 274256,
+        "revision_id": 4632428,
+        "sha1": "0db9bdfd72f34ee3a042f6848e290ebcc0ec4c8d"
+      },
+      {
+        "title": "Aromatherapy (move)",
+        "page_id": 3923,
+        "revision_id": 4632646,
+        "sha1": "05dac7f401a3be4136947d4867dd9a94a5d3c0c1"
+      },
+      {
+        "title": "Aromatic Mist (move)",
+        "page_id": 185080,
+        "revision_id": 4634811,
+        "sha1": "d7301036436e4980ae480a53c5e75c9200051b6b"
+      },
+      {
+        "title": "Assist (move)",
+        "page_id": 3885,
+        "revision_id": 4629856,
+        "sha1": "ca632384134d09aef3d58a6c06d392cf8911e46e"
+      },
+      {
+        "title": "Assurance (move)",
+        "page_id": 60473,
+        "revision_id": 4627983,
+        "sha1": "487bafba962f1b336ff6122314296e9365f182ea"
+      },
+      {
+        "title": "Astonish (move)",
+        "page_id": 3921,
+        "revision_id": 4645374,
+        "sha1": "80cfac20a63c745984f0df12b3ea5d84ca91ed16"
+      },
+      {
+        "title": "Astral Barrage (move)",
+        "page_id": 257884,
+        "revision_id": 4577617,
+        "sha1": "efd73aa83a328bd4b2d341b02695129a8005af39"
+      },
+      {
+        "title": "Attack Order (move)",
+        "page_id": 18896,
+        "revision_id": 4627654,
+        "sha1": "b5593efb410d6c39cc6cadbb4b39d3d97de5ff6d"
+      },
+      {
+        "title": "Attract (move)",
+        "page_id": 3824,
+        "revision_id": 4640823,
+        "sha1": "0e9b8f38a94660ef9b92ebb8e491e180ef2d90d4"
+      },
+      {
+        "title": "Aura Sphere (move)",
+        "page_id": 12420,
+        "revision_id": 4643417,
+        "sha1": "56dc2b5c59538103c9643c7d11d9f9480ac8410b"
+      },
+      {
+        "title": "Aura Wheel (move)",
+        "page_id": 240153,
+        "revision_id": 4631991,
+        "sha1": "c3144707e10420a3cf8cb5fc8d252ba9fbe1b780"
+      },
+      {
+        "title": "Aurora Beam (move)",
+        "page_id": 3671,
+        "revision_id": 4645801,
+        "sha1": "3c9e3ac7d9c4bad40f5914ce695a880283e9e2de"
+      },
+      {
+        "title": "Aurora Veil (move)",
+        "page_id": 218370,
+        "revision_id": 4623082,
+        "sha1": "46ac86cfcfb8c5540a66c81c0153292f6f13dd9a"
+      },
+      {
+        "title": "Autotomize (move)",
+        "page_id": 117506,
+        "revision_id": 4621537,
+        "sha1": "b452937a010cdfb30d001b87e803feb58bbde8f8"
+      },
+      {
+        "title": "Avalanche (move)",
+        "page_id": 17449,
+        "revision_id": 4649720,
+        "sha1": "9a434d8e4ff23b09921c3d6c5fa0c70f1fc535da"
+      },
+      {
+        "title": "Axe Kick (move)",
+        "page_id": 277755,
+        "revision_id": 4632440,
+        "sha1": "49002c18c512407da5a83b17b2bab928d5165cbf"
+      },
+      {
+        "title": "Baby-Doll Eyes (move)",
+        "page_id": 182760,
+        "revision_id": 4622934,
+        "sha1": "7d02cb70590afc7e9b8f2452593311846d1b54d1"
+      },
+      {
+        "title": "Baddy Bad (move)",
+        "page_id": 233651,
+        "revision_id": 4627586,
+        "sha1": "1e921eb43de8c4ea7a49d28e859de98db4b62368"
+      },
+      {
+        "title": "Baneful Bunker (move)",
+        "page_id": 218235,
+        "revision_id": 4636017,
+        "sha1": "d03e82e6ae0db2e0d18f87de341fb9f4742e3c1d"
+      },
+      {
+        "title": "Barb Barrage (move)",
+        "page_id": 268031,
+        "revision_id": 4593160,
+        "sha1": "77c81b0543d5908cf1dafb47652a7df16e371f5c"
+      },
+      {
+        "title": "Barrage (move)",
+        "page_id": 3749,
+        "revision_id": 4646426,
+        "sha1": "8eb86a279f5b9be7efd5c05c691d62e8237d51bd"
+      },
+      {
+        "title": "Barrier (move)",
+        "page_id": 3721,
+        "revision_id": 4650301,
+        "sha1": "a3707523b24a0cb5746fc14986dc2deeedf52662"
+      },
+      {
+        "title": "Baton Pass (move)",
+        "page_id": 3837,
+        "revision_id": 4640921,
+        "sha1": "3297431bdb68945a0dc10f406f8b8cc0fbd92e17"
+      },
+      {
+        "title": "Beak Blast (move)",
+        "page_id": 218254,
+        "revision_id": 4641991,
+        "sha1": "75078e14a49b84b58ca4bf120ed6969d572d2417"
+      },
+      {
+        "title": "Beat Up (move)",
+        "page_id": 3862,
+        "revision_id": 4643402,
+        "sha1": "09d235a39a2f3312f27e350cc6c5b36f3a2d737e"
+      },
+      {
+        "title": "Behemoth Bash (move)",
+        "page_id": 244336,
+        "revision_id": 4636289,
+        "sha1": "c9c493bf73c5c0bd1e663664245dd4ac7f1e32a3"
+      },
+      {
+        "title": "Behemoth Blade (move)",
+        "page_id": 244335,
+        "revision_id": 4636287,
+        "sha1": "599fb710c787095c8153443adb7948f884ba20eb"
+      },
+      {
+        "title": "Belch (move)",
+        "page_id": 185081,
+        "revision_id": 4634783,
+        "sha1": "399c8731783cd75369200017417b25a6714117d5"
+      },
+      {
+        "title": "Belly Drum (move)",
+        "page_id": 3797,
+        "revision_id": 4638910,
+        "sha1": "54b2667c662d2af5dc3c8baa034f7147edd2a9c4"
+      },
+      {
+        "title": "Bestow (move)",
+        "page_id": 117486,
+        "revision_id": 4389276,
+        "sha1": "ca03696a1c435ab02ce9bfed8953a673376b7bcf"
+      },
+      {
+        "title": "Bide (move)",
+        "page_id": 3726,
+        "revision_id": 4650285,
+        "sha1": "06969d64428a34296821d556e93b54c995162f60"
+      },
+      {
+        "title": "Bind (move)",
+        "page_id": 3628,
+        "revision_id": 4627997,
+        "sha1": "f3e77a57ab08fcf7a383e2261177e824af95e01e"
+      },
+      {
+        "title": "Bite (move)",
+        "page_id": 3653,
+        "revision_id": 4645384,
+        "sha1": "53b379a4272619be5f45d79624b7240ba9e7785f"
+      },
+      {
+        "title": "Bitter Blade (move)",
+        "page_id": 274257,
+        "revision_id": 4648861,
+        "sha1": "46fdd6b644c22792ceaa77fb2ea7827e9edff468"
+      },
+      {
+        "title": "Bitter Malice (move)",
+        "page_id": 268673,
+        "revision_id": 4614824,
+        "sha1": "ea7ce91e95f4a5c826499b43c5cbd244f9a85a0b"
+      },
+      {
+        "title": "Black Hole Eclipse (move)",
+        "page_id": 218485,
+        "revision_id": 4614261,
+        "sha1": "8c1d66900bec919c613c25a8187d568f55175549"
+      },
+      {
+        "title": "Blast Burn (move)",
+        "page_id": 3918,
+        "revision_id": 4632584,
+        "sha1": "7495c28b7b293ebd802ea8eeb0967c0143fa30fb"
+      },
+      {
+        "title": "Blaze Kick (move)",
+        "page_id": 3910,
+        "revision_id": 4645385,
+        "sha1": "197f867d37756c263b8d35d1ceaf4a68613aeaf5"
+      },
+      {
+        "title": "Blazing Torque (move)",
+        "page_id": 277874,
+        "revision_id": 4635199,
+        "sha1": "ccacc7460df86a37c85d1dca4b7ce2754b59c1ad"
+      },
+      {
+        "title": "Bleakwind Storm (move)",
+        "page_id": 268675,
+        "revision_id": 4621942,
+        "sha1": "002e88046b263c4b5c71f9cd3f4d5fdc02d7f254"
+      },
+      {
+        "title": "Blizzard (move)",
+        "page_id": 3668,
+        "revision_id": 4627954,
+        "sha1": "4546a1aec471514ccdc6390bba5f9c71ccdc1638"
+      },
+      {
+        "title": "Block (move)",
+        "page_id": 3946,
+        "revision_id": 4641357,
+        "sha1": "c7767f989a4467d151d4cb8a69dab0e199afef61"
+      },
+      {
+        "title": "Blood Moon (move)",
+        "page_id": 295876,
+        "revision_id": 4632439,
+        "sha1": "e2cb7dc8f1315500c981c064f8bf9fae9ccd7a1c"
+      },
+      {
+        "title": "Bloom Doom (move)",
+        "page_id": 215069,
+        "revision_id": 4614940,
+        "sha1": "d3d95e086b049b795e19bca2cb7a1ea1f6f3d2d5"
+      },
+      {
+        "title": "Blue Flare (move)",
+        "page_id": 117492,
+        "revision_id": 4623005,
+        "sha1": "6f5ef3c6af91d56c3dbcfbee252b4a78f9d70805"
+      },
+      {
+        "title": "Body Press (move)",
+        "page_id": 244330,
+        "revision_id": 4629106,
+        "sha1": "ddf03a6b119454ce7e3dd3ceacb9bbfa1ba053d4"
+      },
+      {
+        "title": "Body Slam (move)",
+        "page_id": 3642,
+        "revision_id": 4645386,
+        "sha1": "0285703bde7c33f18d564c254400c9a9c3f2d9f0"
+      },
+      {
+        "title": "Bolt Beak (move)",
+        "page_id": 244326,
+        "revision_id": 4577560,
+        "sha1": "a9c7297b55ea6b838233b753db2f440417904273"
+      },
+      {
+        "title": "Bolt Strike (move)",
+        "page_id": 117491,
+        "revision_id": 4634776,
+        "sha1": "81f195cc89a15652b34f5e793d927e721c904de2"
+      },
+      {
+        "title": "Bone Club (move)",
+        "page_id": 3734,
+        "revision_id": 4649358,
+        "sha1": "dc31abc602686048fbf4d5cd40186a2efdd1723d"
+      },
+      {
+        "title": "Bone Rush (move)",
+        "page_id": 3809,
+        "revision_id": 4639897,
+        "sha1": "d8c2ebf59f9fcdf6202e270f4f991ca412fa1dee"
+      },
+      {
+        "title": "Bonemerang (move)",
+        "page_id": 3764,
+        "revision_id": 4644587,
+        "sha1": "93d9b0918ce467ea222c578411a3a63869735711"
+      },
+      {
+        "title": "Boomburst (move)",
+        "page_id": 180358,
+        "revision_id": 4628027,
+        "sha1": "00723cde173214ad67355ba2688b34e07f54b831"
+      },
+      {
+        "title": "Bounce (move)",
+        "page_id": 3951,
+        "revision_id": 4634821,
+        "sha1": "6e64c025e8458998b0498e7295d2db7e88eaa866"
+      },
+      {
+        "title": "Bouncy Bubble (move)",
+        "page_id": 232100,
+        "revision_id": 4647457,
+        "sha1": "ee4d5c7941722e41a807e11d66abc46f0ba51f6a"
+      },
+      {
+        "title": "Branch Poke (move)",
+        "page_id": 238896,
+        "revision_id": 4623006,
+        "sha1": "94b20dbdeeac09f76975b5ae5c5dc60ebf12f8dc"
+      },
+      {
+        "title": "Brave Bird (move)",
+        "page_id": 12735,
+        "revision_id": 4645387,
+        "sha1": "0489bd4bbf4a244858fe96941b1a73a285289f7f"
+      },
+      {
+        "title": "Breaking Swipe (move)",
+        "page_id": 240322,
+        "revision_id": 4628034,
+        "sha1": "b7ba7e3f550fe9a8bc86dc3e9a07d2afb6ffc529"
+      },
+      {
+        "title": "Breakneck Blitz (move)",
+        "page_id": 216554,
+        "revision_id": 4614299,
+        "sha1": "a783e6539fbc43f8bcec06690106185f3b7c1282"
+      },
+      {
+        "title": "Brick Break (move)",
+        "page_id": 3891,
+        "revision_id": 4646008,
+        "sha1": "82c6a60016fac0463147e9c3d98e3a260ce3e35b"
+      },
+      {
+        "title": "Brine (move)",
+        "page_id": 13680,
+        "revision_id": 4645389,
+        "sha1": "6412f567e0351e46d9decac56196a14f5b628ccb"
+      },
+      {
+        "title": "Brutal Swing (move)",
+        "page_id": 218367,
+        "revision_id": 4645391,
+        "sha1": "4b393ff7872a1199bc4924b9cad24325f3e90284"
+      },
+      {
+        "title": "Bubble (move)",
+        "page_id": 3754,
+        "revision_id": 4647482,
+        "sha1": "ceaba6c78320e8fb0ae650ce73826c76000b1d76"
+      },
+      {
+        "title": "Bubble Beam (move)",
+        "page_id": 3670,
+        "revision_id": 4647602,
+        "sha1": "585a18327fe3242cb788ff3c8e5a168156857c67"
+      },
+      {
+        "title": "Bug Bite (move)",
+        "page_id": 18895,
+        "revision_id": 4628040,
+        "sha1": "365379ef6c318c525a5dc226f246c70261d52415"
+      },
+      {
+        "title": "Bug Buzz (move)",
+        "page_id": 18884,
+        "revision_id": 4628041,
+        "sha1": "ffd5be75e9c67453ac6ea09ac35f365c8e88edef"
+      },
+      {
+        "title": "Bulk Up (move)",
+        "page_id": 3950,
+        "revision_id": 4633228,
+        "sha1": "05bb8b6f20c523ef839603b9c0411c9dc1463293"
+      },
+      {
+        "title": "Bulldoze (move)",
+        "page_id": 117263,
+        "revision_id": 4649136,
+        "sha1": "5c4abb0c0996eaa7101a687763cd1aff1e426d82"
+      },
+      {
+        "title": "Bullet Punch (move)",
+        "page_id": 18888,
+        "revision_id": 4627424,
+        "sha1": "8d4a5397791ed852aabfc6e77a4d87adfd943392"
+      },
+      {
+        "title": "Bullet Seed (move)",
+        "page_id": 3942,
+        "revision_id": 4636939,
+        "sha1": "0a07e98383df85b1b092bb9775ed5aedf29dd5af"
+      },
+      {
+        "title": "Burn Up (move)",
+        "page_id": 218359,
+        "revision_id": 4581133,
+        "sha1": "e371a514c94eccc86b5219f1ea17e692a93ff013"
+      },
+      {
+        "title": "Burning Bulwark (move)",
+        "page_id": 300830,
+        "revision_id": 4632484,
+        "sha1": "875632460642ea2f8340767939bded744a24aca3"
+      },
+      {
+        "title": "Burning Jealousy (move)",
+        "page_id": 252235,
+        "revision_id": 4628056,
+        "sha1": "ea01b4875431b9b9450c61fabdde7d48053dc082"
+      },
+      {
+        "title": "Buzzy Buzz (move)",
+        "page_id": 232101,
+        "revision_id": 4627583,
+        "sha1": "b9939d0e895df2d63e3f91bc84fe820e986fd560"
+      },
+      {
+        "title": "Calm Mind (move)",
+        "page_id": 3958,
+        "revision_id": 4635977,
+        "sha1": "d1239e1913cbb96d32f7652826840906473e9896"
+      },
+      {
+        "title": "Camouflage (move)",
+        "page_id": 3904,
+        "revision_id": 4634422,
+        "sha1": "e9b622cccfed82d049bd9df235469f22ea48fb27"
+      },
+      {
+        "title": "Captivate (move)",
+        "page_id": 15297,
+        "revision_id": 4627633,
+        "sha1": "aed2e0839dd332a287c04200de0efba50ddced2a"
+      },
+      {
+        "title": "Catastropika (move)",
+        "page_id": 216045,
+        "revision_id": 4642920,
+        "sha1": "549f5b1ec6d5e3ef6729bd4b1ca0f29bd9e3e2bf"
+      },
+      {
+        "title": "Ceaseless Edge (move)",
+        "page_id": 268709,
+        "revision_id": 4614422,
+        "sha1": "2beae81c16939b68e6a1f1a6902b0f75694abc8e"
+      },
+      {
+        "title": "Celebrate (move)",
+        "page_id": 185027,
+        "revision_id": 4518040,
+        "sha1": "eca8338f57ed7a4b96ef0e9919e412eb25e8377d"
+      },
+      {
+        "title": "Charge (move)",
+        "page_id": 3879,
+        "revision_id": 4634804,
+        "sha1": "d39d516abadccb74a0ba5350787a5322a2b38490"
+      },
+      {
+        "title": "Charge Beam (move)",
+        "page_id": 12737,
+        "revision_id": 4645396,
+        "sha1": "b67de23ff7b697cd0b2b273b18ff2b9373077f1d"
+      },
+      {
+        "title": "Charm (move)",
+        "page_id": 3815,
+        "revision_id": 4639922,
+        "sha1": "2f250ca44dd5fefe8bf6c20c88d0929e3057991d"
+      },
+      {
+        "title": "Chatter (move)",
+        "page_id": 12712,
+        "revision_id": 4640656,
+        "sha1": "c3dc1c69849d4eacac1e1d7c865a6289eb3bf368"
+      },
+      {
+        "title": "Chilling Water (move)",
+        "page_id": 277795,
+        "revision_id": 4647545,
+        "sha1": "4884495efcd991eb78422781338fcf961311a24e"
+      },
+      {
+        "title": "Chilly Reception (move)",
+        "page_id": 277789,
+        "revision_id": 4614463,
+        "sha1": "3d1b37e6c48e3e770802758d909495adc43ec813"
+      },
+      {
+        "title": "Chip Away (move)",
+        "page_id": 117612,
+        "revision_id": 4621566,
+        "sha1": "7c715c0d27f5405774fe938d932413061bb9d441"
+      },
+      {
+        "title": "Chloroblast (move)",
+        "page_id": 268711,
+        "revision_id": 4614539,
+        "sha1": "b4b72b5079d9b32f50e8c8efae0274589666e07f"
+      },
+      {
+        "title": "Circle Throw (move)",
+        "page_id": 117448,
+        "revision_id": 4628063,
+        "sha1": "230eba5f37c1dc31db2971b783403e4a12493e76"
+      },
+      {
+        "title": "Clamp (move)",
+        "page_id": 3737,
+        "revision_id": 4649340,
+        "sha1": "9b75d27120e4c31f021364311e0fcc1577c41529"
+      },
+      {
+        "title": "Clanging Scales (move)",
+        "page_id": 216508,
+        "revision_id": 4621877,
+        "sha1": "93503ef69f60eb09f0d25b229b39fa5aabbe1bf0"
+      },
+      {
+        "title": "Clangorous Soul (move)",
+        "page_id": 244329,
+        "revision_id": 4577547,
+        "sha1": "133b4fdcc952a3bf280a879112c536518cbde4f0"
+      },
+      {
+        "title": "Clangorous Soulblaze (move)",
+        "page_id": 225150,
+        "revision_id": 4572100,
+        "sha1": "0a2858d05fff8fd2181c2a237e0144b528f2d8b2"
+      },
+      {
+        "title": "Clear Smog (move)",
+        "page_id": 117503,
+        "revision_id": 4643707,
+        "sha1": "61fea2d8ffd60108e9490c6450bdbfc6d80bb55d"
+      },
+      {
+        "title": "Close Combat (move)",
+        "page_id": 12426,
+        "revision_id": 4628076,
+        "sha1": "c943c715dd8da81e6a7fa98053082f98db572022"
+      },
+      {
+        "title": "Coaching (move)",
+        "page_id": 252915,
+        "revision_id": 4628079,
+        "sha1": "eaf75959e06ea510eb758d395bb815958b249a07"
+      },
+      {
+        "title": "Coil (move)",
+        "page_id": 117551,
+        "revision_id": 4634751,
+        "sha1": "2c8be64eb829577eaac42d1db7e5119fd2c96338"
+      },
+      {
+        "title": "Collision Course (move)",
+        "page_id": 277787,
+        "revision_id": 4628588,
+        "sha1": "ac4850de268e642f144e39100acec9c33bb599e0"
+      },
+      {
+        "title": "Combat Torque (move)",
+        "page_id": 277877,
+        "revision_id": 4635219,
+        "sha1": "6251d4e7c01a7cc3529d4eb1c5f8a00162c33bb4"
+      },
+      {
+        "title": "Comet Punch (move)",
+        "page_id": 3612,
+        "revision_id": 4631943,
+        "sha1": "115bc04c0477934b4a1b2951e7e6ddd79ed1046e"
+      },
+      {
+        "title": "Comeuppance (move)",
+        "page_id": 277800,
+        "revision_id": 4628080,
+        "sha1": "a43c68177c45d74e9f09eb8178d1c933b564090e"
+      },
+      {
+        "title": "Confide (move)",
+        "page_id": 184642,
+        "revision_id": 4403428,
+        "sha1": "8c5695675debd8e4159e87402ebfd6638cca9693"
+      },
+      {
+        "title": "Confuse Ray (move)",
+        "page_id": 3718,
+        "revision_id": 4651065,
+        "sha1": "dc03d16ae057c03ca095c3de90d2b1d1490ed80c"
+      },
+      {
+        "title": "Confusion (move)",
+        "page_id": 3702,
+        "revision_id": 4643692,
+        "sha1": "4c7327d7aa11b2d3d5b591cc20781cd07353d91b"
+      },
+      {
+        "title": "Constrict (move)",
+        "page_id": 3741,
+        "revision_id": 4646668,
+        "sha1": "3199debe4e9c594ad671b8704f593cabc2b27a13"
+      },
+      {
+        "title": "Continental Crush (move)",
+        "page_id": 218473,
+        "revision_id": 4614793,
+        "sha1": "995f71a4bcb99201d4dfdc21af912438a5697302"
+      },
+      {
+        "title": "Conversion (move)",
+        "page_id": 3769,
+        "revision_id": 4644379,
+        "sha1": "90cf2c9fe4360f39e5bced638d7d11a51e39c95a"
+      },
+      {
+        "title": "Conversion 2 (move)",
+        "page_id": 3786,
+        "revision_id": 4641369,
+        "sha1": "e58ef8e487b77f1b5b64d888156323a254e3c2d4"
+      },
+      {
+        "title": "Copycat (move)",
+        "page_id": 12431,
+        "revision_id": 4634735,
+        "sha1": "b1578e070eeaf4ca3d7b5d9c3fc0aadc3d942cb4"
+      },
+      {
+        "title": "Core Enforcer (move)",
+        "page_id": 213899,
+        "revision_id": 4614870,
+        "sha1": "aba71ae7ac4528e675d1179af8aaebf39f249681"
+      },
+      {
+        "title": "Corkscrew Crash (move)",
+        "page_id": 218477,
+        "revision_id": 4614811,
+        "sha1": "33d70816c31bc4b780bbeedc5198517aaa29f77f"
+      },
+      {
+        "title": "Corrosive Gas (move)",
+        "page_id": 252914,
+        "revision_id": 4641305,
+        "sha1": "1d3ccd809d00004688b94245b58cb42f05a9ba32"
+      },
+      {
+        "title": "Cosmic Power (move)",
+        "page_id": 3933,
+        "revision_id": 4632967,
+        "sha1": "8bb44aa8e4e8787ad7d8573607f20644c528ce94"
+      },
+      {
+        "title": "Cotton Guard (move)",
+        "page_id": 117312,
+        "revision_id": 4634768,
+        "sha1": "a957c346305ed9a8e3f190f20118aa56251a4680"
+      },
+      {
+        "title": "Cotton Spore (move)",
+        "page_id": 3788,
+        "revision_id": 4638932,
+        "sha1": "53b84c9598cf49b703e6939bfa9ba502a4635794"
+      },
+      {
+        "title": "Counter (move)",
+        "page_id": 3677,
+        "revision_id": 4628092,
+        "sha1": "23ae86011e5d9f18552c0c53a495fb8cf8ee3821"
+      },
+      {
+        "title": "Court Change (move)",
+        "page_id": 244328,
+        "revision_id": 4630638,
+        "sha1": "27de339a826d2ebb6d7331fdecdd0ea1b48d4df4"
+      },
+      {
+        "title": "Covet (move)",
+        "page_id": 3954,
+        "revision_id": 4635974,
+        "sha1": "56da2f1a0e1b1d688b6e9acb9e6a23c8b02e2897"
+      },
+      {
+        "title": "Crabhammer (move)",
+        "page_id": 3761,
+        "revision_id": 4647456,
+        "sha1": "9fcc61f70c964bcd9320c2bbcf69fac53e86dcc2"
+      },
+      {
+        "title": "Crafty Shield (move)",
+        "page_id": 185070,
+        "revision_id": 4634786,
+        "sha1": "3410fd5ba5c85d84bd5a24f43096d2601aa6f71a"
+      },
+      {
+        "title": "Cross Chop (move)",
+        "page_id": 3849,
+        "revision_id": 4649002,
+        "sha1": "7e81eb87c6065499c79ea1afbe5557d12ea1d384"
+      },
+      {
+        "title": "Cross Poison (move)",
+        "page_id": 12182,
+        "revision_id": 4627631,
+        "sha1": "0295582e136bf172526917b26be7b7788f34a5d3"
+      },
+      {
+        "title": "Crunch (move)",
+        "page_id": 3853,
+        "revision_id": 4643387,
+        "sha1": "ed040d024966c7bd068459ae30717f1bc495ae42"
+      },
+      {
+        "title": "Crush Claw (move)",
+        "page_id": 3917,
+        "revision_id": 4632578,
+        "sha1": "f4d8cc8ab947bfa9e52fbed3cbc4064e6e2cfd51"
+      },
+      {
+        "title": "Crush Grip (move)",
+        "page_id": 17443,
+        "revision_id": 4640042,
+        "sha1": "75b37737213e247e9f50ab5aac7ee0d72f364365"
+      },
+      {
+        "title": "Curse (move)",
+        "page_id": 61439,
+        "revision_id": 4637940,
+        "sha1": "ef36f79af34c2811f2da1816873d9bfbcdd6dd3c"
+      },
+      {
+        "title": "Cut (move)",
+        "page_id": 3623,
+        "revision_id": 4649490,
+        "sha1": "896ce867e6b8d1443bfb369eb4044cb1b9043fb2"
+      },
+      {
+        "title": "Dark Pulse (move)",
+        "page_id": 17448,
+        "revision_id": 4645398,
+        "sha1": "6637b803a2924e3078530cb65b7fc3ec0f9c12b3"
+      },
+      {
+        "title": "Dark Void (move)",
+        "page_id": 18903,
+        "revision_id": 4649007,
+        "sha1": "40ec9f54a696243f341c93f2127392a15ba54914"
+      },
+      {
+        "title": "Darkest Lariat (move)",
+        "page_id": 216849,
+        "revision_id": 4627432,
+        "sha1": "ccae9222c8cdf1f0763191f39e186e2343e40c56"
+      },
+      {
+        "title": "Dazzling Gleam (move)",
+        "page_id": 184534,
+        "revision_id": 4628098,
+        "sha1": "ec6a9866a711f69258354987d0ddb881e4ba82d9"
+      },
+      {
+        "title": "Decorate (move)",
+        "page_id": 244331,
+        "revision_id": 4630636,
+        "sha1": "00dab29f53db8496a3e513825005f8da99a7a1fe"
+      },
+      {
+        "title": "Defend Order (move)",
+        "page_id": 18897,
+        "revision_id": 4627653,
+        "sha1": "2d26dcc403e7493e7a22bfd3cb7c45adc40d4c5e"
+      },
+      {
+        "title": "Defense Curl (move)",
+        "page_id": 3445,
+        "revision_id": 4651103,
+        "sha1": "ad60d45774d2dc1d0575e7a5622b934fd6353f97"
+      },
+      {
+        "title": "Defog (move)",
+        "page_id": 17447,
+        "revision_id": 4643406,
+        "sha1": "3e923947b331aedfbb7b432b6f7125f618cd3106"
+      },
+      {
+        "title": "Destiny Bond (move)",
+        "page_id": 3805,
+        "revision_id": 4639861,
+        "sha1": "5199cc9b01ff3fbb9484901414b39c5c5b6f5277"
+      },
+      {
+        "title": "Detect (move)",
+        "page_id": 3808,
+        "revision_id": 4639886,
+        "sha1": "def7c5957d3fa6939853db4d3bf8f4b86e1f2778"
+      },
+      {
+        "title": "Devastating Drake (move)",
+        "page_id": 218483,
+        "revision_id": 4511401,
+        "sha1": "a6a881e16a4f7ea0d0bd0c72d82f1184c1b6c348"
+      },
+      {
+        "title": "Diamond Storm (move)",
+        "page_id": 190362,
+        "revision_id": 4645935,
+        "sha1": "fb269fc55a7a1582c3296976e12f37129a07c78e"
+      },
+      {
+        "title": "Dig (move)",
+        "page_id": 3700,
+        "revision_id": 4643716,
+        "sha1": "e1d73667a5bcf954c8fcb66513980f0ef747d953"
+      },
+      {
+        "title": "Dire Claw (move)",
+        "page_id": 268030,
+        "revision_id": 4577630,
+        "sha1": "04d465cb9eb9d4a5f32239ac32e04e8789e2b906"
+      },
+      {
+        "title": "Disable (move)",
+        "page_id": 3659,
+        "revision_id": 4628103,
+        "sha1": "23ecb4f866df90be5ab2de674481118ecdb49ea7"
+      },
+      {
+        "title": "Disarming Voice (move)",
+        "page_id": 184571,
+        "revision_id": 4623034,
+        "sha1": "26473c28d50ecf007066f367c96b42115dc222cf"
+      },
+      {
+        "title": "Discharge (move)",
+        "page_id": 12427,
+        "revision_id": 4650171,
+        "sha1": "89a488ce6afe6b7d73a9ff04bda5e626bbaaae5f"
+      },
+      {
+        "title": "Dive (move)",
+        "page_id": 3902,
+        "revision_id": 4643407,
+        "sha1": "fdd7789f8db257505aa1992aaf92b4251eb210ce"
+      },
+      {
+        "title": "Dizzy Punch (move)",
+        "page_id": 3755,
+        "revision_id": 4646255,
+        "sha1": "ad2dbbb8ad8c4d207be44b34494832c4940344f7"
+      },
+      {
+        "title": "Doodle (move)",
+        "page_id": 277767,
+        "revision_id": 4511990,
+        "sha1": "9573797d12f72a54c853135b47083ecb61eeb517"
+      },
+      {
+        "title": "Doom Desire (move)",
+        "page_id": 3964,
+        "revision_id": 4649773,
+        "sha1": "b8c386bb8e3d088856ce45b04e8b3f90d2880bea"
+      },
+      {
+        "title": "Double Hit (move)",
+        "page_id": 17432,
+        "revision_id": 4628112,
+        "sha1": "78308234fadb7557c73b30088dd9c5bcece61d46"
+      },
+      {
+        "title": "Double Iron Bash (move)",
+        "page_id": 232954,
+        "revision_id": 4645402,
+        "sha1": "f4d78ab5d59b070e94aa50402a0c64638633b2fe"
+      },
+      {
+        "title": "Double Kick (move)",
+        "page_id": 3632,
+        "revision_id": 4634650,
+        "sha1": "a245b0fbdedb181eda0177d931813fa31fc5b1ff"
+      },
+      {
+        "title": "Double Shock (move)",
+        "page_id": 277798,
+        "revision_id": 4628113,
+        "sha1": "a069e73f20d4c8f0e19b95ef1907b28d1c21a52d"
+      },
+      {
+        "title": "Double Slap (move)",
+        "page_id": 3611,
+        "revision_id": 4623077,
+        "sha1": "38ff674c7ea09e333ab73a0ccd7670f0cbebf7e5"
+      },
+      {
+        "title": "Double Team (move)",
+        "page_id": 2901,
+        "revision_id": 4651117,
+        "sha1": "67fe23e0069e1d84db8b286ee5a0559aea1bd4a8"
+      },
+      {
+        "title": "Double-Edge (move)",
+        "page_id": 3242,
+        "revision_id": 4637918,
+        "sha1": "9e4e11dfc0d8df43504b95c7e9bf648b6e03d274"
+      },
+      {
+        "title": "Draco Meteor (move)",
+        "page_id": 12418,
+        "revision_id": 4628117,
+        "sha1": "df009c9ad85c8ee98256824709510a1929980872"
+      },
+      {
+        "title": "Dragon Ascent (move)",
+        "page_id": 198506,
+        "revision_id": 4644212,
+        "sha1": "09fffe077a5cefcb79659579d3e894e053f8764e"
+      },
+      {
+        "title": "Dragon Breath (move)",
+        "page_id": 3836,
+        "revision_id": 4642721,
+        "sha1": "58ed82ffde25294bdcaecccd4157ab9876b34d4f"
+      },
+      {
+        "title": "Dragon Cheer (move)",
+        "page_id": 300824,
+        "revision_id": 4628118,
+        "sha1": "8834bcd274f3e5c23e1e4a136a31bca23caed6a6"
+      },
+      {
+        "title": "Dragon Claw (move)",
+        "page_id": 3948,
+        "revision_id": 4643419,
+        "sha1": "69ad12a5e7f929291792bb86ef210125b5ebd0a3"
+      },
+      {
+        "title": "Dragon Dance (move)",
+        "page_id": 3960,
+        "revision_id": 4635986,
+        "sha1": "70c5ad91188cba90023a336965dee0b8fcf703fb"
+      },
+      {
+        "title": "Dragon Darts (move)",
+        "page_id": 244323,
+        "revision_id": 4621909,
+        "sha1": "a596da99c06f93e3b9b28cdb3318245c1e57b920"
+      },
+      {
+        "title": "Dragon Energy (move)",
+        "page_id": 252166,
+        "revision_id": 4621941,
+        "sha1": "ef2521160764228cbcea023e3b0439918acd4273"
+      },
+      {
+        "title": "Dragon Hammer (move)",
+        "page_id": 216555,
+        "revision_id": 4621876,
+        "sha1": "df782427d3444f426bc2054aa33ba177f35048f7"
+      },
+      {
+        "title": "Dragon Pulse (move)",
+        "page_id": 17453,
+        "revision_id": 4642169,
+        "sha1": "24b5e7e728a0785ac112d87505b9923c7f28593c"
+      },
+      {
+        "title": "Dragon Rage (move)",
+        "page_id": 3691,
+        "revision_id": 4518878,
+        "sha1": "4ea91513b1cbcde307bc0c66de139cc02c240755"
+      },
+      {
+        "title": "Dragon Rush (move)",
+        "page_id": 18885,
+        "revision_id": 4628122,
+        "sha1": "e9798144037bf356a3fc746d5641ef77374620e3"
+      },
+      {
+        "title": "Dragon Tail (move)",
+        "page_id": 117269,
+        "revision_id": 4628123,
+        "sha1": "6172b7e632453c406721959cc8c3ba4633c9835c"
+      },
+      {
+        "title": "Drain Punch (move)",
+        "page_id": 17451,
+        "revision_id": 4628124,
+        "sha1": "63ecb3e2135410c9d74cb83f3280c4b4cabaa57a"
+      },
+      {
+        "title": "Draining Kiss (move)",
+        "page_id": 180352,
+        "revision_id": 4645404,
+        "sha1": "677784510f867a37e5ec98cefb34ebe81bb9f121"
+      },
+      {
+        "title": "Dream Eater (move)",
+        "page_id": 3747,
+        "revision_id": 4646422,
+        "sha1": "512bcba201b7c15ccb8b2890f0d192f6385f964a"
+      },
+      {
+        "title": "Drill Peck (move)",
+        "page_id": 3674,
+        "revision_id": 4622972,
+        "sha1": "c13b43e55006f8b2d25545bd06424d4442450fb6"
+      },
+      {
+        "title": "Drill Run (move)",
+        "page_id": 117266,
+        "revision_id": 4645407,
+        "sha1": "3f1258b8b489c6211a7d1ada1d22ea0d9701d9ec"
+      },
+      {
+        "title": "Drum Beating (move)",
+        "page_id": 244332,
+        "revision_id": 4631988,
+        "sha1": "943ff90db9919ea34c097c763100b0dd767768ad"
+      },
+      {
+        "title": "Dual Chop (move)",
+        "page_id": 117268,
+        "revision_id": 4636229,
+        "sha1": "bd3a4af551bca0d924b48e01a5f156aba84054db"
+      },
+      {
+        "title": "Dual Wingbeat (move)",
+        "page_id": 252918,
+        "revision_id": 4628129,
+        "sha1": "45d8158828611cceadb406fce4177c1fb14df04c"
+      },
+      {
+        "title": "Dynamax Cannon (move)",
+        "page_id": 244316,
+        "revision_id": 4636288,
+        "sha1": "9024595f20aac3e847cbcb0e90fb2e1df2f89421"
+      },
+      {
+        "title": "Dynamic Punch (move)",
+        "page_id": 3834,
+        "revision_id": 4645408,
+        "sha1": "d6d84fb426a2686d5d407ac3716d3a345f1e61de"
+      },
+      {
+        "title": "Earth Power (move)",
+        "page_id": 17466,
+        "revision_id": 4645409,
+        "sha1": "937f8e9fb0f6da10c65015e960f9692f143c81c0"
+      },
+      {
+        "title": "Earthquake (move)",
+        "page_id": 2052,
+        "revision_id": 4649296,
+        "sha1": "0ea219c4f88221e9df004f1c0334300f52f9b74f"
+      },
+      {
+        "title": "Echoed Voice (move)",
+        "page_id": 117490,
+        "revision_id": 4621563,
+        "sha1": "9299de1652dca3ce0bd984b114ac57f0981d8f8f"
+      },
+      {
+        "title": "Eerie Impulse (move)",
+        "page_id": 185075,
+        "revision_id": 4628132,
+        "sha1": "c53c6da197a9bba3b7d4a139c54dff248b62c93b"
+      },
+      {
+        "title": "Eerie Spell (move)",
+        "page_id": 257116,
+        "revision_id": 4614713,
+        "sha1": "f3cc52ebfcc23a0b91d8b597949adf0fff1f3e26"
+      },
+      {
+        "title": "Egg Bomb (move)",
+        "page_id": 3730,
+        "revision_id": 4650253,
+        "sha1": "99f6b1d56f615c7ba1c3bb0a156c78c017e21170"
+      },
+      {
+        "title": "Electric Terrain (move)",
+        "page_id": 185078,
+        "revision_id": 4636855,
+        "sha1": "1796fa16d2f47861060d830e420138fa89814536"
+      },
+      {
+        "title": "Electrify (move)",
+        "page_id": 185076,
+        "revision_id": 4621650,
+        "sha1": "2c419101470e1f0f9e386ccc6801602e752f6cb7"
+      },
+      {
+        "title": "Electro Ball (move)",
+        "page_id": 114997,
+        "revision_id": 4628138,
+        "sha1": "86c6a10b0d90b31ceeae42d139697b4ca040385b"
+      },
+      {
+        "title": "Electro Drift (move)",
+        "page_id": 277788,
+        "revision_id": 4623927,
+        "sha1": "8c2d44af79613f9e45138e2ac5919af5fd601c62"
+      },
+      {
+        "title": "Electro Shot (move)",
+        "page_id": 294183,
+        "revision_id": 4642652,
+        "sha1": "5bbcfb0f0038938625a402465e6efdd2ccb3d86a"
+      },
+      {
+        "title": "Electroweb (move)",
+        "page_id": 117465,
+        "revision_id": 4628137,
+        "sha1": "2031f64f0b66703b91bd5a75f3588834f135935d"
+      },
+      {
+        "title": "Embargo (move)",
+        "page_id": 12422,
+        "revision_id": 4650821,
+        "sha1": "c7723ac20637b5f09f8e2fd04a4b90078e59d27c"
+      },
+      {
+        "title": "Ember (move)",
+        "page_id": 3661,
+        "revision_id": 4632673,
+        "sha1": "21c387a86ef7f36c4b6864e540ad8ccb4946768f"
+      },
+      {
+        "title": "Encore (move)",
+        "page_id": 3838,
+        "revision_id": 4640919,
+        "sha1": "2f125679a0202bedd6d1b3d9e934742d4a2d73cf"
+      },
+      {
+        "title": "Endeavor (move)",
+        "page_id": 3894,
+        "revision_id": 4632375,
+        "sha1": "aa173eafb6ef6311a4a660d182082caea4283afb"
+      },
+      {
+        "title": "Endure (move)",
+        "page_id": 3442,
+        "revision_id": 4639916,
+        "sha1": "f61b59db5fa7673dfdcf184733e71e69ea291106"
+      },
+      {
+        "title": "Energy Ball (move)",
+        "page_id": 14237,
+        "revision_id": 4649586,
+        "sha1": "9c877d1170df459dcdf16417e157648a783e2fe1"
+      },
+      {
+        "title": "Entrainment (move)",
+        "page_id": 117472,
+        "revision_id": 4628143,
+        "sha1": "7ccb63ef6539c63ec94fadd204792e6082b66795"
+      },
+      {
+        "title": "Eruption (move)",
+        "page_id": 3895,
+        "revision_id": 4644041,
+        "sha1": "e732a184c65dcf88ff066ef03185dcb79240a8cf"
+      },
+      {
+        "title": "Esper Wing (move)",
+        "page_id": 268714,
+        "revision_id": 4614843,
+        "sha1": "2d0086fb5bac0a223f7b9b936ce5d190d191b28b"
+      },
+      {
+        "title": "Eternabeam (move)",
+        "page_id": 244344,
+        "revision_id": 4614214,
+        "sha1": "517df270434630bf64224e4678dc6b3bda45849b"
+      },
+      {
+        "title": "Excavate (move)",
+        "page_id": 60300,
+        "revision_id": 4398406,
+        "sha1": "4cd4e6ba4e54f98c61a0c974d81c156b9e27b398"
+      },
+      {
+        "title": "Expanding Force (move)",
+        "page_id": 252903,
+        "revision_id": 4628144,
+        "sha1": "a3a9f2432c57d8a43b5457a27c8a0f6a74290454"
+      },
+      {
+        "title": "Explosion (move)",
+        "page_id": 3762,
+        "revision_id": 4644612,
+        "sha1": "8ac3470a19ffd127e7f648e0a48af7ef7df436e4"
+      },
+      {
+        "title": "Extrasensory (move)",
+        "page_id": 3937,
+        "revision_id": 4633188,
+        "sha1": "e7c8e3a0777245b7f63f0cf51d467bd4dceec111"
+      },
+      {
+        "title": "Extreme Evoboost (move)",
+        "page_id": 216046,
+        "revision_id": 4614794,
+        "sha1": "f8a772232cc6f466a7c205b867dc951c417b1e1f"
+      },
+      {
+        "title": "Extreme Speed (move)",
+        "page_id": 3856,
+        "revision_id": 4643388,
+        "sha1": "5195193621161f662d705559b3d3623efe42e0d4"
+      },
+      {
+        "title": "Facade (move)",
+        "page_id": 3874,
+        "revision_id": 4628454,
+        "sha1": "4c037b2f19ed9888247c4a5d342f0ab44cfbeb06"
+      },
+      {
+        "title": "Fairy Lock (move)",
+        "page_id": 185074,
+        "revision_id": 4634808,
+        "sha1": "12e63d27809574a6e5b19fff4fc6180fa0830652"
+      },
+      {
+        "title": "Fairy Wind (move)",
+        "page_id": 180354,
+        "revision_id": 4634807,
+        "sha1": "3210b58fd14765d45a6cb97d0b183538c049e0cf"
+      },
+      {
+        "title": "Fake Out (move)",
+        "page_id": 3863,
+        "revision_id": 4628422,
+        "sha1": "7a3d1277c23a3436bbd5de21b5d09c873e5ef9b9"
+      },
+      {
+        "title": "Fake Tears (move)",
+        "page_id": 3924,
+        "revision_id": 4643725,
+        "sha1": "3bef2d22a6de4a0f4422ab267aaf414f940b0568"
+      },
+      {
+        "title": "False Surrender (move)",
+        "page_id": 244343,
+        "revision_id": 4614791,
+        "sha1": "9526e0d3408a947eab377aab569fe6a43e20c198"
+      },
+      {
+        "title": "False Swipe (move)",
+        "page_id": 3817,
+        "revision_id": 4649405,
+        "sha1": "14dc5298c3793144379c9a91767142bc5544104a"
+      },
+      {
+        "title": "Feather Dance (move)",
+        "page_id": 3908,
+        "revision_id": 4632495,
+        "sha1": "ec008836706dd7224819d5ec6c1f57d7a05068b2"
+      },
+      {
+        "title": "Feint (move)",
+        "page_id": 12711,
+        "revision_id": 4646858,
+        "sha1": "a2839ce83b74e807367decaea2dd2e2637dfbcfd"
+      },
+      {
+        "title": "Feint Attack (move)",
+        "page_id": 3795,
+        "revision_id": 4638921,
+        "sha1": "381ee78d60b685c50c0dce8fbb3e574b8cc44967"
+      },
+      {
+        "title": "Fell Stinger (move)",
+        "page_id": 185029,
+        "revision_id": 4645413,
+        "sha1": "ac8328e9e270c203e06a3d99d7ae4e9d7b8a01d0"
+      },
+      {
+        "title": "Fickle Beam (move)",
+        "page_id": 300832,
+        "revision_id": 4637025,
+        "sha1": "55a02f2bc02850cb4cb04ac3f5bb2faf6c3086f8"
+      },
+      {
+        "title": "Fiery Dance (move)",
+        "page_id": 117272,
+        "revision_id": 4621624,
+        "sha1": "22e6e4ad9d054dee39680a80763e5f9e05d1a015"
+      },
+      {
+        "title": "Fiery Wrath (move)",
+        "page_id": 252181,
+        "revision_id": 4620156,
+        "sha1": "0a90581887e95cfc0b72f2c5df3e27f95c1fe0bc"
+      },
+      {
+        "title": "Fillet Away (move)",
+        "page_id": 277768,
+        "revision_id": 4527964,
+        "sha1": "5236b4d18bc40f6b492dbff14b76d9d623ce205d"
+      },
+      {
+        "title": "Final Gambit (move)",
+        "page_id": 117459,
+        "revision_id": 4650298,
+        "sha1": "76c5155bcdb10ab8064e7f067f192c6ff5a73639"
+      },
+      {
+        "title": "Fire Blast (move)",
+        "page_id": 61438,
+        "revision_id": 4649497,
+        "sha1": "fe5ac5161500e2892a3406fd8ae7f6dbee84dd80"
+      },
+      {
+        "title": "Fire Fang (move)",
+        "page_id": 12449,
+        "revision_id": 4650810,
+        "sha1": "5d601a6cdd6833fff22ad9305c3fa60b55ff5015"
+      },
+      {
+        "title": "Fire Lash (move)",
+        "page_id": 218355,
+        "revision_id": 4621863,
+        "sha1": "54032a85f92c6315b9aa59f4d1e35531542a838e"
+      },
+      {
+        "title": "Fire Pledge (move)",
+        "page_id": 117620,
+        "revision_id": 4621587,
+        "sha1": "3aab051fac3e31d9404f8cc6e2c6b30f4177663b"
+      },
+      {
+        "title": "Fire Punch (move)",
+        "page_id": 3615,
+        "revision_id": 4649512,
+        "sha1": "88bd1812b362af6a1d820f001fe5e2f2ce208f45"
+      },
+      {
+        "title": "Fire Spin (move)",
+        "page_id": 3692,
+        "revision_id": 4639189,
+        "sha1": "1e352373746071990ce6e0a1d4c6a48e08e98480"
+      },
+      {
+        "title": "First Impression (move)",
+        "page_id": 218333,
+        "revision_id": 4647086,
+        "sha1": "dafdf31c865c4c2158f29d2d5f84cbb8b4f8b69c"
+      },
+      {
+        "title": "Fishious Rend (move)",
+        "page_id": 244327,
+        "revision_id": 4647580,
+        "sha1": "d74989faf6c642cd71e5c15cbd7d9ea811a78c05"
+      },
+      {
+        "title": "Fissure (move)",
+        "page_id": 3699,
+        "revision_id": 4649776,
+        "sha1": "f2c9407bac9370080e0c59eed15570923d717378"
+      },
+      {
+        "title": "Flail (move)",
+        "page_id": 3785,
+        "revision_id": 4649777,
+        "sha1": "05a7297dc7c53e18e1c8f5e0b3af5ac7e56f1a8d"
+      },
+      {
+        "title": "Flame Burst (move)",
+        "page_id": 114927,
+        "revision_id": 4647609,
+        "sha1": "dbdbbb02bb6044a39c682cf101fb234c346a5afc"
+      },
+      {
+        "title": "Flame Charge (move)",
+        "page_id": 113895,
+        "revision_id": 4628161,
+        "sha1": "023790fe966ebc7a8b87b392aabe755cbb104504"
+      },
+      {
+        "title": "Flame Wheel (move)",
+        "page_id": 3782,
+        "revision_id": 4638829,
+        "sha1": "02e04c5a787f777aca3a8aff15bd9e3c978c2529"
+      },
+      {
+        "title": "Flamethrower (move)",
+        "page_id": 3662,
+        "revision_id": 4628163,
+        "sha1": "b2505ca17a067c9f74c48c29d8523b262a4e2b57"
+      },
+      {
+        "title": "Flare Blitz (move)",
+        "page_id": 17054,
+        "revision_id": 4646913,
+        "sha1": "ba5599d52bb663025dc37448e553363288b7c2ec"
+      },
+      {
+        "title": "Flash (move)",
+        "page_id": 3757,
+        "revision_id": 4644991,
+        "sha1": "9f702ef7b8bf1bee7aa289066db6b6d362a656a3"
+      },
+      {
+        "title": "Flash Cannon (move)",
+        "page_id": 15291,
+        "revision_id": 4646436,
+        "sha1": "67ebd0e43627c03238383535373ca8c4fc9bc84e"
+      },
+      {
+        "title": "Flatter (move)",
+        "page_id": 3871,
+        "revision_id": 4628165,
+        "sha1": "0325842670cc52afbb86b3c9709e8d3694fa3484"
+      },
+      {
+        "title": "Fleur Cannon (move)",
+        "page_id": 213865,
+        "revision_id": 4621879,
+        "sha1": "a7e3eef542ee2612d35d61b3d077639ac9a95af9"
+      },
+      {
+        "title": "Fling (move)",
+        "page_id": 16904,
+        "revision_id": 4628183,
+        "sha1": "81465f27af2833e096e3c1dd523671aae349cef5"
+      },
+      {
+        "title": "Flip Turn (move)",
+        "page_id": 252916,
+        "revision_id": 4628166,
+        "sha1": "11252ce841954f8132b0ae047f4e84e881f52a2f"
+      },
+      {
+        "title": "Floaty Fall (move)",
+        "page_id": 232373,
+        "revision_id": 4511666,
+        "sha1": "42df9db4fec26113972bb50b919a09e06905234e"
+      },
+      {
+        "title": "Floral Healing (move)",
+        "page_id": 218337,
+        "revision_id": 4622988,
+        "sha1": "ab8e61cb448aeaac2a6c935cb8f78ed09f8e98a1"
+      },
+      {
+        "title": "Flower Shield (move)",
+        "page_id": 185073,
+        "revision_id": 4634787,
+        "sha1": "8be84bd1f22352d1b858a36537c931ce133e388b"
+      },
+      {
+        "title": "Flower Trick (move)",
+        "page_id": 277636,
+        "revision_id": 4623068,
+        "sha1": "b39579c717b7172e2f45ed627dc1b782641e5c30"
+      },
+      {
+        "title": "Fly (move)",
+        "page_id": 3627,
+        "revision_id": 4649507,
+        "sha1": "cf4a89636b87e49d7d706e1976a86e8975097eff"
+      },
+      {
+        "title": "Flying Press (move)",
+        "page_id": 185065,
+        "revision_id": 4621635,
+        "sha1": "939d43495c7a141918d34f22f261fad5988ff653"
+      },
+      {
+        "title": "Focus Blast (move)",
+        "page_id": 17444,
+        "revision_id": 4641822,
+        "sha1": "968081cd71eb4960d4745c3892ba20cb3f0e942b"
+      },
+      {
+        "title": "Focus Energy (move)",
+        "page_id": 3725,
+        "revision_id": 4650288,
+        "sha1": "fc470d62e586ee57046604f1f6e9b8cf41519baa"
+      },
+      {
+        "title": "Focus Punch (move)",
+        "page_id": 3875,
+        "revision_id": 4643638,
+        "sha1": "efcbaf6083f335b6d99542cd95aee227176571a6"
+      },
+      {
+        "title": "Follow Me (move)",
+        "page_id": 3877,
+        "revision_id": 4629217,
+        "sha1": "1690a9d0eca6c7c4518f1e7d12a7b33e50f5f25f"
+      },
+      {
+        "title": "Force Palm (move)",
+        "page_id": 12429,
+        "revision_id": 4623730,
+        "sha1": "b0601512a655609a3943538cfe01d1c333fa8728"
+      },
+      {
+        "title": "Foresight (move)",
+        "page_id": 3804,
+        "revision_id": 4639015,
+        "sha1": "b98011643982f62dd57e5f50bf81c08526c8b4fb"
+      },
+      {
+        "title": "Forest's Curse (move)",
+        "page_id": 185068,
+        "revision_id": 4629108,
+        "sha1": "aabbe08b8c0479bfd4d73094eb500a35285df77f"
+      },
+      {
+        "title": "Foul Play (move)",
+        "page_id": 117616,
+        "revision_id": 4645414,
+        "sha1": "e395575354736cc96098b6ca2944aa9d95d15e60"
+      },
+      {
+        "title": "Freeze Shock (move)",
+        "page_id": 117722,
+        "revision_id": 4642644,
+        "sha1": "1a20e8c51567988529c209cad0ddaf7a14e19b22"
+      },
+      {
+        "title": "Freeze-Dry (move)",
+        "page_id": 183150,
+        "revision_id": 4633255,
+        "sha1": "0d7ba3b83da1cfd95aa936c293e6973b2489c77e"
+      },
+      {
+        "title": "Freezing Glare (move)",
+        "page_id": 252179,
+        "revision_id": 4614196,
+        "sha1": "f4104f2bea7d730662250a319902b61e7fbae5be"
+      },
+      {
+        "title": "Freezy Frost (move)",
+        "page_id": 233652,
+        "revision_id": 4627588,
+        "sha1": "a9ec805913bc128ca3e2e7c6e7f93481d290a0b5"
+      },
+      {
+        "title": "Frenzy Plant (move)",
+        "page_id": 3949,
+        "revision_id": 4643446,
+        "sha1": "e67eb9840c48ab0c72e63ffddcd0c551c123bd7b"
+      },
+      {
+        "title": "Frost Breath (move)",
+        "page_id": 117451,
+        "revision_id": 4628191,
+        "sha1": "b782c003d69a834035f0d6455dde98d8983bcad8"
+      },
+      {
+        "title": "Frustration (move)",
+        "page_id": 3829,
+        "revision_id": 4640795,
+        "sha1": "de71814fae6088c9f8339d86b09b5bd6eb48ced3"
+      },
+      {
+        "title": "Fury Attack (move)",
+        "page_id": 3639,
+        "revision_id": 4644475,
+        "sha1": "5e5c8297299d9e9c96b2a84c6b8a0b68b41240e7"
+      },
+      {
+        "title": "Fury Cutter (move)",
+        "page_id": 3821,
+        "revision_id": 4640739,
+        "sha1": "c36679f9957dd0dd6aad6037c4568c5df2ab7a9c"
+      },
+      {
+        "title": "Fury Swipes (move)",
+        "page_id": 3763,
+        "revision_id": 4649504,
+        "sha1": "73be48c88fccd4a33c442ba2aa03b12283c7cbc5"
+      },
+      {
+        "title": "Fusion Bolt (move)",
+        "page_id": 117706,
+        "revision_id": 4638785,
+        "sha1": "488b21ca99d4c87a5a5f6a25eb2fdfed98fd0aa1"
+      },
+      {
+        "title": "Fusion Flare (move)",
+        "page_id": 117704,
+        "revision_id": 4621630,
+        "sha1": "bd7b480f29e5b33dff10331138cc6fb4f009b01b"
+      },
+      {
+        "title": "Future Sight (move)",
+        "page_id": 3859,
+        "revision_id": 4643425,
+        "sha1": "81568d7f063e08fca56a4a4480acc755bcd598ac"
+      },
+      {
+        "title": "G-Max Befuddle (move)",
+        "page_id": 243178,
+        "revision_id": 4563778,
+        "sha1": "95a9dc08e8a5408f4fbb3127b83ea813b4bd16c3"
+      },
+      {
+        "title": "G-Max Cannonade (move)",
+        "page_id": 252196,
+        "revision_id": 4647475,
+        "sha1": "b092c7c9e6b2392a187f7818603826e18264dc16"
+      },
+      {
+        "title": "G-Max Centiferno (move)",
+        "page_id": 244634,
+        "revision_id": 4614264,
+        "sha1": "859efef72444d609dffd2808d9213696bd8b0fed"
+      },
+      {
+        "title": "G-Max Chi Strike (move)",
+        "page_id": 244638,
+        "revision_id": 4563782,
+        "sha1": "b13dc79eb0cee2134e6660b45be0f418421396f6"
+      },
+      {
+        "title": "G-Max Cuddle (move)",
+        "page_id": 243181,
+        "revision_id": 4641253,
+        "sha1": "be83e558e42f86915d14b35811dcedce1fa9e8da"
+      },
+      {
+        "title": "G-Max Depletion (move)",
+        "page_id": 244649,
+        "revision_id": 4650692,
+        "sha1": "e950c1d08117a9c29257e8ccd5815662b72f0d69"
+      },
+      {
+        "title": "G-Max Drum Solo (move)",
+        "page_id": 249094,
+        "revision_id": 4614241,
+        "sha1": "9f6aa647f6edf4728fdd2d3275d94373e1eae740"
+      },
+      {
+        "title": "G-Max Finale (move)",
+        "page_id": 240366,
+        "revision_id": 4563807,
+        "sha1": "3a581842c70a1f6c9174ae01be2d64bbff322fe3"
+      },
+      {
+        "title": "G-Max Fireball (move)",
+        "page_id": 249095,
+        "revision_id": 4614639,
+        "sha1": "b97114cb07d52e5106d241a54ff5353d8e479185"
+      },
+      {
+        "title": "G-Max Foam Burst (move)",
+        "page_id": 244636,
+        "revision_id": 4647514,
+        "sha1": "f4ce0a7083d02e1491292093dbd29ecc9475ac0f"
+      },
+      {
+        "title": "G-Max Gold Rush (move)",
+        "page_id": 243180,
+        "revision_id": 4641255,
+        "sha1": "2591b28895442f12930342bb4167b46269ddc417"
+      },
+      {
+        "title": "G-Max Gravitas (move)",
+        "page_id": 244644,
+        "revision_id": 4563796,
+        "sha1": "b26d34303919b00bd7ad87214c4055731e915d88"
+      },
+      {
+        "title": "G-Max Hydrosnipe (move)",
+        "page_id": 249096,
+        "revision_id": 4647468,
+        "sha1": "5df3f4f373aa2d21c5e049f25ff3023196100295"
+      },
+      {
+        "title": "G-Max Malodor (move)",
+        "page_id": 244641,
+        "revision_id": 4614913,
+        "sha1": "5ac9684dd88e937fce94dab7072e262a089dc0ae"
+      },
+      {
+        "title": "G-Max Meltdown (move)",
+        "page_id": 244642,
+        "revision_id": 4563792,
+        "sha1": "3a61dc4838417b7a29271d6fb8d7cd12bdb4ecd6"
+      },
+      {
+        "title": "G-Max One Blow (move)",
+        "page_id": 252211,
+        "revision_id": 4516507,
+        "sha1": "52217960308e4110e36e893131f0d3cc9fb884be"
+      },
+      {
+        "title": "G-Max Rapid Flow (move)",
+        "page_id": 252212,
+        "revision_id": 4647559,
+        "sha1": "ad7ed35c0cb6bf874cae0df97409138124b01a73"
+      },
+      {
+        "title": "G-Max Replenish (move)",
+        "page_id": 244635,
+        "revision_id": 4641256,
+        "sha1": "960c06d355ceeddaa91111572e4ee14fe700dec8"
+      },
+      {
+        "title": "G-Max Resonance (move)",
+        "page_id": 244640,
+        "revision_id": 4614803,
+        "sha1": "57189bf6f26c62d62152f4d9507026b5a56b95f5"
+      },
+      {
+        "title": "G-Max Sandblast (move)",
+        "page_id": 244651,
+        "revision_id": 4563802,
+        "sha1": "0b2a5f66cafe3391f611cc8975860edacc2801e2"
+      },
+      {
+        "title": "G-Max Smite (move)",
+        "page_id": 244637,
+        "revision_id": 4614928,
+        "sha1": "87f814087a2cd8d4e9d0026058bf05c877bcc904"
+      },
+      {
+        "title": "G-Max Snooze (move)",
+        "page_id": 244650,
+        "revision_id": 4614292,
+        "sha1": "d27539ec58867af1d2bc5819d5a3c36f10ac2c71"
+      },
+      {
+        "title": "G-Max Steelsurge (move)",
+        "page_id": 244643,
+        "revision_id": 4614574,
+        "sha1": "53f3dec6d683fd9c161bf45be2753befbbd1c5b7"
+      },
+      {
+        "title": "G-Max Stonesurge (move)",
+        "page_id": 240367,
+        "revision_id": 4647481,
+        "sha1": "d16051f02861bc44320d52574d7848d10738d004"
+      },
+      {
+        "title": "G-Max Stun Shock (move)",
+        "page_id": 244646,
+        "revision_id": 4614502,
+        "sha1": "87095fe2d8051ca26f67e1e465b75a0695b71f22"
+      },
+      {
+        "title": "G-Max Sweetness (move)",
+        "page_id": 244648,
+        "revision_id": 4563801,
+        "sha1": "3bac4b07642dbfe7d782208f9704baa5c6bde091"
+      },
+      {
+        "title": "G-Max Tartness (move)",
+        "page_id": 244647,
+        "revision_id": 4563800,
+        "sha1": "9e8650fe4e1f1fc1d005174b27f476832bcee625"
+      },
+      {
+        "title": "G-Max Terror (move)",
+        "page_id": 244639,
+        "revision_id": 4614596,
+        "sha1": "a6e4bac9c6ad134e1765f2e84113140587c274f9"
+      },
+      {
+        "title": "G-Max Vine Lash (move)",
+        "page_id": 252195,
+        "revision_id": 4563776,
+        "sha1": "94ded3aa2c8d8320882f4afcca81cee5a28b28d2"
+      },
+      {
+        "title": "G-Max Volcalith (move)",
+        "page_id": 244645,
+        "revision_id": 4614984,
+        "sha1": "5c195ec4d2059df3fc7332cac2c39bb96158bb42"
+      },
+      {
+        "title": "G-Max Volt Crash (move)",
+        "page_id": 243179,
+        "revision_id": 4614693,
+        "sha1": "44301a8e4de8d976d7288e9e66ac587207c5862a"
+      },
+      {
+        "title": "G-Max Wildfire (move)",
+        "page_id": 243177,
+        "revision_id": 4614462,
+        "sha1": "d5113b84c49f7e5cadb9eca8ec0f552b195e4b5b"
+      },
+      {
+        "title": "G-Max Wind Rage (move)",
+        "page_id": 240368,
+        "revision_id": 4563795,
+        "sha1": "b1599d3a37e9df94a8919cde6a03c3a27f0765c7"
+      },
+      {
+        "title": "Gastro Acid (move)",
+        "page_id": 17462,
+        "revision_id": 4628193,
+        "sha1": "d1e28cecd73cc5ebd4e97dba83d356c45be398d4"
+      },
+      {
+        "title": "Gear Grind (move)",
+        "page_id": 117547,
+        "revision_id": 4621613,
+        "sha1": "b2196d30614861058b4d97816593f2a8441ec307"
+      },
+      {
+        "title": "Gear Up (move)",
+        "page_id": 218347,
+        "revision_id": 4628593,
+        "sha1": "675db3f91d29f533e618a59088e70786f0f48e3f"
+      },
+      {
+        "title": "Genesis Supernova (move)",
+        "page_id": 218752,
+        "revision_id": 4512368,
+        "sha1": "055115f17b7ae3953707353e4f791b96afa42249"
+      },
+      {
+        "title": "Geomancy (move)",
+        "page_id": 180346,
+        "revision_id": 4645802,
+        "sha1": "d73acee144d520a64edff00fd0a316e8d67c5518"
+      },
+      {
+        "title": "Giga Drain (move)",
+        "page_id": 3813,
+        "revision_id": 4639915,
+        "sha1": "795b53134af928504feca54f3548e1d443d4cf5c"
+      },
+      {
+        "title": "Giga Impact (move)",
+        "page_id": 12451,
+        "revision_id": 4628736,
+        "sha1": "1ce4e9a9aff7cd230eea7df0431bb2e2052795f2"
+      },
+      {
+        "title": "Gigaton Hammer (move)",
+        "page_id": 277799,
+        "revision_id": 4623056,
+        "sha1": "e27cfc2d34a0502d160989a12c4bff4e8d399638"
+      },
+      {
+        "title": "Gigavolt Havoc (move)",
+        "page_id": 215068,
+        "revision_id": 4614480,
+        "sha1": "c6424551628392f2b0d9c3ba20796d90a21c1a78"
+      },
+      {
+        "title": "Glacial Lance (move)",
+        "page_id": 257883,
+        "revision_id": 4614850,
+        "sha1": "5e7a0a75b9238d21223353925660ea93d2226a61"
+      },
+      {
+        "title": "Glaciate (move)",
+        "page_id": 117526,
+        "revision_id": 4641283,
+        "sha1": "a9efac40a312687390939bba376d26d203dad656"
+      },
+      {
+        "title": "Glaive Rush (move)",
+        "page_id": 277763,
+        "revision_id": 4641290,
+        "sha1": "e98112db4ff8223cc2b35385f04422ba67b6a7ca"
+      },
+      {
+        "title": "Glare (move)",
+        "page_id": 3746,
+        "revision_id": 4646494,
+        "sha1": "93304181016ba7266a14ace9acfa3acfb3542a42"
+      },
+      {
+        "title": "Glitzy Glow (move)",
+        "page_id": 233650,
+        "revision_id": 4627585,
+        "sha1": "b0fc97aa53968b6b305322aee221135a87e98b64"
+      },
+      {
+        "title": "Grass Knot (move)",
+        "page_id": 15132,
+        "revision_id": 4649523,
+        "sha1": "4c499fb843724051518f46140b549b81aa035adc"
+      },
+      {
+        "title": "Grass Pledge (move)",
+        "page_id": 117621,
+        "revision_id": 4621588,
+        "sha1": "92e98e31b3e5e4d9fbc6fd8bc270b0777328c38c"
+      },
+      {
+        "title": "Grass Whistle (move)",
+        "page_id": 3931,
+        "revision_id": 4632966,
+        "sha1": "d8bb953b4b3657040f73a4062d19b4c56d240855"
+      },
+      {
+        "title": "Grassy Glide (move)",
+        "page_id": 252236,
+        "revision_id": 4628215,
+        "sha1": "ece8ea5d1afd0be0a703153b778cd74a9c744ffb"
+      },
+      {
+        "title": "Grassy Terrain (move)",
+        "page_id": 184822,
+        "revision_id": 4636836,
+        "sha1": "e56f95bb7b155282c9916518df34f39130a28f62"
+      },
+      {
+        "title": "Grav Apple (move)",
+        "page_id": 244339,
+        "revision_id": 4593168,
+        "sha1": "e80ec5a157887ff6b5bafbb82425858203e8216f"
+      },
+      {
+        "title": "Gravity (move)",
+        "page_id": 13702,
+        "revision_id": 4633013,
+        "sha1": "c712dff442affcb010a01dbb2aca23f81b0f9840"
+      },
+      {
+        "title": "Growl (move)",
+        "page_id": 3654,
+        "revision_id": 4642534,
+        "sha1": "68115431d1cd8c1128c88523fc854ef5429d6a66"
+      },
+      {
+        "title": "Growth (move)",
+        "page_id": 3683,
+        "revision_id": 4633662,
+        "sha1": "f0d25160e91fc11646a86bfa1a11e0cb7536984e"
+      },
+      {
+        "title": "Grudge (move)",
+        "page_id": 3899,
+        "revision_id": 4570795,
+        "sha1": "ff852f31e80a4c5622cfab167515ddb97995aa41"
+      },
+      {
+        "title": "Guard Split (move)",
+        "page_id": 117441,
+        "revision_id": 4628219,
+        "sha1": "ca478065904bb8dac00d1b22874e60c8471a3bac"
+      },
+      {
+        "title": "Guard Swap (move)",
+        "page_id": 18879,
+        "revision_id": 4628220,
+        "sha1": "c58c7f5a7a923ea7863a882cf509c0c4f001ff51"
+      },
+      {
+        "title": "Guardian of Alola (move)",
+        "page_id": 216826,
+        "revision_id": 4511608,
+        "sha1": "df05b61602e63b33b18adfd1b9984c5e8071438b"
+      },
+      {
+        "title": "Guillotine (move)",
+        "page_id": 3620,
+        "revision_id": 4597085,
+        "sha1": "626b2169848f145a282a39aec7eaea64ddff4583"
+      },
+      {
+        "title": "Gunk Shot (move)",
+        "page_id": 17461,
+        "revision_id": 4628226,
+        "sha1": "b884ed636637f66fe88db71bf701999c8d491a3b"
+      },
+      {
+        "title": "Gust (move)",
+        "page_id": 3624,
+        "revision_id": 4645415,
+        "sha1": "18bb228ad3289b9f16d44168183d006259051550"
+      },
+      {
+        "title": "Gyro Ball (move)",
+        "page_id": 14441,
+        "revision_id": 4628228,
+        "sha1": "777e07190876354d067c13e757ccbe534f2064de"
+      },
+      {
+        "title": "Hail (move)",
+        "page_id": 3869,
+        "revision_id": 4629201,
+        "sha1": "598efd49ad03b4864fb53fe5f33f5e048712ef70"
+      },
+      {
+        "title": "Hammer Arm (move)",
+        "page_id": 14440,
+        "revision_id": 4634728,
+        "sha1": "ad0bf1bda166f84eeb392818ecf5a30b490e3e41"
+      },
+      {
+        "title": "Happy Hour (move)",
+        "page_id": 184817,
+        "revision_id": 4637137,
+        "sha1": "9fa20c072c7450ad55104e0ae30e0cb8f6b30cfc"
+      },
+      {
+        "title": "Hard Press (move)",
+        "page_id": 299910,
+        "revision_id": 4577757,
+        "sha1": "a6059fe32cd6fd31904861a85ee578dad4e0905f"
+      },
+      {
+        "title": "Harden (move)",
+        "page_id": 3715,
+        "revision_id": 4651083,
+        "sha1": "255d72582a44c808187dace8faf4b4194d843159"
+      },
+      {
+        "title": "Haze (move)",
+        "page_id": 3723,
+        "revision_id": 4650360,
+        "sha1": "850bf160f0227a76b6a59a026c45ba0ba4ec2bc6"
+      },
+      {
+        "title": "Head Charge (move)",
+        "page_id": 117504,
+        "revision_id": 4634773,
+        "sha1": "9c347ff397e16d1d15dc040a2d45063295e25386"
+      },
+      {
+        "title": "Head Smash (move)",
+        "page_id": 18899,
+        "revision_id": 4628293,
+        "sha1": "714bba52e41dadb2dbbaf1f9d571519e30a34aee"
+      },
+      {
+        "title": "Headbutt (move)",
+        "page_id": 3637,
+        "revision_id": 4648721,
+        "sha1": "bd7e95b4eec01202bb73943aefa15ea1c4c1f688"
+      },
+      {
+        "title": "Headlong Rush (move)",
+        "page_id": 268027,
+        "revision_id": 4614380,
+        "sha1": "0611abcab768113061f9f16d44b2b1ac5e15c56b"
+      },
+      {
+        "title": "Heal Bell (move)",
+        "page_id": 3826,
+        "revision_id": 4640822,
+        "sha1": "6c1251960b0a154bdfa8b2ccabf9f40749548033"
+      },
+      {
+        "title": "Heal Block (move)",
+        "page_id": 16955,
+        "revision_id": 4622371,
+        "sha1": "a930b78eb1cd708aef0ef35da55529f30df699ed"
+      },
+      {
+        "title": "Heal Order (move)",
+        "page_id": 18898,
+        "revision_id": 4627652,
+        "sha1": "239fa577d540199db865de77e70d620901e7f68e"
+      },
+      {
+        "title": "Heal Pulse (move)",
+        "page_id": 117501,
+        "revision_id": 4628233,
+        "sha1": "bdb536b176b167e1a407f0a468d8a17f7633f438"
+      },
+      {
+        "title": "Healing Wish (move)",
+        "page_id": 14446,
+        "revision_id": 4634729,
+        "sha1": "b9c3049b40f1367292ecfa4fac1281e308657b76"
+      },
+      {
+        "title": "Heart Stamp (move)",
+        "page_id": 109478,
+        "revision_id": 4621601,
+        "sha1": "46daae574b0ccb244c651e1867d98551f6a36346"
+      },
+      {
+        "title": "Heart Swap (move)",
+        "page_id": 12419,
+        "revision_id": 4623715,
+        "sha1": "a9277e10af12fcdad3af784d68c10805a22b54c1"
+      },
+      {
+        "title": "Heat Crash (move)",
+        "page_id": 117610,
+        "revision_id": 4621607,
+        "sha1": "2df87c993f3eeb95606dd7882b38dfff0b56232a"
+      },
+      {
+        "title": "Heat Wave (move)",
+        "page_id": 3868,
+        "revision_id": 4628449,
+        "sha1": "27dd78efa7c66c1d1543a9e4ea16dcd290d1c49e"
+      },
+      {
+        "title": "Heavy Slam (move)",
+        "page_id": 117597,
+        "revision_id": 4628237,
+        "sha1": "cd5e5e087e575bf6a30e06c878ba5aab135dc0bf"
+      },
+      {
+        "title": "Helping Hand (move)",
+        "page_id": 3881,
+        "revision_id": 4632946,
+        "sha1": "a7d2259bc30d26a1a0266f7dae8b0f4bc3b43a7d"
+      },
+      {
+        "title": "Hex (move)",
+        "page_id": 117270,
+        "revision_id": 4628241,
+        "sha1": "3f20bc12a1b520ead65a4476dc49800f6176eaf0"
+      },
+      {
+        "title": "Hidden Power (move)",
+        "page_id": 900,
+        "revision_id": 4643335,
+        "sha1": "f4b72f5702f05dcbd7efdabf5717eff11a69b48c"
+      },
+      {
+        "title": "High Horsepower (move)",
+        "page_id": 214983,
+        "revision_id": 4645416,
+        "sha1": "cb43e8d20a4276b6b5777c5c93a2de962abc3583"
+      },
+      {
+        "title": "High Jump Kick (move)",
+        "page_id": 3745,
+        "revision_id": 4646618,
+        "sha1": "23969adc57a33166f10fd940720d3e24b1e02ae8"
+      },
+      {
+        "title": "Hold Back (move)",
+        "page_id": 188124,
+        "revision_id": 4270206,
+        "sha1": "0941b4a7f637828d228d2f0171c050738687b2af"
+      },
+      {
+        "title": "Hold Hands (move)",
+        "page_id": 194262,
+        "revision_id": 4631616,
+        "sha1": "c87416f9fa6f3abbabf3ba96d879efa1fe410af7"
+      },
+      {
+        "title": "Hone Claws (move)",
+        "page_id": 105428,
+        "revision_id": 4622973,
+        "sha1": "58cd5508063152c03b77c34efba8189113f2e757"
+      },
+      {
+        "title": "Horn Attack (move)",
+        "page_id": 3638,
+        "revision_id": 4512180,
+        "sha1": "b6f7fc692f5ea81d2605108e079c94085df6c82d"
+      },
+      {
+        "title": "Horn Drill (move)",
+        "page_id": 3640,
+        "revision_id": 4577773,
+        "sha1": "e6d26cfaefe478dca76fb51fcd2166eeaa7a8d33"
+      },
+      {
+        "title": "Horn Leech (move)",
+        "page_id": 117265,
+        "revision_id": 4634763,
+        "sha1": "d07a3b6cc4d4c57285a7f836f0b4ed314892a79a"
+      },
+      {
+        "title": "Howl (move)",
+        "page_id": 3947,
+        "revision_id": 4643228,
+        "sha1": "34aebe02cd71a721708d3c91a021357e1551eb1f"
+      },
+      {
+        "title": "Hurricane (move)",
+        "page_id": 117696,
+        "revision_id": 4649826,
+        "sha1": "d9206281513d8858f04825617d4c466e51fbb521"
+      },
+      {
+        "title": "Hydro Cannon (move)",
+        "page_id": 3919,
+        "revision_id": 4632594,
+        "sha1": "adb8b2076243d5ceb6b57670ad5f96864f142809"
+      },
+      {
+        "title": "Hydro Pump (move)",
+        "page_id": 3665,
+        "revision_id": 4647540,
+        "sha1": "38d004c6ff639d392af3bf37683bec6d5a075316"
+      },
+      {
+        "title": "Hydro Steam (move)",
+        "page_id": 281864,
+        "revision_id": 4647469,
+        "sha1": "04b71c69cb6a4360fb352d49227f0df33305631e"
+      },
+      {
+        "title": "Hydro Vortex (move)",
+        "page_id": 215071,
+        "revision_id": 4647560,
+        "sha1": "5b871b8024e22bda9495d55ed1e004a9ca23dceb"
+      },
+      {
+        "title": "Hyper Beam (move)",
+        "page_id": 3672,
+        "revision_id": 4646881,
+        "sha1": "b04f062dd490cedb14866ddc6a98212b53cdecbe"
+      },
+      {
+        "title": "Hyper Drill (move)",
+        "page_id": 277796,
+        "revision_id": 4614319,
+        "sha1": "0053e777a36d6ab23731ebf3b362a326d55766c8"
+      },
+      {
+        "title": "Hyper Fang (move)",
+        "page_id": 3767,
+        "revision_id": 4646278,
+        "sha1": "c124f0836b575a7c570c3ad66f4d469f5e2c039c"
+      },
+      {
+        "title": "Hyper Voice (move)",
+        "page_id": 3915,
+        "revision_id": 4632570,
+        "sha1": "73b70a94ed2bde3a743dcd66b3ef8681cf6ba275"
+      },
+      {
+        "title": "Hyperspace Fury (move)",
+        "page_id": 201904,
+        "revision_id": 4623065,
+        "sha1": "dccbd728982d11c1a9d00c519a9620115715d7cd"
+      },
+      {
+        "title": "Hyperspace Hole (move)",
+        "page_id": 191892,
+        "revision_id": 4622922,
+        "sha1": "ff043b8ab5584c7499b1a7fd4415b1bd4b64b31c"
+      },
+      {
+        "title": "Hypnosis (move)",
+        "page_id": 3704,
+        "revision_id": 4630591,
+        "sha1": "37e7d19b2808a9f8ddf482364c085440206a2dec"
+      },
+      {
+        "title": "Ice Ball (move)",
+        "page_id": 3912,
+        "revision_id": 4632541,
+        "sha1": "b4605ba392d0b263535cb07728e2696cf66d369e"
+      },
+      {
+        "title": "Ice Beam (move)",
+        "page_id": 63007,
+        "revision_id": 4649008,
+        "sha1": "29de64ef6427b5cc613543ea16b107b4cce3aaf9"
+      },
+      {
+        "title": "Ice Burn (move)",
+        "page_id": 117721,
+        "revision_id": 4642647,
+        "sha1": "5b14a4850bfab8a3027fc2229241c7a95c3ba37d"
+      },
+      {
+        "title": "Ice Fang (move)",
+        "page_id": 12433,
+        "revision_id": 4650008,
+        "sha1": "78436423e71c89de7f9308037d7e3996751a6ba4"
+      },
+      {
+        "title": "Ice Hammer (move)",
+        "page_id": 218335,
+        "revision_id": 4627457,
+        "sha1": "debe96e8988093d3fb9cca00cb5c6964c989bf25"
+      },
+      {
+        "title": "Ice Punch (move)",
+        "page_id": 3616,
+        "revision_id": 4645417,
+        "sha1": "bee139fe885b1f3d369a24cc3ecf760ce947241e"
+      },
+      {
+        "title": "Ice Shard (move)",
+        "page_id": 14539,
+        "revision_id": 4628282,
+        "sha1": "2cdab56d8ba646fddf4dbce6b839c40c8cb4aca3"
+      },
+      {
+        "title": "Ice Spinner (move)",
+        "page_id": 277762,
+        "revision_id": 4628283,
+        "sha1": "d7ffca5e43d02eddd93942752582a0a14856fefb"
+      },
+      {
+        "title": "Icicle Crash (move)",
+        "page_id": 117314,
+        "revision_id": 4644660,
+        "sha1": "c68f021b8937f18266d53407f9aa0de1d0f53a89"
+      },
+      {
+        "title": "Icicle Spear (move)",
+        "page_id": 3944,
+        "revision_id": 4633220,
+        "sha1": "29b4e84c0abf93e314741ffe3239424e8705d5d1"
+      },
+      {
+        "title": "Icy Wind (move)",
+        "page_id": 3807,
+        "revision_id": 4639865,
+        "sha1": "e3db4465b94d4f65710bda9658b469a64ea74aaa"
+      },
+      {
+        "title": "Imprison (move)",
+        "page_id": 3897,
+        "revision_id": 4641267,
+        "sha1": "f13e316a2799ae2b345a87dede8c8e8bde3fbbf8"
+      },
+      {
+        "title": "Incinerate (move)",
+        "page_id": 117554,
+        "revision_id": 4645418,
+        "sha1": "825740a08da4dc2c1ea259d172e69a48deb8dd8a"
+      },
+      {
+        "title": "Infernal Parade (move)",
+        "page_id": 268717,
+        "revision_id": 4628599,
+        "sha1": "263418ddc2e8770d102304f5a53754898f9d1520"
+      },
+      {
+        "title": "Inferno (move)",
+        "page_id": 117309,
+        "revision_id": 4644661,
+        "sha1": "3d988871ba81aa303a59c74f382ecf824c081830"
+      },
+      {
+        "title": "Inferno Overdrive (move)",
+        "page_id": 215070,
+        "revision_id": 4614421,
+        "sha1": "a8be2fd9c3f931b948daf6a502d0811a645e319a"
+      },
+      {
+        "title": "Infestation (move)",
+        "page_id": 184477,
+        "revision_id": 4645419,
+        "sha1": "0a7f0ba5b4d88aee61ed42c583ecd8293e5ab81d"
+      },
+      {
+        "title": "Ingrain (move)",
+        "page_id": 3886,
+        "revision_id": 4636323,
+        "sha1": "ed57048824a37edb0c688cf88a59a64c90365290"
+      },
+      {
+        "title": "Instruct (move)",
+        "page_id": 216632,
+        "revision_id": 4620164,
+        "sha1": "1a39dfd45b9b475569585590057542f2eee479c3"
+      },
+      {
+        "title": "Ion Deluge (move)",
+        "page_id": 185079,
+        "revision_id": 4512270,
+        "sha1": "09f9cb1d6c9b4674365d2e5bd2bf41c88c561823"
+      },
+      {
+        "title": "Iron Defense (move)",
+        "page_id": 3945,
+        "revision_id": 4633221,
+        "sha1": "bd486adb69a4e29cc3a547c1dd313f646747c855"
+      },
+      {
+        "title": "Iron Head (move)",
+        "page_id": 18893,
+        "revision_id": 4646847,
+        "sha1": "127a4051fa5700833cd2a482f8177a6098705d2b"
+      },
+      {
+        "title": "Iron Tail (move)",
+        "page_id": 3842,
+        "revision_id": 4649179,
+        "sha1": "c16d31d30eb4ac0a6c8e599339a15eaf5b299eb7"
+      },
+      {
+        "title": "Ivy Cudgel (move)",
+        "page_id": 295909,
+        "revision_id": 4648991,
+        "sha1": "21633a27153e590fdbb7a6d25faccb030973405b"
+      },
+      {
+        "title": "Jaw Lock (move)",
+        "page_id": 244318,
+        "revision_id": 4628300,
+        "sha1": "2784cc75a7c27458a525423b024ce6992c8533d1"
+      },
+      {
+        "title": "Jet Punch (move)",
+        "page_id": 277759,
+        "revision_id": 4647535,
+        "sha1": "f025054a0bc4e513479782fb1504739b17b6b2f8"
+      },
+      {
+        "title": "Judgment (move)",
+        "page_id": 17440,
+        "revision_id": 4627641,
+        "sha1": "5c347360fa81623ac92c6fc8e7d966a67fc5926f"
+      },
+      {
+        "title": "Jump Kick (move)",
+        "page_id": 3634,
+        "revision_id": 4647449,
+        "sha1": "a0293178cb9ee632371a29bdcd5b2d23eb5dbd08"
+      },
+      {
+        "title": "Jungle Healing (move)",
+        "page_id": 250062,
+        "revision_id": 4511658,
+        "sha1": "25b9f4b6b384bbeccda9dd0b18052feb9b89def1"
+      },
+      {
+        "title": "Karate Chop (move)",
+        "page_id": 3610,
+        "revision_id": 4643345,
+        "sha1": "13f3b3f5717488c57932d060121baba2ccbd4b75"
+      },
+      {
+        "title": "Kinesis (move)",
+        "page_id": 3743,
+        "revision_id": 4646666,
+        "sha1": "80ae56944cdb3703db434b87cbac1be13f83b3dc"
+      },
+      {
+        "title": "King's Shield (move)",
+        "page_id": 184913,
+        "revision_id": 4636018,
+        "sha1": "d43ddc558eef5942c75c0897fc297e750265b6b8"
+      },
+      {
+        "title": "Knock Off (move)",
+        "page_id": 3893,
+        "revision_id": 4632426,
+        "sha1": "e6abfc32f89a256ae074bfff451a970770d55498"
+      },
+      {
+        "title": "Kowtow Cleave (move)",
+        "page_id": 277769,
+        "revision_id": 4614952,
+        "sha1": "3974d89dc85d011e84bb00a46a473b711ff92db0"
+      },
+      {
+        "title": "Land's Wrath (move)",
+        "page_id": 184761,
+        "revision_id": 4634816,
+        "sha1": "7f5397fd0608d4f5c6238747c029dbf5bd7dfd05"
+      },
+      {
+        "title": "Laser Focus (move)",
+        "page_id": 218345,
+        "revision_id": 4623132,
+        "sha1": "b8bce3d30c4c8b0c592200c65c3d8093bf88cab7"
+      },
+      {
+        "title": "Lash Out (move)",
+        "page_id": 252912,
+        "revision_id": 4628303,
+        "sha1": "7214c388866ef055c73e45f7158842c38c4c48cc"
+      },
+      {
+        "title": "Last Resort (move)",
+        "page_id": 15946,
+        "revision_id": 4628304,
+        "sha1": "4af9f548873dad586141a89c1a97702ce2766e62"
+      },
+      {
+        "title": "Last Respects (move)",
+        "page_id": 277756,
+        "revision_id": 4643324,
+        "sha1": "01d9ed616adbf9e0a9993b3652c162617aba04c5"
+      },
+      {
+        "title": "Lava Plume (move)",
+        "page_id": 18891,
+        "revision_id": 4627618,
+        "sha1": "647867954835bebab4840abf0dc418154128c1d4"
+      },
+      {
+        "title": "Leaf Blade (move)",
+        "page_id": 3959,
+        "revision_id": 4636935,
+        "sha1": "7e45cabf01cfc8be8405f403844db99066e2eb2d"
+      },
+      {
+        "title": "Leaf Storm (move)",
+        "page_id": 12736,
+        "revision_id": 4628307,
+        "sha1": "aa60cbd0f77a3f9c6841cde3110b8de4ea069089"
+      },
+      {
+        "title": "Leaf Tornado (move)",
+        "page_id": 115972,
+        "revision_id": 4634767,
+        "sha1": "be29f473f87d35de1d736b3dcabb97272bcc0f2d"
+      },
+      {
+        "title": "Leafage (move)",
+        "page_id": 213487,
+        "revision_id": 4622987,
+        "sha1": "d8ac61504ebc31b87b7e7eccd4395389ffa3a5e4"
+      },
+      {
+        "title": "Leech Life (move)",
+        "page_id": 3750,
+        "revision_id": 4646418,
+        "sha1": "a5a7eb889e7438724948642e99ace2ee84a2d6b8"
+      },
+      {
+        "title": "Leech Seed (move)",
+        "page_id": 3682,
+        "revision_id": 4628309,
+        "sha1": "978b4d8da46b7ef7a2d60e1f67657d6758c745de"
+      },
+      {
+        "title": "Leer (move)",
+        "page_id": 3652,
+        "revision_id": 4623919,
+        "sha1": "e0bd2bc5513af7fccda80af394a4d4e60a69b574"
+      },
+      {
+        "title": "Let's Snuggle Forever (move)",
+        "page_id": 226626,
+        "revision_id": 4621910,
+        "sha1": "53a7c71992935e60f4f02b979161ae45cbe86287"
+      },
+      {
+        "title": "Lick (move)",
+        "page_id": 3731,
+        "revision_id": 4650250,
+        "sha1": "16723546d14fe823ab6e242b21c9b6439f1f98bc"
+      },
+      {
+        "title": "Life Dew (move)",
+        "page_id": 244342,
+        "revision_id": 4647558,
+        "sha1": "1825aa06f7350d75a78ab1ac6819cda48d0ff26b"
+      },
+      {
+        "title": "Light Screen (move)",
+        "page_id": 3722,
+        "revision_id": 4650302,
+        "sha1": "11bd0e4ef64d44234264fbd27730b3c84b3f1ff3"
+      },
+      {
+        "title": "Light That Burns the Sky (move)",
+        "page_id": 226701,
+        "revision_id": 4633810,
+        "sha1": "c9bfa18c8e426a6c1772695d50e9104195248b06"
+      },
+      {
+        "title": "Light of Ruin (move)",
+        "page_id": 190476,
+        "revision_id": 4634817,
+        "sha1": "40c5d07abbcb4ecf3e057e6de1e6aae3bf392b0e"
+      },
+      {
+        "title": "Liquidation (move)",
+        "page_id": 218417,
+        "revision_id": 4647454,
+        "sha1": "335ae5a0e0a85c3e2b2a6d697b1e1680a7152768"
+      },
+      {
+        "title": "Lock-On (move)",
+        "page_id": 3810,
+        "revision_id": 4639891,
+        "sha1": "b6b97d2045f46c152ef8ca584373f86943cc0d5c"
+      },
+      {
+        "title": "Lovely Kiss (move)",
+        "page_id": 3751,
+        "revision_id": 4646299,
+        "sha1": "535b618229ec7ef76401b2892fe50cd46b0291a1"
+      },
+      {
+        "title": "Low Kick (move)",
+        "page_id": 3676,
+        "revision_id": 4645421,
+        "sha1": "0d09c9b13ca925fc4b828c344904db1aa316ef91"
+      },
+      {
+        "title": "Low Sweep (move)",
+        "page_id": 117453,
+        "revision_id": 4636097,
+        "sha1": "775472e3f74ade3c766feb636811646b6d2053f2"
+      },
+      {
+        "title": "Lucky Chant (move)",
+        "page_id": 12734,
+        "revision_id": 4628341,
+        "sha1": "62ea5f35ac46c54cde4762609be13b4c6261cd50"
+      },
+      {
+        "title": "Lumina Crash (move)",
+        "page_id": 277757,
+        "revision_id": 4578150,
+        "sha1": "332e5f36e6a43a616d0c214cb3c8edfdb8441896"
+      },
+      {
+        "title": "Lunar Blessing (move)",
+        "page_id": 268368,
+        "revision_id": 4523532,
+        "sha1": "2ad3ddba028f267ecd1d2a7dde42e59c096797e3"
+      },
+      {
+        "title": "Lunar Dance (move)",
+        "page_id": 18901,
+        "revision_id": 4628201,
+        "sha1": "037db0de694643cd872bf2bda703ee01f12a6ba9"
+      },
+      {
+        "title": "Lunge (move)",
+        "page_id": 218353,
+        "revision_id": 4645422,
+        "sha1": "aa5b33556384cb63ee0080eee6b09cbb6848d7c3"
+      },
+      {
+        "title": "Luster Purge (move)",
+        "page_id": 3906,
+        "revision_id": 4632493,
+        "sha1": "9d313e36946897c6eee280144a86bd9632bebbb0"
+      },
+      {
+        "title": "Mach Punch (move)",
+        "page_id": 3793,
+        "revision_id": 4638828,
+        "sha1": "f52e0ae6c45bb61865e584c4454c718bb328c32f"
+      },
+      {
+        "title": "Magic Coat (move)",
+        "page_id": 3888,
+        "revision_id": 4512231,
+        "sha1": "8a8fa9e71c27c428d1ae8ee6361528a8a2a0ff72"
+      },
+      {
+        "title": "Magic Powder (move)",
+        "page_id": 244322,
+        "revision_id": 4632221,
+        "sha1": "d358c687dc3c336ba9aa258c12863a76cfb544ef"
+      },
+      {
+        "title": "Magic Room (move)",
+        "page_id": 117188,
+        "revision_id": 4634747,
+        "sha1": "f5bc5917bfc54005a284518bfebb3f59f7d68a04"
+      },
+      {
+        "title": "Magical Leaf (move)",
+        "page_id": 3956,
+        "revision_id": 4635985,
+        "sha1": "04fde2d801fb68527eace228573bf50999961570"
+      },
+      {
+        "title": "Magical Torque (move)",
+        "page_id": 277878,
+        "revision_id": 4635267,
+        "sha1": "26e3cde39ad9c7196dc9ab74db8a42dc24e72d54"
+      },
+      {
+        "title": "Magma Storm (move)",
+        "page_id": 18902,
+        "revision_id": 4628199,
+        "sha1": "d91655135d02afe6cb42a068e2d752d9511ab860"
+      },
+      {
+        "title": "Magnet Bomb (move)",
+        "page_id": 18894,
+        "revision_id": 4645426,
+        "sha1": "b2544349e73df0f4d0b5cffa3913e7f0ae25d4c7"
+      },
+      {
+        "title": "Magnet Rise (move)",
+        "page_id": 18882,
+        "revision_id": 4623716,
+        "sha1": "338af6d8d7c534c29de91f30f563840af25d830a"
+      },
+      {
+        "title": "Magnetic Flux (move)",
+        "page_id": 185077,
+        "revision_id": 4634812,
+        "sha1": "c672f963600e72c771a85b8c6b433ba067d7323d"
+      },
+      {
+        "title": "Magnitude (move)",
+        "page_id": 3833,
+        "revision_id": 4640874,
+        "sha1": "9bf2df2db9d5f9a0b9ed96864542182c3a540fbc"
+      },
+      {
+        "title": "Make It Rain (move)",
+        "page_id": 277777,
+        "revision_id": 4620155,
+        "sha1": "b9d7a4e63b3ff0efcabfdd32585850bb65b32087"
+      },
+      {
+        "title": "Malicious Moonsault (move)",
+        "page_id": 218076,
+        "revision_id": 4621873,
+        "sha1": "16644b2bf8f822e579c0531884e7ff3ca4154542"
+      },
+      {
+        "title": "Malignant Chain (move)",
+        "page_id": 300833,
+        "revision_id": 4646794,
+        "sha1": "b0dced08be07b1e64a4752e4b9cbbb010565350e"
+      },
+      {
+        "title": "Mat Block (move)",
+        "page_id": 185069,
+        "revision_id": 4621632,
+        "sha1": "8ffe6666ef14160acbca8d6c88ffe7ec2db6dbbe"
+      },
+      {
+        "title": "Matcha Gotcha (move)",
+        "page_id": 295853,
+        "revision_id": 4614876,
+        "sha1": "340907b1e0a53a59ce4517ec3ff6be5742a4236c"
+      },
+      {
+        "title": "Max Airstream (move)",
+        "page_id": 243945,
+        "revision_id": 4614651,
+        "sha1": "509a8963e57ecd14b20d10775c3c19423081bfab"
+      },
+      {
+        "title": "Max Darkness (move)",
+        "page_id": 243948,
+        "revision_id": 4406818,
+        "sha1": "91a524823cb5b016d4a68267a55453691c82483e"
+      },
+      {
+        "title": "Max Flare (move)",
+        "page_id": 240362,
+        "revision_id": 4628343,
+        "sha1": "8100bd6ba1931a56b76472c6ae3b3c508dbaa090"
+      },
+      {
+        "title": "Max Flutterby (move)",
+        "page_id": 244374,
+        "revision_id": 4614541,
+        "sha1": "64d5f79ae379e97d71706c78f1b4f2af139b6cd1"
+      },
+      {
+        "title": "Max Geyser (move)",
+        "page_id": 240363,
+        "revision_id": 4647582,
+        "sha1": "3680f69fd194d6d270aab7668a3e4a0f0bb49a39"
+      },
+      {
+        "title": "Max Guard (move)",
+        "page_id": 240365,
+        "revision_id": 4643601,
+        "sha1": "eac196b4b2683268dcc55dce2e0ac895666a0459"
+      },
+      {
+        "title": "Max Hailstorm (move)",
+        "page_id": 243946,
+        "revision_id": 4569378,
+        "sha1": "2a1ff107610dc66f89f5385fc52f6217430f708b"
+      },
+      {
+        "title": "Max Knuckle (move)",
+        "page_id": 240360,
+        "revision_id": 4614391,
+        "sha1": "79445a970118dd9a2002d739b326a0db0b56fe36"
+      },
+      {
+        "title": "Max Lightning (move)",
+        "page_id": 240364,
+        "revision_id": 4614941,
+        "sha1": "2ca97a34bbf13c04f2360d5418d5c9e360d994a8"
+      },
+      {
+        "title": "Max Mindstorm (move)",
+        "page_id": 244377,
+        "revision_id": 4614356,
+        "sha1": "c9af5f6c1c5dcfddaaaa6dfe8b436179433028a5"
+      },
+      {
+        "title": "Max Ooze (move)",
+        "page_id": 244375,
+        "revision_id": 4636291,
+        "sha1": "5f15773026a6f6364aea1bedafa84a42b83cb726"
+      },
+      {
+        "title": "Max Overgrowth (move)",
+        "page_id": 243943,
+        "revision_id": 4614551,
+        "sha1": "6b64e025f492138e577bac37451177f3fa80a018"
+      },
+      {
+        "title": "Max Phantasm (move)",
+        "page_id": 244390,
+        "revision_id": 4614405,
+        "sha1": "d920bf4dfdb22e4e77492b10bf148452bafc56e4"
+      },
+      {
+        "title": "Max Quake (move)",
+        "page_id": 244378,
+        "revision_id": 4614379,
+        "sha1": "f8f77231b670cc67607d61bb4aefda00c8c3ae9a"
+      },
+      {
+        "title": "Max Rockfall (move)",
+        "page_id": 240361,
+        "revision_id": 4614507,
+        "sha1": "33860c4ebaf080f254480229e5cd47f9529d0724"
+      },
+      {
+        "title": "Max Spirit (move)",
+        "page_id": 320246,
+        "revision_id": 4530196,
+        "sha1": "49394517cd9952dadd4e5bfd9e2636883d61af39"
+      },
+      {
+        "title": "Max Starfall (move)",
+        "page_id": 243949,
+        "revision_id": 4614958,
+        "sha1": "3c0e740ada70d3201c928dc2a137243fd1b4d6f5"
+      },
+      {
+        "title": "Max Steelspike (move)",
+        "page_id": 243947,
+        "revision_id": 4614418,
+        "sha1": "b49512108d9c4668114b78a4cb3c3d13e0f11290"
+      },
+      {
+        "title": "Max Strike (move)",
+        "page_id": 238781,
+        "revision_id": 4620159,
+        "sha1": "483c6bcb6bff0d3cc5f08d1543c5585d854d0bdb"
+      },
+      {
+        "title": "Max Wyrmwind (move)",
+        "page_id": 244376,
+        "revision_id": 4614477,
+        "sha1": "f0e95607fbc93f2f3c8c371d256a943f3108f888"
+      },
+      {
+        "title": "Me First (move)",
+        "page_id": 12430,
+        "revision_id": 4623695,
+        "sha1": "309cf29cf5e5ff815c2897938dc59bccd3332afa"
+      },
+      {
+        "title": "Mean Look (move)",
+        "page_id": 3823,
+        "revision_id": 4641355,
+        "sha1": "01236755d37a86ae1b184d55da56b731e85ce29a"
+      },
+      {
+        "title": "Meditate (move)",
+        "page_id": 3705,
+        "revision_id": 4635980,
+        "sha1": "ec635b1d0531e4310adc598d3764150ffad9cf20"
+      },
+      {
+        "title": "Mega Drain (move)",
+        "page_id": 3681,
+        "revision_id": 4512235,
+        "sha1": "46c7a54f9c5665f05179cb5ca118824c6a2dfae5"
+      },
+      {
+        "title": "Mega Kick (move)",
+        "page_id": 3633,
+        "revision_id": 4628337,
+        "sha1": "af0a7ae99c929ae56d6b4096b1bd364578342601"
+      },
+      {
+        "title": "Mega Punch (move)",
+        "page_id": 3613,
+        "revision_id": 4630283,
+        "sha1": "9838b37df0be4f4df3998c64a5d845dbb3b6ede6"
+      },
+      {
+        "title": "Megahorn (move)",
+        "page_id": 3835,
+        "revision_id": 4640881,
+        "sha1": "afbace998870b11a12a9c6e91990997cac84fab0"
+      },
+      {
+        "title": "Memento (move)",
+        "page_id": 3873,
+        "revision_id": 4628339,
+        "sha1": "56a2c5e67b5419dea76eebe6fdeba8ef15d05deb"
+      },
+      {
+        "title": "Menacing Moonraze Maelstrom (move)",
+        "page_id": 226141,
+        "revision_id": 4530862,
+        "sha1": "4b3e3788632f7974b73539cc97cf89fea72e4a50"
+      },
+      {
+        "title": "Metal Burst (move)",
+        "page_id": 14458,
+        "revision_id": 4629935,
+        "sha1": "0a56c4f770c645d8f2699266c83bbcec63b1a33d"
+      },
+      {
+        "title": "Metal Claw (move)",
+        "page_id": 3843,
+        "revision_id": 4643317,
+        "sha1": "b1fcce586f86835199e0c93126b36c92173ccf86"
+      },
+      {
+        "title": "Metal Sound (move)",
+        "page_id": 3930,
+        "revision_id": 4632656,
+        "sha1": "66d544f310bd473a3d95a959b70579972b3e1c8e"
+      },
+      {
+        "title": "Meteor Assault (move)",
+        "page_id": 241013,
+        "revision_id": 4629782,
+        "sha1": "d012e69e5417cab777f7a07faaf3f364942bc7ee"
+      },
+      {
+        "title": "Meteor Beam (move)",
+        "page_id": 252906,
+        "revision_id": 4642649,
+        "sha1": "822ec7cfd68f87258df7f08c502f23a27c2a8ef0"
+      },
+      {
+        "title": "Meteor Mash (move)",
+        "page_id": 3920,
+        "revision_id": 4632604,
+        "sha1": "b5d63e1c12c390749ead4f4d264c61cfde7fb0a6"
+      },
+      {
+        "title": "Metronome (move)",
+        "page_id": 3727,
+        "revision_id": 4650271,
+        "sha1": "ec42faf2e7064d0ecf324a0f46036795abb5df07"
+      },
+      {
+        "title": "Mighty Cleave (move)",
+        "page_id": 300836,
+        "revision_id": 4477404,
+        "sha1": "81b51b4fe232aa270ce64c7f5e84ebdbb3cf9e4e"
+      },
+      {
+        "title": "Milk Drink (move)",
+        "page_id": 3819,
+        "revision_id": 4643404,
+        "sha1": "de3c6fc34c490a100715eb930052de1c69fe9f5e"
+      },
+      {
+        "title": "Mimic (move)",
+        "page_id": 3711,
+        "revision_id": 4633248,
+        "sha1": "ebc3de45911d06df4b4623ddffb6083675205bd6"
+      },
+      {
+        "title": "Mind Blown (move)",
+        "page_id": 226073,
+        "revision_id": 4621895,
+        "sha1": "9184f11b3c11ece9207ef65a66d3f826337d758f"
+      },
+      {
+        "title": "Mind Reader (move)",
+        "page_id": 3779,
+        "revision_id": 4637938,
+        "sha1": "2e0e4c1ba2d16df292d08ffd621b227f9b31efa1"
+      },
+      {
+        "title": "Minimize (move)",
+        "page_id": 3716,
+        "revision_id": 4650411,
+        "sha1": "52a1f970b946b0f313446df5ce121dda5c00a2e0"
+      },
+      {
+        "title": "Miracle Eye (move)",
+        "page_id": 13703,
+        "revision_id": 4554001,
+        "sha1": "e365090c2ebd26d525d1ec8aea677da16267e9dc"
+      },
+      {
+        "title": "Mirror Coat (move)",
+        "page_id": 3854,
+        "revision_id": 4645427,
+        "sha1": "90bfcece2e0cf9d23641bcd2cad8b437f2825aac"
+      },
+      {
+        "title": "Mirror Move (move)",
+        "page_id": 3728,
+        "revision_id": 4650267,
+        "sha1": "d85ceb70e638b9decbd977e3571bc48c81c9cf78"
+      },
+      {
+        "title": "Mirror Shot (move)",
+        "page_id": 18890,
+        "revision_id": 4627645,
+        "sha1": "8f836aff0f0ab6d3830ffeb24c6b9f8345307da7"
+      },
+      {
+        "title": "Mist (move)",
+        "page_id": 3663,
+        "revision_id": 4650361,
+        "sha1": "ab00be455245ead82fa9b82184c30c3e5a3025cb"
+      },
+      {
+        "title": "Mist Ball (move)",
+        "page_id": 3907,
+        "revision_id": 4632494,
+        "sha1": "35e608e8310c727ba2305074e62797c3c7ac537d"
+      },
+      {
+        "title": "Misty Explosion (move)",
+        "page_id": 252908,
+        "revision_id": 4628348,
+        "sha1": "58a1b3ea1c47a588cca8a884480bbab4b1c5883e"
+      },
+      {
+        "title": "Misty Terrain (move)",
+        "page_id": 185021,
+        "revision_id": 4637908,
+        "sha1": "9eb85d72c344bb6ee73ec93f8e77c63b637bbdbb"
+      },
+      {
+        "title": "Moonblast (move)",
+        "page_id": 180369,
+        "revision_id": 4645428,
+        "sha1": "1ab6bb3d11cc912ac775829c9e1aef8a713508ad"
+      },
+      {
+        "title": "Moongeist Beam (move)",
+        "page_id": 213484,
+        "revision_id": 4621904,
+        "sha1": "a03aea5570f4ce2d267fe830466f8828e3351990"
+      },
+      {
+        "title": "Moonlight (move)",
+        "page_id": 3847,
+        "revision_id": 4641840,
+        "sha1": "ac1c2ad87aa00ead0bf692c336c82bad8035be83"
+      },
+      {
+        "title": "Morning Sun (move)",
+        "page_id": 3845,
+        "revision_id": 4641839,
+        "sha1": "fc4383ea17518d2509e30fbd3f4301a0c10e0049"
+      },
+      {
+        "title": "Mortal Spin (move)",
+        "page_id": 277766,
+        "revision_id": 4631936,
+        "sha1": "3c0c2d071c8777edf745fc9d714d695e28e32c0a"
+      },
+      {
+        "title": "Mountain Gale (move)",
+        "page_id": 268721,
+        "revision_id": 4618753,
+        "sha1": "ba3d4dbaea0a178976087559ba376b46cc610860"
+      },
+      {
+        "title": "Mud Bomb (move)",
+        "page_id": 17468,
+        "revision_id": 4625806,
+        "sha1": "c9e8c7f18f38156111188ce41638e47e1f4ee19e"
+      },
+      {
+        "title": "Mud Shot (move)",
+        "page_id": 3952,
+        "revision_id": 4641824,
+        "sha1": "147f4b7d999c9f6621c97eb05ce49907fdf11ec7"
+      },
+      {
+        "title": "Mud Sport (move)",
+        "page_id": 3911,
+        "revision_id": 4632539,
+        "sha1": "64f1ef3d23be5201f84504acc612c9c3cacf14af"
+      },
+      {
+        "title": "Mud-Slap (move)",
+        "page_id": 3799,
+        "revision_id": 4648146,
+        "sha1": "3199641bee273234ee6f90e32804f6d8e4d55040"
+      },
+      {
+        "title": "Muddy Water (move)",
+        "page_id": 3941,
+        "revision_id": 4633222,
+        "sha1": "20766ad447012aadb938fb38f002f26fe8c48779"
+      },
+      {
+        "title": "Multi-Attack (move)",
+        "page_id": 216510,
+        "revision_id": 4621893,
+        "sha1": "1ccbb37f4cd2726b67dba577cc6527525f734406"
+      },
+      {
+        "title": "Mystical Fire (move)",
+        "page_id": 184464,
+        "revision_id": 4645429,
+        "sha1": "4754b8226fff3b12f1b5e7eba591b924f7eef6fd"
+      },
+      {
+        "title": "Mystical Power (move)",
+        "page_id": 268726,
+        "revision_id": 4527955,
+        "sha1": "86bdaeb10ca8f0c7aef681a00c05b5cce0d6fd7d"
+      },
+      {
+        "title": "Nasty Plot (move)",
+        "page_id": 12450,
+        "revision_id": 4628357,
+        "sha1": "1d31f2f5a546ee26b6c968e5738abe924461bf08"
+      },
+      {
+        "title": "Natural Gift (move)",
+        "page_id": 14448,
+        "revision_id": 4622414,
+        "sha1": "17080ae05c59f6cbc3a93dfa1f64d3e780022ade"
+      },
+      {
+        "title": "Nature Power (move)",
+        "page_id": 3878,
+        "revision_id": 4640960,
+        "sha1": "fcead316c9f2e1d7451ac8440eabe9d8cc6a6668"
+      },
+      {
+        "title": "Nature's Madness (move)",
+        "page_id": 214192,
+        "revision_id": 4621892,
+        "sha1": "7106aeb3c93d9649eca8ba3bfd354aa06fb3193b"
+      },
+      {
+        "title": "Needle Arm (move)",
+        "page_id": 3913,
+        "revision_id": 4632644,
+        "sha1": "a6dc8ac180255280c2d396c877dfdb860cb0884a"
+      },
+      {
+        "title": "Never-Ending Nightmare (move)",
+        "page_id": 216397,
+        "revision_id": 4614377,
+        "sha1": "2ebec5ce2fde705200dac10e5f610a78a46771ab"
+      },
+      {
+        "title": "Night Daze (move)",
+        "page_id": 117383,
+        "revision_id": 4634769,
+        "sha1": "eaa656f7f4cd26a13522be6638edd7626d77c976"
+      },
+      {
+        "title": "Night Shade (move)",
+        "page_id": 3710,
+        "revision_id": 4649974,
+        "sha1": "5e80c74453751f87d3f0566974e47c936dd647cc"
+      },
+      {
+        "title": "Night Slash (move)",
+        "page_id": 15939,
+        "revision_id": 4628358,
+        "sha1": "d12d79383facae35b6814f6941dee2253c74f956"
+      },
+      {
+        "title": "Nightmare (move)",
+        "page_id": 3780,
+        "revision_id": 4637937,
+        "sha1": "f77d21f17ea9013ca50b95f57af61407dc4fe607"
+      },
+      {
+        "title": "Nihil Light (move)",
+        "page_id": 343776,
+        "revision_id": 4634595,
+        "sha1": "1e6e985e06fc945285883b90877bdac7b4dbc3dd"
+      },
+      {
+        "title": "No Retreat (move)",
+        "page_id": 244320,
+        "revision_id": 4650597,
+        "sha1": "7df9402079c9fa4c41cd3e6aee5f0d5fb79d13a0"
+      },
+      {
+        "title": "Noble Roar (move)",
+        "page_id": 180355,
+        "revision_id": 4628359,
+        "sha1": "e09af04a70f42d2f2e37395e43f0c79839d57521"
+      },
+      {
+        "title": "Noxious Torque (move)",
+        "page_id": 277876,
+        "revision_id": 4635211,
+        "sha1": "189082137d8f22f460014ceac523ba813b14ccad"
+      },
+      {
+        "title": "Nuzzle (move)",
+        "page_id": 181624,
+        "revision_id": 4628361,
+        "sha1": "fc3d3d526627d1e19fb21065cfd4e28f6c21170d"
+      },
+      {
+        "title": "Oblivion Wing (move)",
+        "page_id": 180345,
+        "revision_id": 4645621,
+        "sha1": "750a8c45d84999a982c6d552c70108ba522d2f8d"
+      },
+      {
+        "title": "Obstruct (move)",
+        "page_id": 240155,
+        "revision_id": 4621927,
+        "sha1": "84615fa6ac6af8d0a44b7f2527974666d79794ea"
+      },
+      {
+        "title": "Oceanic Operetta (move)",
+        "page_id": 218077,
+        "revision_id": 4647605,
+        "sha1": "6cf8a87731cf5b3c03cecc91ba15c51c7549a3df"
+      },
+      {
+        "title": "Octazooka (move)",
+        "page_id": 3801,
+        "revision_id": 4647526,
+        "sha1": "c55b3237b7b8105a2771c217ce4c2e2d1d454359"
+      },
+      {
+        "title": "Octolock (move)",
+        "page_id": 244325,
+        "revision_id": 4628633,
+        "sha1": "7c800c325735c2cebd6ee1aca2343b915ff31289"
+      },
+      {
+        "title": "Odor Sleuth (move)",
+        "page_id": 3927,
+        "revision_id": 4632655,
+        "sha1": "0e1e75491e3f994bad01ddab2b19c552a145f8e7"
+      },
+      {
+        "title": "Ominous Wind (move)",
+        "page_id": 18904,
+        "revision_id": 4628238,
+        "sha1": "6783d06f12bd2bcc49008f16dacde3c45d6c6703"
+      },
+      {
+        "title": "Order Up (move)",
+        "page_id": 277758,
+        "revision_id": 4622559,
+        "sha1": "a4e3e52ccaa2f4fec6ac2639a9f2ea195bea5140"
+      },
+      {
+        "title": "Origin Pulse (move)",
+        "page_id": 196188,
+        "revision_id": 4644164,
+        "sha1": "81b01c425f6d2328572d19028f7996dfc16ba544"
+      },
+      {
+        "title": "Outrage (move)",
+        "page_id": 3811,
+        "revision_id": 4639905,
+        "sha1": "1d7004eea572c7ccad470ac5d413b507d4abeea4"
+      },
+      {
+        "title": "Overdrive (move)",
+        "page_id": 244337,
+        "revision_id": 4634803,
+        "sha1": "5e8a033bdc750f47392a4ceee1d2224b9138e636"
+      },
+      {
+        "title": "Overheat (move)",
+        "page_id": 3926,
+        "revision_id": 4649582,
+        "sha1": "8d758ad2101ffb2c67cce6bb41696acf8fd39502"
+      },
+      {
+        "title": "Pain Split (move)",
+        "page_id": 3831,
+        "revision_id": 4640825,
+        "sha1": "e7818491512ea92b6c4bea6cd6f5d5e7f5d8780c"
+      },
+      {
+        "title": "Parabolic Charge (move)",
+        "page_id": 180371,
+        "revision_id": 4646853,
+        "sha1": "c876690239c64fab6fd5dc602be3169708cff8de"
+      },
+      {
+        "title": "Parting Shot (move)",
+        "page_id": 180370,
+        "revision_id": 4628368,
+        "sha1": "03cd2a4b4482f61a7fa55b0a229d37d149b8f219"
+      },
+      {
+        "title": "Pay Day (move)",
+        "page_id": 3614,
+        "revision_id": 4641113,
+        "sha1": "4d6977f6ad77e19d07b4da1b1abe8ad8c3ed1e20"
+      },
+      {
+        "title": "Payback (move)",
+        "page_id": 14540,
+        "revision_id": 4644893,
+        "sha1": "17cecc17b8983cee283c18fd962fa1b968e9629b"
+      },
+      {
+        "title": "Peck (move)",
+        "page_id": 3673,
+        "revision_id": 4645430,
+        "sha1": "359143936100f2cd8fdea2a8831063757b178a80"
+      },
+      {
+        "title": "Perish Song (move)",
+        "page_id": 3806,
+        "revision_id": 4639863,
+        "sha1": "9d8eba4aa68eb2fe79a557ad06d9c4c2fb589de3"
+      },
+      {
+        "title": "Petal Blizzard (move)",
+        "page_id": 185066,
+        "revision_id": 4628371,
+        "sha1": "2a89aa686e4190faaf5c0e8aa0c00290d0739339"
+      },
+      {
+        "title": "Petal Dance (move)",
+        "page_id": 3689,
+        "revision_id": 4636318,
+        "sha1": "4ed588a0e3c9a349f7af07d2f9b447647f6c4517"
+      },
+      {
+        "title": "Phantom Force (move)",
+        "page_id": 185067,
+        "revision_id": 4642748,
+        "sha1": "8a9c44af73c4b63daa28ba584a95fa1c164a71aa"
+      },
+      {
+        "title": "Photon Geyser (move)",
+        "page_id": 226139,
+        "revision_id": 4621899,
+        "sha1": "0b5b337ab22bac9abadc910c714aca3305134a31"
+      },
+      {
+        "title": "Pika Papow (move)",
+        "page_id": 232103,
+        "revision_id": 4614753,
+        "sha1": "856d0d67975294d48206b8087e5bf10f61ff85de"
+      },
+      {
+        "title": "Pin Missile (move)",
+        "page_id": 3651,
+        "revision_id": 4646891,
+        "sha1": "24a4b993aa840f6fd39b98180b1797dfe1b70c15"
+      },
+      {
+        "title": "Plasma Fists (move)",
+        "page_id": 226664,
+        "revision_id": 4621911,
+        "sha1": "fa14d6e9b3a3965457cfaaf1d6c084da349b778c"
+      },
+      {
+        "title": "Play Nice (move)",
+        "page_id": 184497,
+        "revision_id": 4621670,
+        "sha1": "84189477820b4b7870db60483fe77301c2b8fb4b"
+      },
+      {
+        "title": "Play Rough (move)",
+        "page_id": 183538,
+        "revision_id": 4647063,
+        "sha1": "db576c5bc72f3580922ef4f44744a3476196ca8d"
+      },
+      {
+        "title": "Pluck (move)",
+        "page_id": 14449,
+        "revision_id": 4634730,
+        "sha1": "000ddca55339567119b960dc26a4ad6fe00f2890"
+      },
+      {
+        "title": "Poison Fang (move)",
+        "page_id": 3916,
+        "revision_id": 4645433,
+        "sha1": "3e26dfdcb206b64dccc49e49fa45e2243db1658a"
+      },
+      {
+        "title": "Poison Gas (move)",
+        "page_id": 3748,
+        "revision_id": 4649058,
+        "sha1": "c4f3ca5ac5b2aa71ab92bb7f7996d92380df417d"
+      },
+      {
+        "title": "Poison Jab (move)",
+        "page_id": 17446,
+        "revision_id": 4628376,
+        "sha1": "5de44e78ec46687956828ac4850df074a8f415ba"
+      },
+      {
+        "title": "Poison Powder (move)",
+        "page_id": 3686,
+        "revision_id": 4625922,
+        "sha1": "ece773efd7bc250e784d331ec0c5908169167d78"
+      },
+      {
+        "title": "Poison Sting (move)",
+        "page_id": 3649,
+        "revision_id": 4614766,
+        "sha1": "9dca4fa16b6f03731e5cb5ae21b270dcb25b7665"
+      },
+      {
+        "title": "Poison Tail (move)",
+        "page_id": 3953,
+        "revision_id": 4635973,
+        "sha1": "e58e3b54858974e369968f2fb066a23aeb32f8fd"
+      },
+      {
+        "title": "Pollen Puff (move)",
+        "page_id": 218351,
+        "revision_id": 4628377,
+        "sha1": "118e9aa3c652850dc2c23c45d2e3ba5456c2ffa3"
+      },
+      {
+        "title": "Poltergeist (move)",
+        "page_id": 252913,
+        "revision_id": 4622994,
+        "sha1": "2a6792266a8a4f56a98aaa2e1a9663852c7c7be4"
+      },
+      {
+        "title": "Population Bomb (move)",
+        "page_id": 277761,
+        "revision_id": 4589972,
+        "sha1": "cb2a7404a825f6bdf722b445dfe694ff4efdad56"
+      },
+      {
+        "title": "Pounce (move)",
+        "page_id": 277792,
+        "revision_id": 4628378,
+        "sha1": "3eef32b3551e6da68ea957bd979966aa5a2c0536"
+      },
+      {
+        "title": "Pound (move)",
+        "page_id": 3609,
+        "revision_id": 4627511,
+        "sha1": "bb4f0084140c81bf2df191d24d2740136974f1e7"
+      },
+      {
+        "title": "Powder (move)",
+        "page_id": 185071,
+        "revision_id": 4621664,
+        "sha1": "76b98434d254bd7abeb28fb6beac3f9ba6879088"
+      },
+      {
+        "title": "Powder Snow (move)",
+        "page_id": 3791,
+        "revision_id": 4638827,
+        "sha1": "6a4da0a9aaf5a48e9e270661a8f4c79a5f2404b7"
+      },
+      {
+        "title": "Power Gem (move)",
+        "page_id": 60071,
+        "revision_id": 4636592,
+        "sha1": "f93b52ce7625691a44b092807c1823fbbbd27408"
+      },
+      {
+        "title": "Power Shift (move)",
+        "page_id": 268033,
+        "revision_id": 4650195,
+        "sha1": "be82d63d08220ed81153f5c497a9749b109ba28f"
+      },
+      {
+        "title": "Power Split (move)",
+        "page_id": 117442,
+        "revision_id": 4628380,
+        "sha1": "d84713e58706c78a509ed442e33dfb640f8dcc5c"
+      },
+      {
+        "title": "Power Swap (move)",
+        "page_id": 18878,
+        "revision_id": 4628381,
+        "sha1": "03114595c00ce39ffa6f0721ee26ad85c11f1c70"
+      },
+      {
+        "title": "Power Trick (move)",
+        "page_id": 18877,
+        "revision_id": 4636324,
+        "sha1": "e0afae22db6132c5aa6219118b7a48127be12110"
+      },
+      {
+        "title": "Power Trip (move)",
+        "page_id": 218357,
+        "revision_id": 4623820,
+        "sha1": "f4dbaeaa29e2bc3bbd7880d73a6dd91341d3084d"
+      },
+      {
+        "title": "Power Whip (move)",
+        "page_id": 17429,
+        "revision_id": 4648190,
+        "sha1": "9f34375638d65da7c6c15eab0db7c4b131256786"
+      },
+      {
+        "title": "Power-Up Punch (move)",
+        "page_id": 181991,
+        "revision_id": 4623098,
+        "sha1": "4e1aedb26ad703aa8365ef7b70bb518f600635e8"
+      },
+      {
+        "title": "Precipice Blades (move)",
+        "page_id": 196189,
+        "revision_id": 4644167,
+        "sha1": "5e0f0393672549adffcbf5ffc6636988cf2adc2c"
+      },
+      {
+        "title": "Present (move)",
+        "page_id": 3828,
+        "revision_id": 4640817,
+        "sha1": "80f9ac90be727b8dc8f0a28619e1787e5a2909bc"
+      },
+      {
+        "title": "Prismatic Laser (move)",
+        "page_id": 218428,
+        "revision_id": 4621887,
+        "sha1": "9b0ca1cced8963d90f817b6ca0b48371c03f176e"
+      },
+      {
+        "title": "Protect (move)",
+        "page_id": 3438,
+        "revision_id": 4643332,
+        "sha1": "65607e788744b4fd6110214694421f85771a1f27"
+      },
+      {
+        "title": "Psybeam (move)",
+        "page_id": 3669,
+        "revision_id": 4623023,
+        "sha1": "8842123ef2c7c78c36aa09ceb0c9ffa8f76db9c0"
+      },
+      {
+        "title": "Psyblade (move)",
+        "page_id": 281866,
+        "revision_id": 4614871,
+        "sha1": "5c01f022702c82d4589eba1da8319c4990da8e63"
+      },
+      {
+        "title": "Psych Up (move)",
+        "page_id": 3855,
+        "revision_id": 4641955,
+        "sha1": "caa20aea8a11c40ffc1fec1a96108dfb537633f7"
+      },
+      {
+        "title": "Psychic (move)",
+        "page_id": 3703,
+        "revision_id": 4628388,
+        "sha1": "c445836a94c2f186e4ebe1b0b3416b3970f006c9"
+      },
+      {
+        "title": "Psychic Fangs (move)",
+        "page_id": 218384,
+        "revision_id": 4628389,
+        "sha1": "35609f1380b993801dd772d43b6f72a17e37db1b"
+      },
+      {
+        "title": "Psychic Noise (move)",
+        "page_id": 294637,
+        "revision_id": 4628390,
+        "sha1": "be28558bdf48981d19de7c1f52d3b7455f30becd"
+      },
+      {
+        "title": "Psychic Terrain (move)",
+        "page_id": 216854,
+        "revision_id": 4636834,
+        "sha1": "cbe2ebb5271206270c0770317dd05911c19cddc7"
+      },
+      {
+        "title": "Psycho Boost (move)",
+        "page_id": 3965,
+        "revision_id": 4645435,
+        "sha1": "ed7ad375296f74568df4b6d9771314df52092f52"
+      },
+      {
+        "title": "Psycho Cut (move)",
+        "page_id": 18907,
+        "revision_id": 4630598,
+        "sha1": "7d0156ff440c6d87a599fbd1c64862640b6d1da3"
+      },
+      {
+        "title": "Psycho Shift (move)",
+        "page_id": 16924,
+        "revision_id": 4634732,
+        "sha1": "2375f9ef1f9814f662843809f1510d6cc8d1aebc"
+      },
+      {
+        "title": "Psyshield Bash (move)",
+        "page_id": 268028,
+        "revision_id": 4593171,
+        "sha1": "e9c921462a87e250407745f1dc1eaf302f355f53"
+      },
+      {
+        "title": "Psyshock (move)",
+        "page_id": 117289,
+        "revision_id": 4634744,
+        "sha1": "0f4bd1c79e10bf50d5a72dca98c360fa2c027154"
+      },
+      {
+        "title": "Psystrike (move)",
+        "page_id": 117487,
+        "revision_id": 4634770,
+        "sha1": "0b11f4f28c6d74eee9c705e9a6ffdb28b1835b51"
+      },
+      {
+        "title": "Psywave (move)",
+        "page_id": 3758,
+        "revision_id": 4645436,
+        "sha1": "d073fa5309598cdc286388dc97b1a70d4e62e230"
+      },
+      {
+        "title": "Pulverizing Pancake (move)",
+        "page_id": 215569,
+        "revision_id": 4511611,
+        "sha1": "6cf08056ee7461ee776e77303afff9ab01c79169"
+      },
+      {
+        "title": "Punishment (move)",
+        "page_id": 17055,
+        "revision_id": 4623696,
+        "sha1": "1e34c24f5d8cc71fc483cdb6cb4a287136c8eb59"
+      },
+      {
+        "title": "Purify (move)",
+        "page_id": 218366,
+        "revision_id": 4270092,
+        "sha1": "29935ffb0210cefdd77d086fb554b7eff04dd08c"
+      },
+      {
+        "title": "Pursuit (move)",
+        "page_id": 3839,
+        "revision_id": 4640920,
+        "sha1": "83d78aa2f0435c2b6a2e3a24b43a44817534af9b"
+      },
+      {
+        "title": "Pyro Ball (move)",
+        "page_id": 244334,
+        "revision_id": 4628394,
+        "sha1": "5a437853e0e2000a2e123e65fa3b52482cb6109f"
+      },
+      {
+        "title": "Quash (move)",
+        "page_id": 117388,
+        "revision_id": 4636016,
+        "sha1": "4e507f55d4b640da7c33702a962eae211c0ead57"
+      },
+      {
+        "title": "Quick Attack (move)",
+        "page_id": 3707,
+        "revision_id": 4648993,
+        "sha1": "193281143d0d6aeac81110badc676990902f2acb"
+      },
+      {
+        "title": "Quick Guard (move)",
+        "page_id": 117456,
+        "revision_id": 4634754,
+        "sha1": "920146fd4f3e330ec2c05491be475f42fbeb2436"
+      },
+      {
+        "title": "Quiver Dance (move)",
+        "page_id": 117185,
+        "revision_id": 4620860,
+        "sha1": "3419e10c41b32a5fb7bdfc97ef34b3ffb3aacb4e"
+      },
+      {
+        "title": "Rage (move)",
+        "page_id": 3708,
+        "revision_id": 4485253,
+        "sha1": "69f50ee922cebdac74b4a23e9d31918963ec7061"
+      },
+      {
+        "title": "Rage Fist (move)",
+        "page_id": 277797,
+        "revision_id": 4645437,
+        "sha1": "fb8760a54d3dc2ae2e0d340ce227b3720cc30d61"
+      },
+      {
+        "title": "Rage Powder (move)",
+        "page_id": 117183,
+        "revision_id": 4634748,
+        "sha1": "d2ca52f175c00215b84054a690040d46a67adb53"
+      },
+      {
+        "title": "Raging Bull (move)",
+        "page_id": 277776,
+        "revision_id": 4578233,
+        "sha1": "78c5180fcaf747cf9c87a8042d30650bafa7ff99"
+      },
+      {
+        "title": "Raging Fury (move)",
+        "page_id": 268079,
+        "revision_id": 4636321,
+        "sha1": "828d510e9b6948bc1d86eb533388729e7e2c98e3"
+      },
+      {
+        "title": "Rain Dance (move)",
+        "page_id": 3452,
+        "revision_id": 4647493,
+        "sha1": "5bbae5febb130dd4623a77377006b1a67513ef79"
+      },
+      {
+        "title": "Rapid Spin (move)",
+        "page_id": 3840,
+        "revision_id": 4643255,
+        "sha1": "ba752fcb3c5e78d9e78f5dca4be95d5ab8898571"
+      },
+      {
+        "title": "Razor Leaf (move)",
+        "page_id": 3684,
+        "revision_id": 4622855,
+        "sha1": "81061fff99bf5885412910bfc6c2bea3075a54aa"
+      },
+      {
+        "title": "Razor Shell (move)",
+        "page_id": 117539,
+        "revision_id": 4634766,
+        "sha1": "792ef7048fde65019d60fdf7ec90eac0a815ad04"
+      },
+      {
+        "title": "Razor Wind (move)",
+        "page_id": 3621,
+        "revision_id": 4642737,
+        "sha1": "3dbb9e857a00356f11c21894becad3d6ff55acc4"
+      },
+      {
+        "title": "Recover (move)",
+        "page_id": 3714,
+        "revision_id": 4651090,
+        "sha1": "82a68c265831c91009b15a7d753145ccfb72b58f"
+      },
+      {
+        "title": "Recycle (move)",
+        "page_id": 3889,
+        "revision_id": 4628425,
+        "sha1": "b699fa3fcab54e7e3c1bdf6c7f33209d94ccf077"
+      },
+      {
+        "title": "Reflect (move)",
+        "page_id": 3724,
+        "revision_id": 4650300,
+        "sha1": "867e2d134ad042cb6505ab4d45f500328b4a253a"
+      },
+      {
+        "title": "Reflect Type (move)",
+        "page_id": 117489,
+        "revision_id": 4608863,
+        "sha1": "02750a505e38e6f2a6a6ba24d0dc8148a25240e7"
+      },
+      {
+        "title": "Refresh (move)",
+        "page_id": 3898,
+        "revision_id": 4632445,
+        "sha1": "8d2659b15f157f2541171924c4269df7e97b56d3"
+      },
+      {
+        "title": "Relic Song (move)",
+        "page_id": 117718,
+        "revision_id": 4634774,
+        "sha1": "9fddc7ebe9396372089412f0f8db5eb91d49b026"
+      },
+      {
+        "title": "Rest (move)",
+        "page_id": 2955,
+        "revision_id": 4644585,
+        "sha1": "46f0f7a61324e9071d57d7be80f11ec5208c4015"
+      },
+      {
+        "title": "Retaliate (move)",
+        "page_id": 117527,
+        "revision_id": 4624066,
+        "sha1": "32d0fb47d7ee40c291b8a6a0340504e6b31a1970"
+      },
+      {
+        "title": "Return (move)",
+        "page_id": 3827,
+        "revision_id": 4640796,
+        "sha1": "5cce387d4ecb828523290bee0f0a9bb8b55e353f"
+      },
+      {
+        "title": "Revelation Dance (move)",
+        "page_id": 215306,
+        "revision_id": 4621867,
+        "sha1": "3913a08b6123200529e15d0ff8a1c4f6e6bcd602"
+      },
+      {
+        "title": "Revenge (move)",
+        "page_id": 3890,
+        "revision_id": 4629866,
+        "sha1": "e7dd79cae9c34cb1568c1c48fd45b4cb742a87e6"
+      },
+      {
+        "title": "Reversal (move)",
+        "page_id": 3789,
+        "revision_id": 4640039,
+        "sha1": "3307cb8187c1d9b1a167401fbb5ffd75be276f6a"
+      },
+      {
+        "title": "Revival Blessing (move)",
+        "page_id": 277746,
+        "revision_id": 4641818,
+        "sha1": "e2fe47c7efa729a93a376b5e36fdb380e6237472"
+      },
+      {
+        "title": "Rising Voltage (move)",
+        "page_id": 252909,
+        "revision_id": 4628433,
+        "sha1": "969574a0a247b9a101cc4dd08a090841c1bd59aa"
+      },
+      {
+        "title": "Roar (move)",
+        "page_id": 3655,
+        "revision_id": 4637917,
+        "sha1": "04d6a37cc3a585cdfc38c6fc8f11c416f2628038"
+      },
+      {
+        "title": "Roar of Time (move)",
+        "page_id": 18249,
+        "revision_id": 4630183,
+        "sha1": "3119c6e18185b98a5f8348dd3b3ed60768daa883"
+      },
+      {
+        "title": "Rock Blast (move)",
+        "page_id": 3961,
+        "revision_id": 4641831,
+        "sha1": "86de758232f56c0e8fe1409d89318ded4fb9187d"
+      },
+      {
+        "title": "Rock Climb (move)",
+        "page_id": 17441,
+        "revision_id": 4643405,
+        "sha1": "e785d2e0a8449572ff2421f06ee11c49e3ff2449"
+      },
+      {
+        "title": "Rock Polish (move)",
+        "page_id": 17513,
+        "revision_id": 4623774,
+        "sha1": "6211d1be426859f07812654e7fd715d717340346"
+      },
+      {
+        "title": "Rock Slide (move)",
+        "page_id": 3766,
+        "revision_id": 4649990,
+        "sha1": "1eed7b77e8bf263fb95ce76d00ee8e59cd9e1412"
+      },
+      {
+        "title": "Rock Smash (move)",
+        "page_id": 3475,
+        "revision_id": 4643709,
+        "sha1": "6f55ba621963571e715b2107ed0b8bec9437697b"
+      },
+      {
+        "title": "Rock Throw (move)",
+        "page_id": 3697,
+        "revision_id": 4614385,
+        "sha1": "0988eca66766781359a2836091f0d750325f1a6c"
+      },
+      {
+        "title": "Rock Tomb (move)",
+        "page_id": 3928,
+        "revision_id": 4632944,
+        "sha1": "e5c283b434c2a668fad53c98fa49873325d69f71"
+      },
+      {
+        "title": "Rock Wrecker (move)",
+        "page_id": 18892,
+        "revision_id": 4627632,
+        "sha1": "1903f64e68d0136bd2492fb9ba4eedfae1d72201"
+      },
+      {
+        "title": "Role Play (move)",
+        "page_id": 3883,
+        "revision_id": 4628399,
+        "sha1": "5339f5dec8a6525b8b854081939ef7077e48a8d1"
+      },
+      {
+        "title": "Rolling Kick (move)",
+        "page_id": 3635,
+        "revision_id": 4535648,
+        "sha1": "e008f87284959ddfc5259b517f87639ceabc9413"
+      },
+      {
+        "title": "Rollout (move)",
+        "page_id": 3816,
+        "revision_id": 4640186,
+        "sha1": "6c1fe69236a9cb1b116fcc18cb64550d20e3e12f"
+      },
+      {
+        "title": "Roost (move)",
+        "page_id": 13698,
+        "revision_id": 4628441,
+        "sha1": "9d82f00cc627bff2dc1668b3f33c17922993a8ee"
+      },
+      {
+        "title": "Rototiller (move)",
+        "page_id": 185072,
+        "revision_id": 4621633,
+        "sha1": "21f4ce0555ceda0367f5532b739deef7bbcdd2e1"
+      },
+      {
+        "title": "Round (move)",
+        "page_id": 117466,
+        "revision_id": 4630629,
+        "sha1": "6aaa2607f2a2cc708e61c31879e1da9cd4a39cea"
+      },
+      {
+        "title": "Ruination (move)",
+        "page_id": 277778,
+        "revision_id": 4649717,
+        "sha1": "848e75ee13c0aea68d7cf5ea98da77abe8cd2e38"
+      },
+      {
+        "title": "Sacred Fire (move)",
+        "page_id": 3832,
+        "revision_id": 4640830,
+        "sha1": "5f07af54cfb43f61cfcfb66319129990de346eb7"
+      },
+      {
+        "title": "Sacred Sword (move)",
+        "page_id": 117328,
+        "revision_id": 4645438,
+        "sha1": "87fb870098902f19a6472855e5df549fd867b6e2"
+      },
+      {
+        "title": "Safeguard (move)",
+        "page_id": 3830,
+        "revision_id": 4640846,
+        "sha1": "5541fa37a6eebf36cf5abca9988bb77ca00938ba"
+      },
+      {
+        "title": "Salt Cure (move)",
+        "page_id": 277764,
+        "revision_id": 4578256,
+        "sha1": "74e9502307362f4e4dc5e850980699b70bd1da4f"
+      },
+      {
+        "title": "Sand Attack (move)",
+        "page_id": 3636,
+        "revision_id": 4622929,
+        "sha1": "b650d58fd0f11416ee0a5accd1bdd4f2e5dc1715"
+      },
+      {
+        "title": "Sand Tomb (move)",
+        "page_id": 3939,
+        "revision_id": 4649135,
+        "sha1": "e342a81ca01a41ebe84ba472cf4be9bfe7f594cc"
+      },
+      {
+        "title": "Sandsear Storm (move)",
+        "page_id": 268728,
+        "revision_id": 4621944,
+        "sha1": "c92547f8fd7770629a9ea2895ecffa16a8580d33"
+      },
+      {
+        "title": "Sandstorm (move)",
+        "page_id": 3812,
+        "revision_id": 4639940,
+        "sha1": "add1b33caa26eadc4d8811e3c1550bb8d17c3997"
+      },
+      {
+        "title": "Sappy Seed (move)",
+        "page_id": 233654,
+        "revision_id": 4635882,
+        "sha1": "d053d8201161c4fec309271d223e3b1e7ce49f35"
+      },
+      {
+        "title": "Savage Spin-Out (move)",
+        "page_id": 218475,
+        "revision_id": 4614556,
+        "sha1": "808a7e4f4fedc66e72468d49447d6163a37b9f5d"
+      },
+      {
+        "title": "Scald (move)",
+        "page_id": 114926,
+        "revision_id": 4647477,
+        "sha1": "aeb95e2348bfc506c6879ad53883977f3d4a5f0e"
+      },
+      {
+        "title": "Scale Shot (move)",
+        "page_id": 252905,
+        "revision_id": 4628446,
+        "sha1": "2118914de58ad1d5cd961637e63b60eb1026a223"
+      },
+      {
+        "title": "Scary Face (move)",
+        "page_id": 3794,
+        "revision_id": 4639769,
+        "sha1": "3903d3e478d2c28fee40d053ae29fb45704c238f"
+      },
+      {
+        "title": "Scorching Sands (move)",
+        "page_id": 252919,
+        "revision_id": 4628402,
+        "sha1": "b7cd102790d71d4da3a01f97525c70c986d62bdb"
+      },
+      {
+        "title": "Scratch (move)",
+        "page_id": 3618,
+        "revision_id": 4645440,
+        "sha1": "462575b555a05b877380d2884b66074f7e85a85a"
+      },
+      {
+        "title": "Screech (move)",
+        "page_id": 3712,
+        "revision_id": 4628448,
+        "sha1": "1453fb59693c7c00f62948129c8b7cb4f267d13c"
+      },
+      {
+        "title": "Searing Shot (move)",
+        "page_id": 117471,
+        "revision_id": 4631929,
+        "sha1": "119376b13609f2a7be8f23363ac9b652d911b259"
+      },
+      {
+        "title": "Searing Sunraze Smash (move)",
+        "page_id": 226140,
+        "revision_id": 4614747,
+        "sha1": "63c0b5c078056e3ae55d833f3dfc6592864f03b7"
+      },
+      {
+        "title": "Secret Power (move)",
+        "page_id": 60752,
+        "revision_id": 4650394,
+        "sha1": "5f606914e62a9352ec91635cbdd8da71e2c65f40"
+      },
+      {
+        "title": "Secret Sword (move)",
+        "page_id": 117716,
+        "revision_id": 4624816,
+        "sha1": "79fbb060ac526bda70bf514529c0634fa49833cd"
+      },
+      {
+        "title": "Seed Bomb (move)",
+        "page_id": 17431,
+        "revision_id": 4628456,
+        "sha1": "f74fba200b521882ac3c58f3e9184b3f2a8e22d2"
+      },
+      {
+        "title": "Seed Flare (move)",
+        "page_id": 17177,
+        "revision_id": 4628212,
+        "sha1": "58c67b18c4d56f3994f71b265fb1765e528bbd6f"
+      },
+      {
+        "title": "Seismic Toss (move)",
+        "page_id": 3678,
+        "revision_id": 4628403,
+        "sha1": "cd7c255e1bb5393c7f26890fb8d547f813145f64"
+      },
+      {
+        "title": "Self-Destruct (move)",
+        "page_id": 3729,
+        "revision_id": 4650256,
+        "sha1": "cc9f86477d9c83d726c06c76ae479e27300d6c80"
+      },
+      {
+        "title": "Shadow Ball (move)",
+        "page_id": 3858,
+        "revision_id": 4650338,
+        "sha1": "04a21cc10cc03132a9712998168509d0524d9c60"
+      },
+      {
+        "title": "Shadow Blast (move)",
+        "page_id": 9580,
+        "revision_id": 4431269,
+        "sha1": "4ce8757f5dd43e45dffac43c9168d4b46a626630"
+      },
+      {
+        "title": "Shadow Blitz (move)",
+        "page_id": 9583,
+        "revision_id": 4309710,
+        "sha1": "18f7b7619575dad58fc1b1c1aca69426db037b4a"
+      },
+      {
+        "title": "Shadow Bolt (move)",
+        "page_id": 9584,
+        "revision_id": 4469686,
+        "sha1": "71373dab8f461b2e5cb2c1384a8110d2c3afb2b8"
+      },
+      {
+        "title": "Shadow Bone (move)",
+        "page_id": 218399,
+        "revision_id": 4632561,
+        "sha1": "bd1b0895441cb1c3435fd212dfa59a7c7de8d3ac"
+      },
+      {
+        "title": "Shadow Break (move)",
+        "page_id": 9587,
+        "revision_id": 4309712,
+        "sha1": "0d81414ef352b3d9463d3855258b7a52baa0d18e"
+      },
+      {
+        "title": "Shadow Chill (move)",
+        "page_id": 9585,
+        "revision_id": 4469687,
+        "sha1": "dda0ef9945413b119915493a1e0de9d5aa7f730d"
+      },
+      {
+        "title": "Shadow Claw (move)",
+        "page_id": 12428,
+        "revision_id": 4650988,
+        "sha1": "059c12b34d7f0ab239e5b545cb8057bb7f713bcd"
+      },
+      {
+        "title": "Shadow Down (move)",
+        "page_id": 9588,
+        "revision_id": 4309720,
+        "sha1": "a6713615a3face575eccbd010e93f54649863a86"
+      },
+      {
+        "title": "Shadow End (move)",
+        "page_id": 9589,
+        "revision_id": 4375563,
+        "sha1": "2247d393a687c782e86257f9693e6b6743651fa9"
+      },
+      {
+        "title": "Shadow Fire (move)",
+        "page_id": 9586,
+        "revision_id": 4469688,
+        "sha1": "86730ba3ef8ae2c5ef9e84b035d4b65dcc83979b"
+      },
+      {
+        "title": "Shadow Force (move)",
+        "page_id": 18905,
+        "revision_id": 4645442,
+        "sha1": "92af4fe90899fa594a9f387063b1dc93d5925d48"
+      },
+      {
+        "title": "Shadow Half (move)",
+        "page_id": 9590,
+        "revision_id": 4615798,
+        "sha1": "0b7c7df2a5a1f688e07a3f0276abc6d6305de715"
+      },
+      {
+        "title": "Shadow Hold (move)",
+        "page_id": 9591,
+        "revision_id": 4430052,
+        "sha1": "2d3523df7fefcf4f2776602a12aaf14c751e5361"
+      },
+      {
+        "title": "Shadow Mist (move)",
+        "page_id": 9593,
+        "revision_id": 4309722,
+        "sha1": "0b73afe6adf4ef621f12dfbd9907c64c1f56b3ba"
+      },
+      {
+        "title": "Shadow Panic (move)",
+        "page_id": 9594,
+        "revision_id": 4375913,
+        "sha1": "745ae1f6b9450915165d50a236b28392d9b12a5b"
+      },
+      {
+        "title": "Shadow Punch (move)",
+        "page_id": 3936,
+        "revision_id": 4633187,
+        "sha1": "c8e3841b0533fb54258048a7e855a9fdda9b2646"
+      },
+      {
+        "title": "Shadow Rave (move)",
+        "page_id": 9595,
+        "revision_id": 4309719,
+        "sha1": "af5d9c9a9e81337f02e737a8f82722f29ca2557d"
+      },
+      {
+        "title": "Shadow Rush (move)",
+        "page_id": 5002,
+        "revision_id": 4629696,
+        "sha1": "ebc9a0f595b24d6c0df74663d7bc0098030f7e04"
+      },
+      {
+        "title": "Shadow Shed (move)",
+        "page_id": 9596,
+        "revision_id": 4269569,
+        "sha1": "ddb622e6904761e441007ca329084ee87106f187"
+      },
+      {
+        "title": "Shadow Sky (move)",
+        "page_id": 9597,
+        "revision_id": 4483170,
+        "sha1": "29a7ba0f0fe643c10a22fdf257c7f9277adb0f49"
+      },
+      {
+        "title": "Shadow Sneak (move)",
+        "page_id": 18889,
+        "revision_id": 4636588,
+        "sha1": "fc44386964bcc6fc605a5a4f75db2d3b730770b1"
+      },
+      {
+        "title": "Shadow Storm (move)",
+        "page_id": 9598,
+        "revision_id": 4430051,
+        "sha1": "a055f532f7ab65d9f97a8683ab47d09f29eaba75"
+      },
+      {
+        "title": "Shadow Wave (move)",
+        "page_id": 9599,
+        "revision_id": 4269520,
+        "sha1": "99a1be6758eb375f3133bce9c04c61a7eaba907c"
+      },
+      {
+        "title": "Sharpen (move)",
+        "page_id": 3768,
+        "revision_id": 4644381,
+        "sha1": "24b013b3f2855d131939820eef0237dc34063efa"
+      },
+      {
+        "title": "Shattered Psyche (move)",
+        "page_id": 218479,
+        "revision_id": 4614314,
+        "sha1": "967a5851bf89dc5d34a80738dbe31ac3120b5549"
+      },
+      {
+        "title": "Shed Tail (move)",
+        "page_id": 273855,
+        "revision_id": 4578277,
+        "sha1": "3e53d815b2efd29133c57696401089c1213a0a7d"
+      },
+      {
+        "title": "Sheer Cold (move)",
+        "page_id": 3940,
+        "revision_id": 4633205,
+        "sha1": "7f33a9b9071824ec665346b36b5ccbbc79ebb499"
+      },
+      {
+        "title": "Shell Side Arm (move)",
+        "page_id": 252175,
+        "revision_id": 4615223,
+        "sha1": "c5bcb5be92bf1306e5f5f36a0c433a5e7f457eb1"
+      },
+      {
+        "title": "Shell Smash (move)",
+        "page_id": 117445,
+        "revision_id": 4634755,
+        "sha1": "5832afb08799ca8a07fa256d796119f0531b62d2"
+      },
+      {
+        "title": "Shell Trap (move)",
+        "page_id": 215342,
+        "revision_id": 4614524,
+        "sha1": "6a6c4b45714ba0756f7c235f19662120191e3fdc"
+      },
+      {
+        "title": "Shelter (move)",
+        "page_id": 268345,
+        "revision_id": 4578281,
+        "sha1": "f6fbe4b6b453091b7115b14b009b7c653cc1b1ca"
+      },
+      {
+        "title": "Shift Gear (move)",
+        "page_id": 117479,
+        "revision_id": 4634802,
+        "sha1": "d4127600f4234c60589696d34b39180469baee18"
+      },
+      {
+        "title": "Shock Wave (move)",
+        "page_id": 3962,
+        "revision_id": 4635998,
+        "sha1": "d3d9047e2fe5f6913e945a9d0388f2fc75d76e8a"
+      },
+      {
+        "title": "Shore Up (move)",
+        "page_id": 218331,
+        "revision_id": 4605041,
+        "sha1": "33033df25bb76468938d2ec3574429bf05bfe521"
+      },
+      {
+        "title": "Signal Beam (move)",
+        "page_id": 3935,
+        "revision_id": 4632973,
+        "sha1": "68f6840b88d9afb975278409999654ca40c8c6d7"
+      },
+      {
+        "title": "Silk Trap (move)",
+        "page_id": 277754,
+        "revision_id": 4403633,
+        "sha1": "d8f8a9175ae56afc6149b3bc5abea2f6f2815983"
+      },
+      {
+        "title": "Silver Wind (move)",
+        "page_id": 3929,
+        "revision_id": 4632960,
+        "sha1": "0007d51742bcf728dfbe69ad62486d44d3ad1ff3"
+      },
+      {
+        "title": "Simple Beam (move)",
+        "page_id": 117468,
+        "revision_id": 4634752,
+        "sha1": "b79d8634008d5d7b6f5c6a2508dc0ef838ea2d79"
+      },
+      {
+        "title": "Sing (move)",
+        "page_id": 3656,
+        "revision_id": 4629063,
+        "sha1": "64f00a1974aec6736c2dced6ce97830382d3a34b"
+      },
+      {
+        "title": "Sinister Arrow Raid (move)",
+        "page_id": 218075,
+        "revision_id": 4511605,
+        "sha1": "c0ee46b8cfd592e340699f7f5778ba92343a969a"
+      },
+      {
+        "title": "Sizzly Slide (move)",
+        "page_id": 232102,
+        "revision_id": 4627584,
+        "sha1": "1738d955553d70f7f00f067c9c09e377ffe3144d"
+      },
+      {
+        "title": "Sketch (move)",
+        "page_id": 3775,
+        "revision_id": 4637942,
+        "sha1": "56066ab2dea3c4bd20c5d9a0ec5d08e58f55ccf7"
+      },
+      {
+        "title": "Skill Swap (move)",
+        "page_id": 3896,
+        "revision_id": 4631757,
+        "sha1": "a5c33d939a13c18d7f39277c4832e118f51c36e2"
+      },
+      {
+        "title": "Skitter Smack (move)",
+        "page_id": 252911,
+        "revision_id": 4628484,
+        "sha1": "0a5049ec3cbe17af27ad1a3e407ecf22b0f7e4de"
+      },
+      {
+        "title": "Skull Bash (move)",
+        "page_id": 3739,
+        "revision_id": 4648780,
+        "sha1": "f9792760cfe9a0c0727badbb0f1c602533979f66"
+      },
+      {
+        "title": "Sky Attack (move)",
+        "page_id": 3752,
+        "revision_id": 4646297,
+        "sha1": "de061abb354727e92af1209a9c996c6981fd1031"
+      },
+      {
+        "title": "Sky Drop (move)",
+        "page_id": 117499,
+        "revision_id": 4621582,
+        "sha1": "3caf97f3a631169c908e41d1f9f52fc8bc4b0a3e"
+      },
+      {
+        "title": "Sky Uppercut (move)",
+        "page_id": 3938,
+        "revision_id": 4633195,
+        "sha1": "aecc5bc07a50f0e57db5ceb458d9f52fc3133bf8"
+      },
+      {
+        "title": "Slack Off (move)",
+        "page_id": 3914,
+        "revision_id": 4632542,
+        "sha1": "c131acb52379ab14c204799130a021e9a0bf9711"
+      },
+      {
+        "title": "Slam (move)",
+        "page_id": 3629,
+        "revision_id": 4584269,
+        "sha1": "947ee7a73773db01458b51429fb8c146d3351306"
+      },
+      {
+        "title": "Slash (move)",
+        "page_id": 3772,
+        "revision_id": 4649496,
+        "sha1": "2da559061909ccc0200a59f06fe95dfb2cce2d4f"
+      },
+      {
+        "title": "Sleep Powder (move)",
+        "page_id": 3688,
+        "revision_id": 4625924,
+        "sha1": "20aab28f55d64994d84bf73a67c7d90b189028b9"
+      },
+      {
+        "title": "Sleep Talk (move)",
+        "page_id": 3825,
+        "revision_id": 4640958,
+        "sha1": "968c0d457db9b6e7f4234f7083ce4e50e7e62fca"
+      },
+      {
+        "title": "Sludge (move)",
+        "page_id": 3733,
+        "revision_id": 4649458,
+        "sha1": "78edeefd2209a6dd99154e737c73a1f74144e018"
+      },
+      {
+        "title": "Sludge Bomb (move)",
+        "page_id": 3798,
+        "revision_id": 4642220,
+        "sha1": "dfe906c2b145a67a844b79f8f9bec0089209d5ef"
+      },
+      {
+        "title": "Sludge Wave (move)",
+        "page_id": 117334,
+        "revision_id": 4628495,
+        "sha1": "9d416c7072c3f8533e093893d5c6e9f8e3a114c7"
+      },
+      {
+        "title": "Smack Down (move)",
+        "page_id": 117478,
+        "revision_id": 4628497,
+        "sha1": "7156de1b50e0be4451a631cc21507c925c2da924"
+      },
+      {
+        "title": "Smart Strike (move)",
+        "page_id": 218364,
+        "revision_id": 4622902,
+        "sha1": "c77350e11c69621f282f180ce050d1d96aadeb22"
+      },
+      {
+        "title": "Smelling Salts (move)",
+        "page_id": 3876,
+        "revision_id": 4633245,
+        "sha1": "522f9e85c8ffdda5f9e9b5fbee0db57071fef948"
+      },
+      {
+        "title": "Smog (move)",
+        "page_id": 3732,
+        "revision_id": 4649459,
+        "sha1": "18b45380f214a173d2c68eee9d8f2de5b4893cba"
+      },
+      {
+        "title": "Smokescreen (move)",
+        "page_id": 3717,
+        "revision_id": 4649460,
+        "sha1": "62071007cea6b0b8a32c0f5dbfd84dd382d862d8"
+      },
+      {
+        "title": "Snap Trap (move)",
+        "page_id": 244333,
+        "revision_id": 4593358,
+        "sha1": "99011cebf7219c4480076e23cf2829de82648fea"
+      },
+      {
+        "title": "Snarl (move)",
+        "page_id": 117484,
+        "revision_id": 4628501,
+        "sha1": "859fa2ff4afd70756f8d41b7033767f4716ab658"
+      },
+      {
+        "title": "Snatch (move)",
+        "page_id": 3900,
+        "revision_id": 4644536,
+        "sha1": "4c32c21e023c914c44d7b11773467a764407e9f5"
+      },
+      {
+        "title": "Snipe Shot (move)",
+        "page_id": 244317,
+        "revision_id": 4647490,
+        "sha1": "a3e0b7d3a9893c1d378402b1f79bee6a6fb72e17"
+      },
+      {
+        "title": "Snore (move)",
+        "page_id": 3783,
+        "revision_id": 4650421,
+        "sha1": "366ebc321b1515e9f815187b9afa0fef9c7a663c"
+      },
+      {
+        "title": "Snowscape (move)",
+        "page_id": 277791,
+        "revision_id": 4636006,
+        "sha1": "bcc4332de8227d48421046972870df3e5e187854"
+      },
+      {
+        "title": "Soak (move)",
+        "page_id": 117545,
+        "revision_id": 4647594,
+        "sha1": "4f305ab19ff465bc94b1c06c515a506e46028bae"
+      },
+      {
+        "title": "Soft-Boiled (move)",
+        "page_id": 3744,
+        "revision_id": 4646495,
+        "sha1": "65193544482ce0ce705a1558366ff712945329cb"
+      },
+      {
+        "title": "Solar Beam (move)",
+        "page_id": 3685,
+        "revision_id": 4635893,
+        "sha1": "67ee754465dcf46930b76ecb34e2c80a78c0e672"
+      },
+      {
+        "title": "Solar Blade (move)",
+        "page_id": 215497,
+        "revision_id": 4635892,
+        "sha1": "5b16a93ad0bb8481f85f7587aa0890bbd7ab70e9"
+      },
+      {
+        "title": "Sonic Boom (move)",
+        "page_id": 3658,
+        "revision_id": 4512410,
+        "sha1": "227221f3177d62bac93b6d2761ae570eebe4cfb0"
+      },
+      {
+        "title": "Soul-Stealing 7-Star Strike (move)",
+        "page_id": 218749,
+        "revision_id": 4544743,
+        "sha1": "de73c08b7d89e609b86cd1492201bb3e218c89c6"
+      },
+      {
+        "title": "Spacial Rend (move)",
+        "page_id": 18900,
+        "revision_id": 4629206,
+        "sha1": "ca26e13c77251644af3874ce1c59f345042b0392"
+      },
+      {
+        "title": "Spark (move)",
+        "page_id": 3820,
+        "revision_id": 4640740,
+        "sha1": "fe527ba7b33c653e7f523b7a009bda16209c5f9a"
+      },
+      {
+        "title": "Sparkling Aria (move)",
+        "page_id": 216850,
+        "revision_id": 4647591,
+        "sha1": "586f0b2b360cd855657f48998aced5ec0dff887a"
+      },
+      {
+        "title": "Sparkly Swirl (move)",
+        "page_id": 233653,
+        "revision_id": 4627589,
+        "sha1": "90dedf1c67033031ce0e8a57e8721fb6efecd390"
+      },
+      {
+        "title": "Spectral Thief (move)",
+        "page_id": 218431,
+        "revision_id": 4628594,
+        "sha1": "56e31d030c70fdc7cee7848fc8b8361a0703a4b0"
+      },
+      {
+        "title": "Speed Swap (move)",
+        "page_id": 218361,
+        "revision_id": 4578306,
+        "sha1": "ff65efdf1278a88d0297d9d50d3a54ef13e047d7"
+      },
+      {
+        "title": "Spicy Extract (move)",
+        "page_id": 277760,
+        "revision_id": 4587177,
+        "sha1": "111dc6a8f8799a5f3afbcef285d07f836ed6b6ff"
+      },
+      {
+        "title": "Spider Web (move)",
+        "page_id": 3778,
+        "revision_id": 4637945,
+        "sha1": "1087f1c33b35d3bb09bda7c46c2eb4f3767322f2"
+      },
+      {
+        "title": "Spike Cannon (move)",
+        "page_id": 3740,
+        "revision_id": 4646673,
+        "sha1": "60b70082bfb6aa2f4b8a5ad1bfb910b7b5cbabb2"
+      },
+      {
+        "title": "Spikes (move)",
+        "page_id": 3802,
+        "revision_id": 4638987,
+        "sha1": "b76073a70994497dac9062529e13d649924233ee"
+      },
+      {
+        "title": "Spiky Shield (move)",
+        "page_id": 184463,
+        "revision_id": 4641704,
+        "sha1": "00ec4dfc38bebd7b5e0c82030b1f0a05371547ae"
+      },
+      {
+        "title": "Spin Out (move)",
+        "page_id": 277622,
+        "revision_id": 4635281,
+        "sha1": "0ffbb19c5ed648b3a238da2b5495dd0dd972a85e"
+      },
+      {
+        "title": "Spin Slash (move)",
+        "page_id": 172227,
+        "revision_id": 4398409,
+        "sha1": "9dc3130ff714b3d77542ce5d0f9294fce027a16a"
+      },
+      {
+        "title": "Spirit Break (move)",
+        "page_id": 244340,
+        "revision_id": 4614750,
+        "sha1": "6f4e567df7652dbde00606fe92bdc58c987428d2"
+      },
+      {
+        "title": "Spirit Shackle (move)",
+        "page_id": 216846,
+        "revision_id": 4622946,
+        "sha1": "c1e606083bfb59c2816d341702464ea1235b0c32"
+      },
+      {
+        "title": "Spit Up (move)",
+        "page_id": 3866,
+        "revision_id": 4628572,
+        "sha1": "e06162562ff2355f8239eb5a5e5184003fc7b423"
+      },
+      {
+        "title": "Spite (move)",
+        "page_id": 3790,
+        "revision_id": 4628546,
+        "sha1": "b4b2a597297aec446ed5c199e3f2c65f23576d70"
+      },
+      {
+        "title": "Splash (move)",
+        "page_id": 3759,
+        "revision_id": 4644977,
+        "sha1": "566ea455d83fa956daedfc9595e490fd7426c30f"
+      },
+      {
+        "title": "Splintered Stormshards (move)",
+        "page_id": 225656,
+        "revision_id": 4614801,
+        "sha1": "0315b148af9870bc609dab69385d8b54febed8e6"
+      },
+      {
+        "title": "Splishy Splash (move)",
+        "page_id": 232099,
+        "revision_id": 4647575,
+        "sha1": "066078a9af382212c024a03bd944938bdf494b62"
+      },
+      {
+        "title": "Spore (move)",
+        "page_id": 3756,
+        "revision_id": 4649535,
+        "sha1": "13ace33f635ed6fe17ef079f01780805db6cfaf9"
+      },
+      {
+        "title": "Spotlight (move)",
+        "page_id": 218341,
+        "revision_id": 4621859,
+        "sha1": "f4fbe37da21322bd5413d12f4c9227e26637ccdb"
+      },
+      {
+        "title": "Springtide Storm (move)",
+        "page_id": 268032,
+        "revision_id": 4512124,
+        "sha1": "80e03f5cbed2757e9944275f641fcd0618f3e950"
+      },
+      {
+        "title": "Stealth Rock (move)",
+        "page_id": 15760,
+        "revision_id": 4628547,
+        "sha1": "471855467087597e8fa8e0b7089ef7203364561d"
+      },
+      {
+        "title": "Steam Eruption (move)",
+        "page_id": 191891,
+        "revision_id": 4621659,
+        "sha1": "5eb195b604792839a0c074715ce715bdda8a73fb"
+      },
+      {
+        "title": "Steamroller (move)",
+        "page_id": 117186,
+        "revision_id": 4621602,
+        "sha1": "de48de64bc82bc3af4c62e61d7cadd071b33e403"
+      },
+      {
+        "title": "Steel Beam (move)",
+        "page_id": 239677,
+        "revision_id": 4628406,
+        "sha1": "3fdf572e742e0e938f4ae7e6ac37bff8295661aa"
+      },
+      {
+        "title": "Steel Roller (move)",
+        "page_id": 252904,
+        "revision_id": 4635283,
+        "sha1": "d5f05e4cc0c1c7c35e067b485f4f8fe9cc2a3be6"
+      },
+      {
+        "title": "Steel Wing (move)",
+        "page_id": 3822,
+        "revision_id": 4640791,
+        "sha1": "93a53ccc339c290c372073e6993210c055458446"
+      },
+      {
+        "title": "Sticky Web (move)",
+        "page_id": 185083,
+        "revision_id": 4634784,
+        "sha1": "d7eb1ab19d26c77504cf988b93d0577aead8b2fa"
+      },
+      {
+        "title": "Stockpile (move)",
+        "page_id": 3865,
+        "revision_id": 4631941,
+        "sha1": "e308ca5e73d070c52c803127ba345a91a66aec6b"
+      },
+      {
+        "title": "Stoked Sparksurfer (move)",
+        "page_id": 215570,
+        "revision_id": 4511610,
+        "sha1": "72afda10ff597fc7111d09e3ef87ee8e4eaca7c3"
+      },
+      {
+        "title": "Stomp (move)",
+        "page_id": 3631,
+        "revision_id": 4622912,
+        "sha1": "2c51d0aee66fce3b587b10a72ee93a7f37bdc5af"
+      },
+      {
+        "title": "Stomping Tantrum (move)",
+        "page_id": 218389,
+        "revision_id": 4640932,
+        "sha1": "06bbaade0a18ea963c9be4c58877fcd89ab96dbe"
+      },
+      {
+        "title": "Stone Axe (move)",
+        "page_id": 264763,
+        "revision_id": 4578322,
+        "sha1": "bab7eefe7bc8c87f8fc9ffc0e5a3753214134614"
+      },
+      {
+        "title": "Stone Edge (move)",
+        "page_id": 17445,
+        "revision_id": 4628412,
+        "sha1": "828269cf5ca694c2fe9a55f701b7e8a4dca1cdd4"
+      },
+      {
+        "title": "Stored Power (move)",
+        "page_id": 117613,
+        "revision_id": 4628556,
+        "sha1": "4f746dd4a3b27c49b1b42dfb2f1f615d956facd6"
+      },
+      {
+        "title": "Storm Throw (move)",
+        "page_id": 117450,
+        "revision_id": 4628411,
+        "sha1": "1a3275b41930e73861f90803b5c62a25e0355fc6"
+      },
+      {
+        "title": "Strange Steam (move)",
+        "page_id": 244341,
+        "revision_id": 4533590,
+        "sha1": "a218c172d07b622795744d29cb4839c96384948d"
+      },
+      {
+        "title": "Strength (move)",
+        "page_id": 3539,
+        "revision_id": 4643721,
+        "sha1": "8264f6ef16b93b7c8fc464d645dd51733c2b34a6"
+      },
+      {
+        "title": "Strength Sap (move)",
+        "page_id": 218339,
+        "revision_id": 4643941,
+        "sha1": "676d111a6609b1d8774c3dda48cfe017505527da"
+      },
+      {
+        "title": "String Shot (move)",
+        "page_id": 3690,
+        "revision_id": 4590698,
+        "sha1": "901948b19f67448c2024ca04660e6f75ed712cb7"
+      },
+      {
+        "title": "Struggle (move)",
+        "page_id": 3774,
+        "revision_id": 4643726,
+        "sha1": "f96894259396ccc49c64f2c43d591530ee6126c8"
+      },
+      {
+        "title": "Struggle Bug (move)",
+        "page_id": 117184,
+        "revision_id": 4634762,
+        "sha1": "9c912d8fb79ee7078fa8516546b9b147eac775c4"
+      },
+      {
+        "title": "Stuff Cheeks (move)",
+        "page_id": 244319,
+        "revision_id": 4628410,
+        "sha1": "4cb6ed843b49f8a0246e80946655e06981a51ae0"
+      },
+      {
+        "title": "Stun Spore (move)",
+        "page_id": 3687,
+        "revision_id": 4626046,
+        "sha1": "b48efc2d10870f84a78085bed1a10a4a1f17e244"
+      },
+      {
+        "title": "Submission (move)",
+        "page_id": 3675,
+        "revision_id": 4623051,
+        "sha1": "32f324ee1958506d9eb980e2e61c506e74545d88"
+      },
+      {
+        "title": "Substitute (move)",
+        "page_id": 3773,
+        "revision_id": 4644243,
+        "sha1": "6e2d2e6a000efe360e958a3d3cd2dc06fda4f3dc"
+      },
+      {
+        "title": "Subzero Slammer (move)",
+        "page_id": 218481,
+        "revision_id": 4614962,
+        "sha1": "b8b374729b5363b07d136e82442f53f28b1ec1a5"
+      },
+      {
+        "title": "Sucker Punch (move)",
+        "page_id": 18880,
+        "revision_id": 4645462,
+        "sha1": "b455ce32b7f547d0a3de33699b8eb544683f7fb1"
+      },
+      {
+        "title": "Sunny Day (move)",
+        "page_id": 3852,
+        "revision_id": 4644467,
+        "sha1": "59c68f6bf3d3885736c8dac958190f3e22c1e539"
+      },
+      {
+        "title": "Sunsteel Strike (move)",
+        "page_id": 213483,
+        "revision_id": 4621903,
+        "sha1": "b3dd3fe43ab7be10f596cb5a754e24e7772fc85f"
+      },
+      {
+        "title": "Super Fang (move)",
+        "page_id": 3771,
+        "revision_id": 4644574,
+        "sha1": "2ffc9c6354194ec9a2dc83020736a6d34df0bcec"
+      },
+      {
+        "title": "Supercell Slam (move)",
+        "page_id": 299912,
+        "revision_id": 4632430,
+        "sha1": "2c3fd8fb8c5832494b46ac0f9161fea94f3e3bd8"
+      },
+      {
+        "title": "Superpower (move)",
+        "page_id": 3887,
+        "revision_id": 4646823,
+        "sha1": "6af35a214e0211641cdf95c07ffa9cc8d5ef0066"
+      },
+      {
+        "title": "Supersonic (move)",
+        "page_id": 3657,
+        "revision_id": 4540966,
+        "sha1": "5094afef4d9106a5359363042c402367c1f1432f"
+      },
+      {
+        "title": "Supersonic Skystrike (move)",
+        "page_id": 218466,
+        "revision_id": 4614601,
+        "sha1": "71d44b831c72a71d44ca9b65138e20a55bf7733c"
+      },
+      {
+        "title": "Surf (move)",
+        "page_id": 2056,
+        "revision_id": 4649498,
+        "sha1": "d21a9ce0de4d83a4a41827bede67adc9290ec37e"
+      },
+      {
+        "title": "Surging Strikes (move)",
+        "page_id": 252178,
+        "revision_id": 4622938,
+        "sha1": "eb5a5b7cbddc5b30631f408796e78e74eb2fc83e"
+      },
+      {
+        "title": "Swagger (move)",
+        "page_id": 3435,
+        "revision_id": 4640189,
+        "sha1": "1b4f9eb6c951f7e7372c4aa087f62fb6f05fc8e2"
+      },
+      {
+        "title": "Swallow (move)",
+        "page_id": 3867,
+        "revision_id": 4628573,
+        "sha1": "341f2d3369908543949cd0b8322e6424e669ff43"
+      },
+      {
+        "title": "Sweet Kiss (move)",
+        "page_id": 3796,
+        "revision_id": 4638911,
+        "sha1": "acff229c7f6a8acba12c394e326e6caf170c17a4"
+      },
+      {
+        "title": "Sweet Scent (move)",
+        "page_id": 3841,
+        "revision_id": 4643270,
+        "sha1": "8644c38754492a408367c3c8260ebdf7e22f606a"
+      },
+      {
+        "title": "Swift (move)",
+        "page_id": 3738,
+        "revision_id": 4649338,
+        "sha1": "1112e1868a8cbe1eb31310355ba5b338fe05c6c6"
+      },
+      {
+        "title": "Switcheroo (move)",
+        "page_id": 18887,
+        "revision_id": 4628576,
+        "sha1": "d654f6ae15767e75450f16339d8209786b8e8f44"
+      },
+      {
+        "title": "Swords Dance (move)",
+        "page_id": 3622,
+        "revision_id": 4628577,
+        "sha1": "ebe4d30cbcd7d4d945b136ba755181d0b6da7bb1"
+      },
+      {
+        "title": "Synchronoise (move)",
+        "page_id": 117605,
+        "revision_id": 4647388,
+        "sha1": "35bfb4003380f345216a2d4eed1763d31f2c286f"
+      },
+      {
+        "title": "Synthesis (move)",
+        "page_id": 3846,
+        "revision_id": 4643327,
+        "sha1": "62c1721c2c75581853d133731e2d3b801916fd41"
+      },
+      {
+        "title": "Syrup Bomb (move)",
+        "page_id": 294180,
+        "revision_id": 4638547,
+        "sha1": "1f2bc464148e8007aeb71e3e772d43ef8772fc8f"
+      },
+      {
+        "title": "Tachyon Cutter (move)",
+        "page_id": 294639,
+        "revision_id": 4616453,
+        "sha1": "dc4165b6786dac46aa6c834b5d7a27354647cf65"
+      },
+      {
+        "title": "Tackle (move)",
+        "page_id": 3641,
+        "revision_id": 4646902,
+        "sha1": "02954ab2f21160451824c3e204faf8a633477918"
+      },
+      {
+        "title": "Tail Glow (move)",
+        "page_id": 3905,
+        "revision_id": 4632452,
+        "sha1": "61174573d9ca44bd074c92104f1cffed0b2d727a"
+      },
+      {
+        "title": "Tail Slap (move)",
+        "page_id": 117488,
+        "revision_id": 4628428,
+        "sha1": "eb92a45fe87a8e49ab1f1c612923168d5694cfa5"
+      },
+      {
+        "title": "Tail Whip (move)",
+        "page_id": 3648,
+        "revision_id": 4623025,
+        "sha1": "dc09a7b6992131f1d0cd3d0a6ebb7d7fc2559a41"
+      },
+      {
+        "title": "Tailwind (move)",
+        "page_id": 14450,
+        "revision_id": 4628579,
+        "sha1": "15208b0f7f001eaaad986e5d0a5239919b9d4a32"
+      },
+      {
+        "title": "Take Down (move)",
+        "page_id": 3644,
+        "revision_id": 4645447,
+        "sha1": "592a9111ee5ddd75736dbb089759bae577126419"
+      },
+      {
+        "title": "Take Heart (move)",
+        "page_id": 268369,
+        "revision_id": 4614830,
+        "sha1": "c194fbc83a3e161b0d7b20049660143f57323865"
+      },
+      {
+        "title": "Tar Shot (move)",
+        "page_id": 244321,
+        "revision_id": 4647406,
+        "sha1": "1643d1b603e7559b446b8db7e1189dde6dfe8470"
+      },
+      {
+        "title": "Taunt (move)",
+        "page_id": 3880,
+        "revision_id": 4628817,
+        "sha1": "7fdff585792f596531c09b2356939f17e1c85193"
+      },
+      {
+        "title": "Tearful Look (move)",
+        "page_id": 218433,
+        "revision_id": 4628581,
+        "sha1": "39e7d1e69388e2d913707fc70370afb139d583f2"
+      },
+      {
+        "title": "Teatime (move)",
+        "page_id": 244324,
+        "revision_id": 4578351,
+        "sha1": "551b64bb1e5bee7074e1a452e1e36daab56fefb5"
+      },
+      {
+        "title": "Techno Blast (move)",
+        "page_id": 117615,
+        "revision_id": 4624900,
+        "sha1": "875270c9b8cea42fdba2ddc11134457587d79d8c"
+      },
+      {
+        "title": "Tectonic Rage (move)",
+        "page_id": 218471,
+        "revision_id": 4614788,
+        "sha1": "1ee7ad85783dff8c34a8c0a37b8fe2225a8b23f1"
+      },
+      {
+        "title": "Teeter Dance (move)",
+        "page_id": 3909,
+        "revision_id": 4632519,
+        "sha1": "aa21b4e4992cda8b954a5a818ebf458fb721bc10"
+      },
+      {
+        "title": "Telekinesis (move)",
+        "page_id": 117469,
+        "revision_id": 4646857,
+        "sha1": "ea50d30b8fd7f631126f3179435bf4958402e547"
+      },
+      {
+        "title": "Teleport (move)",
+        "page_id": 3709,
+        "revision_id": 4643720,
+        "sha1": "78e89892ebc5086a8747228d8dc8e6adf1be3512"
+      },
+      {
+        "title": "Temper Flare (move)",
+        "page_id": 300846,
+        "revision_id": 4628582,
+        "sha1": "2328db869fbb3de4b26bc28ebf371bb04264be3d"
+      },
+      {
+        "title": "Tera Blast (move)",
+        "page_id": 273858,
+        "revision_id": 4649130,
+        "sha1": "992bf98594831c9fe9da976a6c9bb45e73652773"
+      },
+      {
+        "title": "Tera Starstorm (move)",
+        "page_id": 300825,
+        "revision_id": 4633812,
+        "sha1": "d0b4b0caf8917de26a1f2a1c3e0b01dbc4dd0eab"
+      },
+      {
+        "title": "Terrain Pulse (move)",
+        "page_id": 252910,
+        "revision_id": 4628583,
+        "sha1": "b875b26629e0eb4f0003205d6a8d9b51658d75d1"
+      },
+      {
+        "title": "Thief (move)",
+        "page_id": 3777,
+        "revision_id": 4637943,
+        "sha1": "50489e03f1afa0e5d9570d11da7f9654ea7447ef"
+      },
+      {
+        "title": "Thousand Arrows (move)",
+        "page_id": 192775,
+        "revision_id": 4580087,
+        "sha1": "ddafedfcf4ecb815e781c81f542b5b1031a0882b"
+      },
+      {
+        "title": "Thousand Waves (move)",
+        "page_id": 192776,
+        "revision_id": 4614513,
+        "sha1": "f2604f44315ecf0d421e2fa00291d72fe831a4e2"
+      },
+      {
+        "title": "Thrash (move)",
+        "page_id": 3646,
+        "revision_id": 4636308,
+        "sha1": "23d8155a0119a441dd22b75a4057840c275d42d5"
+      },
+      {
+        "title": "Throat Chop (move)",
+        "page_id": 218349,
+        "revision_id": 4643209,
+        "sha1": "7574c07c27565495de8d23fbf1f4d7e2c220083d"
+      },
+      {
+        "title": "Thunder (move)",
+        "page_id": 3478,
+        "revision_id": 4646852,
+        "sha1": "d09d9f4b2f81c481e7cd09639792c5dc3f2e64f6"
+      },
+      {
+        "title": "Thunder Cage (move)",
+        "page_id": 252167,
+        "revision_id": 4621940,
+        "sha1": "40d78ac76b53eb35a7783640805118c7914ffbec"
+      },
+      {
+        "title": "Thunder Fang (move)",
+        "page_id": 12448,
+        "revision_id": 4632492,
+        "sha1": "eefb487061fbf0aebca4746c285bf2fabd321acd"
+      },
+      {
+        "title": "Thunder Punch (move)",
+        "page_id": 3617,
+        "revision_id": 4638387,
+        "sha1": "7b0770063eff9a5d1b268c1024d73958eaa00717"
+      },
+      {
+        "title": "Thunder Shock (move)",
+        "page_id": 3693,
+        "revision_id": 4623816,
+        "sha1": "35aeb09fdb046117cb46b8b8eec3c4603418ca4c"
+      },
+      {
+        "title": "Thunder Wave (move)",
+        "page_id": 3695,
+        "revision_id": 4628621,
+        "sha1": "c87f36f37877a9ef2a24a00ed07aa1537ec780f1"
+      },
+      {
+        "title": "Thunderbolt (move)",
+        "page_id": 3694,
+        "revision_id": 4628623,
+        "sha1": "af1efd18e276db14c9f314c130963193793b3460"
+      },
+      {
+        "title": "Thunderclap (move)",
+        "page_id": 294640,
+        "revision_id": 4651042,
+        "sha1": "de72750d37c8083eba3286a7fd182f8b88a60830"
+      },
+      {
+        "title": "Thunderous Kick (move)",
+        "page_id": 252180,
+        "revision_id": 4614479,
+        "sha1": "a38b6aa149db779f2843b23588969aa2c862b2ba"
+      },
+      {
+        "title": "Tickle (move)",
+        "page_id": 3932,
+        "revision_id": 4632980,
+        "sha1": "b057a15dadd7287baf3186a971e3b9fec7fd16ee"
+      },
+      {
+        "title": "Tidy Up (move)",
+        "page_id": 277779,
+        "revision_id": 4578365,
+        "sha1": "efe986ff115ae4ce9af4bbe6fef77e889be335fc"
+      },
+      {
+        "title": "Topsy-Turvy (move)",
+        "page_id": 180351,
+        "revision_id": 4643413,
+        "sha1": "402a2cad9411f248983868bf96685e436745cb72"
+      },
+      {
+        "title": "Torch Song (move)",
+        "page_id": 277770,
+        "revision_id": 4621949,
+        "sha1": "cef895285f16455d1b1f75a02a6ba48b0e94c672"
+      },
+      {
+        "title": "Torment (move)",
+        "page_id": 3870,
+        "revision_id": 4628591,
+        "sha1": "fff1be2027375682e86d114996bb25af7ce6a2b1"
+      },
+      {
+        "title": "Toxic (move)",
+        "page_id": 2898,
+        "revision_id": 4631298,
+        "sha1": "ee8762734d685b1cf3289e81b6b9c757ceeba5b6"
+      },
+      {
+        "title": "Toxic Spikes (move)",
+        "page_id": 17463,
+        "revision_id": 4643103,
+        "sha1": "22dbb1116530e9495610b3982bf3c7842640df52"
+      },
+      {
+        "title": "Toxic Thread (move)",
+        "page_id": 218343,
+        "revision_id": 4613780,
+        "sha1": "8b78dda32e71bf0f90f4747461848bc8cefbcd4a"
+      },
+      {
+        "title": "Trailblaze (move)",
+        "page_id": 274270,
+        "revision_id": 4645448,
+        "sha1": "1f23cc4e2e53fa75f2c4c3ca6bfb4bf552ee8684"
+      },
+      {
+        "title": "Transform (move)",
+        "page_id": 3753,
+        "revision_id": 4646411,
+        "sha1": "46db914b3c47599270aa46c47f80f5a363a64acd"
+      },
+      {
+        "title": "Tri Attack (move)",
+        "page_id": 3770,
+        "revision_id": 4644401,
+        "sha1": "22f950c09057129041df923a475d89f1fac301d2"
+      },
+      {
+        "title": "Trick (move)",
+        "page_id": 3882,
+        "revision_id": 4629839,
+        "sha1": "7500694b6485875afc9c81b736aa45e1d96f0eda"
+      },
+      {
+        "title": "Trick Room (move)",
+        "page_id": 17450,
+        "revision_id": 4631962,
+        "sha1": "1e5e656ab1773c491851f3eb696ef8c53466a9f1"
+      },
+      {
+        "title": "Trick-or-Treat (move)",
+        "page_id": 185033,
+        "revision_id": 4629109,
+        "sha1": "9f4a2f57de5412201e6281b2f8e00c94bc2cd7e2"
+      },
+      {
+        "title": "Triple Arrows (move)",
+        "page_id": 268730,
+        "revision_id": 4614616,
+        "sha1": "bec8830d5e09eb592887b6467d57e53deb10df94"
+      },
+      {
+        "title": "Triple Axel (move)",
+        "page_id": 252917,
+        "revision_id": 4630705,
+        "sha1": "b995a4c023847a31868c90b6ad6d0f85e37c2167"
+      },
+      {
+        "title": "Triple Dive (move)",
+        "page_id": 277765,
+        "revision_id": 4647583,
+        "sha1": "cd4bb9866601885fc75ff1d3b8ef2a82a60a64f3"
+      },
+      {
+        "title": "Triple Kick (move)",
+        "page_id": 3776,
+        "revision_id": 4638224,
+        "sha1": "d99ef3cbcca7e3d32d55fcf0a0d0dbc5b89e3315"
+      },
+      {
+        "title": "Trop Kick (move)",
+        "page_id": 216511,
+        "revision_id": 4623165,
+        "sha1": "0eec41f2c65e703b1e54efb2b76818a7356f9dba"
+      },
+      {
+        "title": "Trump Card (move)",
+        "page_id": 17430,
+        "revision_id": 4636278,
+        "sha1": "7742025a4c61047f4ab2ed91881fec38d8eb8331"
+      },
+      {
+        "title": "Twin Beam (move)",
+        "page_id": 277643,
+        "revision_id": 4614269,
+        "sha1": "365b134527f5cc6117f743b2a4bf1e607aebb493"
+      },
+      {
+        "title": "Twineedle (move)",
+        "page_id": 3650,
+        "revision_id": 4649911,
+        "sha1": "474f3089fcbbb3efd98d9a11fd7ea2cb17022269"
+      },
+      {
+        "title": "Twinkle Tackle (move)",
+        "page_id": 218488,
+        "revision_id": 4614424,
+        "sha1": "365fef0aba11fbcd074ca2a443e254ddc60eccfb"
+      },
+      {
+        "title": "Twister (move)",
+        "page_id": 3850,
+        "revision_id": 4643359,
+        "sha1": "c2fb4bcdc7251c228ce9503b65b6447beceb5b29"
+      },
+      {
+        "title": "U-turn (move)",
+        "page_id": 14503,
+        "revision_id": 4644458,
+        "sha1": "7b352b7020e6d82c5534f700c7381d01ac4ced97"
+      },
+      {
+        "title": "Upper Hand (move)",
+        "page_id": 294638,
+        "revision_id": 4628416,
+        "sha1": "07bb11cf9d8e497d1eb7fe63bdbbc19e0b3ffcbd"
+      },
+      {
+        "title": "Uproar (move)",
+        "page_id": 3864,
+        "revision_id": 4650420,
+        "sha1": "e9623e59614d69516c465a5650e30dba6a9f2289"
+      },
+      {
+        "title": "V-create (move)",
+        "page_id": 117470,
+        "revision_id": 4631618,
+        "sha1": "c56cb58076748e6b003bc9c2bd012ecfd0b712d0"
+      },
+      {
+        "title": "Vacuum Wave (move)",
+        "page_id": 17457,
+        "revision_id": 4631300,
+        "sha1": "101dbe8387444389552deeddb2b471e466126fa5"
+      },
+      {
+        "title": "Vacuum-Cut (move)",
+        "page_id": 23595,
+        "revision_id": 4366260,
+        "sha1": "3bec236431fe1eab1a4987a677e8da2554c9b704"
+      },
+      {
+        "title": "Veevee Volley (move)",
+        "page_id": 232104,
+        "revision_id": 4614365,
+        "sha1": "d1bf3e03ee93c0733c419e6f074d75655c118ddf"
+      },
+      {
+        "title": "Venom Drench (move)",
+        "page_id": 185082,
+        "revision_id": 4621663,
+        "sha1": "53824257e7b6fa9a34e98e49b7594a9dcab14695"
+      },
+      {
+        "title": "Venoshock (move)",
+        "page_id": 117329,
+        "revision_id": 4631299,
+        "sha1": "80dead4f3e355c1c6c7e5836784143622c4a0bba"
+      },
+      {
+        "title": "Victory Dance (move)",
+        "page_id": 268104,
+        "revision_id": 4614272,
+        "sha1": "d0805282bb7029375ce38b6ea7f73ff8c9c6749b"
+      },
+      {
+        "title": "Vine Whip (move)",
+        "page_id": 3630,
+        "revision_id": 4622899,
+        "sha1": "a7d2908f8f53f707ce83f51198033abba1fdfda5"
+      },
+      {
+        "title": "Vise Grip (move)",
+        "page_id": 3619,
+        "revision_id": 4512191,
+        "sha1": "d647cac76e3ec0b64862afbde98c37e1bd065dff"
+      },
+      {
+        "title": "Vital Throw (move)",
+        "page_id": 3844,
+        "revision_id": 4641832,
+        "sha1": "7711b2b95dcb3fdeec9619f400d57731b74cf4e0"
+      },
+      {
+        "title": "Volt Switch (move)",
+        "page_id": 117464,
+        "revision_id": 4646893,
+        "sha1": "48bf160c65fa387a7dba0d05b5e7f2bf481ed0e9"
+      },
+      {
+        "title": "Volt Tackle (move)",
+        "page_id": 1482,
+        "revision_id": 4645449,
+        "sha1": "b9d4471eaa3fa30e68935e417af0b6079ef05108"
+      },
+      {
+        "title": "Wake-Up Slap (move)",
+        "page_id": 13704,
+        "revision_id": 4622398,
+        "sha1": "bfe0ae9b607423faacbf245c75c9334f7eb66c0e"
+      },
+      {
+        "title": "Water Gun (move)",
+        "page_id": 3664,
+        "revision_id": 4647470,
+        "sha1": "ffcce02864f80214faa99d1be1b0795c2bf103ce"
+      },
+      {
+        "title": "Water Pledge (move)",
+        "page_id": 117619,
+        "revision_id": 4621586,
+        "sha1": "992199b40a5852ab1269dce692ddddf5b55e0821"
+      },
+      {
+        "title": "Water Pulse (move)",
+        "page_id": 3963,
+        "revision_id": 4636290,
+        "sha1": "e25cf6b08ecb86a01af3e819d7b7fb264113bcb8"
+      },
+      {
+        "title": "Water Shuriken (move)",
+        "page_id": 184462,
+        "revision_id": 4623899,
+        "sha1": "7d2e66cd925e1f2010b495486c16b9a010db272d"
+      },
+      {
+        "title": "Water Sport (move)",
+        "page_id": 3957,
+        "revision_id": 4635978,
+        "sha1": "2835c5c075dbb77b03790d1222cb1ef20de45317"
+      },
+      {
+        "title": "Water Spout (move)",
+        "page_id": 3934,
+        "revision_id": 4632968,
+        "sha1": "b64306c7c2c97f575071df557da16f08d8e8c437"
+      },
+      {
+        "title": "Waterfall (move)",
+        "page_id": 3736,
+        "revision_id": 4649342,
+        "sha1": "752b81d045e49409f763aa38cfadc59e251f2409"
+      },
+      {
+        "title": "Wave Crash (move)",
+        "page_id": 268029,
+        "revision_id": 4647522,
+        "sha1": "7fe679f27364a836966dc30de69f23610a148525"
+      },
+      {
+        "title": "Weather Ball (move)",
+        "page_id": 3922,
+        "revision_id": 4632641,
+        "sha1": "6576290667daf984b21f9a33cebed891b72ad156"
+      },
+      {
+        "title": "Whirlpool (move)",
+        "page_id": 3861,
+        "revision_id": 4647480,
+        "sha1": "fefcff2b5709f45e7cffc28b93529742409c9289"
+      },
+      {
+        "title": "Whirlwind (move)",
+        "page_id": 3626,
+        "revision_id": 4644902,
+        "sha1": "1b8ac545ee535cb6c0f33027de0c3eed664b6fcb"
+      },
+      {
+        "title": "Wicked Blow (move)",
+        "page_id": 252177,
+        "revision_id": 4623001,
+        "sha1": "e1939b30d125bae1aca2db97335b42f364c3b18e"
+      },
+      {
+        "title": "Wicked Torque (move)",
+        "page_id": 277875,
+        "revision_id": 4635205,
+        "sha1": "588c7d295fd4c07d51aeff0a9ad72c6599754bff"
+      },
+      {
+        "title": "Wide Guard (move)",
+        "page_id": 117204,
+        "revision_id": 4634750,
+        "sha1": "9154578fda2fb6fa7442bab2b95d544a3723076a"
+      },
+      {
+        "title": "Wide Slash (move)",
+        "page_id": 27213,
+        "revision_id": 4366261,
+        "sha1": "cb0edf9ea89fbc84770163d24aaf70cf49de274f"
+      },
+      {
+        "title": "Wild Charge (move)",
+        "page_id": 117467,
+        "revision_id": 4628630,
+        "sha1": "625040bd1059cac0f3282551a45172b04c92ace4"
+      },
+      {
+        "title": "Wildbolt Storm (move)",
+        "page_id": 268734,
+        "revision_id": 4621943,
+        "sha1": "f47d5008ac9efb5e4fcf71f3ff7fd3f50386acd4"
+      },
+      {
+        "title": "Will-O-Wisp (move)",
+        "page_id": 3872,
+        "revision_id": 4628859,
+        "sha1": "60259b06247ced445a1baa35fb5ea6b2402cc704"
+      },
+      {
+        "title": "Wing Attack (move)",
+        "page_id": 3625,
+        "revision_id": 4622865,
+        "sha1": "f40159deb3667a119f6ba7b7566580a86694aa37"
+      },
+      {
+        "title": "Wish (move)",
+        "page_id": 3884,
+        "revision_id": 4635804,
+        "sha1": "aff05233da9dfbe5181d3d1df63779a138ea06d3"
+      },
+      {
+        "title": "Withdraw (move)",
+        "page_id": 3719,
+        "revision_id": 4650408,
+        "sha1": "816c60dc8ae3a5dd36d32fea7bda8f29fd253f4e"
+      },
+      {
+        "title": "Wonder Room (move)",
+        "page_id": 117446,
+        "revision_id": 4634749,
+        "sha1": "188bdd3f56e31f6f875034b06b4035383821cba4"
+      },
+      {
+        "title": "Wood Hammer (move)",
+        "page_id": 16168,
+        "revision_id": 4628421,
+        "sha1": "2b2adc46eed3dd9ea1f11eb3560b815e9f3118cb"
+      },
+      {
+        "title": "Work Up (move)",
+        "page_id": 117475,
+        "revision_id": 4621595,
+        "sha1": "dce270adfa16a9f6ba40bc3ca3c98f9968099715"
+      },
+      {
+        "title": "Worry Seed (move)",
+        "page_id": 12423,
+        "revision_id": 4634736,
+        "sha1": "436ca03747c51ef572e407295fdf556992928dc7"
+      },
+      {
+        "title": "Wrap (move)",
+        "page_id": 3643,
+        "revision_id": 4645450,
+        "sha1": "0c141e059550e5197d8a90ea6978e6f12a090b91"
+      },
+      {
+        "title": "Wring Out (move)",
+        "page_id": 17428,
+        "revision_id": 4640047,
+        "sha1": "01bf786fa0a635fe9fc850aad21ea067c2de583d"
+      },
+      {
+        "title": "X-Scissor (move)",
+        "page_id": 17452,
+        "revision_id": 4629725,
+        "sha1": "20ae080eba06753c6d0179ed99a8fb61f4d00313"
+      },
+      {
+        "title": "Yawn (move)",
+        "page_id": 3892,
+        "revision_id": 4632421,
+        "sha1": "0178d809483a29e5b57a50eb1dbce43c067778d6"
+      },
+      {
+        "title": "Zap Cannon (move)",
+        "page_id": 3803,
+        "revision_id": 4638999,
+        "sha1": "156a15bbf9f5a5ae5957bbfafd37a0ca9feec513"
+      },
+      {
+        "title": "Zen Headbutt (move)",
+        "page_id": 16172,
+        "revision_id": 4629988,
+        "sha1": "75aac7c1aa73623d6a69731dd7673142f0dcda25"
+      },
+      {
+        "title": "Zing Zap (move)",
+        "page_id": 218435,
+        "revision_id": 4628423,
+        "sha1": "e78b22265511c30128deb1bd41aac3acbbdbff6b"
+      },
+      {
+        "title": "Zippy Zap (move)",
+        "page_id": 233637,
+        "revision_id": 4269630,
+        "sha1": "b73340744ae3ea312f3201990f6a02c9f75b5aaa"
+      }
+    ],
     "species": [
       {
         "title": "Abomasnow (Pokémon)",
