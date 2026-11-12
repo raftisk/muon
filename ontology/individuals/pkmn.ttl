@@ -142,49 +142,57 @@ pkmn:statusFreeze        a pkmn:StatusCondition ; rdfs:label "Freeze"@en ; pkmn:
 pkmn:statusParalysis     a pkmn:StatusCondition ; rdfs:label "Paralysis"@en ; pkmn:introducedIn pkmn:gen1 .
 pkmn:statusPoison        a pkmn:StatusCondition ; rdfs:label "Poison"@en ; pkmn:introducedIn pkmn:gen1 .
 pkmn:statusBadlyPoisoned a pkmn:StatusCondition ; rdfs:label "Badly Poisoned"@en ; pkmn:introducedIn pkmn:gen1 .
-pkmn:statusSleep         a pkmn:StatusCondition ; rdfs:label "Sleep"@en ; pkmn:introducedIn pkmn:gen1 .
+pkmn:statusSleep         a pkmn:StatusCondition ; rdfs:label "Sleep"@en ; pkmn:introducedIn pkmn:gen1 ; pkmn:minTurns 2 ; pkmn:maxTurns 4 .
 pkmn:statusFrostbite     a pkmn:StatusCondition ; rdfs:label "Frostbite"@en ; pkmn:introducedIn pkmn:gen8 .
 pkmn:statusDrowsy        a pkmn:StatusCondition ; rdfs:label "Drowsy"@en ; pkmn:introducedIn pkmn:gen8 .
 
 ## Volatile conditions ##
 # Names are the in-game status names; mo:aliases keeps the move-derived name.
-pkmn:confused         a pkmn:VolatileCondition ; rdfs:label "Confused"@en ; mo:aliases "Confusion"@en .
+pkmn:confused         a pkmn:VolatileCondition ; rdfs:label "Confused"@en ; mo:aliases "Confusion"@en ; pkmn:minTurns 2 ; pkmn:maxTurns 5 .
 pkmn:flinch           a pkmn:VolatileCondition ; rdfs:label "Flinch"@en .
 pkmn:infatuated       a pkmn:VolatileCondition ; rdfs:label "Infatuated"@en ; mo:aliases "Infatuation"@en .
-pkmn:taunted          a pkmn:VolatileCondition ; rdfs:label "Taunted"@en ; mo:aliases "Taunt"@en .
-pkmn:encore           a pkmn:VolatileCondition ; rdfs:label "Encore"@en .
-pkmn:moveDisabled     a pkmn:VolatileCondition ; rdfs:label "Move Disabled"@en ; mo:aliases "Disable"@en .
+pkmn:taunted          a pkmn:VolatileCondition ; rdfs:label "Taunted"@en ; mo:aliases "Taunt"@en ; pkmn:minTurns 3 ; pkmn:maxTurns 4 .
+pkmn:encore           a pkmn:VolatileCondition ; rdfs:label "Encore"@en ; pkmn:minTurns 3 ; pkmn:maxTurns 3 .
+pkmn:moveDisabled     a pkmn:VolatileCondition ; rdfs:label "Move Disabled"@en ; mo:aliases "Disable"@en ; pkmn:minTurns 4 ; pkmn:maxTurns 4 .
 pkmn:unableToRepeat   a pkmn:VolatileCondition ; rdfs:label "Unable to Repeat"@en ; mo:aliases "Torment"@en .
 pkmn:healingPrevented a pkmn:VolatileCondition ; rdfs:label "Healing Prevented"@en ; mo:aliases "Heal Block"@en .
 pkmn:leechSeeded      a pkmn:VolatileCondition ; rdfs:label "Leech Seeded"@en ; mo:aliases "Leech Seed"@en .
-pkmn:volatileDrowsy   a pkmn:VolatileCondition ; rdfs:label "Drowsy"@en ; mo:aliases "Yawn"@en .
+pkmn:volatileDrowsy   a pkmn:VolatileCondition ; rdfs:label "Drowsy"@en ; mo:aliases "Yawn"@en ; pkmn:minTurns 1 ; pkmn:maxTurns 1 .
 pkmn:cantEscape       a pkmn:VolatileCondition ; rdfs:label "Can't Escape"@en ; mo:aliases "Trapped"@en .
-pkmn:bound            a pkmn:VolatileCondition ; rdfs:label "Bound"@en .
+pkmn:bound            a pkmn:VolatileCondition ; rdfs:label "Bound"@en ; pkmn:minTurns 4 ; pkmn:maxTurns 5 .
 pkmn:noAbility        a pkmn:VolatileCondition ; rdfs:label "No Ability"@en .
 pkmn:substitute       a pkmn:VolatileCondition ; rdfs:label "Substitute"@en .
-pkmn:telekinesis      a pkmn:VolatileCondition ; rdfs:label "Telekinesis"@en .
-pkmn:magnetRise       a pkmn:VolatileCondition ; rdfs:label "Magnet Rise"@en .
+pkmn:telekinesis      a pkmn:VolatileCondition ; rdfs:label "Telekinesis"@en ; pkmn:minTurns 3 ; pkmn:maxTurns 3 .
+pkmn:magnetRise       a pkmn:VolatileCondition ; rdfs:label "Magnet Rise"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
 pkmn:concealed        a pkmn:VolatileCondition ; rdfs:label "Concealed"@en .
 pkmn:skyHigh          a pkmn:VolatileCondition ; rdfs:label "Sky-High"@en .
 pkmn:submerged        a pkmn:VolatileCondition ; rdfs:label "Submerged"@en .
 pkmn:underground      a pkmn:VolatileCondition ; rdfs:label "Underground"@en .
+pkmn:identified       a pkmn:VolatileCondition ; rdfs:label "Identified"@en .
+pkmn:perishing        a pkmn:VolatileCondition ; rdfs:label "Perishing"@en ; mo:aliases "Counting Down"@en, "Perish Song"@en ; pkmn:minTurns 3 ; pkmn:maxTurns 3 .
+pkmn:ingrained        a pkmn:VolatileCondition ; rdfs:label "Ingrained"@en ; mo:aliases "Ingrain"@en .
+pkmn:nightmare        a pkmn:VolatileCondition ; rdfs:label "Nightmare"@en .
+pkmn:embargo          a pkmn:VolatileCondition ; rdfs:label "Embargo"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:throatChopped    a pkmn:VolatileCondition ; rdfs:label "Throat Chopped"@en ; mo:aliases "Throat Chop"@en ; pkmn:minTurns 2 ; pkmn:maxTurns 2 .
+pkmn:tarShot          a pkmn:VolatileCondition ; rdfs:label "Tar Shot"@en .
+pkmn:landed           a pkmn:VolatileCondition ; rdfs:label "Landed"@en .
 
 ## Weather ##
-pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en ; pkmn:amplifiesType pkmn:Water ; pkmn:dampensType pkmn:Fire ; pkmn:introducedIn pkmn:gen2 .
-pkmn:harshSunlight          a pkmn:Weather ; rdfs:label "Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire ; pkmn:dampensType pkmn:Water ; pkmn:introducedIn pkmn:gen2 .
-pkmn:sandstorm              a pkmn:Weather ; rdfs:label "Sandstorm"@en ; pkmn:introducedIn pkmn:gen2 .
-pkmn:hail                   a pkmn:Weather ; rdfs:label "Hail"@en ; pkmn:introducedIn pkmn:gen2 .
-pkmn:snow                   a pkmn:Weather ; rdfs:label "Snow"@en ; pkmn:introducedIn pkmn:gen8 .
+pkmn:rain                   a pkmn:Weather ; rdfs:label "Rain"@en ; pkmn:amplifiesType pkmn:Water ; pkmn:dampensType pkmn:Fire ; pkmn:introducedIn pkmn:gen2 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:harshSunlight          a pkmn:Weather ; rdfs:label "Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire ; pkmn:dampensType pkmn:Water ; pkmn:introducedIn pkmn:gen2 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:sandstorm              a pkmn:Weather ; rdfs:label "Sandstorm"@en ; pkmn:introducedIn pkmn:gen2 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:hail                   a pkmn:Weather ; rdfs:label "Hail"@en ; pkmn:introducedIn pkmn:gen2 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:snow                   a pkmn:Weather ; rdfs:label "Snow"@en ; pkmn:introducedIn pkmn:gen8 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
 pkmn:fog                    a pkmn:Weather ; rdfs:label "Fog"@en ; pkmn:introducedIn pkmn:gen4 .
 pkmn:extremelyHarshSunlight a pkmn:Weather ; rdfs:label "Extremely Harsh Sunlight"@en ; pkmn:amplifiesType pkmn:Fire ; pkmn:introducedIn pkmn:gen6 .
 pkmn:heavyRain              a pkmn:Weather ; rdfs:label "Heavy Rain"@en ; pkmn:amplifiesType pkmn:Water ; pkmn:introducedIn pkmn:gen6 .
 pkmn:strongWinds            a pkmn:Weather ; rdfs:label "Strong Winds"@en ; pkmn:introducedIn pkmn:gen6 .
 
 ## Terrain ##
-pkmn:electricTerrain a pkmn:Terrain ; rdfs:label "Electric Terrain"@en ; pkmn:amplifiesType pkmn:Electric ; pkmn:introducedIn pkmn:gen6 .
-pkmn:grassyTerrain   a pkmn:Terrain ; rdfs:label "Grassy Terrain"@en ; pkmn:amplifiesType pkmn:Grass ; pkmn:introducedIn pkmn:gen6 .
-pkmn:mistyTerrain    a pkmn:Terrain ; rdfs:label "Misty Terrain"@en ; pkmn:dampensType pkmn:Dragon ; pkmn:introducedIn pkmn:gen6 .
-pkmn:psychicTerrain  a pkmn:Terrain ; rdfs:label "Psychic Terrain"@en ; pkmn:amplifiesType pkmn:Psychic ; pkmn:introducedIn pkmn:gen7 .
+pkmn:electricTerrain a pkmn:Terrain ; rdfs:label "Electric Terrain"@en ; pkmn:amplifiesType pkmn:Electric ; pkmn:introducedIn pkmn:gen6 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:grassyTerrain   a pkmn:Terrain ; rdfs:label "Grassy Terrain"@en ; pkmn:amplifiesType pkmn:Grass ; pkmn:introducedIn pkmn:gen6 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:mistyTerrain    a pkmn:Terrain ; rdfs:label "Misty Terrain"@en ; pkmn:dampensType pkmn:Dragon ; pkmn:introducedIn pkmn:gen6 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:psychicTerrain  a pkmn:Terrain ; rdfs:label "Psychic Terrain"@en ; pkmn:amplifiesType pkmn:Psychic ; pkmn:introducedIn pkmn:gen7 ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
 
 ## Entry hazards ##
 pkmn:stealthRock a pkmn:EntryHazard ; rdfs:label "Stealth Rock"@en ; mo:aliases "Pointed Stones"@en ; pkmn:introducedIn pkmn:gen4 .
@@ -194,16 +202,16 @@ pkmn:stickyWeb   a pkmn:EntryHazard ; rdfs:label "Sticky Web"@en ; pkmn:introduc
 pkmn:steelsurge  a pkmn:EntryHazard ; rdfs:label "Steelsurge"@en ; mo:aliases "Sharp Steel"@en, "G-Max Steelsurge"@en ; pkmn:introducedIn pkmn:gen8 .
 
 ## Field effects ##
-pkmn:trickRoom   a pkmn:FieldEffect ; rdfs:label "Trick Room"@en .
-pkmn:gravity     a pkmn:FieldEffect ; rdfs:label "Gravity"@en .
-pkmn:magicRoom   a pkmn:FieldEffect ; rdfs:label "Magic Room"@en .
-pkmn:wonderRoom  a pkmn:FieldEffect ; rdfs:label "Wonder Room"@en .
-pkmn:tailwind    a pkmn:FieldEffect ; rdfs:label "Tailwind"@en .
-pkmn:lightScreen a pkmn:FieldEffect ; rdfs:label "Light Screen"@en .
-pkmn:reflect     a pkmn:FieldEffect ; rdfs:label "Reflect"@en .
-pkmn:auroraVeil  a pkmn:FieldEffect ; rdfs:label "Aurora Veil"@en .
-pkmn:safeguard   a pkmn:FieldEffect ; rdfs:label "Safeguard"@en .
-pkmn:mist        a pkmn:FieldEffect ; rdfs:label "Mist"@en .
+pkmn:trickRoom   a pkmn:FieldEffect ; rdfs:label "Trick Room"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:gravity     a pkmn:FieldEffect ; rdfs:label "Gravity"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:magicRoom   a pkmn:FieldEffect ; rdfs:label "Magic Room"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:wonderRoom  a pkmn:FieldEffect ; rdfs:label "Wonder Room"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:tailwind    a pkmn:FieldEffect ; rdfs:label "Tailwind"@en ; pkmn:minTurns 4 ; pkmn:maxTurns 4 .
+pkmn:lightScreen a pkmn:FieldEffect ; rdfs:label "Light Screen"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:reflect     a pkmn:FieldEffect ; rdfs:label "Reflect"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:auroraVeil  a pkmn:FieldEffect ; rdfs:label "Aurora Veil"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:safeguard   a pkmn:FieldEffect ; rdfs:label "Safeguard"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
+pkmn:mist        a pkmn:FieldEffect ; rdfs:label "Mist"@en ; pkmn:minTurns 5 ; pkmn:maxTurns 5 .
 
 ## Move flags ##
 pkmn:contact   a pkmn:MoveFlag ; rdfs:label "contact"@en .
@@ -225,6 +233,7 @@ pkmn:ohko      a pkmn:MoveFlag ; rdfs:label "ohko"@en .
 pkmn:healing   a pkmn:MoveFlag ; rdfs:label "healing"@en .
 pkmn:reflectable a pkmn:MoveFlag ; rdfs:label "reflectable"@en .
 pkmn:snatchable  a pkmn:MoveFlag ; rdfs:label "snatchable"@en .
+pkmn:explosive   a pkmn:MoveFlag ; rdfs:label "explosive"@en .
 
 ## Generations ##
 pkmn:gen1 a pkmn:Generation ; rdfs:label "Generation I"@en .

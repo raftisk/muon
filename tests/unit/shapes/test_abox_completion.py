@@ -1,5 +1,6 @@
 import pytest
 from rdflib import RDF, RDFS, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import SKOS
 
 from muon.ingestion.batch import build_node_id
 from tests.unit.shapes.abox_completion import (
@@ -7,6 +8,7 @@ from tests.unit.shapes.abox_completion import (
     ALIASES,
     APPEARS_IN_EDGES,
     CLASS_COUNTS,
+    CONDITION_DURATIONS,
     CONDITION_EDGES,
     GAME_GROUPS,
     INTRODUCED_IN_BY_CLASS,
@@ -141,6 +143,23 @@ def test_condition_edges_match_table(abox_graph):
     assert len(CONDITION_EDGES) == 27
     counts = {name: len(read_edges(abox_graph, PKMN[name])) for name in properties}
     assert counts == {"immuneTo": 9, "blocksCondition": 16, "inflictsCondition": 2}
+
+
+def test_condition_durations_match_table(abox_graph):
+    durations = {}
+    for subject in {*abox_graph.subjects(PKMN.minTurns), *abox_graph.subjects(PKMN.maxTurns)}:
+        low = abox_graph.value(subject, PKMN.minTurns)
+        high = abox_graph.value(subject, PKMN.maxTurns)
+        durations[read_local_name(subject)] = (
+            None if low is None else low.toPython(),
+            None if high is None else high.toPython(),
+        )
+    assert durations == CONDITION_DURATIONS
+    assert len(CONDITION_DURATIONS) == 31
+
+
+def test_no_individual_has_a_definition(abox_graph):
+    assert list(abox_graph.subjects(SKOS.definition)) == []
 
 
 def test_appears_in_edges(abox_graph):
