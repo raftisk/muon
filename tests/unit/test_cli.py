@@ -13,6 +13,7 @@ from muon.config import Neo4jSettings, OntologySettings, Settings
 from muon.graph import GraphConnectionError, WriteSummary
 from muon.ingestion.batch import NodeRef
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
+from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
 from muon.ingestion.bulbapedia.pages import PageStoreError
 from muon.ingestion.bulbapedia.species.extract import ResidueKind
@@ -319,6 +320,20 @@ FETCH_REPORT = FetchReport(
     requests=4,
     elapsed_seconds=2.25,
 )
+EXPORT_FILE = "Bulbapedia-export.xml"
+EXPORT_REPORT = FetchReport(
+    page_type="move",
+    listed=2,
+    fetched=2,
+    skipped=0,
+    added=("Shadow Ball (move)",),
+    changed=("Tackle (move)",),
+    removed=("Cut (move)",),
+    redirects=(),
+    requests=0,
+    elapsed_seconds=0.5,
+    ignored=46,
+)
 
 
 class RecordingFetch:
@@ -352,6 +367,75 @@ def test_fetch_parses_its_arguments(monkeypatch: pytest.MonkeyPatch) -> None:
     assert fetch.requests == [
         FetchRequest(page_type="ability", titles=("A (Ability)", "B (Ability)")),
         FetchRequest(page_type="species", is_update=True),
+    ]
+
+
+def test_fetch_parses_the_export_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetch = arrange_fetch(monkeypatch, EXPORT_REPORT)
+
+    cli.main(["fetch", "bulbapedia", "move", "--from-export", EXPORT_FILE])
+
+    assert fetch.requests == [FetchRequest(page_type="move", export_path=Path(EXPORT_FILE))]
+
+
+@pytest.mark.parametrize("extra", [["--update"], ["--title", "Tackle (move)"]])
+def test_fetch_rejects_export_with_update_or_title(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], extra: list[str]
+) -> None:
+    fetch = arrange_fetch(monkeypatch, EXPORT_REPORT)
+
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["fetch", "bulbapedia", "move", "--from-export", EXPORT_FILE, *extra])
+
+    assert exit_info.value.code == 2
+    assert cli.EXPORT_CONFLICT_MESSAGE in capsys.readouterr().err
+    assert fetch.requests == []
+
+
+def test_export_run_needs_no_neo4j_setting_and_no_http_client(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    for name in list(os.environ):
+        if name.startswith("NEO4J_"):
+            monkeypatch.delenv(name)
+
+    def fail_on_settings() -> Settings:
+        raise AssertionError("an export run must not read the Neo4j settings")
+
+    def fail_on_http_client() -> None:
+        raise AssertionError("an export run must not build an HTTP client")
+
+    imports: list[FetchRequest] = []
+
+    def record_import(request: FetchRequest, store: object) -> FetchReport:
+        imports.append(request)
+        return EXPORT_REPORT
+
+    monkeypatch.setattr(cli, "get_settings", fail_on_settings)
+    monkeypatch.setattr(cli, "build_http_client", fail_on_http_client)
+    monkeypatch.setattr(cli, "import_pages", record_import)
+    path = tmp_path / EXPORT_FILE
+
+    exit_code = cli.main(["fetch", "bulbapedia", "move", "--from-export", str(path)])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert imports == [FetchRequest(page_type="move", export_path=path)]
+    assert "fetch bulbapedia move: done" in capsys.readouterr().out
+
+
+def test_export_run_prints_ignored_and_titles(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_fetch(monkeypatch, EXPORT_REPORT)
+
+    cli.main(["fetch", "bulbapedia", "move", "--from-export", EXPORT_FILE])
+
+    lines = capsys.readouterr().out.splitlines()
+    assert "ignored: 46" in lines
+    assert lines[-3:] == [
+        "added: Shadow Ball (move)",
+        "changed: Tackle (move)",
+        "removed: Cut (move)",
     ]
 
 
@@ -447,6 +531,7 @@ def test_fetch_lists_the_valid_page_types(capsys: pytest.CaptureFixture[str]) ->
         BulbapediaAPIError("GET api.php for titles=X failed with HTTP 403"),
         FetchError("Category:Pokémon lists no page ending in ' (Pokémon)'"),
         PageStoreError("Cannot read manifest data/bulbapedia/manifest.json"),
+        ExportError("Cannot read export missing.xml: No such file or directory"),
     ],
 )
 def test_fetch_failure_prints_error(

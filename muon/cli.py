@@ -1,6 +1,6 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
-`muon fetch bulbapedia <page-type>`, `muon parse bulbapedia species` and
-`muon ingest bulbapedia species`."""
+`muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
+`muon parse bulbapedia species` and `muon ingest bulbapedia species`."""
 
 import argparse
 import asyncio
@@ -11,18 +11,21 @@ import time
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import fields
+from pathlib import Path
 
 from pydantic import SecretStr, ValidationError
 
 from muon.config import OntologySettings, Settings, get_settings
 from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError, BulbapediaClient, build_http_client
+from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import (
     PAGE_TYPES,
     FetchError,
     FetchReport,
     FetchRequest,
     fetch_pages,
+    import_pages,
 )
 from muon.ingestion.bulbapedia.pages import PageStore, PageStoreError
 from muon.ingestion.bulbapedia.species.forms import OverrideError
@@ -66,6 +69,7 @@ PASSWORD_PROMPT = "Neo4j password: "
 PASSWORD_ENCODING = "utf-8"
 PASSWORD_MISMATCH_MESSAGE = "the password does not match NEO4J_PASSWORD"
 ABORT_MESSAGE = "aborted"
+EXPORT_CONFLICT_MESSAGE = "--from-export cannot be combined with --update or --title"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -95,6 +99,13 @@ def build_parser() -> argparse.ArgumentParser:
         dest="titles",
         metavar="TITLE",
         help="fetch only this page (repeatable)",
+    )
+    fetch.add_argument(
+        "--from-export",
+        type=Path,
+        dest="export_path",
+        metavar="FILE",
+        help="pin the pages of the page type from a Special:Export file",
     )
     parse = commands.add_parser(
         PARSE_COMMAND, help="parse pinned source pages into batches and a report under data/"
@@ -178,12 +189,15 @@ async def run_purge(settings: Settings, prefix: str) -> WriteSummary:
 
 
 def run_fetch(request: FetchRequest) -> FetchReport:
+    """Run an export run with no HTTP client, and any other run against the API."""
+    if request.export_path is not None:
+        return import_pages(request, PageStore())
     with build_http_client() as http_client:
         return fetch_pages(request, PageStore(), BulbapediaClient(http_client))
 
 
 def format_fetch_report(request: FetchRequest, report: FetchReport) -> str:
-    """The counts of a run, and for an update or title run the titles behind them."""
+    """The counts of a run, and for an update, title or export run the titles behind them."""
     lines = [
         f"{FETCH_COMMAND} {BULBAPEDIA_SOURCE} {report.page_type}: done",
         f"listed: {report.listed}",
@@ -194,9 +208,11 @@ def format_fetch_report(request: FetchRequest, report: FetchReport) -> str:
         f"removed: {len(report.removed)}",
         f"redirects: {len(report.redirects)}",
         f"requests: {report.requests}",
-        f"elapsed seconds: {report.elapsed_seconds:.1f}",
     ]
-    if request.is_update or request.titles:
+    if request.export_path is not None:
+        lines.append(f"ignored: {report.ignored}")
+    lines.append(f"elapsed seconds: {report.elapsed_seconds:.1f}")
+    if request.is_update or request.titles or request.export_path is not None:
         for label, titles in (
             ("added", report.added),
             ("changed", report.changed),
@@ -211,7 +227,7 @@ def execute_fetch(request: FetchRequest) -> int:
     failure_prefix = build_failure_prefix(FETCH_COMMAND, f"{BULBAPEDIA_SOURCE} {request.page_type}")
     try:
         report = run_fetch(request)
-    except (BulbapediaAPIError, FetchError, PageStoreError) as error:
+    except (BulbapediaAPIError, ExportError, FetchError, PageStoreError) as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
@@ -370,12 +386,16 @@ def execute_purge(settings: Settings, prefix: str) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command in `argv` and return the process exit code."""
-    arguments = build_parser().parse_args(argv)
+    parser = build_parser()
+    arguments = parser.parse_args(argv)
     if arguments.command == FETCH_COMMAND:
+        if arguments.export_path is not None and (arguments.update or arguments.titles):
+            parser.error(EXPORT_CONFLICT_MESSAGE)
         request = FetchRequest(
             page_type=arguments.page_type,
             titles=tuple(arguments.titles),
             is_update=arguments.update,
+            export_path=arguments.export_path,
         )
         return execute_fetch(request)
     if arguments.command == PARSE_COMMAND:
