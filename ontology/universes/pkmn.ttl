@@ -8,7 +8,7 @@
 
 <https://muon.dev/ns/pkmn> a owl:Ontology ;
     dcterms:title   "muon: Pokémon extension"@en ;
-    owl:versionInfo "0.4.0" ;
+    owl:versionInfo "0.5.0" ;
     owl:imports     <https://muon.dev/ns/core> ;
     skos:definition    "Pokémon-universe extension of the muon core ontology."@en .
 
@@ -80,6 +80,7 @@ pkmn:hasType a owl:ObjectProperty ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:PokemonSpecies pkmn:Move ) ] ;
     rdfs:range pkmn:Type ;
     rdfs:label "hasType"@en ;
+    skos:definition "The type of a species or move: 1 or 2 for a species, exactly 1 for a move (Shadow Ball: Ghost)."@en ;
     rdfs:comment "A species has one or two types; a move has exactly one. In Neo4j, primaryType and secondaryType both become HAS_TYPE with slot 1 or 2."@en .
 
 pkmn:primaryType a owl:ObjectProperty ;
@@ -192,13 +193,14 @@ pkmn:MoveDamageClass a owl:Class ;
 pkmn:hasDamageClass a owl:ObjectProperty ;
     rdfs:domain  pkmn:Move ;
     rdfs:range   pkmn:MoveDamageClass ;
-    rdfs:label   "hasDamageClass"@en .
+    rdfs:label   "hasDamageClass"@en ;
+    skos:definition "Whether a move deals physical or special damage or deals none (Flamethrower: Special)."@en .
 
 pkmn:power a owl:DatatypeProperty ;
     rdfs:domain  pkmn:Move ;
     rdfs:range   xsd:integer ;
     rdfs:label   "power"@en ;
-    skos:definition "Base power. Absent for status moves."@en .
+    skos:definition "Base power. Absent for status moves and for moves whose power varies or whose damage is fixed (Low Kick, Seismic Toss)."@en .
 
 pkmn:accuracy a owl:DatatypeProperty ;
     rdfs:domain  pkmn:Move ;
@@ -303,6 +305,19 @@ pkmn:setsType a owl:ObjectProperty ;
     rdfs:label "setsType"@en ;
     skos:definition "Replaces the type of the effect's recipient (target): the move its owner uses (move), the holder (self) or the Pokémon it acts on (foe)."@en .
 
+pkmn:minTurns a owl:DatatypeProperty ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Move pkmn:BattleCondition ) ] ;
+    rdfs:range xsd:integer ;
+    rdfs:label "minTurns"@en ;
+    skos:definition "Fewest turns a battle condition usually lasts once applied (Bound 4), or fewest turns a move keeps acting once used, with its user locked into it (Outrage 2). A charging turn does not count. Absent means the condition lasts until something removes it, or the move acts in 1 turn."@en ;
+    rdfs:comment "Items and single moves that change a duration (Grip Claw, Light Clay, Psychic Noise) stay in text."@en .
+
+pkmn:maxTurns a owl:DatatypeProperty ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Move pkmn:BattleCondition ) ] ;
+    rdfs:range xsd:integer ;
+    rdfs:label "maxTurns"@en ;
+    skos:definition "Most turns a battle condition usually lasts once applied (Bound 5), or most turns a move keeps acting once used, with its user locked into it (Outrage 3). A charging turn does not count."@en .
+
 #################################################################
 #  Items
 #################################################################
@@ -348,9 +363,11 @@ pkmn:restrictedTo a owl:ObjectProperty ;
 pkmn:category         a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:string  ; rdfs:label "category"@en .
 pkmn:price            a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "price"@en .
 pkmn:isConsumable     a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:boolean ; rdfs:label "isConsumable"@en .
-pkmn:machineNumber    a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:integer ; rdfs:label "machineNumber"@en .
-pkmn:machineKind      a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:string ; rdfs:label "machineKind"@en ; skos:definition "TM, HM, or TR."@en .
-pkmn:isReusable       a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:boolean ; rdfs:label "isReusable"@en .
+pkmn:machineNumber    a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:integer ; rdfs:label "machineNumber"@en ;
+    skos:definition "The number in the machine's name: 30 for TM30, 0 for TM00."@en .
+pkmn:machineKind      a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:string ; rdfs:label "machineKind"@en ; skos:definition "TM, HM or TR."@en .
+pkmn:isReusable       a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:boolean ; rdfs:label "isReusable"@en ;
+    skos:definition "Whether the machine stays in the bag after it teaches its move."@en .
 pkmn:flavour          a owl:DatatypeProperty ; rdfs:domain pkmn:Berry ; rdfs:range xsd:string ; rdfs:label "flavour"@en .
 pkmn:hpThreshold      a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "hpThreshold"@en ;
     skos:definition "Fraction of max HP (0 to 1). With trigger low_hp the effect fires at it; otherwise the effect applies only at or below it."@en .
@@ -389,7 +406,7 @@ pkmn:MoveFlag a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MoveFlag"@e
     skos:definition "A move tag gating interactions (contact, sound, punch, ...)."@en .
 
 pkmn:MoveEffect a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "MoveEffect"@en ;
-    skos:definition "A reified secondary effect of a move; carries probability and magnitude."@en .
+    skos:definition "A reified effect of a move, in battle or outside of it (Flamethrower's burn chance, Cut clearing small trees); carries probability and magnitude."@en .
 
 pkmn:LearnsetEntry a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "LearnsetEntry"@en ;
     skos:definition "A reified (species, move, version group, method, level) learn fact."@en .
@@ -397,7 +414,17 @@ pkmn:LearnsetEntry a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "Learns
 pkmn:hasFlag a owl:ObjectProperty ;
     rdfs:domain pkmn:Move ;
     rdfs:range  pkmn:MoveFlag ;
-    rdfs:label  "hasFlag"@en .
+    rdfs:label  "hasFlag"@en ;
+    skos:definition "A tag of a move that abilities, items and other moves react to (Thunder Punch: punch, contact)."@en .
+
+pkmn:isProtectable a owl:DatatypeProperty ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Move pkmn:AbilityEffect ) ] ;
+    rdfs:range xsd:boolean ;
+    rdfs:label "isProtectable"@en ;
+    skos:definition "Whether Protect and the moves that work like it block the move (Tackle: true, Feint: false). On an ability effect, the value for the moves that pass the effect's filters (Unseen Fist: false for the holder's contact moves)."@en .
+
+pkmn:isMirrorable a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:boolean ; rdfs:label "isMirrorable"@en ;
+    skos:definition "Whether Mirror Move can copy the move (Tackle: true, Swords Dance: false)."@en .
 
 pkmn:setsField a owl:ObjectProperty ;
     rdfs:range pkmn:FieldCondition ;
@@ -412,7 +439,8 @@ pkmn:removesField a owl:ObjectProperty ;
 pkmn:hasLearnsetEntry a owl:ObjectProperty ;
     rdfs:domain pkmn:PokemonSpecies ;
     rdfs:range  pkmn:LearnsetEntry ;
-    rdfs:label  "hasLearnsetEntry"@en .
+    rdfs:label  "hasLearnsetEntry"@en ;
+    skos:definition "Links a species to 1 of its learnset entries."@en .
 
 pkmn:canLearn a owl:ObjectProperty ;
     rdfs:domain pkmn:PokemonSpecies ;
@@ -428,7 +456,8 @@ pkmn:inVersionGroup a owl:ObjectProperty ;
 pkmn:viaMachine a owl:ObjectProperty ;
     rdfs:domain pkmn:LearnsetEntry ;
     rdfs:range  pkmn:Machine ;
-    rdfs:label  "viaMachine"@en .
+    rdfs:label  "viaMachine"@en ;
+    skos:definition "The machine through which a learnset entry with method machine teaches its move."@en .
 
 pkmn:viaParent a owl:ObjectProperty ;
     rdfs:domain pkmn:LearnsetEntry ;
@@ -436,8 +465,10 @@ pkmn:viaParent a owl:ObjectProperty ;
     rdfs:label  "viaParent"@en ;
     skos:definition "The parent species of an egg move."@en .
 
-pkmn:priority   a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "priority"@en .
-pkmn:target     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "target"@en ; skos:definition "On a move, the targeting code in snake_case (any_adjacent, ...). On an effect, the recipient: self, ally, foe, field or move (the move the effect's owner uses)."@en .
+pkmn:priority   a owl:DatatypeProperty ; rdfs:domain pkmn:Move ; rdfs:range xsd:integer ; rdfs:label "priority"@en ;
+    skos:definition "Priority bracket of a move, from -7 to +5. A move of a higher bracket acts first in a turn; 0 for most moves (Quick Attack +1, Trick Room -7)."@en .
+pkmn:target     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "target"@en ; skos:definition "On a move, the targeting code in snake_case (any_adjacent, ...). On an effect, the recipient: self, ally, foe, field or move (the move the effect's owner uses)."@en ;
+    rdfs:comment "Move targeting codes: any_adjacent, self, all_adjacent_foes, any, all_adjacent, entire_field, user_side, user_and_allies, random_foe, varies, all, foe_side, adjacent_ally, user_or_adjacent_ally, adjacent_foe, all_allies."@en .
 pkmn:effectText a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "effectText"@en ; skos:definition "Short English effect text of a move, ability or item. Effect nodes do not carry it."@en .
 
 pkmn:probability a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "probability"@en ; skos:definition "Chance (0-100) an effect triggers."@en .
@@ -454,7 +485,8 @@ pkmn:damageMultiplier a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:lab
 pkmn:trigger     a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "trigger"@en ; skos:definition "When an ability or item effect or a form change fires: switch_in, switch_out (holder leaves battle), on_attack (holder uses a move), on_hit (holder is hit), on_knock_out (holder knocks out a Pokémon with a move), low_hp, end_of_turn, passive. A form change with no trigger is either out of battle with a used item (formKind alternate) or activated by the player (formKind mega, ultra_burst, gigantamax or terastal)."@en .
 
 pkmn:method a owl:DatatypeProperty ; rdfs:range xsd:string ; rdfs:label "method"@en ; skos:definition "Learnset method (level, machine, egg, tutor, evolution, reminder (a move learned only through the Move Reminder), special (event and Wild Tera moves)) or encounter method (walk, surf, old-rod, headbutt, gift, ...)."@en .
-pkmn:level  a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:integer ; rdfs:label "level"@en .
+pkmn:level  a owl:DatatypeProperty ; rdfs:domain pkmn:LearnsetEntry ; rdfs:range xsd:integer ; rdfs:label "level"@en ;
+    skos:definition "The level at which a species learns the move of a level-up learnset entry."@en .
 
 #################################################################
 #  Abilities: effects
@@ -473,7 +505,12 @@ pkmn:triggeredBy a owl:ObjectProperty ;
     rdfs:label "triggeredBy"@en ;
     skos:definition "What activates an effect or form change: a move type, flag or damage class filters the move involved, and trigger gives the direction; a field condition fires it while active; an ability causes a form change. Edges to the same label mean any of them; edges to different labels must all match."@en .
 
-pkmn:hasOverworldEffect a owl:DatatypeProperty ; rdfs:domain pkmn:Ability ; rdfs:range xsd:boolean ; rdfs:label "hasOverworldEffect"@en .
+pkmn:isOverworld a owl:DatatypeProperty ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:MoveEffect pkmn:AbilityEffect ) ] ;
+    rdfs:range xsd:boolean ;
+    rdfs:label "isOverworld"@en ;
+    skos:definition "Whether the effect applies outside of battle in at least 1 main-series game (Cut clears small trees, Pickup finds items). Absent means a battle effect."@en ;
+    rdfs:comment "An effect node with isOverworld true may have no action edge; the owner's effect chunks say what it does. A move with a battle and an overworld effect has 1 node for each."@en .
 
 #################################################################
 #  Evolution and forms

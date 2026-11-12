@@ -124,7 +124,11 @@ The pkmn ontology models species and game mechanics. It holds no individual Poke
 
 ### Moves and learnsets
 
-- Move properties: `power`, `accuracy`, `pp`, `priority`, `target` (targeting code), `critStage`, `minHits`, `maxHits`, `effectText`.
+- Move properties: `power`, `accuracy`, `pp`, `priority`, `target` (targeting code), `critStage`, `minHits`, `maxHits`, `minTurns`, `maxTurns`, `isProtectable`, `isMirrorable`, `effectText`.
+- `priority` is the bracket from -7 to +5; a move with no priority in its source gets 0.
+- `target` holds 1 of 16 codes: any_adjacent, self, all_adjacent_foes, any, all_adjacent, entire_field, user_side, user_and_allies, random_foe, varies, all, foe_side, adjacent_ally, user_or_adjacent_ally, adjacent_foe, all_allies. The `rdfs:comment` of `target` lists them for the shapes.
+- `isProtectable` says whether Protect and the moves that work like it block the move; `isMirrorable` says whether Mirror Move can copy it. A move whose source gives no value has neither.
+- `minTurns` and `maxTurns` on a move are its own duration: the turns it keeps acting once used, with its user locked into it (Outrage 2 to 3, Rollout 5). A move that acts in 1 turn has neither. `minHits` and `maxHits` count the hits within 1 turn.
 - Move edges: `hasType`, `hasDamageClass`, `hasFlag`, `hasEffect`, `introducedIn`.
 - `LearnsetEntry` reifies 1 (species, move, version group, method, level) fact. It links `teachesMove`, `inVersionGroup` and, where relevant, `viaMachine` or `viaParent`. `method` is one of level, machine, egg, tutor, evolution, reminder, special.
 - `Machine` is 1 TM, HM or TR in 1 version group, with `machineKind`, `machineNumber`, `isReusable`, `teachesMove` and `inVersionGroup`.
@@ -145,6 +149,10 @@ Action edges say what the effect does:
 Filter edges say when it applies. `triggeredBy` points at a MoveFlag, MoveDamageClass, Type, FieldCondition or (from a FormChange) Ability. Edges to the same class mean any of them; edges to different classes must all match. `restrictedTo` limits an item effect to the listed species.
 
 Magnitudes are node properties: `probability`, `statStages`, `statMultiplier`, `powerMultiplier`, `damageMultiplier`, `hpChange` with `hpBasis` (max_hp, current_hp, damage_dealt), `hpThreshold`, `amount`.
+
+`isOverworld` marks a `MoveEffect` or `AbilityEffect` that applies outside of battle (Cut clears small trees, Pickup finds items). Such a node may have no action edge; the owner's effect chunks say what it does. A move with a battle and an overworld effect has 1 node for each. Absent means a battle effect.
+
+`isProtectable` on an `AbilityEffect` gives the value for the moves that pass the effect's filters: Unseen Fist has `isProtectable` false, `triggeredBy` contact and `trigger` on_attack.
 
 `target` names the recipient (self, ally, foe, field, move). `trigger` names the moment an ability effect, item effect or form change fires: switch_in, switch_out, on_attack, on_hit, on_knock_out, low_hp, end_of_turn, passive.
 
