@@ -5,9 +5,9 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 | File | Namespace | Content |
 | --- | --- | --- |
 | `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 20 object properties, 6 datatype properties |
-| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box. Imports the core. 37 classes, 47 object properties, 62 datatype properties |
-| `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 235 enumerable individuals in 19 classes |
-| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 20 rules, listed in [Shapes](#shapes) |
+| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.5.0. Imports the core. 37 classes, 47 object properties, 66 datatype properties |
+| `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 244 enumerable individuals in 19 classes |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 22 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -189,10 +189,11 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 | Node keys and edge typing | L2 node key pattern, T1 edge range and domain read from the T-Box |
 | Species | S1 dex number, S2 types, S3 female rate and growth rate, S4 EV amount |
 | Natures | N1 nature stat edges |
-| Moves and types | M1 one type and one damage class, K1 one effectiveness per type pair |
-| Items | C2 machine links |
+| Moves and types | M1 one type and one damage class, M2 move values (required `pp`, `priority`, `target` and `introducedIn`, value ranges, hit and turn counts in pairs, hit counts with the `multihit` flag), K1 one effectiveness per type pair |
+| Battle conditions | B1 `minTurns` and `maxTurns` together, at least 1, in order |
+| Items | C2 machine links, kind (TM, HM, TR) and number |
 | Meta and text | G1 version part of a version group, G2 version group part of a generation, X1 text chunk completeness, X2 `fromWork` by aspect |
-| Moves: flags, effects, learnset | C2 learnset entry, E1 effect values, X3 `effectText` owner |
+| Moves: flags, effects, learnset | C2 learnset entry, E1 effect values and booleans (`isOverworld`, `isProtectable`), X3 `effectText` owner |
 | Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role |
 | Encounters and locations | C1 encounter links, level order and chance |
 
