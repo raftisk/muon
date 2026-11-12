@@ -1,12 +1,14 @@
 """Fetch runs: which Bulbapedia pages to download, and the pins they leave behind.
 
-A run covers 1 page type and takes 1 of 3 paths:
+A run covers 1 page type and takes 1 of 4 paths:
 
 - pinned (the default): fetch the pinned revisions the cache lacks, so a fresh
   clone gets exactly the committed pages;
 - update (`--update`, and any run on a page type with no pins): list the category
   and move the pins to the latest revisions;
-- titles (`--title`): touch only the named pages.
+- titles (`--title`): touch only the named pages;
+- export (`--from-export`): pin every page of the page type found in an export
+  file, with no request.
 
 Page files are written per batch as they arrive, so a rerun after a failure
 fetches only what is missing. The manifest is written once, at the end of a run
@@ -17,8 +19,16 @@ import time
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import batched
+from pathlib import Path
 
-from muon.ingestion.bulbapedia.api import MAX_IDS_PER_REQUEST, BulbapediaClient, RevisionContent
+from muon.ingestion.bulbapedia.api import (
+    MAIN_NAMESPACE,
+    MAX_IDS_PER_REQUEST,
+    BulbapediaClient,
+    RevisionContent,
+    RevisionMeta,
+)
+from muon.ingestion.bulbapedia.export import ExportedPage, read_export_revisions
 from muon.ingestion.bulbapedia.pages import Manifest, Page, PagePin, PageStore
 
 
@@ -38,6 +48,7 @@ PAGE_TYPES: Mapping[str, PageType] = {
     "species": PageType(category="Category:Pokémon", title_suffix=" (Pokémon)"),
     "ability": PageType(category="Category:Abilities", title_suffix=" (Ability)"),
     "item": PageType(category="Category:Items"),
+    "move": PageType(category="Category:Moves", title_suffix=" (move)"),
 }
 
 
@@ -46,11 +57,13 @@ class FetchRequest:
     page_type: str
     titles: tuple[str, ...] = ()
     is_update: bool = False
+    export_path: Path | None = None
 
 
 @dataclass(frozen=True)
 class FetchReport:
-    """What 1 run did. `listed` counts the pages the run considered."""
+    """What 1 run did. `listed` counts the pages the run considered; `ignored` counts the
+    pages of an export that are outside the page type."""
 
     page_type: str
     listed: int
@@ -62,6 +75,7 @@ class FetchReport:
     redirects: tuple[tuple[str, str], ...]
     requests: int
     elapsed_seconds: float
+    ignored: int = 0
 
 
 @dataclass(frozen=True)
@@ -78,15 +92,20 @@ class FetchOutcome:
 
 
 class FetchError(Exception):
-    """A run that cannot proceed: an unknown page type, an empty category or a pin
-    whose revision the API describes differently."""
+    """A run that cannot proceed: an unknown page type, an empty category or export, or a
+    pin whose revision the API describes differently."""
+
+
+def find_page_type(page_type: str) -> PageType:
+    if page_type not in PAGE_TYPES:
+        known = ", ".join(sorted(PAGE_TYPES))
+        raise FetchError(f"Unknown page type {page_type!r}; known page types: {known}")
+    return PAGE_TYPES[page_type]
 
 
 def fetch_pages(request: FetchRequest, store: PageStore, client: BulbapediaClient) -> FetchReport:
     """Run `request`, write the manifest when the pins changed, and report."""
-    if request.page_type not in PAGE_TYPES:
-        known = ", ".join(sorted(PAGE_TYPES))
-        raise FetchError(f"Unknown page type {request.page_type!r}; known page types: {known}")
+    find_page_type(request.page_type)
     started = time.monotonic()
     requests_before = client.request_count
     manifest = store.read_manifest()
@@ -115,6 +134,66 @@ def fetch_pages(request: FetchRequest, store: PageStore, client: BulbapediaClien
     )
 
 
+def import_pages(request: FetchRequest, store: PageStore) -> FetchReport:
+    """The export run: pin every page of the page type that the export file holds.
+
+    The pins of the page type are replaced as an update run replaces them, and only the
+    page files that differ from their new pin are written. The run makes no request.
+    """
+    if request.export_path is None:
+        raise FetchError(f"An export run of {request.page_type!r} needs an export file")
+    definition = find_page_type(request.page_type)
+    started = time.monotonic()
+    exported = read_export_revisions(request.export_path)
+    revisions = [page.revision for page in exported if is_importable(page, definition)]
+    if not revisions:
+        raise FetchError(
+            f"{request.export_path} holds no page ending in {definition.title_suffix!r}"
+        )
+    manifest = store.read_manifest()
+    old_pins = {pin.title: pin for pin in manifest.list_pins(request.page_type)}
+    stale = [revision for revision in revisions if not store.is_current(build_pin(revision))]
+    store_revisions(request.page_type, stale, store)
+    pins = tuple(build_pin(revision) for revision in revisions)
+    updated = manifest.replace_pins(request.page_type, pins)
+    if updated != manifest:
+        store.write_manifest(updated)
+    store.delete_pages_except(updated.list_page_ids())
+    titles = {pin.title for pin in pins}
+    return FetchReport(
+        page_type=request.page_type,
+        listed=len(revisions),
+        fetched=len(stale),
+        skipped=len(revisions) - len(stale),
+        added=tuple(sorted(titles - old_pins.keys())),
+        changed=list_changed_titles(old_pins, pins),
+        removed=tuple(sorted(old_pins.keys() - titles)),
+        redirects=(),
+        requests=0,
+        elapsed_seconds=time.monotonic() - started,
+        ignored=len(exported) - len(revisions),
+    )
+
+
+def is_importable(page: ExportedPage, definition: PageType) -> bool:
+    """Whether an export page belongs to the page type: an article, not a redirect, with a
+    matching title."""
+    return (
+        page.namespace == MAIN_NAMESPACE
+        and not page.is_redirect
+        and definition.is_matching_title(page.revision.title)
+    )
+
+
+def build_pin(revision: RevisionMeta) -> PagePin:
+    return PagePin(
+        title=revision.title,
+        page_id=revision.page_id,
+        revision_id=revision.revision_id,
+        sha1=revision.sha1,
+    )
+
+
 def fetch_missing(
     page_type: str, pins: Sequence[PagePin], store: PageStore, client: BulbapediaClient
 ) -> FetchOutcome:
@@ -137,7 +216,7 @@ def update_pins(
     and their content is fetched only when the latest revision differs or the page
     file is stale. Pages never seen are fetched by title.
     """
-    definition = PAGE_TYPES[page_type]
+    definition = find_page_type(page_type)
     listed = [
         title
         for title in client.list_category_members(definition.category)
