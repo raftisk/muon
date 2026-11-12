@@ -1,24 +1,17 @@
 from tests.unit.shapes.games_fixtures import GENERATION_NODE, build_version_group
+from tests.unit.shapes.move_fixtures import build_move
 
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
 ICE = 'ex:ice a pkmn:Type ; pkmn:id "ice" .'
 SPECIAL = 'ex:special a pkmn:MoveDamageClass ; pkmn:id "special" .'
 GROUP = build_version_group("sv", "scarlet-violet")
-EARTHQUAKE = (
-    'ex:earthquake a pkmn:Move ; pkmn:id "earthquake" ; '
-    "pkmn:hasType ex:fire ; pkmn:hasDamageClass ex:special ."
-)
+EARTHQUAKE = build_move("earthquake")
 REFERENCES = FIRE + ICE + SPECIAL + GENERATION_NODE + GROUP + EARTHQUAKE
-
-
-def move(
-    extra: str = "pkmn:hasType ex:fire ;", damage_class: str = "pkmn:hasDamageClass ex:special ;"
-):
-    return f'ex:tackle a pkmn:Move ; pkmn:id "tackle" ; {extra} {damage_class} pkmn:pp 35 .'
+MOVE_REFERENCES = FIRE + ICE + SPECIAL + GENERATION_NODE
 
 
 def test_move_with_type_and_class_conforms(validate_fixture):
-    assert validate_fixture(FIRE + SPECIAL + move()).conforms
+    assert validate_fixture(MOVE_REFERENCES + build_move("tackle")).conforms
 
 
 def test_move_in_one_transaction_with_its_edges_conforms(validate_fixture):
@@ -26,16 +19,18 @@ def test_move_in_one_transaction_with_its_edges_conforms(validate_fixture):
 
 
 def test_move_with_two_types_fails(validate_fixture):
-    data = FIRE + ICE + SPECIAL + move("pkmn:hasType ex:fire , ex:ice ;")
+    data = MOVE_REFERENCES + build_move("tackle", extra="pkmn:hasType ex:ice")
     assert validate_fixture(data).rule_ids == {"M1"}
 
 
 def test_move_without_type_fails(validate_fixture):
-    assert validate_fixture(SPECIAL + move("")).rule_ids == {"M1"}
+    data = MOVE_REFERENCES + build_move("tackle", type_local_name=None)
+    assert validate_fixture(data).rule_ids == {"M1"}
 
 
 def test_move_without_damage_class_fails(validate_fixture):
-    assert validate_fixture(FIRE + move(damage_class="")).rule_ids == {"M1"}
+    data = MOVE_REFERENCES + build_move("tackle", damage_class_local_name=None)
+    assert validate_fixture(data).rule_ids == {"M1"}
 
 
 def test_name_only_move_fails(validate_fixture):

@@ -1,11 +1,9 @@
 from tests.unit.shapes.games_fixtures import GENERATION_NODE, build_version_group
+from tests.unit.shapes.move_fixtures import build_move
 
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
 SPECIAL = 'ex:special a pkmn:MoveDamageClass ; pkmn:id "special" .'
-FLAMETHROWER = (
-    'ex:flamethrower a pkmn:Move ; pkmn:id "flamethrower" ; '
-    "pkmn:hasType ex:fire ; pkmn:hasDamageClass ex:special ."
-)
+FLAMETHROWER = build_move("flamethrower")
 
 
 def test_valid_slug_conforms(validate_fixture):
@@ -42,11 +40,11 @@ def test_two_ids_fail(validate_fixture):
 
 
 def test_edge_to_range_class_conforms(validate_fixture):
-    assert validate_fixture(FIRE + SPECIAL + FLAMETHROWER).conforms
+    assert validate_fixture(FIRE + SPECIAL + GENERATION_NODE + FLAMETHROWER).conforms
 
 
 def test_edge_to_wrong_class_fails_range(validate_fixture):
-    data = SPECIAL + FLAMETHROWER + 'ex:fire a pkmn:Ability ; pkmn:id "fire" .'
+    data = SPECIAL + GENERATION_NODE + FLAMETHROWER + 'ex:fire a pkmn:Ability ; pkmn:id "fire" .'
     report = validate_fixture(data)
     assert "T1" in report.rule_ids
     assert any("hasType" in message for message in report.messages)
