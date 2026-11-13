@@ -13,7 +13,7 @@ the pkmn universe, as every ingestion module of a source does.
 """
 
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -225,6 +225,153 @@ MACHINE_FIELDS: Mapping[str, MachineField] = {
 }
 
 
+FLAG_FIELDS: Mapping[str, str] = {
+    "touches": "contact",
+    "sound": "sound",
+    "magiccoat": "reflectable",
+    "snatch": "snatchable",
+}
+
+FLAG_CATEGORIES: Mapping[str, str] = {
+    "Punching moves": "punch",
+    "Biting moves": "bite",
+    "Ball and bomb moves": "ballistic",
+    "Powder and spore moves": "powder",
+    "Pulse moves": "pulse",
+    "Wind moves": "wind",
+    "Slicing moves": "slicing",
+    "Dance moves": "dance",
+    "Moves that switch the user out": "pivot",
+    "Multistrike moves": "multihit",
+    "One-hit knockout moves": "ohko",
+    "Moves with a charging turn": "two-turn",
+    "Moves with a semi-invulnerable turn": "two-turn",
+    "Moves that have recoil": "recoil",
+    "HP-draining moves": "drain",
+    "Status moves that heal the user immediately": "healing",
+}
+
+MULTISTRIKE_CATEGORY = "Multistrike moves"
+
+
+@dataclass(frozen=True)
+class FlagOverride:
+    added: frozenset[str] = frozenset()
+    removed: frozenset[str] = frozenset()
+
+
+TWO_TURN = FlagOverride(added=frozenset({"two-turn"}))
+HEALING = FlagOverride(added=frozenset({"healing"}))
+EXPLOSIVE = FlagOverride(added=frozenset({"explosive"}))
+
+FLAG_OVERRIDES: Mapping[str, FlagOverride] = {
+    "dig": TWO_TURN,  # Underground on the 1st turn, attacks on the 2nd
+    "dive": TWO_TURN,  # Submerged on the 1st turn, attacks on the 2nd
+    "sky-attack": TWO_TURN,  # Charging status on the 1st turn
+    "freeze-shock": TWO_TURN,  # Charging status, skipped with a Power Herb
+    "ice-burn": TWO_TURN,  # Charging status, skipped with a Power Herb
+    "dark-void": FlagOverride(removed=frozenset({"drain"})),  # puts foes to sleep, drains no HP
+    "floral-healing": HEALING,  # restores 1/2 of the target's maximum HP
+    "heal-pulse": HEALING,  # restores 50% of the target's maximum HP
+    "jungle-healing": HEALING,  # restores 25% to the user and its allies
+    "life-dew": HEALING,  # restores 25% to the user and its allies
+    "swallow": HEALING,  # restores HP by the Stockpile count
+    "wish": HEALING,  # heals the Pokémon in the user's position at the end of next turn
+    "healing-wish": HEALING,  # restores the HP of the Pokémon sent out next
+    "lunar-dance": HEALING,  # restores the HP and PP of the Pokémon sent out next
+    "explosion": EXPLOSIVE,  # cannot be used while a Pokémon with Damp is on the field
+    "self-destruct": EXPLOSIVE,  # cannot be used while a Pokémon with Damp is on the field
+    "misty-explosion": EXPLOSIVE,  # fails while a Pokémon with Damp is on the field
+    "mind-blown": EXPLOSIVE,  # cannot be used while a Pokémon with Damp is on the field
+}
+
+HIGH_CRIT_STAGE = 1
+PERFECT_CRIT_STAGE = 3
+
+CRIT_CATEGORIES: Mapping[str, int] = {
+    "Moves with a high critical-hit ratio": HIGH_CRIT_STAGE,
+    "Moves with a perfect critical hit chance": PERFECT_CRIT_STAGE,
+}
+
+CRIT_OVERRIDES: Mapping[str, int | None] = {
+    "aeroblast": HIGH_CRIT_STAGE,  # "has an increased critical hit ratio"
+    "attack-order": HIGH_CRIT_STAGE,  # "has an increased critical hit ratio"
+    "cross-chop": HIGH_CRIT_STAGE,  # "has an increased critical hit ratio"
+    "leaf-blade": HIGH_CRIT_STAGE,  # "has an increased critical hit ratio"
+    "spacial-rend": HIGH_CRIT_STAGE,  # increased ratio, unchanged from Generation VIII on
+    "stone-edge": HIGH_CRIT_STAGE,  # "has an increased critical hit ratio"
+    "frost-breath": PERFECT_CRIT_STAGE,  # "will always result in a critical hit if possible"
+    "storm-throw": PERFECT_CRIT_STAGE,  # "will always result in a critical hit if possible"
+    "dragon-claw": None,  # "has no secondary effect"
+    "plasma-fists": None,  # the Effect section names no critical-hit effect
+    "zippy-zap": None,  # from Generation VIII raises evasion instead of a sure critical hit
+    "dire-claw": None,  # Scarlet/Violet: "does not have an increased critical-hit ratio"
+}
+
+TWO_TO_FIVE = (2, 5)
+TWICE = (2, 2)
+THREE_TIMES = (3, 3)
+
+MOVE_HITS: Mapping[str, tuple[int, int]] = {
+    "arm-thrust": TWO_TO_FIVE,  # "2-5 times per use"
+    "barrage": TWO_TO_FIVE,  # "2-5 times per use"
+    "beat-up": (1, 6),  # 1 strike per healthy party member, the user included
+    "bone-rush": TWO_TO_FIVE,  # "2-5 times per use"
+    "bonemerang": TWICE,  # "hitting the target twice per use"
+    "bullet-seed": TWO_TO_FIVE,  # "2-5 times per use"
+    "comet-punch": TWO_TO_FIVE,  # "2-5 times per use"
+    "double-hit": TWICE,  # "hitting twice per use"
+    "double-iron-bash": TWICE,  # "hitting the target twice per use"
+    "double-kick": TWICE,  # "hitting the target twice per use"
+    "double-slap": TWO_TO_FIVE,  # "2-5 times per use"
+    "dragon-darts": TWICE,  # "deals damage twice"
+    "dual-chop": TWICE,  # "hitting twice per use"
+    "dual-wingbeat": TWICE,  # "hitting twice per use"
+    "fury-attack": TWO_TO_FIVE,  # "2-5 times per use"
+    "fury-swipes": TWO_TO_FIVE,  # "2-5 times per use"
+    "gear-grind": TWICE,  # "hitting twice per use"
+    "icicle-spear": TWO_TO_FIVE,  # "2-5 times per use"
+    "pin-missile": TWO_TO_FIVE,  # "2-5 times per use"
+    "population-bomb": (1, 10),  # up to 10, each strike checks accuracy and a miss ends it
+    "rock-blast": TWO_TO_FIVE,  # "2-5 times per use"
+    "scale-shot": TWO_TO_FIVE,  # "2-5 times per use"
+    "spike-cannon": TWO_TO_FIVE,  # "2-5 times per use"
+    "surging-strikes": THREE_TIMES,  # "hitting its target three times per use"
+    "tachyon-cutter": TWICE,  # "hitting twice per use"
+    "tail-slap": TWO_TO_FIVE,  # "2-5 times per use"
+    "triple-axel": (1, 3),  # up to 3, each strike checks accuracy and a miss ends it
+    "triple-dive": THREE_TIMES,  # "hitting the target three times per use"
+    "triple-kick": (1, 3),  # up to 3, each strike checks accuracy and a miss ends it
+    "twin-beam": TWICE,  # "hitting twice per use"
+    "twineedle": TWICE,  # "hitting the target twice per use"
+    "water-shuriken": TWO_TO_FIVE,  # "2-5 times per use"
+}
+
+RAMPAGE = (2, 3)
+ROLLING = (5, 5)
+
+MOVE_TURNS: Mapping[str, tuple[int, int]] = {
+    "uproar": (3, 3),  # Generation V on: "exactly 3 turns"
+    "thrash": RAMPAGE,  # Rampaging "for 2-3 turns"
+    "petal-dance": RAMPAGE,  # Rampaging "for 2-3 turns"
+    "outrage": RAMPAGE,  # Rampaging "for 2-3 turns"
+    "raging-fury": RAMPAGE,  # Rampaging "for 2-3 turns"
+    "rollout": ROLLING,  # "inflicts damage over five turns"
+    "ice-ball": ROLLING,  # "inflicts damage over five turns"
+}
+
+PARSER_TABLES: Mapping[str, Mapping[str, object]] = {
+    "FLAG_OVERRIDES": FLAG_OVERRIDES,
+    "CRIT_OVERRIDES": CRIT_OVERRIDES,
+    "MOVE_HITS": MOVE_HITS,
+    "MOVE_TURNS": MOVE_TURNS,
+}
+
+
+class TableError(Exception):
+    """A parser table disagrees with the pinned pages."""
+
+
 @dataclass(frozen=True)
 class NumberReading:
     value: int | None
@@ -320,6 +467,79 @@ def read_boolean(infobox: Mapping[str, str], key: str) -> tuple[bool | None, tup
     return None, (MoveNote(kind=MoveNoteKind.MISSING_BOOLEAN, field=key, detail=detail),)
 
 
+def read_flags(
+    infobox: Mapping[str, str], categories: frozenset[str], move_id: str
+) -> tuple[frozenset[str], tuple[MoveNote, ...]]:
+    """Return the flag ids from the infobox fields and the categories, then `FLAG_OVERRIDES`."""
+    from_fields = {
+        flag
+        for key, flag in FLAG_FIELDS.items()
+        if infobox.get(key, "").strip().lower() in YES_VALUES
+    }
+    from_categories = {flag for category, flag in FLAG_CATEGORIES.items() if category in categories}
+    flags = frozenset(from_fields | from_categories)
+    override = FLAG_OVERRIDES.get(move_id)
+    if override is None:
+        return flags, ()
+    detail = f"added {sorted(override.added)}, removed {sorted(override.removed)}"
+    note = MoveNote(kind=MoveNoteKind.OVERRIDE_APPLIED, field="flags", detail=detail)
+    return (flags | override.added) - override.removed, (note,)
+
+
+def read_crit_stage(
+    categories: frozenset[str], move_id: str
+) -> tuple[int | None, tuple[MoveNote, ...]]:
+    """Return the stage of the crit categories, or the `CRIT_OVERRIDES` row of the move."""
+    stages = [stage for category, stage in CRIT_CATEGORIES.items() if category in categories]
+    stage = max(stages) if stages else None
+    if move_id not in CRIT_OVERRIDES:
+        return stage, ()
+    override = CRIT_OVERRIDES[move_id]
+    detail = f"{stage} to {override}"
+    return override, (
+        MoveNote(kind=MoveNoteKind.OVERRIDE_APPLIED, field="crit_stage", detail=detail),
+    )
+
+
+def read_range(table: Mapping[str, tuple[int, int]], move_id: str) -> tuple[int | None, int | None]:
+    low_high = table.get(move_id)
+    if low_high is None:
+        return None, None
+    return low_high
+
+
+def build_table_note(
+    table_name: str, table: Mapping[str, tuple[int, int]], move_id: str
+) -> tuple[MoveNote, ...]:
+    if move_id not in table:
+        return ()
+    low, high = table[move_id]
+    detail = f"{table_name} {low} to {high}"
+    return (MoveNote(kind=MoveNoteKind.TABLE_ROW_APPLIED, field=table_name, detail=detail),)
+
+
+def check_tables(extracts: Iterable[MovePageExtract]) -> None:
+    """Fail when a table row names no in-scope move, or `MOVE_HITS` misses a multistrike move."""
+    in_scope = list(extracts)
+    move_ids = {extract.id for extract in in_scope}
+    problems = [
+        f"{table_name} names {move_id}, which is no in-scope move"
+        for table_name, table in PARSER_TABLES.items()
+        for move_id in sorted(set(table) - move_ids)
+    ]
+    multistrike = {extract.id for extract in in_scope if MULTISTRIKE_CATEGORY in extract.categories}
+    problems.extend(
+        f"MOVE_HITS lacks {move_id}, a member of {MULTISTRIKE_CATEGORY!r}"
+        for move_id in sorted(multistrike - set(MOVE_HITS))
+    )
+    problems.extend(
+        f"MOVE_HITS names {move_id}, which is not in {MULTISTRIKE_CATEGORY!r}"
+        for move_id in sorted((set(MOVE_HITS) & move_ids) - multistrike)
+    )
+    if problems:
+        raise TableError("; ".join(problems))
+
+
 def build_number_key(field: str) -> str:
     """Return the number field of a machine field: `tm4` gives `tm#4`, `hmrse` gives `hm#rse`."""
     return field[:MACHINE_KIND_LENGTH] + MACHINE_NUMBER_MARK + field[MACHINE_KIND_LENGTH:]
@@ -381,11 +601,16 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
     is_mirrorable, mirror_notes = read_boolean(infobox, MIRROR_MOVE_KEY)
     machines, machine_notes = read_machines(page.title, infobox)
     numeral = read_required(page.title, infobox, GENERATION_KEY)
+    move_id = build_node_id(name)
+    flags, flag_notes = read_flags(infobox, categories, move_id)
+    crit_stage, crit_notes = read_crit_stage(categories, move_id)
+    min_hits, max_hits = read_range(MOVE_HITS, move_id)
+    min_turns, max_turns = read_range(MOVE_TURNS, move_id)
     return MovePageExtract(
         title=page.title,
         page_id=page.page_id,
         revision_id=page.revision_id,
-        id=build_node_id(name),
+        id=move_id,
         name=name,
         type_name=read_required(page.title, infobox, TYPE_KEY),
         damage_class_name=read_required(page.title, infobox, DAMAGE_CLASS_KEY),
@@ -399,6 +624,12 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
         is_mirrorable=is_mirrorable,
         aliases=read_aliases(split_sections(page.wikitext), infobox, name, MOVE_ALIAS_RULES),
         categories=tuple(sorted(categories)),
+        flags=tuple(sorted(flags)),
+        crit_stage=crit_stage,
+        min_hits=min_hits,
+        max_hits=max_hits,
+        min_turns=min_turns,
+        max_turns=max_turns,
         machines=machines,
         notes=(
             *readings[POWER_KEY].notes,
@@ -408,5 +639,9 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
             *protect_notes,
             *mirror_notes,
             *machine_notes,
+            *flag_notes,
+            *crit_notes,
+            *build_table_note("MOVE_HITS", MOVE_HITS, move_id),
+            *build_table_note("MOVE_TURNS", MOVE_TURNS, move_id),
         ),
     )
