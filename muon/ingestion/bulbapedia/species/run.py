@@ -23,6 +23,12 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from muon.ingestion.batch import GraphBatch, NodeRef
+from muon.ingestion.bulbapedia.batching import (
+    UNIVERSE,
+    AboxIndex,
+    BatchBuildError,
+    build_abox_index,
+)
 from muon.ingestion.bulbapedia.pages import (
     DEFAULT_ROOT,
     Page,
@@ -34,15 +40,11 @@ from muon.ingestion.bulbapedia.species.batches import (
     ASPECT,
     CONDITION,
     POKEMON_SPECIES,
-    UNIVERSE,
-    AboxIndex,
-    BatchBuildError,
     ChunkBuild,
     ChunkBuildError,
     ChunkInputs,
     EvolutionBuild,
     SpeciesIndex,
-    build_abox_index,
     build_change_id,
     build_chunk_batch,
     build_evolution_batch,

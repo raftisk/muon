@@ -20,6 +20,13 @@ from muon.ingestion.batch import (
     NodeRecord,
     NodeRef,
 )
+from muon.ingestion.bulbapedia.batching import (
+    HAS_TYPE,
+    TYPE,
+    AboxIndex,
+    build_abox_index,
+    build_owner_claims,
+)
 from muon.ingestion.bulbapedia.pages import Page
 from muon.ingestion.bulbapedia.species.batches import (
     CAN_LEARN,
@@ -28,19 +35,14 @@ from muon.ingestion.bulbapedia.species.batches import (
     EVOLVES_TO,
     FROM_WORK,
     HAS_LEARNSET_ENTRY,
-    HAS_TYPE,
     MENTIONED_IN,
     SLOT,
     TEXT,
     TEXT_CHUNK,
-    TYPE,
-    AboxIndex,
     ChunkInputs,
     SpeciesIndex,
-    build_abox_index,
     build_chunk_batch,
     build_evolution_batch,
-    build_owner_claims,
     build_species_batch,
     build_species_index,
     hash_chunk_text,

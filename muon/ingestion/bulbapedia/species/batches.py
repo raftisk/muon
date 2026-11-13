@@ -30,14 +30,45 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from muon.ingestion.batch import (
-    ClaimDirection,
-    EdgeClaim,
     EdgeRecord,
     GraphBatch,
     NodeRecord,
-    NodeRef,
     PropertyValue,
     build_node_id,
+)
+from muon.ingestion.bulbapedia.batching import (
+    ALIASES,
+    CORE,
+    GENERATION,
+    GENERATION_LABEL,
+    HAS_TYPE,
+    IN,
+    IN_VERSION_GROUP,
+    INTRODUCED_IN,
+    MACHINE,
+    MOVE,
+    OUT,
+    PKMN,
+    TEACHES_MOVE,
+    TYPE,
+    VERSION_GROUP,
+    AboxIndex,
+    AboxMissError,
+    BatchBuildError,
+    ClaimRule,
+    Parts,
+    assemble_batch,
+    build_claims,
+    build_edge,
+    build_machine_id,
+    build_owner_claims,
+    build_stub,
+    drop_none,
+    join_parts,
+    list_owner_records,
+    require_abox,
+    resolve_abox,
+    to_roman,
 )
 from muon.ingestion.bulbapedia.species.evolution import EVOLUTION_PATH
 from muon.ingestion.bulbapedia.species.extract import (
@@ -62,37 +93,23 @@ from muon.ingestion.bulbapedia.species.page import INFOBOX_LABEL
 from muon.ingestion.bulbapedia.wikitext import PATH_SEPARATOR
 from muon.ontology.model import extract_local_name
 
-UNIVERSE = "pkmn"
-PKMN = "https://muon.dev/ns/pkmn#"
-CORE = "https://muon.dev/ns/core#"
-
 POKEMON_SPECIES = PKMN + "PokemonSpecies"
 LEARNSET_ENTRY = PKMN + "LearnsetEntry"
 FORM_CHANGE = PKMN + "FormChange"
 EVOLUTION = PKMN + "Evolution"
-TYPE = PKMN + "Type"
 EGG_GROUP = PKMN + "EggGroup"
 STAT = PKMN + "Stat"
-GENERATION = PKMN + "Generation"
-VERSION_GROUP = PKMN + "VersionGroup"
 ABILITY = PKMN + "Ability"
-MOVE = PKMN + "Move"
-MACHINE = PKMN + "Machine"
 HELD_ITEM = PKMN + "HeldItem"
 ITEM = PKMN + "Item"
-REGION = CORE + "Region"
 TEXT_CHUNK = CORE + "TextChunk"
 VERSION = PKMN + "Version"
 
-HAS_TYPE = PKMN + "hasType"
 HAS_ABILITY = PKMN + "hasAbility"
 IN_EGG_GROUP = PKMN + "inEggGroup"
 YIELDS_EV = PKMN + "yieldsEv"
 HAS_FORM = PKMN + "hasForm"
-INTRODUCED_IN = PKMN + "introducedIn"
 HAS_LEARNSET_ENTRY = PKMN + "hasLearnsetEntry"
-TEACHES_MOVE = PKMN + "teachesMove"
-IN_VERSION_GROUP = PKMN + "inVersionGroup"
 VIA_MACHINE = PKMN + "viaMachine"
 CAN_LEARN = PKMN + "canLearn"
 FROM_SPECIES = PKMN + "fromSpecies"
@@ -126,7 +143,6 @@ BASE_DEFENSE = PKMN + "baseDefense"
 BASE_SP_ATTACK = PKMN + "baseSpAttack"
 BASE_SP_DEFENSE = PKMN + "baseSpDefense"
 BASE_SPEED = PKMN + "baseSpeed"
-ALIASES = CORE + "aliases"
 METHOD = PKMN + "method"
 LEVEL = PKMN + "level"
 FORM_KIND = PKMN + "formKind"
@@ -161,8 +177,7 @@ MENTION_NOUNS: Mapping[str, str] = {
 }
 ROW_DROPPED_SUFFIX = "; row dropped"
 SNAPSHOT_VERSION_GROUP = "Scarlet-Violet"
-GENERATION_LABEL = "Generation {numeral}"
-ROMAN_NUMERALS = ((10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"))
+MACHINE_KIND_LENGTH = 2  # TM, HM and TR
 
 SLOT = "slot"
 IS_HIDDEN = "isHidden"
@@ -193,19 +208,6 @@ INFOBOX_SECTION = INFOBOX_LABEL
 LEARNSET_SECTION = PATH_SEPARATOR.join(LEARNSET_PATH)
 EVOLUTION_SECTION = PATH_SEPARATOR.join(EVOLUTION_PATH)
 
-
-@dataclass(frozen=True)
-class ClaimRule:
-    """An edge pattern that a batch claims at every anchor of a class."""
-
-    property_iri: str
-    direction: ClaimDirection
-    other_class_iri: str | None
-    owns_other_end: bool
-
-
-OUT = ClaimDirection.OUT
-IN = ClaimDirection.IN
 
 SPECIES_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
     POKEMON_SPECIES: (
@@ -238,38 +240,12 @@ CHUNK_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
 }
 
 
-class BatchBuildError(Exception):
-    """A page names something the A-Box lacks. The message names all 4 fields."""
-
-    def __init__(self, page_title: str, section_path: str, field: str, value: str) -> None:
-        super().__init__(f"{page_title}: no A-Box node for {field} in {section_path}: {value!r}")
-        self.page_title = page_title
-        self.section_path = section_path
-        self.field = field
-        self.value = value
-
-
-@dataclass(frozen=True)
-class AboxIndex:
-    """The ids of the hand-written A-Box nodes by class and label, and the generation of
-    each region."""
-
-    ids: Mapping[tuple[str, str], str]
-    region_generations: Mapping[str, str]
-
-
 @dataclass(frozen=True)
 class SpeciesIndex:
     """Every species node id of a run with its name, and each base species' id by name."""
 
     names: Mapping[str, str]
     ids_by_name: Mapping[str, str]
-
-
-@dataclass(frozen=True)
-class Parts:
-    nodes: tuple[NodeRecord, ...] = ()
-    edges: tuple[EdgeRecord, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -290,48 +266,6 @@ class EvolutionBuild:
     notes: tuple[PageNote, ...]
     structured: int
     total: int
-
-
-class AboxMissError(Exception):
-    def __init__(self, class_iri: str, label: str) -> None:
-        super().__init__(f"No A-Box node of class {class_iri} labelled {label!r}")
-        self.class_iri = class_iri
-        self.label = label
-
-
-def build_abox_index(abox: GraphBatch) -> AboxIndex:
-    """Index the nodes of `read_abox()` by (class, label) and map each region to the label
-    of the generation its `introducedIn` edge names."""
-    ids = {(node.class_iri, node.name): node.id for node in abox.nodes}
-    names = {node.node_ref: node.name for node in abox.nodes}
-    region_generations = {
-        names[edge.start]: names[edge.end]
-        for edge in abox.edges
-        if edge.property_iri == INTRODUCED_IN
-        and edge.start.class_iri == REGION
-        and edge.end.class_iri == GENERATION
-    }
-    return AboxIndex(ids=ids, region_generations=region_generations)
-
-
-def resolve_abox(index: AboxIndex, class_iri: str, label: str) -> NodeRecord:
-    """Return the stub record of an A-Box node. It carries the A-Box id and name."""
-    node_id = index.ids.get((class_iri, label))
-    if node_id is None:
-        raise AboxMissError(class_iri, label)
-    return NodeRecord(class_iri=class_iri, id=node_id, name=label)
-
-
-def require_abox(
-    context: PageContext, class_iri: str, label: str, location: tuple[str, str]
-) -> NodeRecord:
-    """Resolve an A-Box node for a page; a miss fails the page. `location` is the section
-    path and the field that named it."""
-    try:
-        return resolve_abox(context.abox, class_iri, label)
-    except AboxMissError as error:
-        section_path, field_name = location
-        raise BatchBuildError(context.page_title, section_path, field_name, label) from error
 
 
 def build_species_index(extracts: Iterable[SpeciesPageExtract]) -> SpeciesIndex:
@@ -362,14 +296,6 @@ def resolve_species(index: SpeciesIndex, ref: SpeciesRef) -> tuple[str, bool] | 
     return base_id, True
 
 
-def to_roman(number: int) -> str:
-    numeral = ""
-    for value, symbol in ROMAN_NUMERALS:
-        count, number = divmod(number, value)
-        numeral += symbol * count
-    return numeral
-
-
 def build_entry_id(species_id: str, move_id: str, method: LearnMethod, level: int | None) -> str:
     """Return `{species}:{move}:{method}[:{level}]:scarlet-violet`; only level rows have a level."""
     parts = [species_id, move_id, method.value]
@@ -389,7 +315,8 @@ def build_entry_name(
 
 def build_machine_stub(tm_number: str) -> NodeRecord:
     """Return the Machine stub of a TM number: id `tm149-scarlet-violet`, name `TM149`."""
-    machine_id = f"{tm_number.lower()}-{build_node_id(SNAPSHOT_VERSION_GROUP)}"
+    kind, number_text = tm_number[:MACHINE_KIND_LENGTH], tm_number[MACHINE_KIND_LENGTH:]
+    machine_id = build_machine_id(kind, number_text, build_node_id(SNAPSHOT_VERSION_GROUP))
     return NodeRecord(class_iri=MACHINE, id=machine_id, name=tm_number)
 
 
@@ -399,29 +326,6 @@ def build_change_id(from_id: str, to_id: str) -> str:
 
 def build_change_name(from_name: str, to_name: str) -> str:
     return f"{from_name} to {to_name}"
-
-
-def build_stub(class_iri: str, name: str) -> NodeRecord:
-    """Return a stub for a node another page owns: id from the name, name as shown."""
-    return NodeRecord(class_iri=class_iri, id=build_node_id(name), name=name)
-
-
-def build_edge(
-    property_iri: str,
-    start: NodeRecord,
-    end: NodeRecord,
-    properties: Mapping[str, PropertyValue] | None = None,
-) -> EdgeRecord:
-    return EdgeRecord(
-        property_iri=property_iri,
-        start=start.node_ref,
-        end=end.node_ref,
-        properties=properties or {},
-    )
-
-
-def drop_none(values: Mapping[str, PropertyValue | None]) -> dict[str, PropertyValue]:
-    return {key: value for key, value in values.items() if value is not None}
 
 
 def read_base_stat_values(stats: BaseStats) -> dict[str, PropertyValue]:
@@ -580,76 +484,6 @@ def build_form_change_parts(change: FormChangeFact, records: Mapping[str, NodeRe
             build_edge(TO_SPECIES, record, target),
             build_edge(REQUIRES, record, item, {ROLE: HOLD_ROLE}),
         ),
-    )
-
-
-def join_parts(parts: Iterable[Parts]) -> Parts:
-    collected = list(parts)
-    return Parts(
-        nodes=tuple(node for part in collected for node in part.nodes),
-        edges=tuple(edge for part in collected for edge in part.edges),
-    )
-
-
-def build_claims(anchors: Iterable[NodeRef], rules: Sequence[ClaimRule]) -> tuple[EdgeClaim, ...]:
-    """Return every rule as a claim at every anchor, anchor by anchor."""
-    return tuple(
-        EdgeClaim(
-            anchor=anchor,
-            property_iri=rule.property_iri,
-            direction=rule.direction,
-            other_class_iri=rule.other_class_iri,
-            owns_other_end=rule.owns_other_end,
-        )
-        for anchor in anchors
-        for rule in rules
-    )
-
-
-def build_owner_claims(
-    nodes: Iterable[NodeRecord], rules_by_class: Mapping[str, tuple[ClaimRule, ...]]
-) -> tuple[EdgeClaim, ...]:
-    """Claim, at each owner record, the rules of its class. A class with no rules claims nothing."""
-    return tuple(
-        claim
-        for node in nodes
-        for claim in build_claims([node.node_ref], rules_by_class.get(node.class_iri, ()))
-    )
-
-
-def list_owner_records(parts: Parts, scope: frozenset[str]) -> list[NodeRecord]:
-    return [node for node in parts.nodes if node.class_iri in scope]
-
-
-def assemble_batch(
-    scope: frozenset[str], parts: Parts, claims: Iterable[EdgeClaim] = ()
-) -> GraphBatch:
-    """Build a sorted batch. A node or edge repeated across parts is kept once, and an owner
-    record wins over a stub of the same key. A repeated claim is kept once."""
-    nodes: dict[NodeRef, NodeRecord] = {}
-    for node in parts.nodes:
-        kept = nodes.get(node.node_ref)
-        if kept is None or (node.class_iri in scope and kept.class_iri not in scope):
-            nodes[node.node_ref] = node
-    edges = {(e.property_iri, e.start, e.end): e for e in reversed(parts.edges)}
-    claims_by_key = {claim.sort_key: claim for claim in reversed(tuple(claims))}
-    return GraphBatch(
-        universe=UNIVERSE,
-        scope=scope,
-        nodes=tuple(sorted(nodes.values(), key=lambda node: (node.class_iri, node.id))),
-        edges=tuple(
-            sorted(
-                edges.values(),
-                key=lambda e: (
-                    e.property_iri,
-                    e.start.class_iri,
-                    e.start.id,
-                    e.end.class_iri,
-                    e.end.id,
-                ),
-            )
-        ),
-        claims=tuple(claims_by_key[key] for key in sorted(claims_by_key)),
     )
 
 

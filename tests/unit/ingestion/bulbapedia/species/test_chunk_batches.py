@@ -3,6 +3,12 @@ from pathlib import Path
 import pytest
 
 from muon.ingestion.batch import NODE_ID_PATTERN, EdgeRecord, GraphBatch, NodeRecord
+from muon.ingestion.bulbapedia.batching import (
+    MOVE,
+    TYPE,
+    AboxIndex,
+    build_abox_index,
+)
 from muon.ingestion.bulbapedia.species.batches import (
     ABILITY,
     ASPECT,
@@ -10,21 +16,17 @@ from muon.ingestion.bulbapedia.species.batches import (
     DESCRIBES,
     FROM_WORK,
     MENTIONED_IN,
-    MOVE,
     POKEMON_SPECIES,
     SECTION,
     SOURCE,
     SOURCE_URL,
     TEXT,
     TEXT_CHUNK,
-    TYPE,
     VERSION,
-    AboxIndex,
     ChunkBuild,
     ChunkBuildError,
     ChunkInputs,
     SpeciesIndex,
-    build_abox_index,
     build_chunk_batch,
     hash_chunk_text,
     number_chunks,
