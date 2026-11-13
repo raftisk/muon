@@ -20,13 +20,10 @@ from muon.ingestion.bulbapedia.species.page import (
     parse_generation_range,
     parse_species_page,
     read_abilities,
-    read_aliases,
     read_base_stats,
-    read_categories,
     read_form_facts,
     read_genus,
     read_infobox,
-    split_top_level,
 )
 from muon.ingestion.bulbapedia.wikitext import split_sections
 
@@ -118,12 +115,6 @@ def test_read_infobox_returns_none_without_the_template() -> None:
     lead = split_sections("{{New Pokémon Infobox|name=Browt}}")[0]
 
     assert read_infobox(lead) is None
-
-
-def test_read_categories() -> None:
-    wikitext = "[[Category:Legendary Pokémon]]\n[[category: Mythical Pokémon |x]]\n[[Mew]]"
-
-    assert read_categories(wikitext) == {"Legendary Pokémon", "Mythical Pokémon"}
 
 
 def test_species_values_come_from_the_infobox() -> None:
@@ -758,64 +749,6 @@ text
 """
 
 
-def test_aliases_follow_the_template_then_jname_and_tmname() -> None:
-    sections = split_sections(LANGUAGES_PAGE)
-    infobox = {"jname": "ディグダ", "tmname": "Digda"}
-
-    aliases = read_aliases(sections, infobox, "Testmon")
-
-    assert aliases == (
-        "ディグダ",
-        "Digda",
-        "Taupiqueur",
-        "地鼠",
-        "Dìshǔ",
-        "Диглетт",
-        "Diglett",
-        "Глетт",
-    )
-
-
-def test_aliases_drop_the_english_name_and_repeats() -> None:
-    sections = split_sections(
-        "==In other languages==\n{{Other languages|es=Testmon|it=Testmon|fr=A|de=A}}"
-    )
-
-    assert read_aliases(sections, {"jname": "A", "tmname": "Testmon"}, "Testmon") == ("A",)
-
-
-def test_aliases_survive_an_unclosed_italic_that_swallows_the_next_parameters() -> None:
-    wikitext = (
-        "==In other languages==\n"
-        "{{Other languages|ko=다태우지네 ''Datae-ujine|komeaning=From ''da'' (all)\n"
-        "|zh_cmn=焚焰蚣 ''Fényàngōng''|zh_cmnmeaning=x}}"
-    )
-
-    aliases = read_aliases(split_sections(wikitext), {}, "Testmon")
-
-    assert aliases == ("다태우지네", "Datae-ujine", "焚焰蚣", "Fényàngōng")
-
-
-def test_aliases_clean_templates_inside_romanizations_and_stray_quotes() -> None:
-    wikitext = (
-        "==In other languages==\n"
-        "{{Other languages|ko=파이리 ''{{tt|Fairi<!--c-->|Romanized as Fairit}}''"
-        "|ru=Аэродактиль ''Aerodaktil'''}}"
-    )
-
-    aliases = read_aliases(split_sections(wikitext), {}, "Testmon")
-
-    assert aliases == ("파이리", "Fairi", "Аэродактиль", "Aerodaktil")
-
-
-def test_aliases_without_the_section_come_from_the_infobox_only() -> None:
-    aliases = read_aliases(
-        split_sections("lead"), {"jname": "ケンタロス", "tmname": "Kentauros"}, "Tauros"
-    )
-
-    assert aliases == ("ケンタロス", "Kentauros")
-
-
 def test_aliases_belong_to_the_base_node_only() -> None:
     wikitext = DEFAULT_STATS_PAGE + LANGUAGES_PAGE
     infobox = {**FORM_INFOBOX, "jname": "ディグダ"}
@@ -824,18 +757,6 @@ def test_aliases_belong_to_the_base_node_only() -> None:
 
     assert "ディグダ" in facts["testmon"].aliases
     assert facts["testmon-alola"].aliases == ()
-
-
-@pytest.mark.parametrize(
-    ("body", "expected"),
-    [
-        ("a|b|c", ["a", "b", "c"]),
-        ("a|b={{tt|x|y}}|c=[[L|t]]", ["a", "b={{tt|x|y}}", "c=[[L|t]]"]),
-        ("a|b=''x", ["a", "b=''x"]),
-    ],
-)
-def test_split_top_level(body: str, expected: list[str]) -> None:
-    assert split_top_level(body) == expected
 
 
 INFOBOX_WIKITEXT = (

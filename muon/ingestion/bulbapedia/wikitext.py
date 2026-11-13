@@ -9,7 +9,7 @@ knows nothing of page types or of the ontology.
 
 import html
 import re
-from collections.abc import Collection, Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import chain
 
@@ -34,6 +34,18 @@ PATH_SEPARATOR = " > "
 LEAD_LEVEL = 1
 LEAD_TITLE = ""
 PLAIN_TEXT_SEPARATOR = "\n"
+CATEGORY_PATTERN = re.compile(r"\[\[\s*Category\s*:\s*([^\]|]+)", re.IGNORECASE)
+LANGUAGES_PATH = ("In other languages",)
+LINE_BREAK_PATTERN = re.compile(r"<(?:br|hr)\s*/?>", re.IGNORECASE)
+ROMANIZATION_PATTERN = re.compile(r"''(.+?)(?:''|$)")
+TRAILING_NOTE_PATTERN = re.compile(r"\s*\([^()]*\)\s*$")
+ALIAS_PADDING = "' *†‡"  # quote debris and the footnote markers of `{{tt|*|note}}`
+MEANING_SUFFIX = "meaning"
+LANGUAGE_KEY_PATTERN = re.compile(r"^[A-Za-z_]+$")
+EXCLUDED_LANGUAGE_KEYS = frozenset({"type"})
+TEMPLATE_OPENERS = ("{{", "[[")
+TEMPLATE_CLOSERS = ("}}", "]]")
+TEMPLATE_BRACES = 2
 LINE_BREAK_TAG = "br"
 SMALL_TAG = "small"
 DROPPED_TAGS = frozenset({"ref", "sup", SMALL_TAG})
@@ -127,6 +139,21 @@ class PlainText:
     text: str = ""
     captured: tuple[CapturedTemplate, ...] = ()
     dropped: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class AliasRules:
+    """Where a page type keeps its other-language names.
+
+    `template_name` is the language table template of the "In other languages" section and
+    `infobox_keys` the infobox fields that also hold a name. With `should_drop_notes`, a
+    comment inside a language value is blanked before the value is split, and a trailing
+    parenthetical source note such as "(games, XY019-present)" is cut from each name.
+    """
+
+    template_name: str
+    infobox_keys: tuple[str, ...]
+    should_drop_notes: bool
 
 
 @dataclass(frozen=True)
@@ -324,3 +351,86 @@ def find_templates(code: Wikicode, names: Collection[str]) -> list[Template]:
 def read_params(template: Template) -> dict[str, str]:
     """Return the parameters of `template` as stripped names to raw values; the last repeat wins."""
     return {str(param.name).strip(): str(param.value).strip() for param in template.params}
+
+
+def read_categories(wikitext: str) -> frozenset[str]:
+    return frozenset(name.strip() for name in CATEGORY_PATTERN.findall(wikitext))
+
+
+def split_top_level(body: str) -> list[str]:
+    """Split `body` on the `|` that sit outside `{{ }}` and `[[ ]]`."""
+    pieces: list[str] = []
+    depth = 0
+    start = 0
+    index = 0
+    while index < len(body):
+        pair = body[index : index + TEMPLATE_BRACES]
+        if pair in TEMPLATE_OPENERS:
+            depth += 1
+            index += TEMPLATE_BRACES
+        elif pair in TEMPLATE_CLOSERS:
+            depth = max(0, depth - 1)
+            index += TEMPLATE_BRACES
+        else:
+            if body[index] == "|" and depth == 0:
+                pieces.append(body[start:index])
+                start = index + 1
+            index += 1
+    pieces.append(body[start:])
+    return pieces
+
+
+def read_language_values(sections: Sequence[Section], template_name: str) -> list[str]:
+    """Return the raw value of each language parameter of the language table, in order.
+
+    The template is split on its own top-level pipes: an unclosed `''` in 1 value makes
+    `mwparserfromhell` fold the parameters after it into that value.
+    """
+    values: list[str] = []
+    for section in find_sections(sections, LANGUAGES_PATH):
+        for template in find_templates(section.parse(), [template_name]):
+            body = str(template)[TEMPLATE_BRACES:-TEMPLATE_BRACES]
+            for piece in split_top_level(body)[1:]:
+                key, separator, value = piece.partition("=")
+                key = key.strip()
+                if separator and is_language_key(key):
+                    values.append(value.strip())
+    return values
+
+
+def is_language_key(key: str) -> bool:
+    return (
+        LANGUAGE_KEY_PATTERN.match(key) is not None
+        and not key.endswith(MEANING_SUFFIX)
+        and key not in EXCLUDED_LANGUAGE_KEYS
+    )
+
+
+def split_alias_names(raw: str, should_drop_notes: bool) -> list[str]:
+    """Return the names and romanizations in 1 language value, in reading order."""
+    if should_drop_notes:
+        raw = COMMENT_PATTERN.sub("", raw)
+    names: list[str] = []
+    for line in LINE_BREAK_PATTERN.split(raw):
+        names.append(ROMANIZATION_PATTERN.sub("", line))
+        names.extend(ROMANIZATION_PATTERN.findall(line))
+    cleaned = (to_plain_text(name).strip(ALIAS_PADDING) for name in names)
+    if should_drop_notes:
+        cleaned = (TRAILING_NOTE_PATTERN.sub("", name).strip(ALIAS_PADDING) for name in cleaned)
+    return [name for name in cleaned if name]
+
+
+def read_aliases(
+    sections: Sequence[Section],
+    infobox: Mapping[str, str],
+    english_name: str,
+    rules: AliasRules,
+) -> tuple[str, ...]:
+    """Return the other-language names, then the infobox names, without repeats or the
+    English name."""
+    raw_values = [
+        *read_language_values(sections, rules.template_name),
+        *(infobox.get(key, "") for key in rules.infobox_keys),
+    ]
+    names = (name for raw in raw_values for name in split_alias_names(raw, rules.should_drop_notes))
+    return tuple(name for name in dict.fromkeys(names) if name != english_name)

@@ -5,19 +5,28 @@ from muon.ingestion.bulbapedia.wikitext import (
     LEAD_LEVEL,
     PLAIN_TEXT_SEPARATOR,
     TEXT_TEMPLATES,
+    AliasRules,
     CapturedTemplate,
     TextRule,
     find_sections,
     find_templates,
     normalize_heading,
     normalize_template_name,
+    read_aliases,
+    read_categories,
     read_params,
     read_plain_text,
     read_small_captions,
     render_rule,
     split_sections,
+    split_top_level,
     to_plain_text,
 )
+
+SPECIES_RULES = AliasRules(
+    template_name="other languages", infobox_keys=("jname", "tmname"), should_drop_notes=False
+)
+MOVE_RULES = AliasRules(template_name="langtable", infobox_keys=("jname",), should_drop_notes=True)
 
 NESTED_PAGE = """lead text
 ==Game data==
@@ -401,3 +410,135 @@ def test_read_small_captions_returns_each_caption_in_order() -> None:
 
 def test_read_small_captions_returns_nothing_without_captions() -> None:
     assert read_small_captions("Sand Veil") == ()
+
+
+def test_read_categories() -> None:
+    wikitext = "[[Category:Legendary Pokémon]]\n[[category: Mythical Pokémon |x]]\n[[Mew]]"
+
+    assert read_categories(wikitext) == {"Legendary Pokémon", "Mythical Pokémon"}
+
+
+LANGUAGES_PAGE = """==In other languages==
+{{Other languages|type=Ground|type2=Ground
+|ja=ディグダ ''Digda''|jameaning=From ''dig''
+|fr=Taupiqueur|frmeaning=From ''taupe'' (mole)
+|es=Testmon|esmeaning=Same as English name
+|de=Digda|demeaning=Same as Japanese name
+|zh_cmn=地鼠 ''Dìshǔ''|zh_cmnmeaning=From 地
+|ru=Диглетт ''Diglett''<br>Глетт{{tt|*|older}}<ref group=n>note</ref>
+}}
+==Trivia==
+text
+"""
+
+
+def test_aliases_follow_the_template_then_jname_and_tmname() -> None:
+    sections = split_sections(LANGUAGES_PAGE)
+    infobox = {"jname": "ディグダ", "tmname": "Digda"}
+
+    aliases = read_aliases(sections, infobox, "Testmon", SPECIES_RULES)
+
+    assert aliases == (
+        "ディグダ",
+        "Digda",
+        "Taupiqueur",
+        "地鼠",
+        "Dìshǔ",
+        "Диглетт",
+        "Diglett",
+        "Глетт",
+    )
+
+
+def test_aliases_drop_the_english_name_and_repeats() -> None:
+    sections = split_sections(
+        "==In other languages==\n{{Other languages|es=Testmon|it=Testmon|fr=A|de=A}}"
+    )
+
+    infobox = {"jname": "A", "tmname": "Testmon"}
+
+    assert read_aliases(sections, infobox, "Testmon", SPECIES_RULES) == ("A",)
+
+
+def test_aliases_survive_an_unclosed_italic_that_swallows_the_next_parameters() -> None:
+    wikitext = (
+        "==In other languages==\n"
+        "{{Other languages|ko=다태우지네 ''Datae-ujine|komeaning=From ''da'' (all)\n"
+        "|zh_cmn=焚焰蚣 ''Fényàngōng''|zh_cmnmeaning=x}}"
+    )
+
+    aliases = read_aliases(split_sections(wikitext), {}, "Testmon", SPECIES_RULES)
+
+    assert aliases == ("다태우지네", "Datae-ujine", "焚焰蚣", "Fényàngōng")
+
+
+def test_aliases_clean_templates_inside_romanizations_and_stray_quotes() -> None:
+    wikitext = (
+        "==In other languages==\n"
+        "{{Other languages|ko=파이리 ''{{tt|Fairi<!--c-->|Romanized as Fairit}}''"
+        "|ru=Аэродактиль ''Aerodaktil'''}}"
+    )
+
+    aliases = read_aliases(split_sections(wikitext), {}, "Testmon", SPECIES_RULES)
+
+    assert aliases == ("파이리", "Fairi", "Аэродактиль", "Aerodaktil")
+
+
+def test_aliases_without_the_section_come_from_the_infobox_only() -> None:
+    aliases = read_aliases(
+        split_sections("lead"),
+        {"jname": "ケンタロス", "tmname": "Kentauros"},
+        "Tauros",
+        SPECIES_RULES,
+    )
+
+    assert aliases == ("ケンタロス", "Kentauros")
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        ("a|b|c", ["a", "b", "c"]),
+        ("a|b={{tt|x|y}}|c=[[L|t]]", ["a", "b={{tt|x|y}}", "c=[[L|t]]"]),
+        ("a|b=''x", ["a", "b=''x"]),
+    ],
+)
+def test_split_top_level(body: str, expected: list[str]) -> None:
+    assert split_top_level(body) == expected
+
+
+LANGTABLE_PAGE = """==In other languages==
+{{Langtable|color={{ghost color}}|bordercolor={{ghost color dark}}
+|zh_cmn=暗影球 ''{{tt|Ànyǐng Qiú|Shadow Ball}}'' {{tt|*|Games}}<br>影子球 ''{{tt|Yǐngzi Qiú|x}}''
+|fr=Ball'Ombre
+|pl=Kula Cienia{{tt|*|AG036}}<br>Cień Kuli{{tt|*|DP027}}<!--<br>Cień Kulisty{{tt|*|EP181}}-->
+|pt_br=Bola Sombria (games, [[XY019]]–present, TCG, manga)<br>Bola das Sombras ([[AG190]]–[[XY013]])
+|id=Shadow Ball{{tt|*|Pokémon GO}}<br>Bola Bayangan
+}}
+"""
+
+
+def test_move_aliases_drop_footnotes_source_notes_and_commented_names() -> None:
+    sections = split_sections(LANGTABLE_PAGE)
+
+    aliases = read_aliases(sections, {"jname": "シャドーボール"}, "Shadow Ball", MOVE_RULES)
+
+    assert aliases == (
+        "暗影球",
+        "Ànyǐng Qiú",
+        "影子球",
+        "Yǐngzi Qiú",
+        "Ball'Ombre",
+        "Kula Cienia",
+        "Cień Kuli",
+        "Bola Sombria",
+        "Bola das Sombras",
+        "Bola Bayangan",
+        "シャドーボール",
+    )
+
+
+def test_move_rules_read_only_the_langtable() -> None:
+    wikitext = "==In other languages==\n{{Other languages|fr=Taupiqueur}}"
+
+    assert read_aliases(split_sections(wikitext), {}, "Testmon", MOVE_RULES) == ()
