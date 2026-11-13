@@ -16,6 +16,16 @@ from muon.ingestion.batch import NodeRef
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
+from muon.ingestion.bulbapedia.moves.batches import MachineFieldError
+from muon.ingestion.bulbapedia.moves.page import TableError
+from muon.ingestion.bulbapedia.moves.run import BatchCounts as MoveBatchCounts
+from muon.ingestion.bulbapedia.moves.run import (
+    MachineConflictError,
+    MoveParseReport,
+    MoveParseRequest,
+    MoveParseRun,
+)
+from muon.ingestion.bulbapedia.moves.run import ParseRunError as MoveParseRunError
 from muon.ingestion.bulbapedia.pages import PageStoreError
 from muon.ingestion.bulbapedia.species.extract import ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError
@@ -600,6 +610,82 @@ def test_fetch_pokeapi_failure_prints_error(
     assert cli.main(["fetch", "pokeapi"]) == cli.EXIT_FAILURE
 
     assert f"fetch pokeapi failed: {error}" in capsys.readouterr().err
+
+
+def build_move_report(pages_failed: int = 0) -> MoveParseReport:
+    return MoveParseReport(
+        pages=(),
+        pages_parsed=848,
+        pages_skipped=110,
+        pages_failed=pages_failed,
+        skipped_per_reason={},
+        notes=(),
+        batch_counts=MoveBatchCounts(
+            owner_nodes={"Move": 848, "Machine": 2173}, stubs={}, edges={}, claims={}
+        ),
+        moves_per_flag={},
+        cross_check=(),
+        moves_without_pokeapi_row=(),
+        unmatched_pokeapi_moves=(),
+        skipped_pokeapi_machines=0,
+        snapshot_commit="8a92bfa",
+        snapshot_files={},
+    )
+
+
+class RecordingMoveParse:
+    """Stands in for `cli.run_move_parse` and records the requests it ran."""
+
+    def __init__(self, outcome: MoveParseReport | Exception) -> None:
+        self.outcome = outcome
+        self.requests: list[MoveParseRequest] = []
+
+    def __call__(self, request: MoveParseRequest) -> MoveParseRun:
+        self.requests.append(request)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return MoveParseRun(outputs=(), report=self.outcome)
+
+
+def test_parse_move_reaches_the_move_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parse = RecordingMoveParse(build_move_report())
+    monkeypatch.setattr(cli, "run_move_parse", parse)
+
+    exit_code = cli.main(["parse", "bulbapedia", "move", "--title", "Shadow Ball (move)"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert parse.requests == [MoveParseRequest(titles=("Shadow Ball (move)",))]
+    output = capsys.readouterr().out
+    assert "pages parsed: 848" in output
+    assert "owner nodes Machine: 2173" in output
+
+
+def test_parse_move_exits_1_when_a_page_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "run_move_parse", RecordingMoveParse(build_move_report(1)))
+
+    assert cli.main(["parse", "bulbapedia", "move"]) == cli.EXIT_FAILURE
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        TableError("FLAG_OVERRIDES names dig, which is no in-scope move"),
+        MachineFieldError("tm4 names 'X-Y', which is not part of Generation IV"),
+        MachineConflictError("tm30-gold-silver from A and B"),
+        SnapshotError("no PokeAPI snapshot"),
+        MoveParseRunError("Titles that are not pinned move pages: ['X']"),
+    ],
+)
+def test_parse_move_failure_prints_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    monkeypatch.setattr(cli, "run_move_parse", RecordingMoveParse(error))
+
+    assert cli.main(["parse", "bulbapedia", "move"]) == cli.EXIT_FAILURE
+
+    assert f"parse bulbapedia move failed: {error}" in capsys.readouterr().err
 
 
 def test_fetch_lists_the_valid_page_types(capsys: pytest.CaptureFixture[str]) -> None:
