@@ -174,12 +174,27 @@ def count_tags(wikitext: str, name: str) -> int:
     return len(code.filter_tags(recursive=True, matches=lambda node: read_tag_name(node) == name))
 
 
+def join_template_lines(wikitext: str) -> str:
+    """Put each top-level template that spans lines on 1 line.
+
+    A notice such as `{{MoveResearch|\n* question}}` holds bullet lines, which the block
+    cut would otherwise read as bullet items of the page and leave with stray braces.
+    """
+    code = mwparserfromhell.parse(wikitext)
+    for template in code.filter_templates(recursive=False):
+        written = str(template)
+        if LINE_BREAK in written:
+            code.replace(template, LINE_JOINER.join(written.splitlines()))
+    return str(code)
+
+
 def split_blocks(wikitext: str) -> tuple[Block, ...]:
     """Cut section wikitext into paragraphs and bullet items, in page order.
 
-    Comments, tables and galleries are removed first, and layout `<div>` tags are unwrapped.
+    Comments, tables and galleries are removed first, layout `<div>` tags are unwrapped and
+    every template is put on 1 line.
     """
-    text = remove_tags(strip_comments(wikitext), REMOVED_TAGS, UNWRAPPED_TAGS)
+    text = join_template_lines(remove_tags(strip_comments(wikitext), REMOVED_TAGS, UNWRAPPED_TAGS))
     blocks: list[Block] = []
     for group in BLANK_LINES_PATTERN.split(text):
         lines = [line.strip() for line in group.split(LINE_BREAK) if line.strip()]

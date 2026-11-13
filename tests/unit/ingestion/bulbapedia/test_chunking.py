@@ -122,6 +122,15 @@ def test_split_blocks_removes_comments_without_splitting_a_paragraph() -> None:
     assert lines(blocks) == [(False, ("one", "two  three"))]
 
 
+def test_split_blocks_keeps_a_template_with_bullet_lines_in_1_block() -> None:
+    blocks = split_blocks("{{MoveResearch|\n* A question?\n* Another?}}\nText after.\n* Item")
+
+    assert lines(blocks) == [
+        (False, ("{{MoveResearch| * A question? * Another?}}", "Text after.")),
+        (True, ("* Item",)),
+    ]
+
+
 def test_split_blocks_gives_nothing_for_blank_text() -> None:
     assert split_blocks(" \n\n  \n") == ()
 
