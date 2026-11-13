@@ -4,13 +4,20 @@ A test that needs a page the cache lacks skips with the fetch hint, as on a fres
 """
 
 from collections.abc import Callable
+from pathlib import Path
 
 import pytest
 
+from muon.ingestion.bulbapedia.batching import UNIVERSE, build_abox_index
+from muon.ingestion.bulbapedia.moves.batches import MoveChunkInputs
 from muon.ingestion.bulbapedia.moves.page import MovePageExtract, parse_move_page
+from muon.ingestion.bulbapedia.moves.run import SPECIES_PAGE_TYPE, build_species_resolver
 from muon.ingestion.bulbapedia.pages import FETCH_HINT, Page, PageStore
+from muon.ingestion.seed import read_abox
+from muon.ontology.model import load_ontology_model
 
 MOVE = "move"
+ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 
 
 @pytest.fixture(scope="session")
@@ -38,3 +45,19 @@ def read_extract(read_pinned_page: Callable[[str], Page]) -> Callable[[str], Mov
         return extract
 
     return read
+
+
+@pytest.fixture(scope="session")
+def chunk_inputs() -> Callable[[Page], MoveChunkInputs]:
+    """Build the pass 2 inputs of a pinned page: the real A-Box and the species pins."""
+    model = load_ontology_model(ONTOLOGY_DIR, UNIVERSE)
+    abox = build_abox_index(read_abox(model, ONTOLOGY_DIR))
+    species_pins = PageStore().read_manifest().list_pins(SPECIES_PAGE_TYPE)
+    resolve_species = build_species_resolver(species_pins)
+
+    def build(page: Page) -> MoveChunkInputs:
+        return MoveChunkInputs(
+            abox=abox, resolve_species=resolve_species, source_url=page.permalink
+        )
+
+    return build
