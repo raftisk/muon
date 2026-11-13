@@ -11,8 +11,8 @@
 
 # Shapes for the pkmn universe, validated against the projection of a Neo4j
 # write transaction. Sections follow ontology/universes/pkmn.ttl. The ttl
-# sections without rules (base stats, abilities, egg groups, battle
-# conditions, species groups) have no banner here.
+# sections without rules (base stats, abilities, egg groups, species groups)
+# have no banner here.
 
 <https://muon.dev/ns/pkmn-shapes> a owl:Ontology ;
     dcterms:title   "muon: Pokémon SHACL shapes"@en ;
@@ -277,6 +277,160 @@ pkmn-shape:M1_MoveTypeAndClass a sh:NodeShape ;
         sh:class pkmn:MoveDamageClass
     ] .
 
+# Move values. Hit counts need the multihit flag; the query reads the flag by its id,
+# because the projection holds the flag node with its key.
+pkmn-shape:M2_MoveValues a sh:NodeShape ;
+    sh:name "M2" ;
+    sh:message "A move has exactly 1 pp, priority, target and introducedIn, and its other values are in range."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Move ;
+    sh:targetClass pkmn:Move ;
+    sh:property [
+        sh:path pkmn:pp ;
+        sh:name "M2" ;
+        sh:message "A move needs exactly 1 pp, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] ;
+    sh:property [
+        sh:path pkmn:priority ;
+        sh:name "M2" ;
+        sh:message "A move needs exactly 1 priority, an integer from -7 to 5."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive -7 ;
+        sh:maxInclusive 5
+    ] ;
+    sh:property [
+        sh:path pkmn:target ;
+        sh:name "M2" ;
+        sh:message "A move needs exactly 1 target, one of any_adjacent, self, all_adjacent_foes, any, all_adjacent, entire_field, user_side, user_and_allies, random_foe, varies, all, foe_side, adjacent_ally, user_or_adjacent_ally, adjacent_foe, all_allies."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "any_adjacent" "self" "all_adjacent_foes" "any" "all_adjacent" "entire_field" "user_side" "user_and_allies" "random_foe" "varies" "all" "foe_side" "adjacent_ally" "user_or_adjacent_ally" "adjacent_foe" "all_allies" )
+    ] ;
+    sh:property [
+        sh:path pkmn:introducedIn ;
+        sh:name "M2" ;
+        sh:message "A move needs exactly 1 introducedIn, a Generation."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Generation
+    ] ;
+    sh:property [
+        sh:path pkmn:power ;
+        sh:name "M2" ;
+        sh:message "A move has at most 1 power, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] ;
+    sh:property [
+        sh:path pkmn:accuracy ;
+        sh:name "M2" ;
+        sh:message "A move has at most 1 accuracy, an integer from 1 to 100."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 100
+    ] ;
+    sh:property [
+        sh:path pkmn:critStage ;
+        sh:name "M2" ;
+        sh:message "A move has at most 1 critStage, an integer from 1 to 3."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 3
+    ] ;
+    sh:property [
+        sh:path pkmn:isProtectable ;
+        sh:name "M2" ;
+        sh:message "A move has at most 1 isProtectable, a boolean."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean
+    ] ;
+    sh:property [
+        sh:path pkmn:isMirrorable ;
+        sh:name "M2" ;
+        sh:message "A move has at most 1 isMirrorable, a boolean."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean
+    ] ;
+    sh:property [
+        sh:path pkmn:minTurns ;
+        sh:name "M2" ;
+        sh:message "A move has at most 1 minTurns, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] ;
+    sh:property [
+        sh:path pkmn:maxTurns ;
+        sh:name "M2" ;
+        sh:message "A move has at most 1 maxTurns, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Move {$this} needs minHits and maxHits together, minHits from 1 to maxHits, and a hasFlag edge to multihit."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT DISTINCT $this WHERE {
+                {
+                    $this pkmn:minHits ?bound .
+                    FILTER NOT EXISTS { $this pkmn:maxHits ?other }
+                } UNION {
+                    $this pkmn:maxHits ?bound .
+                    FILTER NOT EXISTS { $this pkmn:minHits ?other }
+                } UNION {
+                    $this pkmn:minHits ?fewest ;
+                          pkmn:maxHits ?most .
+                    FILTER (?fewest < 1 || ?fewest > ?most)
+                } UNION {
+                    { $this pkmn:minHits ?bound } UNION { $this pkmn:maxHits ?bound }
+                    FILTER NOT EXISTS { $this pkmn:hasFlag ?flag . ?flag pkmn:id "multihit" }
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Move {$this} needs minTurns and maxTurns together, minTurns at most maxTurns."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT DISTINCT $this WHERE {
+                {
+                    $this pkmn:minTurns ?bound .
+                    FILTER NOT EXISTS { $this pkmn:maxTurns ?other }
+                } UNION {
+                    $this pkmn:maxTurns ?bound .
+                    FILTER NOT EXISTS { $this pkmn:minTurns ?other }
+                } UNION {
+                    $this pkmn:minTurns ?fewest ;
+                          pkmn:maxTurns ?most .
+                    FILTER (?fewest > ?most)
+                }
+            }
+        """
+    ] .
+
 # A type pair has at most 1 effectiveness. The query names the 3 sub-properties
 # of effectiveAgainst, because the shapes run without RDFS inference.
 pkmn-shape:K1_TypePairEffectiveness a sh:NodeShape ;
@@ -301,12 +455,63 @@ pkmn-shape:K1_TypePairEffectiveness a sh:NodeShape ;
     ] .
 
 #################################################################
+#  Battle conditions
+#################################################################
+
+# Condition durations. The target class reaches every subclass of BattleCondition
+# through the T-Box.
+pkmn-shape:B1_ConditionDurations a sh:NodeShape ;
+    sh:name "B1" ;
+    sh:message "A battle condition has minTurns and maxTurns together, minTurns at most maxTurns."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:BattleCondition ;
+    sh:targetClass pkmn:BattleCondition ;
+    sh:property [
+        sh:path pkmn:minTurns ;
+        sh:name "B1" ;
+        sh:message "A battle condition has at most 1 minTurns, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] ;
+    sh:property [
+        sh:path pkmn:maxTurns ;
+        sh:name "B1" ;
+        sh:message "A battle condition has at most 1 maxTurns, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Condition {$this} needs minTurns and maxTurns together, minTurns at most maxTurns."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT DISTINCT $this WHERE {
+                {
+                    $this pkmn:minTurns ?bound .
+                    FILTER NOT EXISTS { $this pkmn:maxTurns ?other }
+                } UNION {
+                    $this pkmn:maxTurns ?bound .
+                    FILTER NOT EXISTS { $this pkmn:minTurns ?other }
+                } UNION {
+                    $this pkmn:minTurns ?fewest ;
+                          pkmn:maxTurns ?most .
+                    FILTER (?fewest > ?most)
+                }
+            }
+        """
+    ] .
+
+#################################################################
 #  Items
 #################################################################
 
 pkmn-shape:C2_MachineLinks a sh:NodeShape ;
     sh:name "C2" ;
-    sh:message "A machine has exactly 1 inVersionGroup and exactly 1 teachesMove."@en ;
+    sh:message "A machine has exactly 1 inVersionGroup, teachesMove, machineKind and machineNumber."@en ;
     sh:severity sh:Violation ;
     pkmn-shape:scope pkmn:Machine ;
     sh:targetClass pkmn:Machine ;
@@ -327,6 +532,25 @@ pkmn-shape:C2_MachineLinks a sh:NodeShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class pkmn:Move
+    ] ;
+    sh:property [
+        sh:path pkmn:machineKind ;
+        sh:name "C2" ;
+        sh:message "A machine needs exactly 1 machineKind, one of TM, HM, TR."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "TM" "HM" "TR" )
+    ] ;
+    sh:property [
+        sh:path pkmn:machineNumber ;
+        sh:name "C2" ;
+        sh:message "A machine needs exactly 1 machineNumber, an integer of at least 0."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0
     ] .
 
 #################################################################
@@ -495,6 +719,22 @@ pkmn-shape:E1_EffectValues a sh:NodeShape ;
         sh:severity sh:Violation ;
         sh:maxCount 1 ;
         sh:in ( "self" "ally" "foe" "field" "move" )
+    ] ;
+    sh:property [
+        sh:path pkmn:isOverworld ;
+        sh:name "E1" ;
+        sh:message "An effect has at most 1 isOverworld, a boolean."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean
+    ] ;
+    sh:property [
+        sh:path pkmn:isProtectable ;
+        sh:name "E1" ;
+        sh:message "An effect has at most 1 isProtectable, a boolean."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean
     ] .
 
 # `embedding` is not in the ttl, so the Validator checks that only a TextChunk

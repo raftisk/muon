@@ -1,13 +1,27 @@
 import json
 import re
 import shutil
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
-from muon.ingestion.bulbapedia.fetch import FetchError, FetchRequest, fetch_pages
+from muon.ingestion.bulbapedia.export import ExportError
+from muon.ingestion.bulbapedia.fetch import (
+    FetchError,
+    FetchReport,
+    FetchRequest,
+    fetch_pages,
+    import_pages,
+)
 from muon.ingestion.bulbapedia.pages import PageStore
+from tests.unit.ingestion.bulbapedia.fake_export import (
+    ExportFixturePage,
+    build_export_from_wiki,
+    encode_base36_sha1,
+    write_export,
+)
 from tests.unit.ingestion.bulbapedia.fake_wiki import FakeWiki, build_status_failure
 
 SPECIES = "species"
@@ -21,6 +35,16 @@ ALL_SPECIES = [BULBASAUR, DIGLETT, DUGTRIO]
 OVERVIEW = "Pokémon (species)"
 NATURAL_CURE = "Natural Cure (Ability)"
 THICK_FAT = "Thick Fat (Ability)"
+MOVE = "move"
+MOVES_CATEGORY = "Category:Moves"
+SHADOW_BALL = "Shadow Ball (move)"
+TACKLE = "Tackle (move)"
+WIND_MOVE = "Wind move"
+STATUS_MOVES_CATEGORY = "Category:Status moves"
+MOVE_TEMPLATE = "Template:MoveInfobox"
+ALL_MOVES = [SHADOW_BALL, TACKLE]
+CATEGORY_NAMESPACE = 14
+TEMPLATE_NAMESPACE = 10
 
 
 @pytest.fixture
@@ -32,6 +56,10 @@ def wiki() -> FakeWiki:
     fake.add_page("Ability", "An overview page", ABILITY_CATEGORY)
     fake.add_page(NATURAL_CURE, "Cures status on switch-out.", ABILITY_CATEGORY)
     fake.add_page(THICK_FAT, "Halves Fire and Ice damage.", ABILITY_CATEGORY)
+    for title in ALL_MOVES:
+        fake.add_page(title, f"{{{{MoveInfobox|name={title}}}}}", MOVES_CATEGORY)
+    fake.add_page(WIND_MOVE, "An article about wind moves", MOVES_CATEGORY)
+    fake.add_page(STATUS_MOVES_CATEGORY, "A subcategory", MOVES_CATEGORY)
     return fake
 
 
@@ -263,5 +291,150 @@ def test_pin_that_disagrees_with_the_api_fails(wiki: FakeWiki, store: PageStore)
 
 
 def test_unknown_page_type_fails(wiki: FakeWiki, store: PageStore) -> None:
-    with pytest.raises(FetchError, match="known page types: ability, item, species"):
+    with pytest.raises(FetchError, match="known page types: ability, item, move, species"):
         fetch_pages(FetchRequest("moves"), store, wiki.build_client())
+
+
+def build_move_export(wiki: FakeWiki) -> list[ExportFixturePage]:
+    """The 2 move pages of `wiki` with an article, a category and a template beside them."""
+    others = build_export_from_wiki(wiki, [WIND_MOVE, STATUS_MOVES_CATEGORY])
+    category = replace(others[1], namespace=CATEGORY_NAMESPACE)
+    template = ExportFixturePage(
+        title=MOVE_TEMPLATE,
+        page_id=9000,
+        revision_id=9000,
+        timestamp=others[0].timestamp,
+        wikitext="{{{name}}}",
+        namespace=TEMPLATE_NAMESPACE,
+    )
+    return [*build_export_from_wiki(wiki, ALL_MOVES), others[0], category, template]
+
+
+def import_moves(store: PageStore, path: Path) -> FetchReport:
+    return import_pages(FetchRequest(MOVE, export_path=path), store)
+
+
+def read_page_files(store: PageStore) -> dict[int, bytes]:
+    return {page_id: path.read_bytes() for page_id, path in store.list_page_files().items()}
+
+
+def test_update_run_pins_only_move_pages(wiki: FakeWiki, store: PageStore) -> None:
+    report = fetch_pages(FetchRequest(MOVE), store, wiki.build_client())
+
+    assert [pin.title for pin in store.read_manifest().list_pins(MOVE)] == ALL_MOVES
+    assert report.added == tuple(ALL_MOVES)
+
+
+def test_first_import_pins_and_writes_every_move_page(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path
+) -> None:
+    report = import_moves(store, write_export(tmp_path, build_move_export(wiki)))
+
+    pins = store.read_manifest().list_pins(MOVE)
+    assert [pin.title for pin in pins] == ALL_MOVES
+    for pin in pins:
+        page = store.read_page(MOVE, pin)
+        assert page.revision_id == latest_revision_id(wiki, pin.title)
+        assert page.wikitext == wiki.pages[pin.title].revisions[-1].wikitext
+    assert (report.listed, report.fetched, report.skipped) == (2, 2, 0)
+    assert (report.requests, report.ignored) == (0, 3)
+    assert report.added == tuple(ALL_MOVES)
+    assert wiki.requests == []
+
+
+def test_second_import_writes_nothing(wiki: FakeWiki, store: PageStore, tmp_path: Path) -> None:
+    path = write_export(tmp_path, build_move_export(wiki))
+    import_moves(store, path)
+    manifest_bytes = store.manifest_path.read_bytes()
+    modified = {
+        page_id: file.stat().st_mtime_ns for page_id, file in store.list_page_files().items()
+    }
+
+    report = import_moves(store, path)
+
+    assert store.manifest_path.read_bytes() == manifest_bytes
+    assert {
+        page_id: file.stat().st_mtime_ns for page_id, file in store.list_page_files().items()
+    } == modified
+    assert (report.fetched, report.skipped, report.added, report.changed) == (0, 2, (), ())
+
+
+def test_pinned_run_after_import_makes_no_request(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path
+) -> None:
+    import_moves(store, write_export(tmp_path, build_move_export(wiki)))
+
+    report = fetch_pages(FetchRequest(MOVE), store, wiki.build_client())
+
+    assert (report.requests, report.fetched, report.skipped) == (0, 0, 2)
+
+
+def test_import_with_no_matching_page_fails(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path
+) -> None:
+    path = write_export(tmp_path, build_export_from_wiki(wiki, [WIND_MOVE]))
+
+    with pytest.raises(FetchError, match=r"export.xml holds no page ending in ' \(move\)'"):
+        import_moves(store, path)
+
+    assert not store.manifest_path.exists()
+
+
+@pytest.mark.parametrize(
+    ("sha1", "extra_revisions"), [(encode_base36_sha1("f" * 40), 0), (None, 1)]
+)
+def test_bad_export_changes_nothing(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path, sha1: str | None, extra_revisions: int
+) -> None:
+    import_moves(store, write_export(tmp_path, build_move_export(wiki)))
+    manifest_bytes = store.manifest_path.read_bytes()
+    files_before = read_page_files(store)
+    wiki.edit_page(SHADOW_BALL, "a newer revision")
+    pages = build_move_export(wiki)
+    pages[0] = replace(pages[0], sha1=sha1, extra_revisions=extra_revisions)
+
+    with pytest.raises(ExportError, match=re.escape(SHADOW_BALL)):
+        import_moves(store, write_export(tmp_path, pages))
+
+    assert store.manifest_path.read_bytes() == manifest_bytes
+    assert read_page_files(store) == files_before
+
+
+def test_move_import_keeps_species_pins_and_files(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path
+) -> None:
+    fetch_pages(FetchRequest(SPECIES), store, wiki.build_client())
+    species_pins = store.read_manifest().list_pins(SPECIES)
+
+    import_moves(store, write_export(tmp_path, build_move_export(wiki)))
+
+    assert store.read_manifest().list_pins(SPECIES) == species_pins
+    for pin in species_pins:
+        assert store.read_page(SPECIES, pin).title == pin.title
+
+
+def test_import_moves_and_removes_pins(wiki: FakeWiki, store: PageStore, tmp_path: Path) -> None:
+    import_moves(store, write_export(tmp_path, build_move_export(wiki)))
+    tackle_id = wiki.pages[TACKLE].page_id
+    wiki.edit_page(SHADOW_BALL, "an edit")
+
+    report = import_moves(
+        store, write_export(tmp_path, build_export_from_wiki(wiki, [SHADOW_BALL]))
+    )
+
+    assert report.changed == (SHADOW_BALL,)
+    assert report.removed == (TACKLE,)
+    assert (report.fetched, report.ignored) == (1, 0)
+    assert [pin.title for pin in store.read_manifest().list_pins(MOVE)] == [SHADOW_BALL]
+    assert not store.build_page_path(tackle_id).exists()
+
+
+def test_import_matches_an_api_fetch_byte_for_byte(wiki: FakeWiki, tmp_path: Path) -> None:
+    fetched = PageStore(tmp_path / "fetched")
+    imported = PageStore(tmp_path / "imported")
+    fetch_pages(FetchRequest(MOVE), fetched, wiki.build_client())
+
+    import_moves(imported, write_export(tmp_path, build_move_export(wiki)))
+
+    assert imported.manifest_path.read_bytes() == fetched.manifest_path.read_bytes()
+    assert read_page_files(imported) == read_page_files(fetched)

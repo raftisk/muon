@@ -67,3 +67,26 @@ def test_effect_text_on_type_fails(validate_fixture):
 
 def test_effect_text_on_effect_node_fails(validate_fixture):
     assert validate_fixture(effect('pkmn:effectText "Hot."')).rule_ids == {"X3"}
+
+
+def test_overworld_move_effect_without_action_edge_conforms(validate_fixture):
+    assert validate_fixture(effect("pkmn:isOverworld true")).conforms
+
+
+def test_unseen_fist_effect_conforms(validate_fixture):
+    contact = 'ex:contact a pkmn:MoveFlag ; pkmn:id "contact" .'
+    properties = 'pkmn:isProtectable false ; pkmn:trigger "on_attack" ; pkmn:triggeredBy ex:contact'
+    assert validate_fixture(contact + effect(properties, "AbilityEffect")).conforms
+
+
+@pytest.mark.parametrize(
+    ("effect_class", "properties"),
+    [
+        ("MoveEffect", "pkmn:isOverworld true , false"),
+        ("AbilityEffect", "pkmn:isOverworld true , false"),
+        ("AbilityEffect", 'pkmn:isProtectable "no"'),
+        ("AbilityEffect", "pkmn:isProtectable true , false"),
+    ],
+)
+def test_wrong_effect_booleans_fail(validate_fixture, effect_class, properties):
+    assert validate_fixture(effect(properties, effect_class)).rule_ids == {"E1"}

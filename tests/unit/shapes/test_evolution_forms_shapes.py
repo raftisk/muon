@@ -1,5 +1,8 @@
 import pytest
 
+from tests.unit.shapes.games_fixtures import GENERATION_NODE
+from tests.unit.shapes.move_fixtures import build_move
+
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
 
 
@@ -15,9 +18,9 @@ BASE = FIRE + species("charmander", 4) + species("charmeleon", 5)
 TARGETS = {
     "Item": 'ex:thing a pkmn:Item ; pkmn:id "thing" .',
     "Move": (
-        'ex:move a pkmn:Move ; pkmn:id "move" ; pkmn:hasType ex:fire ; '
-        "pkmn:hasDamageClass ex:physical . "
-        'ex:physical a pkmn:MoveDamageClass ; pkmn:id "physical" .'
+        build_move("move", damage_class_local_name="physical")
+        + 'ex:physical a pkmn:MoveDamageClass ; pkmn:id "physical" .'
+        + GENERATION_NODE
     ),
     "Type": FIRE,
     "Location": 'ex:thing a pkmn:LocationArea ; pkmn:id "thing" .',

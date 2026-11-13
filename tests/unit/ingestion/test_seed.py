@@ -22,7 +22,7 @@ REAL_ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
 CORE = "https://muon.dev/ns/core#"
 PKMN = "https://muon.dev/ns/pkmn#"
 TOY = "https://muon.dev/ns/muontoy#"
-REAL_NODE_COUNT = 235
+REAL_NODE_COUNT = 244
 REAL_EDGE_COUNT = 364
 REAL_CLASS_COUNT = 19
 INLINE_SOURCE = "inline.ttl"
@@ -74,6 +74,13 @@ def test_real_abox_alias_and_key(real_batch: GraphBatch) -> None:
 
     assert stealth_rock.properties[CORE + "aliases"] == ("Pointed Stones",)
     assert escape in {node.node_ref for node in real_batch.nodes}
+
+
+def test_real_abox_condition_durations(real_batch: GraphBatch) -> None:
+    bound = next(node for node in real_batch.nodes if node.id == "bound")
+
+    assert bound.properties[PKMN + "minTurns"] == 4
+    assert bound.properties[PKMN + "maxTurns"] == 5
 
 
 def test_real_abox_type_chart_edges(real_batch: GraphBatch) -> None:

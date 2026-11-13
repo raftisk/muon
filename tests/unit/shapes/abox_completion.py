@@ -12,12 +12,12 @@ CLASS_COUNTS: dict[str, int] = {
     "pkmn:EggGroup": 15,
     "pkmn:Nature": 25,
     "pkmn:StatusCondition": 8,
-    "pkmn:VolatileCondition": 20,
+    "pkmn:VolatileCondition": 28,
     "pkmn:Weather": 9,
     "pkmn:Terrain": 4,
     "pkmn:EntryHazard": 5,
     "pkmn:FieldEffect": 10,
-    "pkmn:MoveFlag": 19,
+    "pkmn:MoveFlag": 20,
     "pkmn:Generation": 9,
     "mo:Region": 11,
     "pkmn:GenerationMechanic": 5,
@@ -74,6 +74,14 @@ VOCABULARY_LABELS: dict[str, tuple[str, ...]] = {
         "Sky-High",
         "Submerged",
         "Underground",
+        "Identified",
+        "Perishing",
+        "Ingrained",
+        "Nightmare",
+        "Embargo",
+        "Throat Chopped",
+        "Tar Shot",
+        "Landed",
     ),
     "pkmn:EntryHazard": ("Spikes", "Stealth Rock", "Toxic Spikes", "Sticky Web", "Steelsurge"),
     "pkmn:FieldEffect": (
@@ -103,14 +111,15 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "leechSeeded": ("Leech Seed",),
     "volatileDrowsy": ("Yawn",),
     "cantEscape": ("Trapped",),
+    "perishing": ("Counting Down", "Perish Song"),
+    "ingrained": ("Ingrain",),
+    "throatChopped": ("Throat Chop",),
 }
 
 REMOVED_LOCAL_NAMES: tuple[str, ...] = (
     "curse",
-    "nightmare",
     "aquaRing",
     "ingrain",
-    "embargo",
     "semiInvulnerable",
     "trapped",
     "yawn",
@@ -261,6 +270,46 @@ CONDITION_EDGES: tuple[tuple[str, str, str], ...] = (
     ("toxicSpikes", "inflictsCondition", "statusPoison"),
     ("toxicSpikes", "inflictsCondition", "statusBadlyPoisoned"),
 )
+
+# (minTurns, maxTurns) of every condition that lasts a fixed number of turns.
+CONDITION_DURATIONS: dict[str, tuple[int, int]] = {
+    "statusSleep": (2, 4),
+    "confused": (2, 5),
+    "taunted": (3, 4),
+    "encore": (3, 3),
+    "moveDisabled": (4, 4),
+    "volatileDrowsy": (1, 1),
+    "bound": (4, 5),
+    "telekinesis": (3, 3),
+    "magnetRise": (5, 5),
+    "perishing": (3, 3),
+    "embargo": (5, 5),
+    "throatChopped": (2, 2),
+    **{
+        name: (5, 5)
+        for name in (
+            "rain",
+            "harshSunlight",
+            "sandstorm",
+            "hail",
+            "snow",
+            "electricTerrain",
+            "grassyTerrain",
+            "mistyTerrain",
+            "psychicTerrain",
+            "trickRoom",
+            "gravity",
+            "magicRoom",
+            "wonderRoom",
+            "lightScreen",
+            "reflect",
+            "auroraVeil",
+            "safeguard",
+            "mist",
+        )
+    },
+    "tailwind": (4, 4),
+}
 
 APPEARS_IN_EDGES: tuple[tuple[str, str], ...] = (
     ("statusFrostbite", "versionGroupLegendsArceus"),
