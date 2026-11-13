@@ -21,31 +21,31 @@ from muon.ingestion.batch import (
     NodeRef,
 )
 from muon.ingestion.bulbapedia.batching import (
+    DESCRIBES,
+    FROM_WORK,
     HAS_TYPE,
+    MENTIONED_IN,
+    TEXT,
+    TEXT_CHUNK,
     TYPE,
     AboxIndex,
     build_abox_index,
     build_owner_claims,
+    hash_chunk_text,
 )
 from muon.ingestion.bulbapedia.pages import Page
 from muon.ingestion.bulbapedia.species.batches import (
     CAN_LEARN,
     CHUNK_OWNER_CLAIMS,
-    DESCRIBES,
     EVOLVES_TO,
-    FROM_WORK,
     HAS_LEARNSET_ENTRY,
-    MENTIONED_IN,
     SLOT,
-    TEXT,
-    TEXT_CHUNK,
     ChunkInputs,
     SpeciesIndex,
     build_chunk_batch,
     build_evolution_batch,
     build_species_batch,
     build_species_index,
-    hash_chunk_text,
 )
 from muon.ingestion.bulbapedia.species.extract import SpeciesPageExtract
 from muon.ingestion.bulbapedia.species.page import parse_species_page

@@ -24,9 +24,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from muon.ingestion.batch import GraphBatch, NodeRef
 from muon.ingestion.bulbapedia.batching import (
+    ASPECT,
     UNIVERSE,
     AboxIndex,
     BatchBuildError,
+    ChunkBuildError,
     build_abox_index,
 )
 from muon.ingestion.bulbapedia.pages import (
@@ -37,11 +39,9 @@ from muon.ingestion.bulbapedia.pages import (
     write_text_atomically,
 )
 from muon.ingestion.bulbapedia.species.batches import (
-    ASPECT,
     CONDITION,
     POKEMON_SPECIES,
     ChunkBuild,
-    ChunkBuildError,
     ChunkInputs,
     EvolutionBuild,
     SpeciesIndex,

@@ -8,21 +8,21 @@ import pytest
 
 from muon.ingestion.batch import NODE_ID_PATTERN, GraphBatch
 from muon.ingestion.bulbapedia.batching import (
+    ASPECT,
+    DESCRIBES,
+    FROM_WORK,
+    MENTIONED_IN,
     MOVE,
+    SOURCE,
+    TEXT,
+    TEXT_CHUNK,
     AboxIndex,
     build_abox_index,
 )
 from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
 from muon.ingestion.bulbapedia.pages import Page
 from muon.ingestion.bulbapedia.species.batches import (
-    ASPECT,
-    DESCRIBES,
-    FROM_WORK,
-    MENTIONED_IN,
     POKEMON_SPECIES,
-    SOURCE,
-    TEXT,
-    TEXT_CHUNK,
     VERSION,
     ChunkInputs,
     SpeciesIndex,

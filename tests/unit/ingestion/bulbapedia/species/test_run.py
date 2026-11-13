@@ -3,8 +3,9 @@ from pathlib import Path
 
 import pytest
 
+from muon.ingestion.bulbapedia import batching
 from muon.ingestion.bulbapedia.pages import PageStore
-from muon.ingestion.bulbapedia.species import batches, forms
+from muon.ingestion.bulbapedia.species import forms
 from muon.ingestion.bulbapedia.species.extract import NoteKind, ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError, PageOverride
 from muon.ingestion.bulbapedia.species.run import (
@@ -332,7 +333,7 @@ def test_chunk_notes_reach_the_report(tmp_path: Path) -> None:
 def test_a_chunk_id_collision_fails_only_its_page(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(batches, "hash_chunk_text", lambda text: "deadbeef")
+    monkeypatch.setattr(batching, "hash_chunk_text", lambda text: "deadbeef")
     run = run_parse(chunk_wikitexts(tmp_path, alpha=POKEDEX))
 
     failed = [r for r in run.report.pages if r.status is PageStatus.FAILED]

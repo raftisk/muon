@@ -4,33 +4,33 @@ import pytest
 
 from muon.ingestion.batch import NODE_ID_PATTERN, EdgeRecord, GraphBatch, NodeRecord
 from muon.ingestion.bulbapedia.batching import (
-    MOVE,
-    TYPE,
-    AboxIndex,
-    build_abox_index,
-)
-from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
-from muon.ingestion.bulbapedia.species.batches import (
     ABILITY,
     ASPECT,
-    CHUNK_SCOPE,
     DESCRIBES,
     FROM_WORK,
     MENTIONED_IN,
-    POKEMON_SPECIES,
+    MOVE,
     SECTION,
     SOURCE,
     SOURCE_URL,
     TEXT,
     TEXT_CHUNK,
+    TYPE,
+    AboxIndex,
+    ChunkBuildError,
+    build_abox_index,
+    hash_chunk_text,
+    number_chunks,
+)
+from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
+from muon.ingestion.bulbapedia.species.batches import (
+    CHUNK_SCOPE,
+    POKEMON_SPECIES,
     VERSION,
     ChunkBuild,
-    ChunkBuildError,
     ChunkInputs,
     SpeciesIndex,
     build_chunk_batch,
-    hash_chunk_text,
-    number_chunks,
 )
 from muon.ingestion.bulbapedia.species.extract import (
     NoteKind,
@@ -392,7 +392,7 @@ def test_two_texts_with_the_same_hash_fail_the_page_with_both_texts(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "muon.ingestion.bulbapedia.species.batches.hash_chunk_text", lambda text: "deadbeef"
+        "muon.ingestion.bulbapedia.batching.hash_chunk_text", lambda text: "deadbeef"
     )
     facts = [pokedex_fact(("Gold",), "First text."), pokedex_fact(("Gold",), "Second text.")]
 
