@@ -1,6 +1,7 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
-`muon parse bulbapedia species` and `muon ingest bulbapedia species`."""
+`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move` and
+`muon ingest bulbapedia species`."""
 
 import argparse
 import asyncio
@@ -13,6 +14,7 @@ from collections.abc import Sequence
 from dataclasses import fields
 from pathlib import Path
 
+import httpx
 from pydantic import SecretStr, ValidationError
 
 from muon.config import OntologySettings, Settings, get_settings
@@ -26,6 +28,28 @@ from muon.ingestion.bulbapedia.fetch import (
     FetchRequest,
     fetch_pages,
     import_pages,
+)
+from muon.ingestion.bulbapedia.moves.batches import MachineFieldError
+from muon.ingestion.bulbapedia.moves.page import TableError
+from muon.ingestion.bulbapedia.moves.run import (
+    PAGE_TYPE as MOVE_PAGE_TYPE,
+)
+from muon.ingestion.bulbapedia.moves.run import (
+    MachineConflictError,
+    MoveParseReport,
+    MoveParseRequest,
+    MoveParseRun,
+    MoveRunInputs,
+    parse_move_pages,
+)
+from muon.ingestion.bulbapedia.moves.run import (
+    PageStatus as MovePageStatus,
+)
+from muon.ingestion.bulbapedia.moves.run import (
+    ParseRunError as MoveParseRunError,
+)
+from muon.ingestion.bulbapedia.moves.run import (
+    write_outputs as write_move_outputs,
 )
 from muon.ingestion.bulbapedia.pages import PageStore, PageStoreError
 from muon.ingestion.bulbapedia.species.forms import OverrideError
@@ -51,6 +75,12 @@ from muon.ingestion.bulbapedia.species.run import (
 from muon.ingestion.bulbapedia.species.run import (
     PAGE_TYPE as PARSE_PAGE_TYPE,
 )
+from muon.ingestion.pokeapi.snapshot import (
+    SnapshotError,
+    SnapshotFetchReport,
+    SnapshotStore,
+    fetch_snapshot,
+)
 from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, seed_universe
 from muon.ontology.materializer import LabelMaterializer
@@ -65,11 +95,14 @@ FETCH_COMMAND = "fetch"
 PARSE_COMMAND = "parse"
 INGEST_COMMAND = "ingest"
 BULBAPEDIA_SOURCE = "bulbapedia"
+POKEAPI_SOURCE = "pokeapi"
 PASSWORD_PROMPT = "Neo4j password: "
 PASSWORD_ENCODING = "utf-8"
 PASSWORD_MISMATCH_MESSAGE = "the password does not match NEO4J_PASSWORD"
 ABORT_MESSAGE = "aborted"
 EXPORT_CONFLICT_MESSAGE = "--from-export cannot be combined with --update or --title"
+MISSING_PAGE_TYPE_MESSAGE = "fetch bulbapedia needs a page type"
+POKEAPI_OPTIONS_MESSAGE = "fetch pokeapi takes no page type, --title or --from-export"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -87,10 +120,17 @@ def build_parser() -> argparse.ArgumentParser:
     fetch = commands.add_parser(
         FETCH_COMMAND, help="download pinned source pages into data/<source>/ for ingestion"
     )
-    fetch.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to fetch from")
-    fetch.add_argument("page_type", choices=sorted(PAGE_TYPES), help="the set of pages to fetch")
     fetch.add_argument(
-        "--update", action="store_true", help="move the pins to the latest revisions"
+        "source", choices=(BULBAPEDIA_SOURCE, POKEAPI_SOURCE), help="the source to fetch from"
+    )
+    fetch.add_argument(
+        "page_type",
+        nargs="?",
+        choices=sorted(PAGE_TYPES),
+        help="the set of pages to fetch (bulbapedia only)",
+    )
+    fetch.add_argument(
+        "--update", action="store_true", help="move the pins to the latest revisions or commit"
     )
     fetch.add_argument(
         "--title",
@@ -111,7 +151,9 @@ def build_parser() -> argparse.ArgumentParser:
         PARSE_COMMAND, help="parse pinned source pages into batches and a report under data/"
     )
     parse.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to parse")
-    parse.add_argument("page_type", choices=(PARSE_PAGE_TYPE,), help="the set of pages to parse")
+    parse.add_argument(
+        "page_type", choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE), help="the set of pages to parse"
+    )
     parse.add_argument(
         "--title",
         action="append",
@@ -235,6 +277,32 @@ def execute_fetch(request: FetchRequest) -> int:
     return EXIT_SUCCESS
 
 
+def run_fetch_pokeapi(is_update: bool) -> SnapshotFetchReport:
+    with build_http_client() as http_client:
+        return fetch_snapshot(SnapshotStore(), http_client, is_update)
+
+
+def execute_fetch_pokeapi(is_update: bool) -> int:
+    failure_prefix = build_failure_prefix(FETCH_COMMAND, POKEAPI_SOURCE)
+    try:
+        report = run_fetch_pokeapi(is_update)
+    except (SnapshotError, httpx.HTTPError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(
+        "\n".join(
+            [
+                f"{FETCH_COMMAND} {POKEAPI_SOURCE}: done",
+                f"commit: {report.commit}",
+                f"files downloaded: {report.files_downloaded}",
+                f"requests: {report.requests}",
+            ]
+        )
+    )
+    return EXIT_SUCCESS
+
+
 def run_parse(request: ParseRequest) -> ParseRun:
     """Parse the pinned pages and write the outputs. No Neo4j setting is read."""
     inputs = RunInputs(request, PageStore(), OntologySettings().ontology_dir)
@@ -280,6 +348,63 @@ def execute_parse(request: ParseRequest) -> int:
         return EXIT_FAILURE
 
     print(format_parse_report(run.report, time.monotonic() - started))
+    return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
+
+
+def run_move_parse(request: MoveParseRequest) -> MoveParseRun:
+    """Parse the pinned move pages and write the outputs. No Neo4j or LLM setting is read."""
+    inputs = MoveRunInputs(request, PageStore(), SnapshotStore(), OntologySettings().ontology_dir)
+    run = parse_move_pages(inputs)
+    write_move_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
+    return run
+
+
+def format_move_parse_report(report: MoveParseReport, elapsed_seconds: float) -> str:
+    """The page counts, batch counts, notes per kind, cross-check per field and failures."""
+    counts = report.batch_counts
+    lines = [
+        f"{PARSE_COMMAND} {BULBAPEDIA_SOURCE} {MOVE_PAGE_TYPE}: done",
+        f"pages parsed: {report.pages_parsed}",
+        f"pages skipped: {report.pages_skipped}",
+        f"pages failed: {report.pages_failed}",
+    ]
+    lines.extend(
+        f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
+    )
+    lines.append(f"stubs: {sum(counts.stubs.values())}")
+    lines.append(f"edges: {sum(counts.edges.values())}")
+    note_counts = Counter(note.kind.value for note in report.notes)
+    lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
+    field_counts = Counter(difference.field for difference in report.cross_check)
+    lines.extend(f"cross-check {field}: {count}" for field, count in sorted(field_counts.items()))
+    lines.extend(
+        f"failed: {page.title}: {page.reason}"
+        for page in report.pages
+        if page.status is MovePageStatus.FAILED
+    )
+    lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
+    return "\n".join(lines)
+
+
+def execute_move_parse(titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(PARSE_COMMAND, f"{BULBAPEDIA_SOURCE} {MOVE_PAGE_TYPE}")
+    started = time.monotonic()
+    try:
+        run = run_move_parse(MoveParseRequest(titles=titles))
+    except (
+        MoveParseRunError,
+        TableError,
+        MachineFieldError,
+        MachineConflictError,
+        SnapshotError,
+        PageStoreError,
+        OntologyError,
+        ABoxError,
+    ) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_move_parse_report(run.report, time.monotonic() - started))
     return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
 
 
@@ -388,7 +513,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the command in `argv` and return the process exit code."""
     parser = build_parser()
     arguments = parser.parse_args(argv)
+    if arguments.command == FETCH_COMMAND and arguments.source == POKEAPI_SOURCE:
+        if arguments.page_type is not None or arguments.titles or arguments.export_path:
+            parser.error(POKEAPI_OPTIONS_MESSAGE)
+        return execute_fetch_pokeapi(arguments.update)
     if arguments.command == FETCH_COMMAND:
+        if arguments.page_type is None:
+            parser.error(MISSING_PAGE_TYPE_MESSAGE)
         if arguments.export_path is not None and (arguments.update or arguments.titles):
             parser.error(EXPORT_CONFLICT_MESSAGE)
         request = FetchRequest(
@@ -398,6 +529,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             export_path=arguments.export_path,
         )
         return execute_fetch(request)
+    if arguments.command == PARSE_COMMAND and arguments.page_type == MOVE_PAGE_TYPE:
+        return execute_move_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND:
         return execute_parse(ParseRequest(titles=tuple(arguments.titles)))
 

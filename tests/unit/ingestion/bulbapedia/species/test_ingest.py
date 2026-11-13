@@ -9,13 +9,15 @@ from typing import Any
 import pytest
 
 from muon.graph import GraphQueryError, Statement
+from muon.ingestion.bulbapedia.batching import (
+    PKMN,
+)
 from muon.ingestion.bulbapedia.pages import PageStore
 from muon.ingestion.bulbapedia.species import ingest
 from muon.ingestion.bulbapedia.species.batches import (
     EVOLUTION,
     FORM_CHANGE,
     LEARNSET_ENTRY,
-    PKMN,
     POKEMON_SPECIES,
     TEXT_CHUNK,
 )

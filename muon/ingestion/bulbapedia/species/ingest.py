@@ -25,8 +25,8 @@ from pathlib import Path
 
 from muon.graph import GraphClient, GraphError
 from muon.ingestion.batch import GraphBatch, NodeRef
+from muon.ingestion.bulbapedia.batching import UNIVERSE
 from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT, write_text_atomically
-from muon.ingestion.bulbapedia.species.batches import UNIVERSE
 from muon.ingestion.bulbapedia.species.run import (
     PageOutput,
     PageStatus,

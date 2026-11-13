@@ -6,6 +6,13 @@ from pathlib import Path
 import pytest
 
 from muon.ingestion.batch import GraphBatch, NodeRecord
+from muon.ingestion.bulbapedia.batching import (
+    INTRODUCED_IN,
+    MACHINE,
+    PKMN,
+    AboxIndex,
+    build_abox_index,
+)
 from muon.ingestion.bulbapedia.species.batches import (
     CAN_LEARN,
     EVOLUTION,
@@ -13,18 +20,13 @@ from muon.ingestion.bulbapedia.species.batches import (
     EVOLVES_TO,
     FORM_CHANGE,
     HELD_ITEM,
-    INTRODUCED_IN,
     LEARNSET_ENTRY,
-    MACHINE,
-    PKMN,
     POKEMON_SPECIES,
     REQUIRES,
     SPECIES_SCOPE,
     VIA_MACHINE,
-    AboxIndex,
     EvolutionBuild,
     SpeciesIndex,
-    build_abox_index,
     build_evolution_batch,
     build_species_batch,
     build_species_index,

@@ -7,22 +7,24 @@ from pathlib import Path
 import pytest
 
 from muon.ingestion.batch import NODE_ID_PATTERN, GraphBatch
+from muon.ingestion.bulbapedia.batching import (
+    MOVE,
+    AboxIndex,
+    build_abox_index,
+)
 from muon.ingestion.bulbapedia.pages import Page
 from muon.ingestion.bulbapedia.species.batches import (
     ASPECT,
     DESCRIBES,
     FROM_WORK,
     MENTIONED_IN,
-    MOVE,
     POKEMON_SPECIES,
     SOURCE,
     TEXT,
     TEXT_CHUNK,
     VERSION,
-    AboxIndex,
     ChunkInputs,
     SpeciesIndex,
-    build_abox_index,
     build_chunk_batch,
     build_species_index,
 )

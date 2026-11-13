@@ -49,9 +49,12 @@ from muon.ingestion.bulbapedia.species.learnset import list_learnset_titles, rea
 from muon.ingestion.bulbapedia.wikitext import (
     COMMENT_PATTERN,
     PATH_SEPARATOR,
+    AliasRules,
     Section,
     find_sections,
     find_templates,
+    read_aliases,
+    read_categories,
     read_params,
     read_small_captions,
     render_node,
@@ -61,11 +64,11 @@ from muon.ingestion.bulbapedia.wikitext import (
 
 INFOBOX_TEMPLATE = "pokémon infobox"
 INFOBOX_LABEL = "Pokémon Infobox"
+SPECIES_ALIAS_RULES = AliasRules(
+    template_name="other languages", infobox_keys=("jname", "tmname"), should_drop_notes=False
+)
 STATS_PATH = ("Game data", "Stats", "Base stats")
-LANGUAGES_PATH = ("In other languages",)
 STATS_TEMPLATES = ("stats", "basestats", "base stats", "basestats with rby")
-OTHER_LANGUAGES_TEMPLATE = "other languages"
-CATEGORY_PATTERN = re.compile(r"\[\[\s*Category\s*:\s*([^\]|]+)", re.IGNORECASE)
 
 GENDER_RATES: Mapping[int, float] = {
     0: 0.0,
@@ -136,7 +139,6 @@ FORM_TYPE_KEYS = ("form{index}type1", "form{index}type2")
 EGG_GROUP_KEYS = ("egggroup1", "egggroup2")
 HEIGHT_KEY = "height-m"
 WEIGHT_KEY = "weight-kg"
-ALIAS_INFOBOX_KEYS = ("jname", "tmname")
 
 BASE_ABILITY_KEYS = ("ability1", "ability2")
 INDEXED_ABILITY_PATTERN = re.compile(r"^ability(\d+)-(\d+)$")
@@ -147,15 +149,6 @@ ABILITY_NOTE_KEYS = ("ability1note", "ability2note")
 GENUS_SUFFIX = " Pokémon"
 GENUS_CAPTION_TEMPLATE = "tt"
 CAPTION_PADDING = "() "
-LINE_BREAK_PATTERN = re.compile(r"<(?:br|hr)\s*/?>", re.IGNORECASE)
-ROMANIZATION_PATTERN = re.compile(r"''(.+?)(?:''|$)")
-ALIAS_PADDING = "' *†‡"  # quote debris and the footnote markers of `{{tt|*|note}}`
-MEANING_SUFFIX = "meaning"
-LANGUAGE_KEY_PATTERN = re.compile(r"^[A-Za-z_]+$")
-EXCLUDED_LANGUAGE_KEYS = frozenset({"type"})
-TEMPLATE_OPENERS = ("{{", "[[")
-TEMPLATE_CLOSERS = ("}}", "]]")
-TEMPLATE_BRACES = 2
 
 GENERATION_RANGE_PATTERN = re.compile(r"^Generations? ([IVX]+)(?: ?(?:-|to) ?([IVX]+)| onwards?)?$")
 VERSION_RANGE_PATTERN = re.compile(r"^Version [\d.]+(\+)?$")
@@ -174,10 +167,6 @@ def read_infobox(lead: Section) -> dict[str, str] | None:
         name: COMMENT_PATTERN.sub("", value).strip()
         for name, value in read_params(infoboxes[0]).items()
     }
-
-
-def read_categories(wikitext: str) -> frozenset[str]:
-    return frozenset(name.strip() for name in CATEGORY_PATTERN.findall(wikitext))
 
 
 def text_of(infobox: Mapping[str, str], key: str) -> str:
@@ -530,78 +519,6 @@ def read_genus(
     return genus, tuple(residue)
 
 
-def split_top_level(body: str) -> list[str]:
-    """Split `body` on the `|` that sit outside `{{ }}` and `[[ ]]`."""
-    pieces: list[str] = []
-    depth = 0
-    start = 0
-    index = 0
-    while index < len(body):
-        pair = body[index : index + TEMPLATE_BRACES]
-        if pair in TEMPLATE_OPENERS:
-            depth += 1
-            index += TEMPLATE_BRACES
-        elif pair in TEMPLATE_CLOSERS:
-            depth = max(0, depth - 1)
-            index += TEMPLATE_BRACES
-        else:
-            if body[index] == "|" and depth == 0:
-                pieces.append(body[start:index])
-                start = index + 1
-            index += 1
-    pieces.append(body[start:])
-    return pieces
-
-
-def read_language_values(sections: Sequence[Section]) -> list[str]:
-    """Return the raw value of each language parameter of `Other languages`, in order.
-
-    The template is split on its own top-level pipes: an unclosed `''` in 1 value makes
-    `mwparserfromhell` fold the parameters after it into that value.
-    """
-    values: list[str] = []
-    for section in find_sections(sections, LANGUAGES_PATH):
-        for template in find_templates(section.parse(), [OTHER_LANGUAGES_TEMPLATE]):
-            body = str(template)[TEMPLATE_BRACES:-TEMPLATE_BRACES]
-            for piece in split_top_level(body)[1:]:
-                key, separator, value = piece.partition("=")
-                key = key.strip()
-                if separator and is_language_key(key):
-                    values.append(value.strip())
-    return values
-
-
-def is_language_key(key: str) -> bool:
-    return (
-        LANGUAGE_KEY_PATTERN.match(key) is not None
-        and not key.endswith(MEANING_SUFFIX)
-        and key not in EXCLUDED_LANGUAGE_KEYS
-    )
-
-
-def split_alias_names(raw: str) -> list[str]:
-    """Return the names and romanizations in 1 language value, in reading order."""
-    names: list[str] = []
-    for line in LINE_BREAK_PATTERN.split(raw):
-        names.append(ROMANIZATION_PATTERN.sub("", line))
-        names.extend(ROMANIZATION_PATTERN.findall(line))
-    cleaned = (to_plain_text(name).strip(ALIAS_PADDING) for name in names)
-    return [name for name in cleaned if name]
-
-
-def read_aliases(
-    sections: Sequence[Section], infobox: Mapping[str, str], english_name: str
-) -> tuple[str, ...]:
-    """Return the other-language names, then `jname` and `tmname`, without repeats or the
-    English name."""
-    raw_values = [
-        *read_language_values(sections),
-        *(infobox.get(key, "") for key in ALIAS_INFOBOX_KEYS),
-    ]
-    names = (name for raw in raw_values for name in split_alias_names(raw))
-    return tuple(name for name in dict.fromkeys(names) if name != english_name)
-
-
 @dataclass(frozen=True)
 class FactInputs:
     page_title: str
@@ -772,7 +689,7 @@ def read_form_facts(
         abilities=abilities.abilities,
         genus=genus,
         base_stats=read_base_stats(inputs.sections, inputs.forms, inputs.page_title),
-        aliases=read_aliases(inputs.sections, inputs.infobox, english_name),
+        aliases=read_aliases(inputs.sections, inputs.infobox, english_name, SPECIES_ALIAS_RULES),
     )
     facts: list[FormFacts] = []
     notes: list[PageNote] = [*abilities.notes]
