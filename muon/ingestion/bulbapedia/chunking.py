@@ -30,8 +30,13 @@ from muon.ingestion.bulbapedia.wikitext import (
 )
 
 MIN_PARAGRAPH_LENGTH = 100
+# Above this many characters a chunk is reported, never split: the longest chunk of the
+# pinned pages has 3,895, and the embedding model takes about 8,000 tokens.
+LONG_CHUNK_LENGTH = 4000
+TABLE_TAG = "table"
+MATH_TAG = "math"
 MENTION_TEMPLATES = frozenset({"p", "m", "a", "type", "t"})
-REMOVED_TAGS = frozenset({"table", "gallery"})
+REMOVED_TAGS = frozenset({TABLE_TAG, "gallery"})
 UNWRAPPED_TAGS = frozenset({"div", "center"})
 SOFT_HYPHEN = "­"
 BULLET_MARK = "*"
@@ -100,10 +105,13 @@ class RenderedBlock:
 
 @dataclass(frozen=True)
 class ProseReading:
-    """The chunks of 1 prose section and the names of the templates its render dropped."""
+    """The chunks of 1 prose section, the names of the templates its render dropped, and how
+    many tables it removed and `<math>` formulas it kept as LaTeX source."""
 
     chunks: tuple[ChunkFact, ...]
     dropped: tuple[str, ...]
+    removed_tables: int = 0
+    math_formulas: int = 0
 
 
 def read_tag_name(tag: Tag) -> str:
@@ -156,13 +164,22 @@ def cut_group(lines: Sequence[str]) -> list[Block]:
     return blocks
 
 
+def strip_comments(wikitext: str) -> str:
+    return COMMENT_PATTERN.sub("", COMMENT_LINE_PATTERN.sub("", wikitext))
+
+
+def count_tags(wikitext: str, name: str) -> int:
+    """Count the elements named `name` in `wikitext`, nested ones included."""
+    code = mwparserfromhell.parse(wikitext)
+    return len(code.filter_tags(recursive=True, matches=lambda node: read_tag_name(node) == name))
+
+
 def split_blocks(wikitext: str) -> tuple[Block, ...]:
     """Cut section wikitext into paragraphs and bullet items, in page order.
 
     Comments, tables and galleries are removed first, and layout `<div>` tags are unwrapped.
     """
-    uncommented = COMMENT_PATTERN.sub("", COMMENT_LINE_PATTERN.sub("", wikitext))
-    text = remove_tags(uncommented, REMOVED_TAGS, UNWRAPPED_TAGS)
+    text = remove_tags(strip_comments(wikitext), REMOVED_TAGS, UNWRAPPED_TAGS)
     blocks: list[Block] = []
     for group in BLANK_LINES_PATTERN.split(text):
         lines = [line.strip() for line in group.split(LINE_BREAK) if line.strip()]
@@ -224,8 +241,13 @@ def merge_short_paragraphs(blocks: Sequence[RenderedBlock]) -> tuple[RenderedBlo
     return tuple(merged)
 
 
+def find_long_chunks(chunks: Sequence[ChunkFact]) -> tuple[ChunkFact, ...]:
+    return tuple(chunk for chunk in chunks if len(chunk.text) > LONG_CHUNK_LENGTH)
+
+
 def read_prose_section(section: Section, aspect: ChunkAspect, subject_id: str) -> ProseReading:
     """Read the chunks of a prose section about `subject_id`, 1 per merged block."""
+    uncommented = strip_comments(section.text)
     rendered = [render_block(block) for block in split_blocks(section.text)]
     kept = merge_short_paragraphs([block for block in rendered if block.text])
     chunks = tuple(
@@ -238,4 +260,9 @@ def read_prose_section(section: Section, aspect: ChunkAspect, subject_id: str) -
         )
         for block in kept
     )
-    return ProseReading(chunks=chunks, dropped=tuple(name for b in rendered for name in b.dropped))
+    return ProseReading(
+        chunks=chunks,
+        dropped=tuple(name for b in rendered for name in b.dropped),
+        removed_tables=count_tags(uncommented, TABLE_TAG),
+        math_formulas=count_tags(uncommented, MATH_TAG),
+    )

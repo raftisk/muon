@@ -22,6 +22,8 @@ from mwparserfromhell.nodes import Template
 from pydantic import BaseModel, ConfigDict
 
 from muon.ingestion.batch import build_node_id
+from muon.ingestion.bulbapedia.chunking import ChunkFact
+from muon.ingestion.bulbapedia.moves.chunks import MoveChunkReading, read_move_chunks
 from muon.ingestion.bulbapedia.pages import Page
 from muon.ingestion.bulbapedia.wikitext import (
     AliasRules,
@@ -114,6 +116,9 @@ class MoveNoteKind(StrEnum):
     NO_POKEAPI_MATCH = "no_pokeapi_match"
     OVERRIDE_APPLIED = "override_applied"
     TABLE_ROW_APPLIED = "table_row_applied"
+    UNKNOWN_GAME_CODE = "unknown_game_code"
+    UNRESOLVED_MENTION = "unresolved_mention"
+    LONG_CHUNK = "long_chunk"
 
 
 class MoveModel(BaseModel):
@@ -171,6 +176,10 @@ class MovePageExtract(MoveModel):
     min_turns: int | None = None
     max_turns: int | None = None
     machines: tuple[MachineFact, ...] = ()
+    chunks: tuple[ChunkFact, ...] = ()
+    dropped_templates: Mapping[str, int] = {}
+    removed_tables: int = 0
+    math_formulas: int = 0
     notes: tuple[MoveNote, ...] = ()
 
 
@@ -577,6 +586,26 @@ def read_machines(
     return tuple(machines), tuple(notes)
 
 
+def build_chunk_notes(reading: MoveChunkReading) -> tuple[MoveNote, ...]:
+    unknown = (
+        MoveNote(
+            kind=MoveNoteKind.UNKNOWN_GAME_CODE,
+            field=code.section_path,
+            detail=f"{code.cell} has a game code no rule reads",
+        )
+        for code in reading.unknown_codes
+    )
+    long = (
+        MoveNote(
+            kind=MoveNoteKind.LONG_CHUNK,
+            field=chunk.section_path,
+            detail=f"{len(chunk.text)} characters",
+        )
+        for chunk in reading.long_chunks
+    )
+    return (*unknown, *long)
+
+
 def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
     """Parse 1 pinned move page. Raises `MovePageParseError` for a value no rule can read."""
     masked = mask_comments(page.wikitext)
@@ -606,6 +635,8 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
     crit_stage, crit_notes = read_crit_stage(categories, move_id)
     min_hits, max_hits = read_range(MOVE_HITS, move_id)
     min_turns, max_turns = read_range(MOVE_TURNS, move_id)
+    sections = split_sections(page.wikitext)
+    chunk_reading = read_move_chunks(sections, move_id)
     return MovePageExtract(
         title=page.title,
         page_id=page.page_id,
@@ -622,7 +653,7 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
         accuracy=readings[ACCURACY_KEY].value,
         is_protectable=is_protectable,
         is_mirrorable=is_mirrorable,
-        aliases=read_aliases(split_sections(page.wikitext), infobox, name, MOVE_ALIAS_RULES),
+        aliases=read_aliases(sections, infobox, name, MOVE_ALIAS_RULES),
         categories=tuple(sorted(categories)),
         flags=tuple(sorted(flags)),
         crit_stage=crit_stage,
@@ -631,6 +662,10 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
         min_turns=min_turns,
         max_turns=max_turns,
         machines=machines,
+        chunks=chunk_reading.chunks,
+        dropped_templates=chunk_reading.dropped_templates,
+        removed_tables=chunk_reading.removed_tables,
+        math_formulas=chunk_reading.math_formulas,
         notes=(
             *readings[POWER_KEY].notes,
             *readings[ACCURACY_KEY].notes,
@@ -643,5 +678,6 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
             *crit_notes,
             *build_table_note("MOVE_HITS", MOVE_HITS, move_id),
             *build_table_note("MOVE_TURNS", MOVE_TURNS, move_id),
+            *build_chunk_notes(chunk_reading),
         ),
     )
