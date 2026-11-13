@@ -1,6 +1,7 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
-`muon parse bulbapedia species` and `muon ingest bulbapedia species`."""
+`muon fetch pokeapi [--update]`, `muon parse bulbapedia species` and
+`muon ingest bulbapedia species`."""
 
 import argparse
 import asyncio
@@ -13,6 +14,7 @@ from collections.abc import Sequence
 from dataclasses import fields
 from pathlib import Path
 
+import httpx
 from pydantic import SecretStr, ValidationError
 
 from muon.config import OntologySettings, Settings, get_settings
@@ -51,6 +53,12 @@ from muon.ingestion.bulbapedia.species.run import (
 from muon.ingestion.bulbapedia.species.run import (
     PAGE_TYPE as PARSE_PAGE_TYPE,
 )
+from muon.ingestion.pokeapi.snapshot import (
+    SnapshotError,
+    SnapshotFetchReport,
+    SnapshotStore,
+    fetch_snapshot,
+)
 from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, seed_universe
 from muon.ontology.materializer import LabelMaterializer
@@ -65,11 +73,14 @@ FETCH_COMMAND = "fetch"
 PARSE_COMMAND = "parse"
 INGEST_COMMAND = "ingest"
 BULBAPEDIA_SOURCE = "bulbapedia"
+POKEAPI_SOURCE = "pokeapi"
 PASSWORD_PROMPT = "Neo4j password: "
 PASSWORD_ENCODING = "utf-8"
 PASSWORD_MISMATCH_MESSAGE = "the password does not match NEO4J_PASSWORD"
 ABORT_MESSAGE = "aborted"
 EXPORT_CONFLICT_MESSAGE = "--from-export cannot be combined with --update or --title"
+MISSING_PAGE_TYPE_MESSAGE = "fetch bulbapedia needs a page type"
+POKEAPI_OPTIONS_MESSAGE = "fetch pokeapi takes no page type, --title or --from-export"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -87,10 +98,17 @@ def build_parser() -> argparse.ArgumentParser:
     fetch = commands.add_parser(
         FETCH_COMMAND, help="download pinned source pages into data/<source>/ for ingestion"
     )
-    fetch.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to fetch from")
-    fetch.add_argument("page_type", choices=sorted(PAGE_TYPES), help="the set of pages to fetch")
     fetch.add_argument(
-        "--update", action="store_true", help="move the pins to the latest revisions"
+        "source", choices=(BULBAPEDIA_SOURCE, POKEAPI_SOURCE), help="the source to fetch from"
+    )
+    fetch.add_argument(
+        "page_type",
+        nargs="?",
+        choices=sorted(PAGE_TYPES),
+        help="the set of pages to fetch (bulbapedia only)",
+    )
+    fetch.add_argument(
+        "--update", action="store_true", help="move the pins to the latest revisions or commit"
     )
     fetch.add_argument(
         "--title",
@@ -232,6 +250,32 @@ def execute_fetch(request: FetchRequest) -> int:
         return EXIT_FAILURE
 
     print(format_fetch_report(request, report))
+    return EXIT_SUCCESS
+
+
+def run_fetch_pokeapi(is_update: bool) -> SnapshotFetchReport:
+    with build_http_client() as http_client:
+        return fetch_snapshot(SnapshotStore(), http_client, is_update)
+
+
+def execute_fetch_pokeapi(is_update: bool) -> int:
+    failure_prefix = build_failure_prefix(FETCH_COMMAND, POKEAPI_SOURCE)
+    try:
+        report = run_fetch_pokeapi(is_update)
+    except (SnapshotError, httpx.HTTPError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(
+        "\n".join(
+            [
+                f"{FETCH_COMMAND} {POKEAPI_SOURCE}: done",
+                f"commit: {report.commit}",
+                f"files downloaded: {report.files_downloaded}",
+                f"requests: {report.requests}",
+            ]
+        )
+    )
     return EXIT_SUCCESS
 
 
@@ -388,7 +432,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the command in `argv` and return the process exit code."""
     parser = build_parser()
     arguments = parser.parse_args(argv)
+    if arguments.command == FETCH_COMMAND and arguments.source == POKEAPI_SOURCE:
+        if arguments.page_type is not None or arguments.titles or arguments.export_path:
+            parser.error(POKEAPI_OPTIONS_MESSAGE)
+        return execute_fetch_pokeapi(arguments.update)
     if arguments.command == FETCH_COMMAND:
+        if arguments.page_type is None:
+            parser.error(MISSING_PAGE_TYPE_MESSAGE)
         if arguments.export_path is not None and (arguments.update or arguments.titles):
             parser.error(EXPORT_CONFLICT_MESSAGE)
         request = FetchRequest(

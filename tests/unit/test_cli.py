@@ -6,6 +6,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any
 
+import httpx
 import pytest
 
 from muon import cli
@@ -40,6 +41,7 @@ from muon.ingestion.bulbapedia.species.run import (
     ParseRunError,
     ResidueItem,
 )
+from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotFetchReport
 from muon.ingestion.runner import RunReport
 from muon.ingestion.seed import ABoxError
 from muon.ontology.model import OntologyError
@@ -515,6 +517,89 @@ def test_fetch_rejects_unknown_choices(
     assert exit_info.value.code == 2
     assert f"invalid choice: {invalid}" in error
     assert fetch.requests == []
+
+
+class RecordingPokeapiFetch:
+    """Stands in for `cli.run_fetch_pokeapi` and records each `is_update` it ran with."""
+
+    def __init__(self, outcome: SnapshotFetchReport | Exception) -> None:
+        self.outcome = outcome
+        self.updates: list[bool] = []
+
+    def __call__(self, is_update: bool) -> SnapshotFetchReport:
+        self.updates.append(is_update)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return self.outcome
+
+
+SNAPSHOT_REPORT = SnapshotFetchReport(commit="8a92bfa", files_downloaded=8, requests=9)
+
+
+def arrange_pokeapi_fetch(
+    monkeypatch: pytest.MonkeyPatch, outcome: SnapshotFetchReport | Exception
+) -> RecordingPokeapiFetch:
+    fetch = RecordingPokeapiFetch(outcome)
+    monkeypatch.setattr(cli, "run_fetch_pokeapi", fetch)
+    return fetch
+
+
+def test_fetch_pokeapi_runs_with_and_without_update(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fetch = arrange_pokeapi_fetch(monkeypatch, SNAPSHOT_REPORT)
+
+    assert cli.main(["fetch", "pokeapi"]) == cli.EXIT_SUCCESS
+    assert cli.main(["fetch", "pokeapi", "--update"]) == cli.EXIT_SUCCESS
+
+    assert fetch.updates == [False, True]
+    output = capsys.readouterr().out
+    assert "commit: 8a92bfa" in output
+    assert "files downloaded: 8" in output
+    assert "requests: 9" in output
+
+
+@pytest.mark.parametrize(
+    "extra", [["move"], ["--title", "Tackle (move)"], ["--from-export", "export.xml"]]
+)
+def test_fetch_pokeapi_rejects_bulbapedia_options(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], extra: list[str]
+) -> None:
+    fetch = arrange_pokeapi_fetch(monkeypatch, SNAPSHOT_REPORT)
+
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["fetch", "pokeapi", *extra])
+
+    assert exit_info.value.code == 2
+    assert cli.POKEAPI_OPTIONS_MESSAGE in capsys.readouterr().err
+    assert fetch.updates == []
+
+
+def test_fetch_bulbapedia_needs_a_page_type(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fetch = arrange_fetch(monkeypatch, FETCH_REPORT)
+
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["fetch", "bulbapedia"])
+
+    assert exit_info.value.code == 2
+    assert cli.MISSING_PAGE_TYPE_MESSAGE in capsys.readouterr().err
+    assert fetch.requests == []
+
+
+@pytest.mark.parametrize(
+    "error",
+    [SnapshotError("moves.csv does not match its pin"), httpx.ConnectError("no route")],
+)
+def test_fetch_pokeapi_failure_prints_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    arrange_pokeapi_fetch(monkeypatch, error)
+
+    assert cli.main(["fetch", "pokeapi"]) == cli.EXIT_FAILURE
+
+    assert f"fetch pokeapi failed: {error}" in capsys.readouterr().err
 
 
 def test_fetch_lists_the_valid_page_types(capsys: pytest.CaptureFixture[str]) -> None:
