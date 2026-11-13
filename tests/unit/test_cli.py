@@ -623,6 +623,15 @@ def build_move_report(pages_failed: int = 0) -> MoveParseReport:
         batch_counts=MoveBatchCounts(
             owner_nodes={"Move": 848, "Machine": 2173}, stubs={}, edges={}, claims={}
         ),
+        chunk_counts=MoveBatchCounts(
+            owner_nodes={"TextChunk": 9176}, stubs={}, edges={}, claims={}
+        ),
+        chunks_per_aspect={},
+        dropped_templates=(),
+        removed_tables_total=0,
+        removed_tables_per_page={},
+        math_formulas_total=0,
+        math_formulas_per_page={},
         moves_per_flag={},
         cross_check=(),
         moves_without_pokeapi_row=(),

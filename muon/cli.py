@@ -29,7 +29,7 @@ from muon.ingestion.bulbapedia.fetch import (
     fetch_pages,
     import_pages,
 )
-from muon.ingestion.bulbapedia.moves.batches import MachineFieldError
+from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.page import TableError
 from muon.ingestion.bulbapedia.moves.run import (
     PAGE_TYPE as MOVE_PAGE_TYPE,
@@ -395,6 +395,7 @@ def execute_move_parse(titles: tuple[str, ...]) -> int:
         MoveParseRunError,
         TableError,
         MachineFieldError,
+        GameCodeError,
         MachineConflictError,
         SnapshotError,
         PageStoreError,
