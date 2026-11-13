@@ -741,4 +741,6 @@ def parse_species_page(page: Page) -> SpeciesPageExtract | None:
         notes=(*forms.notes, *fact_notes, *learnset_notes, *chunk_reading.notes),
         chunks=chunk_reading.chunks,
         dropped_templates=chunk_reading.dropped_templates,
+        removed_tables=chunk_reading.removed_tables,
+        math_formulas=chunk_reading.math_formulas,
     )

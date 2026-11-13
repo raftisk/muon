@@ -1,6 +1,11 @@
 import pytest
 
-from muon.ingestion.bulbapedia.chunking import MIN_PARAGRAPH_LENGTH, ChunkAspect, MentionRef
+from muon.ingestion.bulbapedia.chunking import (
+    LONG_CHUNK_LENGTH,
+    MIN_PARAGRAPH_LENGTH,
+    ChunkAspect,
+    MentionRef,
+)
 from muon.ingestion.bulbapedia.species.chunks import (
     match_marker,
     merge_dex_rows,
@@ -266,6 +271,29 @@ def test_read_chunks_skips_the_lead_stats_evolution_and_merchandise() -> None:
     assert "stats text" not in joined
     assert "evolution text" not in joined
     assert "merchandise" not in joined
+
+
+def test_read_chunks_counts_removed_tables_and_kept_formulas() -> None:
+    wikitext = (
+        "==Trivia==\n* A fact with <math>x^2</math>.\n{|\n|cell\n|}\n"
+        "===Origin===\nOrigin text with <math>y</math>.\n<div>\n{|\n|c\n|}\n</div>"
+    )
+
+    reading = read_chunks(split_sections(wikitext), DIGLETT)
+
+    assert (reading.removed_tables, reading.math_formulas) == (2, 2)
+    assert "x^2" in reading.chunks[0].text
+
+
+def test_read_chunks_notes_a_chunk_above_the_long_length_and_keeps_it_whole() -> None:
+    text = "z" * (LONG_CHUNK_LENGTH + 1)
+
+    reading = read_chunks(split_sections(f"==Trivia==\n* {text}\n* short"), DIGLETT)
+
+    assert [chunk.text for chunk in reading.chunks] == [text, "short"]
+    assert [(n.kind, n.section_path, n.detail) for n in reading.notes] == [
+        (NoteKind.LONG_CHUNK, "Trivia", f"{LONG_CHUNK_LENGTH + 1} characters")
+    ]
 
 
 def test_read_chunks_gives_nothing_for_a_page_without_chunk_sections() -> None:

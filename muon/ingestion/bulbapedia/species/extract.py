@@ -55,6 +55,7 @@ class NoteKind(StrEnum):
     UNRESOLVED_MENTION = "unresolved_mention"
     UNMATCHED_FORM_LABEL = "unmatched_form_label"
     UNKNOWN_VERSION = "unknown_version"
+    LONG_CHUNK = "long_chunk"
 
 
 class PageNote(ExtractModel):
@@ -197,6 +198,8 @@ class SpeciesPageExtract(ExtractModel):
     """Everything 1 pinned page yields. `forms` lists the base node first.
 
     `dropped_templates` counts the templates left out of chunk text, by normalized name.
+    `removed_tables` and `math_formulas` count the tables left out of prose chunks and the
+    `<math>` formulas kept in them as LaTeX source.
     """
 
     title: str
@@ -211,3 +214,5 @@ class SpeciesPageExtract(ExtractModel):
     notes: tuple[PageNote, ...]
     chunks: tuple[ChunkFact, ...] = ()
     dropped_templates: Mapping[str, int] = Field(default_factory=dict)
+    removed_tables: int = 0
+    math_formulas: int = 0

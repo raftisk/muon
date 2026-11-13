@@ -26,6 +26,8 @@ from muon.ingestion.bulbapedia.chunking import (
     ChunkAspect,
     ChunkFact,
     MentionRef,
+    ProseReading,
+    find_long_chunks,
     normalize_chunk_text,
     read_prose_section,
 )
@@ -82,6 +84,8 @@ class ChunkReading:
     chunks: tuple[ChunkFact, ...]
     notes: tuple[PageNote, ...]
     dropped_templates: Mapping[str, int]
+    removed_tables: int
+    math_formulas: int
 
 
 def has_prefix(path: tuple[str, ...], prefix: tuple[str, ...]) -> bool:
@@ -158,16 +162,27 @@ def pick_biology_subject(
 
 def read_species_prose(
     section: Section, aspect: ChunkAspect, forms: Sequence[ResolvedForm]
-) -> tuple[list[ChunkFact], list[PageNote], list[str]]:
-    """Read the chunks, notes and dropped template names of a Biology, Origin or Trivia section."""
+) -> tuple[ProseReading, list[PageNote]]:
+    """Read a Biology, Origin or Trivia section, with a note when a Biology subsection
+    names no form."""
     notes: list[PageNote] = []
     subject_id = forms[0].id
     if aspect is ChunkAspect.BIOLOGY:
         subject_id, note = pick_biology_subject(section.path, forms)
         if note is not None:
             notes.append(note)
-    reading = read_prose_section(section, aspect, subject_id)
-    return list(reading.chunks), notes, list(reading.dropped)
+    return read_prose_section(section, aspect, subject_id), notes
+
+
+def build_long_chunk_notes(chunks: Sequence[ChunkFact]) -> list[PageNote]:
+    return [
+        PageNote(
+            kind=NoteKind.LONG_CHUNK,
+            section_path=chunk.section_path,
+            detail=f"{len(chunk.text)} characters",
+        )
+        for chunk in find_long_chunks(chunks)
+    ]
 
 
 def read_dex_versions(template: Template) -> tuple[str, ...]:
@@ -286,6 +301,8 @@ def read_chunks(sections: Sequence[Section], forms: Sequence[ResolvedForm]) -> C
     notes: list[PageNote] = []
     dex_rows: list[DexRow] = []
     dropped: Counter[str] = Counter()
+    removed_tables = 0
+    math_formulas = 0
     for section in sections:
         aspect = read_aspect(section.path)
         if aspect is None:
@@ -296,9 +313,18 @@ def read_chunks(sections: Sequence[Section], forms: Sequence[ResolvedForm]) -> C
             notes.extend(dex_notes)
             dropped.update(name for row in rows for name in row.dropped)
             continue
-        section_chunks, section_notes, section_dropped = read_species_prose(section, aspect, forms)
-        chunks.extend(section_chunks)
+        reading, section_notes = read_species_prose(section, aspect, forms)
+        chunks.extend(reading.chunks)
         notes.extend(section_notes)
-        dropped.update(section_dropped)
+        dropped.update(reading.dropped)
+        removed_tables += reading.removed_tables
+        math_formulas += reading.math_formulas
     chunks.extend(merge_dex_rows(dex_rows))
-    return ChunkReading(tuple(chunks), tuple(notes), dict(dropped))
+    notes.extend(build_long_chunk_notes(chunks))
+    return ChunkReading(
+        chunks=tuple(chunks),
+        notes=tuple(notes),
+        dropped_templates=dict(dropped),
+        removed_tables=removed_tables,
+        math_formulas=math_formulas,
+    )
