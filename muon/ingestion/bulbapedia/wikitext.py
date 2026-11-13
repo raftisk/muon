@@ -411,7 +411,10 @@ def split_alias_names(raw: str, should_drop_notes: bool) -> list[str]:
     if should_drop_notes:
         raw = COMMENT_PATTERN.sub("", raw)
     names: list[str] = []
-    for line in LINE_BREAK_PATTERN.split(raw):
+    for raw_line in LINE_BREAK_PATTERN.split(raw):
+        # A source note can hold italic titles, as in `(prior to ''[[Pokémon the Series]]'')`,
+        # that would otherwise read as romanizations.
+        line = TRAILING_NOTE_PATTERN.sub("", raw_line) if should_drop_notes else raw_line
         names.append(ROMANIZATION_PATTERN.sub("", line))
         names.extend(ROMANIZATION_PATTERN.findall(line))
     cleaned = (to_plain_text(name).strip(ALIAS_PADDING) for name in names)

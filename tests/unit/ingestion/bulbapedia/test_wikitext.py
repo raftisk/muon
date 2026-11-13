@@ -538,6 +538,19 @@ def test_move_aliases_drop_footnotes_source_notes_and_commented_names() -> None:
     )
 
 
+def test_move_aliases_read_no_romanization_from_a_source_note() -> None:
+    wikitext = (
+        "==In other languages==\n{{Langtable\n"
+        "|fi=Kaksoisterä ([[S01|''Pokémon the Series'' season 1]])<br>"
+        "Tuplaterä (''[[Pokémon the Series: Ruby and Sapphire]]'')\n"
+        "|zh_cmn=暗影球 ''Ànyǐng Qiú''\n}}"
+    )
+
+    aliases = read_aliases(split_sections(wikitext), {}, "Double-Edge", MOVE_RULES)
+
+    assert aliases == ("Kaksoisterä", "Tuplaterä", "暗影球", "Ànyǐng Qiú")
+
+
 def test_move_rules_read_only_the_langtable() -> None:
     wikitext = "==In other languages==\n{{Other languages|fr=Taupiqueur}}"
 
