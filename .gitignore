@@ -9,3 +9,4 @@ dist/
 data/bulbapedia/pages/
 data/bulbapedia/parsed/
 data/bulbapedia/ingested/
+data/pokeapi/csv/
