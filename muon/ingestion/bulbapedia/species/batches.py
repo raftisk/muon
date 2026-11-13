@@ -70,17 +70,15 @@ from muon.ingestion.bulbapedia.batching import (
     resolve_abox,
     to_roman,
 )
+from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
 from muon.ingestion.bulbapedia.species.evolution import EVOLUTION_PATH
 from muon.ingestion.bulbapedia.species.extract import (
     BaseStats,
-    ChunkAspect,
-    ChunkFact,
     EvolutionFact,
     FormChangeFact,
     FormFacts,
     LearnMethod,
     LearnsetRow,
-    MentionRef,
     NoteKind,
     PageNote,
     Requirement,

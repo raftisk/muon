@@ -12,6 +12,7 @@ from muon.ingestion.bulbapedia.batching import (
     AboxIndex,
     build_abox_index,
 )
+from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
 from muon.ingestion.bulbapedia.pages import Page
 from muon.ingestion.bulbapedia.species.batches import (
     ASPECT,
@@ -29,9 +30,6 @@ from muon.ingestion.bulbapedia.species.batches import (
     build_species_index,
 )
 from muon.ingestion.bulbapedia.species.extract import (
-    ChunkAspect,
-    ChunkFact,
-    MentionRef,
     NoteKind,
     PageNote,
     SpeciesPageExtract,
