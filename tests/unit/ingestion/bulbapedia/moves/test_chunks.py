@@ -213,7 +213,7 @@ def test_a_chunk_above_the_long_length_is_reported_and_kept_whole() -> None:
 def test_dropped_templates_are_counted_by_name() -> None:
     reading = read_page(
         "==Effect==\na {{roundy|x}} b {{roundy|y}}\n==Description==\n"
-        + build_row("{{gameabbrev9|SV}}", "c {{status|Burn}}")
+        + build_row("{{gameabbrev9|SV}}", "c {{sup/9|SV}}")
     )
 
-    assert reading.dropped_templates == {"roundy": 2, "status": 1}
+    assert reading.dropped_templates == {"roundy": 2, "sup/9": 1}

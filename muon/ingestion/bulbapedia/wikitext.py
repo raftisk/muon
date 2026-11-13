@@ -10,7 +10,7 @@ knows nothing of page types or of the ontology.
 import html
 import re
 from collections.abc import Collection, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import chain
 
 import mwparserfromhell
@@ -66,7 +66,9 @@ class TextRule:
     """How a template renders as text: the first of `params` that is present, else `literal`.
 
     `prefix` and `suffix` wrap the value of the last parameter in `params` only. An earlier
-    parameter is display text and shows as written, and `literal` is never wrapped.
+    parameter is display text and shows as written, and `literal` is never wrapped. `codes`
+    maps a value of the last parameter that is a code, such as `{{aniseries|DP}}`, to the
+    text the template shows for it; prefix and suffix do not wrap a mapped code.
     `layout` replaces all of that: a format string over the values of `params`, where `{0}`
     is the 1st name in `params`, `{1}` the 2nd and so on, and an absent parameter is empty.
     """
@@ -76,6 +78,7 @@ class TextRule:
     prefix: str = ""
     suffix: str = ""
     layout: str = ""
+    codes: Mapping[str, str] = field(default_factory=dict)
 
 
 FIRST_PARAM = TextRule(params=("1",))
@@ -83,6 +86,41 @@ SECOND_PARAM = TextRule(params=("2",))
 SECOND_OR_FIRST_PARAM = TextRule(params=("2", "1"))
 THIRD_OR_FIRST_PARAM = TextRule(params=("3", "1"))
 THIRD_OR_SECOND_PARAM = TextRule(params=("3", "2"))
+FOURTH_OR_SECOND_PARAM = TextRule(params=("4", "2"))
+FIRST_TWO_PARAMS = ("1", "2")
+FIRST_THREE_PARAMS = ("1", "2", "3")
+FIRST_FIVE_PARAMS = ("1", "2", "3", "4", "5")
+TCG = "TCG"
+
+
+# `{{aniseries|AG}}` and `{{aniseries|RS}}` show the same series; OS and GS are both
+# parts of the original series and show their own titles.
+ANIME_SERIES_CODES: Mapping[str, str] = {
+    "OS": "Pokémon the Series: The Beginning",
+    "GS": "Pokémon the Series: Gold and Silver",
+    "RS": "Pokémon the Series: Ruby and Sapphire",
+    "AG": "Pokémon the Series: Ruby and Sapphire",
+    "DP": "Pokémon the Series: Diamond and Pearl",
+    "BW": "Pokémon the Series: Black & White",
+    "XY": "Pokémon the Series: XY",
+    "SM": "Pokémon the Series: Sun & Moon",
+    "JN": "Pokémon Journeys: The Series",
+    "PTS": "Pokémon the Series",
+    "HZ": "Pokémon Horizons: The Series",
+}
+GAME_QUARTET_CODES: Mapping[str, str] = {
+    "BWB2W2": "Pokémon Black, White, Black 2, and White 2",
+    "SMUSUM": "Pokémon Sun, Moon, Ultra Sun, and Ultra Moon",
+}
+
+
+def show_param_or(literal: str) -> TextRule:
+    """The rule of a template that shows `literal`, or its 1st parameter in its place."""
+    return TextRule(params=("1",), literal=literal)
+
+
+# Rendering checked on Special:ExpandTemplates on 2026-11-13. A name absent from the table
+# is dropped: boxes, notices, hatnotes, superscripts, images and layout clears.
 
 TEXT_TEMPLATES: Mapping[str, TextRule] = {
     "tt": FIRST_PARAM,
@@ -117,6 +155,101 @@ TEXT_TEMPLATES: Mapping[str, TextRule] = {
     "tcg": SECOND_OR_FIRST_PARAM,
     "scpkmn": TextRule(literal="Pokémon"),
     "!": TextRule(literal="|"),
+    "'": TextRule(literal="'"),
+    "status": SECOND_OR_FIRST_PARAM,
+    "weather": SECOND_OR_FIRST_PARAM,
+    "pmin": SECOND_OR_FIRST_PARAM,
+    "ga": SECOND_OR_FIRST_PARAM,
+    "tc": SECOND_OR_FIRST_PARAM,
+    "b": SECOND_OR_FIRST_PARAM,
+    "i": SECOND_OR_FIRST_PARAM,
+    "an": SECOND_OR_FIRST_PARAM,
+    "jwp": SECOND_OR_FIRST_PARAM,
+    "vg": SECOND_OR_FIRST_PARAM,
+    "go": SECOND_OR_FIRST_PARAM,
+    "adv": SECOND_OR_FIRST_PARAM,
+    "hi": SECOND_OR_FIRST_PARAM,
+    "jpn": SECOND_OR_FIRST_PARAM,
+    "fd": SECOND_OR_FIRST_PARAM,
+    "poko": SECOND_OR_FIRST_PARAM,
+    "sbw": SECOND_OR_FIRST_PARAM,
+    "si": SECOND_OR_FIRST_PARAM,
+    "un": SECOND_OR_FIRST_PARAM,
+    "ka": SECOND_OR_FIRST_PARAM,
+    "mas": SECOND_OR_FIRST_PARAM,
+    "mov": SECOND_OR_FIRST_PARAM,
+    "n": SECOND_OR_FIRST_PARAM,
+    "smw": SECOND_OR_FIRST_PARAM,
+    "wk": SECOND_OR_FIRST_PARAM,
+    "few": SECOND_OR_FIRST_PARAM,
+    "ci": SECOND_OR_FIRST_PARAM,
+    "ho": SECOND_OR_FIRST_PARAM,
+    "jo": SECOND_OR_FIRST_PARAM,
+    "kal": SECOND_OR_FIRST_PARAM,
+    "al": SECOND_OR_FIRST_PARAM,
+    "book": SECOND_OR_FIRST_PARAM,
+    "ma": SECOND_OR_FIRST_PARAM,
+    "so": SECOND_OR_FIRST_PARAM,
+    "ssb": SECOND_OR_FIRST_PARAM,
+    "unite": SECOND_OR_FIRST_PARAM,
+    "wikipedia": SECOND_OR_FIRST_PARAM,
+    "template:wp": SECOND_OR_FIRST_PARAM,
+    "gdis": THIRD_OR_FIRST_PARAM,
+    "tp": SECOND_PARAM,
+    "file": SECOND_PARAM,
+    "lang": SECOND_PARAM,
+    "ap": FIRST_PARAM,
+    "j": FIRST_PARAM,
+    "mdc": FIRST_PARAM,
+    "rtn": FIRST_PARAM,
+    "v2": FIRST_PARAM,
+    "tcg id": FOURTH_OR_SECOND_PARAM,
+    "rt": TextRule(params=("3", "1"), prefix="Route "),
+    "me": TextRule(params=("1",), prefix="Mega "),
+    "badge": TextRule(params=("1",), suffix=" Badge"),
+    "egg2": TextRule(params=("1",), suffix=" Group"),
+    "ct": TextRule(params=("1",), suffix=TYPE_SUFFIX),
+    "player": show_param_or("player"),
+    "tera": show_param_or("Tera"),
+    "ash": show_param_or("Ash"),
+    "ashfr": show_param_or("his friends"),
+    "mtr": show_param_or("Meowth"),
+    "season": show_param_or("season"),
+    "spin-off games": show_param_or("spin-off games"),
+    "lgpe": show_param_or("Pokémon: Let's Go, Pikachu! and Let's Go, Eevee!"),
+    "safari": TextRule(literal="Safari Zone"),
+    "abilities": TextRule(literal="Abilities"),
+    "berries": TextRule(literal="Berries"),
+    "gary": TextRule(literal="Gary"),
+    "todd": TextRule(literal="Todd"),
+    "trt": TextRule(literal="Team Rocket"),
+    "trading card game": TextRule(literal=TCG),
+    "ptcg": TextRule(literal=TCG),
+    "trading figure game": TextRule(literal="TFG"),
+    "pokémon xd": TextRule(literal="Pokémon XD"),
+    "xd": TextRule(literal="XD"),
+    "detpikmov": TextRule(literal="POKÉMON Detective Pikachu"),
+    "stab": TextRule(literal="STAB"),
+    "ev": TextRule(literal="EV"),
+    "iv": TextRule(literal="IV"),
+    "pp": TextRule(literal="PP"),
+    "scball": TextRule(literal="Poké Ball"),
+    "pdollar": TextRule(literal="$"),
+    "v": TextRule(params=FIRST_TWO_PARAMS, layout="{0} Version{1}"),
+    "2t": TextRule(params=FIRST_TWO_PARAMS, layout="{0}/{1}"),
+    "frac": TextRule(params=FIRST_TWO_PARAMS, layout="{0}/{1}"),
+    "sk": TextRule(params=FIRST_TWO_PARAMS, layout="{0} {1}"),
+    "sync": TextRule(params=FIRST_TWO_PARAMS, layout="{0} & {1}"),
+    "tr": TextRule(params=FIRST_TWO_PARAMS, layout="TR{0} ({1})"),
+    "ruby": TextRule(params=FIRST_TWO_PARAMS, layout="{0}({1})"),
+    "3v2": TextRule(params=FIRST_THREE_PARAMS, layout="{0}, {1}, and {2}"),
+    "game2": TextRule(params=FIRST_THREE_PARAMS, layout="Pokémon {0}, {1}, and {2}"),
+    "4v": TextRule(params=FIRST_THREE_PARAMS, layout="{0}, {1}, {0} {2}, and {1} {2}"),
+    "game5": TextRule(params=FIRST_FIVE_PARAMS, layout="Pokémon {0}, {1}, {2}, {3}, and {4}"),
+    "aniseries": TextRule(
+        params=("2", "1"), literal="Pokémon animated series", codes=ANIME_SERIES_CODES
+    ),
+    "game4": TextRule(params=("1",), codes=GAME_QUARTET_CODES),
 }
 
 
@@ -244,7 +377,11 @@ def render_rule(template: Template, rule: TextRule, captured_names: frozenset[st
         if not template.has(param, ignore_empty=True):
             continue
         value = render_param(template, param, captured_names)
-        text = f"{rule.prefix}{value.text}{rule.suffix}" if param == rule.params[-1] else value.text
+        if param != rule.params[-1]:
+            return value
+        if value.text in rule.codes:
+            return PlainText(rule.codes[value.text], value.captured, value.dropped)
+        text = f"{rule.prefix}{value.text}{rule.suffix}"
         return PlainText(text, value.captured, value.dropped)
     return PlainText(rule.literal)
 
