@@ -4,12 +4,16 @@ from pathlib import Path
 import pytest
 
 from muon.ingestion.bulbapedia import batching
-from muon.ingestion.bulbapedia.pages import PageStore
+from muon.ingestion.bulbapedia.pages import Page, PageStore, compute_sha1
 from muon.ingestion.bulbapedia.runs import PageStatus
-from muon.ingestion.bulbapedia.species import forms
+from muon.ingestion.bulbapedia.species import encounters, forms, run
+from muon.ingestion.bulbapedia.species.batches import ENCOUNTER, ENCOUNTER_SCOPE, POKEMON_SPECIES
+from muon.ingestion.bulbapedia.species.encounters import EncounterTableError
 from muon.ingestion.bulbapedia.species.extract import NoteKind, ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError, PageOverride
 from muon.ingestion.bulbapedia.species.run import (
+    CANDIDATE_FILE_NAME,
+    LOCATION_PAGE_TYPE,
     PAGE_OUTPUT_DIR,
     REPORT_FILE_NAME,
     ParseRunError,
@@ -25,6 +29,7 @@ from tests.unit.ingestion.bulbapedia.species.synthetic_pages import (
     BETA,
     DELTA,
     GAMMA,
+    TIMESTAMP,
     build_store,
     default_wikitexts,
     run_parse,
@@ -381,3 +386,105 @@ def test_the_report_counts_the_claims_of_each_pass_by_property(store: PageStore)
     }
     assert report.evolution_counts.claims == {"evolvesTo": 2, "fromSpecies": 2, "requires": 1}
     assert report.chunk_counts.claims == {"describes": 2}
+
+
+GAME_LOCATIONS = (
+    "\n===Game locations===\n"
+    "{{Availability/Entry1|v=Red|area=[[Cave]], [[Beta (Pokémon)|Beta]], [[Lake]] ({{m|Surf}})}}\n"
+)
+LOCATION_INFOBOX = "location infobox"
+
+
+def build_encounter_store(root: Path, location_titles: tuple[str, ...] = ()) -> PageStore:
+    wikitexts = default_wikitexts()
+    wikitexts[ALPHA] += GAME_LOCATIONS
+    store = build_store(root, wikitexts)
+    pages = [
+        Page(
+            title=title,
+            page_id=900 + number,
+            revision_id=900 + number,
+            timestamp=TIMESTAMP,
+            sha1=compute_sha1(f"{{{{Location infobox|name={title}}}}}"),
+            page_type=LOCATION_PAGE_TYPE,
+            wikitext=f"{{{{Location infobox|name={title}}}}}",
+        )
+        for number, title in enumerate(location_titles)
+    ]
+    for page in pages:
+        store.write_page(page)
+    manifest = store.read_manifest().replace_pins(LOCATION_PAGE_TYPE, [p.pin for p in pages])
+    store.write_manifest(manifest)
+    return store
+
+
+def test_with_no_location_pins_every_candidate_is_unknown(tmp_path: Path) -> None:
+    parse = run_parse(build_encounter_store(tmp_path / "data"))
+
+    report = parse.report.encounters
+    assert report.facts == 0
+    assert report.unknown_location == {"Cave": 1, "Lake": 1}
+    assert report.not_a_location == {"Beta (Pokémon)": 1}
+    assert parse.candidate_titles == ("Cave", "Lake")
+    assert parse.report.species_counts.owner_nodes
+
+
+def test_a_full_run_writes_the_candidate_file_and_a_title_run_does_not(tmp_path: Path) -> None:
+    store = build_encounter_store(tmp_path / "data")
+    root = tmp_path / "parsed"
+
+    write_outputs(run_parse(store, ALPHA), root, is_full_run=False)
+    assert not (root / CANDIDATE_FILE_NAME).exists()
+
+    write_outputs(run_parse(store), root, is_full_run=True)
+    assert (root / CANDIDATE_FILE_NAME).read_text(encoding="utf-8") == "Cave\nLake\n"
+
+
+def test_pinned_locations_give_facts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(run, "LOCATION_INFOBOXES", frozenset({LOCATION_INFOBOX}))
+
+    parse = run_parse(build_encounter_store(tmp_path / "data", ("Cave", "Lake")))
+
+    alpha = next(o for o in parse.outputs if o.page.title == ALPHA)
+    assert [(f.location_title, f.method) for f in alpha.encounters.facts] == [
+        ("Cave", "surf"),
+        ("Lake", "surf"),
+    ]
+    assert parse.candidate_titles == ("Cave", "Lake")
+
+
+def test_a_table_version_outside_the_abox_stops_the_run(
+    tmp_path: Path, store: PageStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(encounters, "VERSION_ROWS", {"Pinball DLC": ("Pinball",)})
+
+    with pytest.raises(EncounterTableError, match="Pinball"):
+        run_parse(store)
+
+    assert not (tmp_path / "parsed").exists()
+
+
+def test_every_parsed_page_has_an_encounter_batch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(run, "LOCATION_INFOBOXES", frozenset({LOCATION_INFOBOX}))
+    parse = run_parse(build_encounter_store(tmp_path / "data", ("Cave", "Lake")))
+
+    assert [o.page.title for o in parse.outputs] == [ALPHA, BETA]
+    for output in parse.outputs:
+        assert output.encounter_batch.scope == ENCOUNTER_SCOPE
+    root = tmp_path / "parsed"
+    write_outputs(parse, root, is_full_run=True)
+    alpha = json.loads((root / PAGE_OUTPUT_DIR / "101.json").read_text(encoding="utf-8"))
+    owners = [n["id"] for n in alpha["encounter_batch"]["nodes"] if n["class_iri"] == ENCOUNTER]
+    assert owners == ["alpha:cave:red:surf", "alpha:lake:red:surf"]
+
+
+def test_a_page_without_game_locations_gives_anchors_and_claims_only(tmp_path: Path) -> None:
+    parse = run_parse(build_encounter_store(tmp_path / "data", ("Cave", "Lake")))
+
+    beta = next(o for o in parse.outputs if o.page.title == BETA)
+    assert beta.encounter_batch.owner_nodes == ()
+    assert beta.encounter_batch.edges == ()
+    assert {node.class_iri for node in beta.encounter_batch.nodes} == {POKEMON_SPECIES}
+    assert beta.encounter_batch.claims

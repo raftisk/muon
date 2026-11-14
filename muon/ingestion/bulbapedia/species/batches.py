@@ -1,4 +1,4 @@
-"""Batch builders: a species page extract becomes its pass-1, pass-2 and pass-3 `GraphBatch`.
+"""Batch builders: a species page extract becomes its pass 1 to pass 4 `GraphBatch`.
 
 Pass 1 (`build_species_batch`) owns the species nodes, their learnset entries and the Mega
 and Primal form changes, which all belong to 1 page. Pass 2 (`build_evolution_batch`) owns
@@ -13,13 +13,19 @@ node of the page and is mentioned by the entities its typed templates name, so t
 holds species, move, ability, type and version stubs. A mention that resolves to nothing is
 noted and never fails the page.
 
+Pass 4 (`build_encounter_batch`) owns the encounters of the page: 1 Encounter node per
+species, location, version and method, with its `atLocation` and `inVersion` edges, and 1
+`foundIn` edge per species and location. Locations are stubs the location page run owns;
+versions resolve through the A-Box.
+
 Each batch also claims the edge patterns its page owns, so a re-ingest deletes what the
 page no longer gives. The claim tables below say which patterns each pass claims. The
 edges that a node id fixes (`teachesMove`, `inVersionGroup`, `toSpecies`, `describes`
 of a chunk and the `fromSpecies` of a change) are not claimed, since they cannot go
 stale. Passes 2 and 3 anchor their claims at a stub of every form of the page, and a
 page that gives no evolution or no chunk still gets that batch, with the anchors, their
-claims and no owner record, so a re-ingest deletes what the page gave before.
+claims and no owner record, so a re-ingest deletes what the page gave before. Pass 4
+anchors its claims the same way.
 
 This module knows the pkmn universe, as every ingestion module of a source does.
 """
@@ -38,6 +44,7 @@ from muon.ingestion.bulbapedia.batching import (
     ABILITY,
     ALIASES,
     DESCRIBES,
+    FOUND_IN,
     FROM_WORK,
     GENERATION,
     GENERATION_LABEL,
@@ -45,6 +52,7 @@ from muon.ingestion.bulbapedia.batching import (
     IN,
     IN_VERSION_GROUP,
     INTRODUCED_IN,
+    LOCATION,
     MACHINE,
     MENTIONED_IN,
     MOVE,
@@ -64,6 +72,7 @@ from muon.ingestion.bulbapedia.batching import (
     build_chunk_record,
     build_claims,
     build_edge,
+    build_encounter_id,
     build_machine_id,
     build_mention_parts,
     build_owner_claims,
@@ -75,12 +84,14 @@ from muon.ingestion.bulbapedia.batching import (
     list_owner_records,
     number_chunks,
     require_abox,
+    resolve_abox,
     to_roman,
 )
 from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
 from muon.ingestion.bulbapedia.species.evolution import EVOLUTION_PATH
 from muon.ingestion.bulbapedia.species.extract import (
     BaseStats,
+    EncounterFact,
     EvolutionFact,
     FormChangeFact,
     FormFacts,
@@ -106,6 +117,7 @@ STAT = PKMN + "Stat"
 HELD_ITEM = PKMN + "HeldItem"
 ITEM = PKMN + "Item"
 VERSION = PKMN + "Version"
+ENCOUNTER = PKMN + "Encounter"
 
 HAS_ABILITY = PKMN + "hasAbility"
 IN_EGG_GROUP = PKMN + "inEggGroup"
@@ -118,6 +130,9 @@ FROM_SPECIES = PKMN + "fromSpecies"
 TO_SPECIES = PKMN + "toSpecies"
 REQUIRES = PKMN + "requires"
 EVOLVES_TO = PKMN + "evolvesTo"
+HAS_ENCOUNTER = PKMN + "hasEncounter"
+AT_LOCATION = PKMN + "atLocation"
+IN_VERSION = PKMN + "inVersion"
 
 POKEDEX_NUMBER = PKMN + "pokedexNumber"
 IS_DEFAULT_FORM = PKMN + "isDefaultForm"
@@ -152,10 +167,12 @@ MIN_LEVEL = PKMN + "minLevel"
 TIME_OF_DAY = PKMN + "timeOfDay"
 GENDER = PKMN + "gender"
 CONDITION = PKMN + "condition"
+ENCOUNTER_KIND = PKMN + "encounterKind"
 
 SPECIES_SCOPE = frozenset({POKEMON_SPECIES, LEARNSET_ENTRY, FORM_CHANGE})
 EVOLUTION_SCOPE = frozenset({EVOLUTION})
 CHUNK_SCOPE = frozenset({TEXT_CHUNK})
+ENCOUNTER_SCOPE = frozenset({ENCOUNTER})
 ROW_DROPPED_SUFFIX = "; row dropped"
 SNAPSHOT_VERSION_GROUP = "Scarlet-Violet"
 MACHINE_KIND_LENGTH = 2  # TM, HM and TR
@@ -213,6 +230,11 @@ EVOLUTION_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
     EVOLUTION: (ClaimRule(REQUIRES, OUT, None, False),),
 }
 CHUNK_ANCHOR_CLAIMS: tuple[ClaimRule, ...] = (ClaimRule(DESCRIBES, IN, TEXT_CHUNK, True),)
+# `atLocation` and `inVersion` are not claimed: the Encounter id fixes both ends.
+ENCOUNTER_ANCHOR_CLAIMS: tuple[ClaimRule, ...] = (
+    ClaimRule(HAS_ENCOUNTER, OUT, ENCOUNTER, True),
+    ClaimRule(FOUND_IN, OUT, LOCATION, False),
+)
 CHUNK_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
     TEXT_CHUNK: (
         ClaimRule(FROM_WORK, OUT, VERSION, False),
@@ -737,3 +759,47 @@ def build_chunk_batch(extract: SpeciesPageExtract, inputs: ChunkInputs) -> Chunk
         *build_owner_claims(list_owner_records(joined, CHUNK_SCOPE), CHUNK_OWNER_CLAIMS),
     )
     return ChunkBuild(batch=assemble_batch(CHUNK_SCOPE, joined, claims), notes=tuple(notes))
+
+
+def build_encounter_name(
+    species_name: str, location_name: str, version: str, method: str | None
+) -> str:
+    """Return e.g. `Diglett in Vermilion City (HeartGold, rock-smash)`."""
+    details = ", ".join((version, *((method,) if method else ())))
+    return f"{species_name} in {location_name} ({details})"
+
+
+def build_encounter_parts(fact: EncounterFact, species: NodeRecord, abox: AboxIndex) -> Parts:
+    location = build_stub(LOCATION, fact.location_title)
+    version = resolve_abox(abox, VERSION, fact.version)
+    encounter = NodeRecord(
+        class_iri=ENCOUNTER,
+        id=build_encounter_id(species.id, location.id, version.id, fact.method),
+        name=build_encounter_name(species.name, location.name, version.name, fact.method),
+        properties=drop_none({ENCOUNTER_KIND: fact.kind, METHOD: fact.method}),
+    )
+    return Parts(
+        nodes=(encounter, location, version),
+        edges=(
+            build_edge(HAS_ENCOUNTER, species, encounter),
+            build_edge(AT_LOCATION, encounter, location),
+            build_edge(IN_VERSION, encounter, version),
+            build_edge(FOUND_IN, species, location),
+        ),
+    )
+
+
+def build_encounter_batch(
+    extract: SpeciesPageExtract, facts: Sequence[EncounterFact], abox: AboxIndex
+) -> GraphBatch:
+    """Build the pass 4 batch of a page. A page with no fact gives the anchors and their
+    claims only. Every fact version is an A-Box Version: the run checks the table rows
+    before any page is read."""
+    context = PageContext(extract.title, abox, build_species_index([extract]))
+    anchors = build_page_anchors(extract, context)
+    species = {anchor.id: anchor for anchor in anchors.nodes}
+    joined = join_parts(
+        [*(build_encounter_parts(fact, species[fact.species_id], abox) for fact in facts), anchors]
+    )
+    claims = build_claims([anchor.node_ref for anchor in anchors.nodes], ENCOUNTER_ANCHOR_CLAIMS)
+    return assemble_batch(ENCOUNTER_SCOPE, joined, claims)

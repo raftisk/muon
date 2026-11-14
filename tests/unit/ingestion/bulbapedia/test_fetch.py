@@ -291,7 +291,9 @@ def test_pin_that_disagrees_with_the_api_fails(wiki: FakeWiki, store: PageStore)
 
 
 def test_unknown_page_type_fails(wiki: FakeWiki, store: PageStore) -> None:
-    with pytest.raises(FetchError, match="known page types: ability, item, move, species"):
+    with pytest.raises(
+        FetchError, match="known page types: ability, item, location, move, species"
+    ):
         fetch_pages(FetchRequest("moves"), store, wiki.build_client())
 
 
@@ -438,3 +440,58 @@ def test_import_matches_an_api_fetch_byte_for_byte(wiki: FakeWiki, tmp_path: Pat
 
     assert imported.manifest_path.read_bytes() == fetched.manifest_path.read_bytes()
     assert read_page_files(imported) == read_page_files(fetched)
+
+
+LOCATION = "location"
+
+
+def build_location_export(wiki: FakeWiki) -> list[ExportFixturePage]:
+    """2 location articles and 1 redirect page."""
+    articles = [
+        replace(page, title=title)
+        for page, title in zip(
+            build_export_from_wiki(wiki, [WIND_MOVE, OVERVIEW]),
+            ["Diglett's Cave", "Vermilion City"],
+            strict=True,
+        )
+    ]
+    redirect = ExportFixturePage(
+        title="Diglett Cave",
+        page_id=9100,
+        revision_id=9100,
+        timestamp=articles[0].timestamp,
+        wikitext="#REDIRECT [[Diglett's Cave]]",
+        is_redirect=True,
+    )
+    return [*articles, redirect]
+
+
+def test_location_import_keeps_redirect_pages(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path
+) -> None:
+    fetch_pages(FetchRequest(SPECIES), store, wiki.build_client())
+    species_pins = store.read_manifest().list_pins(SPECIES)
+
+    report = import_pages(
+        FetchRequest(LOCATION, export_path=write_export(tmp_path, build_location_export(wiki))),
+        store,
+    )
+
+    pins = store.read_manifest().list_pins(LOCATION)
+    assert sorted(pin.title for pin in pins) == ["Diglett Cave", "Diglett's Cave", "Vermilion City"]
+    assert (report.listed, report.ignored) == (3, 0)
+    assert store.read_manifest().list_pins(SPECIES) == species_pins
+
+
+def test_move_import_still_drops_redirect_pages(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path
+) -> None:
+    pages = build_move_export(wiki)
+    redirect = replace(
+        pages[0], title="Shadowball (move)", page_id=9200, revision_id=9200, is_redirect=True
+    )
+
+    report = import_moves(store, write_export(tmp_path, [*pages, redirect]))
+
+    assert [pin.title for pin in store.read_manifest().list_pins(MOVE)] == ALL_MOVES
+    assert report.ignored == 4

@@ -8,10 +8,10 @@ from rdflib.namespace import OWL, RDF, RDFS, SKOS
 PKMN_TTL_PATH = Path(__file__).resolve().parents[3] / "ontology" / "universes" / "pkmn.ttl"
 PKMN = Namespace("https://muon.dev/ns/pkmn#")
 ONTOLOGY_IRI = URIRef("https://muon.dev/ns/pkmn")
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 ENGLISH = "en"
 DATA_SOURCES = ("bulbapedia", "pokeapi")
-TERM_COUNTS = {OWL.Class: 37, OWL.ObjectProperty: 47, OWL.DatatypeProperty: 66}
+TERM_COUNTS = {OWL.Class: 37, OWL.ObjectProperty: 47, OWL.DatatypeProperty: 67}
 
 MOVE_TERMS = (
     "Move",

@@ -8,7 +8,8 @@ A run covers 1 page type and takes 1 of 4 paths:
   and move the pins to the latest revisions;
 - titles (`--title`): touch only the named pages;
 - export (`--from-export`): pin every page of the page type found in an export
-  file, with no request.
+  file, with no request. Redirect pages are dropped, except for a page type that
+  keeps them (`location`).
 
 Page files are written per batch as they arrive, so a rerun after a failure
 fetches only what is missing. The manifest is written once, at the end of a run
@@ -34,10 +35,16 @@ from muon.ingestion.bulbapedia.pages import Manifest, Page, PagePin, PageStore
 
 @dataclass(frozen=True)
 class PageType:
-    """A set of pages: the members of `category` whose title ends with `title_suffix`."""
+    """A set of pages: the members of `category` whose title ends with `title_suffix`.
+
+    With `keeps_redirects`, an export run also pins the redirect pages of the file. A
+    species page may link a place by a redirect title, and the parser needs the redirect
+    page to reach its target.
+    """
 
     category: str
     title_suffix: str = ""
+    keeps_redirects: bool = False
 
     def is_matching_title(self, title: str) -> bool:
         return title.endswith(self.title_suffix)
@@ -49,6 +56,7 @@ PAGE_TYPES: Mapping[str, PageType] = {
     "ability": PageType(category="Category:Abilities", title_suffix=" (Ability)"),
     "item": PageType(category="Category:Items"),
     "move": PageType(category="Category:Moves", title_suffix=" (move)"),
+    "location": PageType(category="Category:Locations", keeps_redirects=True),
 }
 
 
@@ -176,11 +184,11 @@ def import_pages(request: FetchRequest, store: PageStore) -> FetchReport:
 
 
 def is_importable(page: ExportedPage, definition: PageType) -> bool:
-    """Whether an export page belongs to the page type: an article, not a redirect, with a
-    matching title."""
+    """Whether an export page belongs to the page type: a main-namespace page with a
+    matching title, and an article unless the page type keeps redirects."""
     return (
         page.namespace == MAIN_NAMESPACE
-        and not page.is_redirect
+        and (not page.is_redirect or definition.keeps_redirects)
         and definition.is_matching_title(page.revision.title)
     )
 

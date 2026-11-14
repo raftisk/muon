@@ -54,11 +54,13 @@ from muon.ingestion.bulbapedia.moves.run import (
 )
 from muon.ingestion.bulbapedia.moves.run import ParseRunError as MoveParseRunError
 from muon.ingestion.bulbapedia.pages import PageStoreError
-from muon.ingestion.bulbapedia.runs import BatchCounts, PageResult, PageStatus
+from muon.ingestion.bulbapedia.runs import DEFAULT_OUTPUT_ROOT, BatchCounts, PageResult, PageStatus
+from muon.ingestion.bulbapedia.species.encounters import build_encounter_report
 from muon.ingestion.bulbapedia.species.extract import ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError
 from muon.ingestion.bulbapedia.species.ingest import IngestPass, IngestRun
 from muon.ingestion.bulbapedia.species.run import (
+    CANDIDATE_FILE_NAME,
     ParseReport,
     ParseRequest,
     ParseRun,
@@ -898,6 +900,7 @@ def build_parse_report(failed_titles: tuple[str, ...] = ()) -> ParseReport:
         abox_stub_misses=0,
         evolution_species_stub_misses=0,
         residue=residue,
+        encounters=build_encounter_report([], []),
     )
 
 
@@ -977,6 +980,14 @@ def test_parse_prints_counts_and_residue_per_kind(
         "chunk stubs: 6",
         "chunk edges: 8",
         "residue evolution: 1",
+        "encounter facts: 0",
+        "encounter owner nodes: 0",
+        "encounter location stubs: 0",
+        "encounter candidates: 0",
+        "encounter locations: 0",
+        "encounter not_a_location: 0",
+        "encounter unknown_location: 0 titles, 0 links",
+        f"location candidate file: {DEFAULT_OUTPUT_ROOT / CANDIDATE_FILE_NAME}",
     ]
     assert lines[-1].startswith("elapsed seconds: ")
 
@@ -1049,7 +1060,7 @@ def build_ingest_run(
         )
         for ingest_pass in IngestPass
     )
-    report = IngestReport(
+    report = StubIngestReport(
         titles=(),
         is_full_run=True,
         passes=passes,
@@ -1061,6 +1072,7 @@ def build_ingest_run(
         else CensusReport(
             labels={"Entity": 5, "PokemonSpecies": 2}, relationship_types={"HAS_TYPE": 2}
         ),
+        stub_ids=None if stop else {"Location": ("digletts-cave",)},
     )
     return IngestRun(report=report, elapsed_seconds=dict.fromkeys(IngestPass, 1.5))
 
@@ -1139,9 +1151,14 @@ def test_ingest_prints_the_parse_counts_the_pass_rows_and_the_census(
         "chunk: 2 batches in 1.5 s",
         "chunk nodes created: 7",
         "chunk nodes deleted: 0",
+        "encounter: 2 batches in 1.5 s",
+        "encounter nodes created: 7",
+        "encounter nodes deleted: 0",
         "nodes Entity: 5",
         "nodes PokemonSpecies: 2",
         "relationships HAS_TYPE: 2",
+        "stubs Location: 1",
+        "stub Location: digletts-cave",
     ]
 
 

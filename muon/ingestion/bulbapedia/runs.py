@@ -140,15 +140,18 @@ def serialize_batch(batch: GraphBatch) -> dict[str, object]:
     return data
 
 
-def write_page_files(output_dir: Path, files: Mapping[str, str], is_full_run: bool) -> None:
-    """Write each file name to its text under `output_dir`, atomically.
+def write_page_files(output_dir: Path, files: Iterable[tuple[str, str]], is_full_run: bool) -> None:
+    """Write each file name to its text under `output_dir`, atomically, 1 file at a time:
+    `files` may be a generator, so a run never holds all its page texts at once.
 
     A full run also deletes every output file that `files` lacks, so the directory depends
     on the run and not on the runs before it.
     """
-    for name, text in files.items():
+    written: set[str] = set()
+    for name, text in files:
         write_text_atomically(output_dir / name, text)
+        written.add(name)
     if is_full_run:
         for path in output_dir.glob(f"*{OUTPUT_SUFFIX}"):
-            if path.name not in files:
+            if path.name not in written:
                 path.unlink()

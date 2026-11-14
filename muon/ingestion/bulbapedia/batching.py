@@ -42,12 +42,14 @@ MOVE = PKMN + "Move"
 MACHINE = PKMN + "Machine"
 ABILITY = PKMN + "Ability"
 REGION = CORE + "Region"
+LOCATION = CORE + "Location"
 TEXT_CHUNK = CORE + "TextChunk"
 
 HAS_TYPE = PKMN + "hasType"
 INTRODUCED_IN = PKMN + "introducedIn"
 TEACHES_MOVE = PKMN + "teachesMove"
 IN_VERSION_GROUP = PKMN + "inVersionGroup"
+FOUND_IN = CORE + "foundIn"
 ALIASES = CORE + "aliases"
 DESCRIBES = CORE + "describes"
 MENTIONED_IN = CORE + "mentionedIn"
@@ -65,6 +67,7 @@ CHUNK_SOURCE = "bulbapedia"
 CHUNK_ID_TEMPLATE = "{source}:{label}:{subject}:{aspect}:{n}"
 CHUNK_NAME_TEMPLATE = "{subject} {aspect} {n}"
 TEXT_HASH_LENGTH = 8
+ENCOUNTER_ID_SEPARATOR = ":"
 # Texts shown in a game: their id ends with a text hash and they name their origin through
 # `fromWork`, so they carry no `source` (shape X1).
 WORK_ASPECTS = frozenset({ChunkAspect.POKEDEX, ChunkAspect.FLAVOR})
@@ -281,6 +284,16 @@ def build_machine_id(kind: str, number_text: str, version_group_id: str) -> str:
     from `TM0` and `TM74`. Species stubs and move owners must build the same id.
     """
     return f"{kind.lower()}{number_text}-{version_group_id}"
+
+
+def build_encounter_id(
+    species_id: str, location_id: str, version_id: str, method: str | None
+) -> str:
+    """Return the Encounter id `{species}:{location}:{version}[:{method}]`, e.g.
+    `diglett:vermilion-city:heartgold:rock-smash`. An encounter with no method has no
+    method segment."""
+    segments = (species_id, location_id, version_id, *((method,) if method else ()))
+    return ENCOUNTER_ID_SEPARATOR.join(segments)
 
 
 class ChunkBuildError(Exception):

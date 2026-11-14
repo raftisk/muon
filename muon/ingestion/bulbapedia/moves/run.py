@@ -426,8 +426,9 @@ def serialize_output(output: MovePageOutput) -> str:
 def write_outputs(run: MoveParseRun, root: Path, is_full_run: bool) -> None:
     """Write the page outputs and the report under `root`, atomically. A full run also
     deletes the output files of every page it produced no output for."""
-    files = {
-        f"{output.page.page_id}{OUTPUT_SUFFIX}": serialize_output(output) for output in run.outputs
-    }
+    files = (
+        (f"{output.page.page_id}{OUTPUT_SUFFIX}", serialize_output(output))
+        for output in run.outputs
+    )
     write_page_files(root / PAGE_OUTPUT_DIR, files, is_full_run)
     write_text_atomically(root / REPORT_FILE_NAME, dump_json(run.report.model_dump(mode="json")))

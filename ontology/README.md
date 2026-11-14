@@ -5,9 +5,9 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 | File | Namespace | Content |
 | --- | --- | --- |
 | `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 20 object properties, 6 datatype properties |
-| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.5.0. Imports the core. 37 classes, 47 object properties, 66 datatype properties |
+| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.6.0. Imports the core. 37 classes, 47 object properties, 67 datatype properties |
 | `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 244 enumerable individuals in 19 classes |
-| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 22 rules, listed in [Shapes](#shapes) |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 23 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -177,7 +177,7 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 
 - `Version` is part of a `VersionGroup`, which is part of a `Generation`, through `mo:partOf`. The A-Box holds the 24 groups and 40 versions of the main series games, Colosseum and XD included, with 64 `partOf` edges. Downloadable content belongs to its base game.
 - `GenerationMechanic` records a battle mechanic (Mega Evolution, Z-Move, Dynamax, Gigantamax, Terastallization) and its generation.
-- `Encounter` reifies 1 wild encounter. It links `atLocation` (a `LocationArea` or a location) and `inVersion`, with `method`, `conditions`, `minLevel`, `maxLevel` and `chance`. A species links to it with `hasEncounter`.
+- `Encounter` reifies 1 encounter of any kind: a species caught or received at a location in a version. It links `atLocation` (a `LocationArea` or a location) and `inVersion`, and carries exactly 1 `encounterKind` (`wild`, `raid`, `static`, `gift`, `snag`, `migration`) and at most 1 `method` from the encounter methods of the `method` definition. `conditions`, `minLevel`, `maxLevel` and `chance` are optional, so a coarse encounter has none of them. A species links to it with `hasEncounter`, and `mo:foundIn` is the shortcut from the species to the location. No `locatedIn` edge connects a location to its region yet.
 - `LocationArea` is a subdivision of a location (a floor, a sector) and chains to it with `mo:locatedIn`.
 
 ## Shapes
@@ -195,7 +195,7 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 | Meta and text | G1 version part of a version group, G2 version group part of a generation, X1 text chunk completeness, X2 `fromWork` by aspect |
 | Moves: flags, effects, learnset | C2 learnset entry, E1 effect values and booleans (`isOverworld`, `isProtectable`), X3 `effectText` owner |
 | Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role |
-| Encounters and locations | C1 encounter links, level order and chance |
+| Encounters and locations | C1 encounter links, kind, level order and chance, C3 encounter method |
 
 Every shape carries `pkmn-shape:scope`, the classes it checks, or `pkmn-shape:Always` for the shapes that run on every touched node (L2 and T1). `validate(batch, scope)` runs a shape when its scope class is in the requested scope or a subclass of it. A node outside the scope may be a stub with only `id`, `name` and labels, and the Always shapes still apply to it. `scope=None` runs every shape and is the final sweep after all ingestion passes.
 
