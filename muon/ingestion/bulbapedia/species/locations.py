@@ -29,8 +29,17 @@ URL_TITLE_SPACE = "_"
 WHITESPACE_PATTERN = re.compile(r"\s+")
 REDIRECT_PATTERN = re.compile(r"^\s*#redirect\s*:?\s*\[\[([^\]|]+)", re.IGNORECASE)
 
-# Normalized names of the infobox templates that mark a location article.
-LOCATION_INFOBOXES: frozenset[str] = frozenset()
+# Normalized names of the infobox templates that mark a location article, read off the
+# lead of the 1,107 pinned location articles of 2026-11-14 (uses in brackets).
+LOCATION_INFOBOXES: frozenset[str] = frozenset(
+    {
+        "infobox location",  # 582, caves, forests, Pal Park, Max Lair
+        "route infobox",  # 206
+        "town infobox",  # 100
+        "regioninfobox",  # 11, regions and Hyperspace Lumiose
+        "gyminfobox",  # 3
+    }
+)
 
 
 def normalize_title(title: str) -> str:
@@ -54,7 +63,7 @@ def read_redirect_target(wikitext: str) -> str | None:
 def has_location_infobox(page: Page, infobox_names: frozenset[str]) -> bool:
     lead = split_sections(page.wikitext)[0]
     templates = mwparserfromhell.parse(lead.text).filter_templates(recursive=False)
-    return any(normalize_template_name(str(t.name)) in infobox_names for t in templates)
+    return any(normalize_template_name(t.name.strip_code()) in infobox_names for t in templates)
 
 
 @dataclass(frozen=True)

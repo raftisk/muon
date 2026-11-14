@@ -78,6 +78,12 @@ def test_index_sorts_the_pages(index: LocationIndex) -> None:
     assert index.redirects["Sinnoh Route 228"] == "Route 228 (Sinnoh)"
 
 
+def test_infobox_name_with_a_comment_marks_a_location() -> None:
+    page = build_page("Hunting Grounds", "{{Location infobox\n<!--|image=x.png-->\n|name=X}}", 9)
+
+    assert build_location_index([page], [], INFOBOXES).locations == {"Hunting Grounds"}
+
+
 @pytest.mark.parametrize(
     ("candidate", "verdict", "title"),
     [
