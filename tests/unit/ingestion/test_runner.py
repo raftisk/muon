@@ -545,3 +545,23 @@ def test_add_summaries_sums_every_field() -> None:
         properties_set=14,
     )
     assert runner.add_summaries([]) == EMPTY_SUMMARY
+
+
+async def test_stub_ids_are_read_per_label_in_order(materializer: LabelMaterializer) -> None:
+    client = RecordingGraphClient(read_records=[[{"id": "g1"}, {"id": "g2"}], [{"id": "w1"}]])
+
+    stub_ids = await Runner(client, materializer).list_stub_ids([TOY_WIDGET, TOY_GADGET])
+
+    assert stub_ids == {"ToyGadget": ("g1", "g2"), "ToyWidget": ("w1",)}
+    assert client.reads == [
+        (
+            runner.LIST_STUB_IDS,
+            {"label": label, "universe": TOY_UNIVERSE, "stub_keys": ["id", "name"]},
+        )
+        for label in ("ToyGadget", "ToyWidget")
+    ]
+
+
+def test_stub_statement_takes_the_labels_and_keys_as_parameters() -> None:
+    assert "$($label):$($universe)" in runner.LIST_STUB_IDS
+    assert "$stub_keys" in runner.LIST_STUB_IDS
