@@ -1,6 +1,8 @@
 {
   "commit": "8a92bfa7dab2f12b84b5d151562f9857c133ff30",
   "files": {
+    "abilities.csv": "74c3588ad48e08e54ff01f432899a4028c3e91508bbd53201df85e1f6b9e9ef3",
+    "ability_prose.csv": "8547ffe366f48145796e14ed1848042d838c7273340a84c107fac755367cbb22",
     "items.csv": "f08cd6dc30b447cb91cbe9232c79052e8521f32f6105bb1489b5bfabf4ca3241",
     "machines.csv": "f9df7faaf0a60896fa344abd2b639f83f79c2a24e1fd4bb3560ca7da76e9a6ad",
     "move_damage_classes.csv": "b7101ceca4dff152537a2fb5c439ca4030b05f86442c643812c0b7b6ccf16f1b",

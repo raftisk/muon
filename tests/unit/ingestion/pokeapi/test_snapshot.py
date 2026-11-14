@@ -101,6 +101,27 @@ def test_plain_fetch_downloads_a_fresh_clone_at_the_pinned_commit(tmp_path: Path
     assert store.read_table("moves.csv") == ({"id": "1", "identifier": "v1-moves.csv"},)
 
 
+def test_plain_fetch_pins_a_file_the_manifest_lacks_at_the_pinned_commit(tmp_path: Path) -> None:
+    pinned = build_files("v1")
+    github = FakeGitHub(NEXT_COMMIT, {COMMIT: pinned, NEXT_COMMIT: build_files("v2")})
+    store = SnapshotStore(tmp_path)
+    fetch_snapshot(store, FakeGitHub(COMMIT, {COMMIT: pinned}).client(), is_update=True)
+    old = {name: content for name, content in pinned.items() if name != "abilities.csv"}
+    pin(store, COMMIT, old)
+
+    report = fetch_snapshot(store, github.client(), is_update=False)
+
+    manifest = store.read_manifest()
+    assert manifest is not None
+    assert manifest.commit == COMMIT
+    assert manifest.files == {name: compute_sha256(content) for name, content in pinned.items()}
+    assert report.files_downloaded == report.requests == 1
+    assert github.requests == [
+        f"https://raw.githubusercontent.com/{REPOSITORY}/{COMMIT}/data/v2/csv/abilities.csv"
+    ]
+    assert store.read_table("abilities.csv") == ({"id": "1", "identifier": "v1-abilities.csv"},)
+
+
 def test_a_download_that_differs_from_its_pin_writes_nothing(tmp_path: Path) -> None:
     github = FakeGitHub(COMMIT, {COMMIT: build_files("changed")})
     store = SnapshotStore(tmp_path)
