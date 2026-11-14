@@ -25,14 +25,12 @@ from muon.ingestion.bulbapedia.ingest import (
     PageFailure,
     PassProgress,
     PassTotals,
+    StubIngestReport,
 )
 from muon.ingestion.bulbapedia.moves.batches import MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
-    MoveIngestReport,
     MoveIngestRun,
-    MoveIngestStop,
     MovePass,
-    MovePassTotals,
 )
 from muon.ingestion.bulbapedia.moves.page import TableError
 from muon.ingestion.bulbapedia.moves.run import (
@@ -1242,12 +1240,12 @@ async def test_run_ingest_gives_the_run_a_client_the_titles_and_the_progress_pri
     assert requests[0].on_progress is cli.print_progress
 
 
-def build_move_ingest_run(stop: MoveIngestStop | None = None) -> MoveIngestRun:
+def build_move_ingest_run(stop: IngestStop | None = None) -> MoveIngestRun:
     passes = tuple(
-        MovePassTotals(ingest_pass=ingest_pass, batches_written=848, counters={"nodes_created": 3})
+        PassTotals(ingest_pass=ingest_pass, batches_written=848, counters={"nodes_created": 3})
         for ingest_pass in MovePass
     )
-    report = MoveIngestReport(
+    report = StubIngestReport(
         titles=(),
         is_full_run=True,
         passes=passes,
@@ -1266,7 +1264,7 @@ class RecordingMoveIngest:
     def __init__(self, outcome: MoveIngestRun | Exception) -> None:
         self.outcome = outcome
         self.titles: list[tuple[str, ...]] = []
-        self.reports: list[MoveIngestReport] = []
+        self.reports: list[StubIngestReport] = []
 
     async def run(
         self, settings: Settings, run: MoveParseRun, titles: tuple[str, ...]
@@ -1276,7 +1274,7 @@ class RecordingMoveIngest:
             raise self.outcome
         return self.outcome
 
-    def write_report(self, report: MoveIngestReport) -> Path:
+    def write_report(self, report: StubIngestReport) -> Path:
         self.reports.append(report)
         return Path("move-ingest-report.json")
 
@@ -1338,7 +1336,7 @@ def test_move_ingest_prints_the_passes_the_census_and_the_stubs(
 def test_move_ingest_exits_1_for_a_stopped_run_and_still_writes_the_report(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    stop = MoveIngestStop(page_title="Surf (move)", ingest_pass=MovePass.CHUNK, error="boom")
+    stop = IngestStop(page_title="Surf (move)", ingest_pass=MovePass.CHUNK, error="boom")
     _, ingest = arrange_move_ingest(monkeypatch, build_move_ingest_run(stop))
 
     exit_code = cli.main(MOVE_INGEST_ARGV)

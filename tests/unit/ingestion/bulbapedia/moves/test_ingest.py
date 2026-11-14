@@ -9,19 +9,19 @@ from typing import Any
 import pytest
 
 from muon.graph import GraphQueryError, Statement
+from muon.ingestion.bulbapedia import ingest
 from muon.ingestion.bulbapedia.batching import MACHINE, MOVE, PKMN, TEXT_CHUNK
 from muon.ingestion.bulbapedia.ingest import (
     CensusReport,
     IngestRequest,
+    IngestStop,
     MissingSeedError,
     PassProgress,
 )
-from muon.ingestion.bulbapedia.moves import ingest
 from muon.ingestion.bulbapedia.moves import page as move_page
 from muon.ingestion.bulbapedia.moves.ingest import (
     MOVE_INGEST_REPORT_FILE_NAME,
     MoveIngestRun,
-    MoveIngestStop,
     MovePass,
     ingest_moves,
     list_move_constraint_classes,
@@ -189,7 +189,7 @@ async def test_a_failed_batch_write_stops_every_later_batch_and_the_census(
     result = await run_ingest(client, run)
 
     assert len(client.batches) == fail_at - 1
-    assert result.report.stop == MoveIngestStop(
+    assert result.report.stop == IngestStop(
         page_title=run.outputs[pass_index].page.title,
         ingest_pass=list(MovePass)[passes_run - 1],
         error=str(error),

@@ -121,6 +121,12 @@ class IngestReport(ReportModel):
     census: CensusReport | None
 
 
+class StubIngestReport(IngestReport):
+    """`stub_ids` maps a class label to the ids of its nodes with only `id` and `name`."""
+
+    stub_ids: Mapping[str, tuple[str, ...]] | None
+
+
 @dataclass(frozen=True)
 class PassItem:
     """1 batch to write and the page it came from."""

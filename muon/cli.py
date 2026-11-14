@@ -10,7 +10,7 @@ import secrets
 import sys
 import time
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import fields
 from pathlib import Path
 
@@ -29,7 +29,13 @@ from muon.ingestion.bulbapedia.fetch import (
     fetch_pages,
     import_pages,
 )
-from muon.ingestion.bulbapedia.ingest import IngestRequest, MissingSeedError, PassProgress
+from muon.ingestion.bulbapedia.ingest import (
+    IngestReport,
+    IngestRequest,
+    MissingSeedError,
+    PassProgress,
+    StubIngestReport,
+)
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
@@ -428,14 +434,16 @@ async def run_ingest(settings: Settings, run: ParseRun, titles: tuple[str, ...])
         return await ingest_species(client, run, request)
 
 
-def format_ingest_report(ingest_run: IngestRun) -> str:
-    """The counters and seconds of each pass, the failed pages, the stop and the census."""
-    report = ingest_run.report
+def format_ingest_report(
+    page_type: str, report: IngestReport, elapsed_seconds: Mapping[str, float]
+) -> str:
+    """The counters and seconds of each pass, the failed pages, the stop, the census and,
+    for a report with stub ids, the stubs."""
     status = "stopped" if report.stop is not None else "done"
-    lines = [f"{INGEST_COMMAND} {BULBAPEDIA_SOURCE} {PARSE_PAGE_TYPE}: {status}"]
+    lines = [f"{INGEST_COMMAND} {BULBAPEDIA_SOURCE} {page_type}: {status}"]
     for totals in report.passes:
         name = totals.ingest_pass
-        seconds = ingest_run.elapsed_seconds[totals.ingest_pass]
+        seconds = elapsed_seconds[totals.ingest_pass]
         lines.append(f"{name}: {totals.batches_written} batches in {seconds:.1f} s")
         lines.extend(
             f"{name} {counter.replace('_', ' ')}: {count}"
@@ -451,6 +459,10 @@ def format_ingest_report(ingest_run: IngestRun) -> str:
             f"relationships {name}: {count}"
             for name, count in report.census.relationship_types.items()
         )
+    stub_ids = report.stub_ids if isinstance(report, StubIngestReport) else None
+    for label, ids in (stub_ids or {}).items():
+        lines.append(f"stubs {label}: {len(ids)}")
+        lines.extend(f"stub {label}: {stub_id}" for stub_id in ids)
     return "\n".join(lines)
 
 
@@ -472,7 +484,7 @@ def execute_ingest(settings: Settings, request: ParseRequest) -> int:
 
     write_ingest_report(ingest_run.report)
     print(format_parse_report(run.report, parse_seconds))
-    print(format_ingest_report(ingest_run))
+    print(format_ingest_report(PARSE_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
     is_clean = not run.report.pages_failed and ingest_run.report.stop is None
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
@@ -485,36 +497,6 @@ async def run_move_ingest(
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_moves(client, run, request)
-
-
-def format_move_ingest_report(ingest_run: MoveIngestRun) -> str:
-    """The counters and seconds of each pass, the failed pages, the stop, the census and
-    the stubs."""
-    report = ingest_run.report
-    status = "stopped" if report.stop is not None else "done"
-    lines = [f"{INGEST_COMMAND} {BULBAPEDIA_SOURCE} {MOVE_PAGE_TYPE}: {status}"]
-    for totals in report.passes:
-        name = totals.ingest_pass.value
-        seconds = ingest_run.elapsed_seconds[totals.ingest_pass]
-        lines.append(f"{name}: {totals.batches_written} batches in {seconds:.1f} s")
-        lines.extend(
-            f"{name} {counter.replace('_', ' ')}: {count}"
-            for counter, count in totals.counters.items()
-        )
-    lines.extend(f"failed: {page.page_title}: {page.reason}" for page in report.failed_pages)
-    if report.stop is not None:
-        stop = report.stop
-        lines.append(f"stopped: {stop.page_title} ({stop.ingest_pass.value}): {stop.error}")
-    if report.census is not None:
-        lines.extend(f"nodes {label}: {count}" for label, count in report.census.labels.items())
-        lines.extend(
-            f"relationships {name}: {count}"
-            for name, count in report.census.relationship_types.items()
-        )
-    for label, ids in (report.stub_ids or {}).items():
-        lines.append(f"stubs {label}: {len(ids)}")
-        lines.extend(f"stub {label}: {stub_id}" for stub_id in ids)
-    return "\n".join(lines)
 
 
 def execute_move_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
@@ -535,7 +517,7 @@ def execute_move_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
 
     write_move_ingest_report(ingest_run.report)
     print(format_move_parse_report(run.report, parse_seconds))
-    print(format_move_ingest_report(ingest_run))
+    print(format_ingest_report(MOVE_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
     is_clean = not run.report.pages_failed and ingest_run.report.stop is None
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
