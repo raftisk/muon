@@ -1,13 +1,18 @@
 from collections.abc import Callable
+from pathlib import Path
 
 import pytest
 
+from muon.ingestion.bulbapedia.batching import UNIVERSE
+from muon.ingestion.bulbapedia.moves import batches as move_batches
+from muon.ingestion.bulbapedia.moves.batches import check_type_overrides
 from muon.ingestion.bulbapedia.moves.page import (
     CRIT_OVERRIDES,
     FLAG_OVERRIDES,
     MOVE_HITS,
     MOVE_TURNS,
     MULTISTRIKE_CATEGORY,
+    TYPE_OVERRIDES,
     MoveNoteKind,
     MovePageExtract,
     TableError,
@@ -15,8 +20,12 @@ from muon.ingestion.bulbapedia.moves.page import (
     read_crit_stage,
     read_flags,
     read_range,
+    read_type,
 )
+from muon.ingestion.seed import read_abox
+from muon.ontology.model import load_ontology_model
 
+ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 HIGH_CRIT = "Moves with a high critical-hit ratio"
 PERFECT_CRIT = "Moves with a perfect critical hit chance"
 
@@ -40,7 +49,7 @@ def build_extract(move_id: str, categories: tuple[str, ...] = ()) -> MovePageExt
 
 def build_table_extracts() -> list[MovePageExtract]:
     """1 extract per table row, the `MOVE_HITS` rows in the multistrike category."""
-    ids = set(FLAG_OVERRIDES) | set(CRIT_OVERRIDES) | set(MOVE_TURNS)
+    ids = set(FLAG_OVERRIDES) | set(CRIT_OVERRIDES) | set(MOVE_TURNS) | set(TYPE_OVERRIDES)
     return [build_extract(move_id) for move_id in sorted(ids - set(MOVE_HITS))] + [
         build_extract(move_id, (MULTISTRIKE_CATEGORY,)) for move_id in sorted(MOVE_HITS)
     ]
@@ -190,3 +199,45 @@ def test_pinned_crit_stages(
     read_extract: Callable[[str], MovePageExtract], name: str, stage: int
 ) -> None:
     assert read_extract(name).crit_stage == stage
+
+
+def test_type_comes_from_the_infobox_without_a_row() -> None:
+    assert read_type("Tackle (move)", {"type": "Normal"}, "tackle") == ("Normal", ())
+
+
+def test_a_type_row_wins_over_the_infobox_with_a_note() -> None:
+    type_name, notes = read_type("Growth (move)", {"type": "Grass"}, "growth")
+
+    assert type_name == "Normal"
+    assert [(note.kind, note.detail) for note in notes] == [
+        (MoveNoteKind.TABLE_ROW_APPLIED, "TYPE_OVERRIDES Grass to Normal")
+    ]
+
+
+def test_a_type_row_without_an_in_scope_move_fails() -> None:
+    extracts = [e for e in build_table_extracts() if e.id != "snap-trap"]
+
+    with pytest.raises(TableError, match="TYPE_OVERRIDES names snap-trap"):
+        check_tables(extracts)
+
+
+def test_type_rows_name_abox_types() -> None:
+    model = load_ontology_model(ONTOLOGY_DIR, UNIVERSE)
+
+    check_type_overrides(read_abox(model, ONTOLOGY_DIR))
+
+
+def test_a_type_row_outside_the_abox_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(move_batches, "TYPE_OVERRIDES", {"growth": "Shadow"})
+    model = load_ontology_model(ONTOLOGY_DIR, UNIVERSE)
+
+    with pytest.raises(TableError, match="growth 'Shadow', which is no A-Box Type"):
+        check_type_overrides(read_abox(model, ONTOLOGY_DIR))
+
+
+@pytest.mark.pages
+@pytest.mark.parametrize(("name", "expected"), [("Growth", "Normal"), ("Snap Trap", "Grass")])
+def test_pinned_type_overrides(
+    read_extract: Callable[[str], MovePageExtract], name: str, expected: str
+) -> None:
+    assert read_extract(name).type_name == expected

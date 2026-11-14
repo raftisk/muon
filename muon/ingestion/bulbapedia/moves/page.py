@@ -369,11 +369,19 @@ MOVE_TURNS: Mapping[str, tuple[int, int]] = {
     "ice-ball": ROLLING,  # "inflicts damage over five turns"
 }
 
+# The infobox shows the type of the latest game; these moves changed type after
+# Scarlet/Violet, so the snapshot type comes from this table.
+TYPE_OVERRIDES: Mapping[str, str] = {
+    "growth": "Normal",  # "Prior to Legends: Z-A, it was a Normal move."
+    "snap-trap": "Grass",  # "Prior to Champions, it was a Grass move."
+}
+
 PARSER_TABLES: Mapping[str, Mapping[str, object]] = {
     "FLAG_OVERRIDES": FLAG_OVERRIDES,
     "CRIT_OVERRIDES": CRIT_OVERRIDES,
     "MOVE_HITS": MOVE_HITS,
     "MOVE_TURNS": MOVE_TURNS,
+    "TYPE_OVERRIDES": TYPE_OVERRIDES,
 }
 
 
@@ -455,6 +463,22 @@ def read_required(page_title: str, infobox: Mapping[str, str], key: str) -> str:
     if not text:
         raise MovePageParseError(page_title, key, infobox.get(key, ""))
     return text
+
+
+def read_type(
+    page_title: str, infobox: Mapping[str, str], move_id: str
+) -> tuple[str, tuple[MoveNote, ...]]:
+    """Return the infobox type, or the `TYPE_OVERRIDES` row of the move with its note."""
+    infobox_type = read_required(page_title, infobox, TYPE_KEY)
+    override = TYPE_OVERRIDES.get(move_id)
+    if override is None:
+        return infobox_type, ()
+    note = MoveNote(
+        kind=MoveNoteKind.TABLE_ROW_APPLIED,
+        field="TYPE_OVERRIDES",
+        detail=f"TYPE_OVERRIDES {infobox_type} to {override}",
+    )
+    return override, (note,)
 
 
 def read_target(page_title: str, infobox: Mapping[str, str]) -> str:
@@ -631,6 +655,7 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
     machines, machine_notes = read_machines(page.title, infobox)
     numeral = read_required(page.title, infobox, GENERATION_KEY)
     move_id = build_node_id(name)
+    type_name, type_notes = read_type(page.title, infobox, move_id)
     flags, flag_notes = read_flags(infobox, categories, move_id)
     crit_stage, crit_notes = read_crit_stage(categories, move_id)
     min_hits, max_hits = read_range(MOVE_HITS, move_id)
@@ -643,7 +668,7 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
         revision_id=page.revision_id,
         id=move_id,
         name=name,
-        type_name=read_required(page.title, infobox, TYPE_KEY),
+        type_name=type_name,
         damage_class_name=read_required(page.title, infobox, DAMAGE_CLASS_KEY),
         generation_label=GENERATION_LABEL.format(numeral=numeral),
         pp=pp.value,
@@ -674,6 +699,7 @@ def parse_move_page(page: Page) -> MovePageExtract | SkippedPage:
             *protect_notes,
             *mirror_notes,
             *machine_notes,
+            *type_notes,
             *flag_notes,
             *crit_notes,
             *build_table_note("MOVE_HITS", MOVE_HITS, move_id),

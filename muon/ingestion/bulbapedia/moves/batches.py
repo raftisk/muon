@@ -70,10 +70,12 @@ from muon.ingestion.bulbapedia.moves.page import (
     INFOBOX_LABEL,
     MACHINE_FIELDS,
     TYPE_KEY,
+    TYPE_OVERRIDES,
     MachineFact,
     MoveNote,
     MoveNoteKind,
     MovePageExtract,
+    TableError,
 )
 
 MOVE_DAMAGE_CLASS = PKMN + "MoveDamageClass"
@@ -333,3 +335,15 @@ def check_game_codes(seed: GraphBatch) -> None:
     ]
     if problems:
         raise GameCodeError("; ".join(problems))
+
+
+def check_type_overrides(seed: GraphBatch) -> None:
+    """Fail unless every `TYPE_OVERRIDES` value is an A-Box Type name."""
+    types = {node.name for node in seed.nodes if node.class_iri == TYPE}
+    problems = [
+        f"TYPE_OVERRIDES gives {move_id} {type_name!r}, which is no A-Box Type"
+        for move_id, type_name in TYPE_OVERRIDES.items()
+        if type_name not in types
+    ]
+    if problems:
+        raise TableError("; ".join(problems))
