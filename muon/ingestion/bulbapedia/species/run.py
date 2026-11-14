@@ -592,9 +592,10 @@ def write_outputs(run: ParseRun, root: Path, is_full_run: bool) -> None:
     deletes the output files of every page it produced no output for, and writes the
     location candidate file: a `--title` run sees only some pages, and an export of a
     partial list would replace the location pins with a partial set."""
-    files = {
-        f"{output.page.page_id}{OUTPUT_SUFFIX}": serialize_output(output) for output in run.outputs
-    }
+    files = (
+        (f"{output.page.page_id}{OUTPUT_SUFFIX}", serialize_output(output))
+        for output in run.outputs
+    )
     write_page_files(root / PAGE_OUTPUT_DIR, files, is_full_run)
     write_text_atomically(root / REPORT_FILE_NAME, serialize_report(run.report))
     if is_full_run:
