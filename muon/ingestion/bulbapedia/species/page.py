@@ -145,6 +145,7 @@ INDEXED_ABILITY_PATTERN = re.compile(r"^ability(\d+)-(\d+)$")
 MEGA_ABILITY_KEYS = ("abilitym", "abilitym2")
 HIDDEN_ABILITY_SLOTS = (("abilityd", "abilitydcaption"), ("abilityd2", "abilityd2caption"))
 ABILITY_NOTE_KEYS = ("ability1note", "ability2note")
+ABILITY_TITLE_SUFFIX = " (Ability)"
 
 GENUS_SUFFIX = " Pokémon"
 GENUS_CAPTION_TEMPLATE = "tt"
@@ -301,13 +302,15 @@ def read_base_stats(
 
 
 def reduce_ability_name(value: str) -> str:
-    """Return the text before the first template or tag, e.g. "Gorilla Tactics{{!}}...""."""
+    """Return the text before the first template or tag, e.g. "Gorilla Tactics{{!}}...",
+    without a trailing " (Ability)": Greninja's `abilitym` starts with the page title
+    "Protean (Ability){{!}}..."."""
     parts: list[str] = []
     for node in mwparserfromhell.parse(value).nodes:
         if isinstance(node, Template | Tag):
             break
         parts.append(render_node(node))
-    return " ".join("".join(parts).split())
+    return " ".join("".join(parts).split()).removesuffix(ABILITY_TITLE_SUFFIX)
 
 
 def match_caption(caption: str, forms: Sequence[ResolvedForm]) -> tuple[str, ...]:
