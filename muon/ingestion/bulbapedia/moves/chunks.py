@@ -32,9 +32,11 @@ from muon.ingestion.bulbapedia.chunking import (
     MENTION_TEMPLATES,
     ChunkAspect,
     ChunkFact,
+    FlavorRow,
     MentionRef,
     RenderedBlock,
     find_long_chunks,
+    merge_flavor_rows,
     normalize_chunk_text,
     read_prose_section,
     read_tag_name,
@@ -101,13 +103,6 @@ class RowPart:
 
     caption: str | None
     wikitext: str
-
-
-@dataclass(frozen=True)
-class FlavorRow:
-    section_path: str
-    block: RenderedBlock
-    labels: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -289,27 +284,6 @@ def read_description_rows(sections: Sequence[Section]) -> DescriptionReading:
             dropped.extend(block.dropped)
             rows.append(FlavorRow(section_path=section_path, block=block, labels=labels))
     return DescriptionReading(tuple(rows), tuple(unknown), tuple(dropped))
-
-
-def merge_flavor_rows(rows: Sequence[FlavorRow], move_id: str) -> tuple[ChunkFact, ...]:
-    """Return 1 chunk per text, in first-seen order, with the ordered union of the version
-    groups of its rows and the section and mentions of its first row."""
-    first_rows: dict[str, FlavorRow] = {}
-    labels: dict[str, dict[str, None]] = {}
-    for row in rows:
-        first_rows.setdefault(row.block.text, row)
-        labels.setdefault(row.block.text, {}).update(dict.fromkeys(row.labels))
-    return tuple(
-        ChunkFact(
-            subject_id=move_id,
-            aspect=ChunkAspect.FLAVOR,
-            section_path=row.section_path,
-            text=text,
-            mentions=row.block.mentions,
-            versions=tuple(labels[text]),
-        )
-        for text, row in first_rows.items()
-    )
 
 
 def read_move_chunks(sections: Sequence[Section], move_id: str) -> MoveChunkReading:

@@ -8,6 +8,8 @@ Map:
   (`render_block`), through the display rules of `wikitext.py`.
 - Merging: a prose paragraph under `MIN_PARAGRAPH_LENGTH` joins the next one, or the one
   before when none follows (`merge_short_paragraphs`).
+- Flavor: in-game texts with the same text give 1 chunk with the union of their version
+  groups (`merge_flavor_rows`).
 
 A page type decides which sections are read, as which aspect and about which subject;
 this module knows nothing of page types or of the ontology.
@@ -101,6 +103,15 @@ class RenderedBlock:
     text: str
     mentions: tuple[MentionRef, ...]
     dropped: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class FlavorRow:
+    """1 in-game text of a page and the version group labels it is shown in."""
+
+    section_path: str
+    block: RenderedBlock
+    labels: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -280,4 +291,25 @@ def read_prose_section(section: Section, aspect: ChunkAspect, subject_id: str) -
         dropped=tuple(name for b in rendered for name in b.dropped),
         removed_tables=count_tags(uncommented, TABLE_TAG),
         math_formulas=count_tags(uncommented, MATH_TAG),
+    )
+
+
+def merge_flavor_rows(rows: Sequence[FlavorRow], subject_id: str) -> tuple[ChunkFact, ...]:
+    """Return 1 chunk per text, in first-seen order, with the ordered union of the version
+    groups of its rows and the section and mentions of its first row."""
+    first_rows: dict[str, FlavorRow] = {}
+    labels: dict[str, dict[str, None]] = {}
+    for row in rows:
+        first_rows.setdefault(row.block.text, row)
+        labels.setdefault(row.block.text, {}).update(dict.fromkeys(row.labels))
+    return tuple(
+        ChunkFact(
+            subject_id=subject_id,
+            aspect=ChunkAspect.FLAVOR,
+            section_path=row.section_path,
+            text=text,
+            mentions=row.block.mentions,
+            versions=tuple(labels[text]),
+        )
+        for text, row in first_rows.items()
     )
