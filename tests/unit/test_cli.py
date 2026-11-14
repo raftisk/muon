@@ -17,6 +17,13 @@ from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
 from muon.ingestion.bulbapedia.moves.batches import MachineFieldError
+from muon.ingestion.bulbapedia.moves.ingest import (
+    MoveIngestReport,
+    MoveIngestRun,
+    MoveIngestStop,
+    MovePass,
+    MovePassTotals,
+)
 from muon.ingestion.bulbapedia.moves.page import TableError
 from muon.ingestion.bulbapedia.moves.run import BatchCounts as MoveBatchCounts
 from muon.ingestion.bulbapedia.moves.run import (
@@ -1239,3 +1246,152 @@ async def test_run_ingest_gives_the_run_a_client_the_titles_and_the_progress_pri
     assert requests[0].titles == ("A (Pokémon)",)
     assert requests[0].ontology_dir == settings.ontology.ontology_dir
     assert requests[0].on_progress is cli.print_progress
+
+
+def build_move_ingest_run(stop: MoveIngestStop | None = None) -> MoveIngestRun:
+    passes = tuple(
+        MovePassTotals(ingest_pass=ingest_pass, batches_written=848, counters={"nodes_created": 3})
+        for ingest_pass in MovePass
+    )
+    report = MoveIngestReport(
+        titles=(),
+        is_full_run=True,
+        passes=passes,
+        changed_pages=(),
+        failed_pages=(),
+        stop=stop,
+        census=None if stop else CensusReport(labels={"Move": 906}, relationship_types={}),
+        stub_ids=None if stop else {"Machine": (), "Move": ("g-max-wildfire",)},
+    )
+    return MoveIngestRun(report=report, elapsed_seconds=dict.fromkeys(MovePass, 2.5))
+
+
+class RecordingMoveIngest:
+    """Stands in for `cli.run_move_ingest` and `cli.write_move_ingest_report`."""
+
+    def __init__(self, outcome: MoveIngestRun | Exception) -> None:
+        self.outcome = outcome
+        self.titles: list[tuple[str, ...]] = []
+        self.reports: list[MoveIngestReport] = []
+
+    async def run(
+        self, settings: Settings, run: MoveParseRun, titles: tuple[str, ...]
+    ) -> MoveIngestRun:
+        self.titles.append(titles)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return self.outcome
+
+    def write_report(self, report: MoveIngestReport) -> Path:
+        self.reports.append(report)
+        return Path("move-ingest-report.json")
+
+
+def arrange_move_ingest(
+    monkeypatch: pytest.MonkeyPatch,
+    outcome: MoveIngestRun | Exception,
+    parse_outcome: MoveParseReport | Exception | None = None,
+) -> tuple[RecordingMoveParse, RecordingMoveIngest]:
+    parse = RecordingMoveParse(parse_outcome or build_move_report())
+    ingest = RecordingMoveIngest(outcome)
+    monkeypatch.setattr(cli, "run_move_parse", parse)
+    monkeypatch.setattr(cli, "run_move_ingest", ingest.run)
+    monkeypatch.setattr(cli, "write_move_ingest_report", ingest.write_report)
+    return parse, ingest
+
+
+MOVE_INGEST_ARGV = ["ingest", "bulbapedia", "move"]
+
+
+@pytest.mark.usefixtures("settings")
+def test_move_ingest_passes_its_titles_to_the_parse_and_the_ingest(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parse, ingest = arrange_move_ingest(monkeypatch, build_move_ingest_run())
+
+    exit_code = cli.main([*MOVE_INGEST_ARGV, "--title", "Shadow Ball (move)"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert parse.requests == [MoveParseRequest(titles=("Shadow Ball (move)",))]
+    assert ingest.titles == [("Shadow Ball (move)",)]
+
+
+@pytest.mark.usefixtures("settings")
+def test_move_ingest_prints_the_passes_the_census_and_the_stubs(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ingest_run = build_move_ingest_run()
+    _, ingest = arrange_move_ingest(monkeypatch, ingest_run)
+
+    cli.main(MOVE_INGEST_ARGV)
+
+    lines = capsys.readouterr().out.splitlines()
+    assert ingest.reports == [ingest_run.report]
+    assert "pages parsed: 848" in lines
+    assert lines[lines.index("ingest bulbapedia move: done") + 1 :] == [
+        "move: 848 batches in 2.5 s",
+        "move nodes created: 3",
+        "chunk: 848 batches in 2.5 s",
+        "chunk nodes created: 3",
+        "nodes Move: 906",
+        "stubs Machine: 0",
+        "stubs Move: 1",
+        "stub Move: g-max-wildfire",
+    ]
+
+
+@pytest.mark.usefixtures("settings")
+def test_move_ingest_exits_1_for_a_stopped_run_and_still_writes_the_report(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    stop = MoveIngestStop(page_title="Surf (move)", ingest_pass=MovePass.CHUNK, error="boom")
+    _, ingest = arrange_move_ingest(monkeypatch, build_move_ingest_run(stop))
+
+    exit_code = cli.main(MOVE_INGEST_ARGV)
+
+    assert exit_code == cli.EXIT_FAILURE
+    assert "stopped: Surf (move) (chunk): boom" in capsys.readouterr().out
+    assert len(ingest.reports) == 1
+
+
+@pytest.mark.usefixtures("settings")
+def test_move_ingest_exits_1_when_a_page_failed_to_parse(monkeypatch: pytest.MonkeyPatch) -> None:
+    arrange_move_ingest(monkeypatch, build_move_ingest_run(), build_move_report(pages_failed=1))
+
+    assert cli.main(MOVE_INGEST_ARGV) == cli.EXIT_FAILURE
+
+
+@pytest.mark.usefixtures("settings")
+@pytest.mark.parametrize(
+    "error",
+    [
+        MissingSeedError([NodeRef(class_iri="https://muon.dev/ns/pkmn#Type", id="fire")]),
+        GraphConnectionError(CONNECTION_MESSAGE),
+    ],
+)
+def test_move_ingest_reports_run_errors_with_exit_1(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    _, ingest = arrange_move_ingest(monkeypatch, error)
+
+    exit_code = cli.main(MOVE_INGEST_ARGV)
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_FAILURE
+    assert captured.err.startswith("ingest bulbapedia move failed:")
+    assert SECRET not in captured.err
+    assert ingest.reports == []
+
+
+@pytest.mark.usefixtures("settings")
+def test_move_ingest_stops_on_a_parse_error_before_the_graph(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    error = TableError("TYPE_OVERRIDES names growth, which is no in-scope move")
+    _, ingest = arrange_move_ingest(monkeypatch, build_move_ingest_run(), error)
+
+    exit_code = cli.main(MOVE_INGEST_ARGV)
+
+    assert exit_code == cli.EXIT_FAILURE
+    assert capsys.readouterr().err == f"ingest bulbapedia move failed: {error}\n"
+    assert ingest.titles == []
