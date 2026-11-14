@@ -27,13 +27,8 @@ from muon.graph import GraphClient, GraphError
 from muon.ingestion.batch import GraphBatch, NodeRef
 from muon.ingestion.bulbapedia.batching import UNIVERSE
 from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT, write_text_atomically
-from muon.ingestion.bulbapedia.species.run import (
-    PageOutput,
-    PageStatus,
-    ParseRun,
-    ReportModel,
-    dump_json,
-)
+from muon.ingestion.bulbapedia.runs import PageStatus, ReportModel, dump_json
+from muon.ingestion.bulbapedia.species.run import PageOutput, ParseRun
 from muon.ingestion.runner import Runner, RunReport, UniverseCensus, WriteMode
 from muon.ingestion.seed import find_missing_seed_nodes, read_abox
 from muon.ontology.materializer import LabelMaterializer

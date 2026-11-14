@@ -34,6 +34,7 @@ from muon.ingestion.bulbapedia.moves.run import (
 )
 from muon.ingestion.bulbapedia.moves.run import ParseRunError as MoveParseRunError
 from muon.ingestion.bulbapedia.pages import PageStoreError
+from muon.ingestion.bulbapedia.runs import BatchCounts, PageResult, PageStatus
 from muon.ingestion.bulbapedia.species.extract import ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError
 from muon.ingestion.bulbapedia.species.ingest import (
@@ -49,9 +50,6 @@ from muon.ingestion.bulbapedia.species.ingest import (
     PassTotals,
 )
 from muon.ingestion.bulbapedia.species.run import (
-    BatchCounts,
-    PageResult,
-    PageStatus,
     ParseReport,
     ParseRequest,
     ParseRun,

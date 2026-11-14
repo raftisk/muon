@@ -57,6 +57,7 @@ from muon.ingestion.bulbapedia.moves.run import (
     write_outputs as write_move_outputs,
 )
 from muon.ingestion.bulbapedia.pages import PageStore, PageStoreError
+from muon.ingestion.bulbapedia.runs import DEFAULT_OUTPUT_ROOT, PageStatus
 from muon.ingestion.bulbapedia.species.forms import OverrideError
 from muon.ingestion.bulbapedia.species.ingest import (
     IngestRequest,
@@ -67,8 +68,9 @@ from muon.ingestion.bulbapedia.species.ingest import (
     write_ingest_report,
 )
 from muon.ingestion.bulbapedia.species.run import (
-    DEFAULT_OUTPUT_ROOT,
-    PageStatus,
+    PAGE_TYPE as PARSE_PAGE_TYPE,
+)
+from muon.ingestion.bulbapedia.species.run import (
     ParseReport,
     ParseRequest,
     ParseRun,
@@ -76,9 +78,6 @@ from muon.ingestion.bulbapedia.species.run import (
     RunInputs,
     parse_species_pages,
     write_outputs,
-)
-from muon.ingestion.bulbapedia.species.run import (
-    PAGE_TYPE as PARSE_PAGE_TYPE,
 )
 from muon.ingestion.pokeapi.snapshot import (
     SnapshotError,
