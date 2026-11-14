@@ -1,6 +1,6 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
-`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move` and
+`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability` and
 `muon ingest bulbapedia species|move`."""
 
 import argparse
@@ -19,6 +19,18 @@ from pydantic import SecretStr, ValidationError
 
 from muon.config import OntologySettings, Settings, get_settings
 from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
+from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
+from muon.ingestion.bulbapedia.abilities.crosscheck import CrossCheckError
+from muon.ingestion.bulbapedia.abilities.run import PAGE_TYPE as ABILITY_PAGE_TYPE
+from muon.ingestion.bulbapedia.abilities.run import (
+    AbilityParseReport,
+    AbilityParseRequest,
+    AbilityParseRun,
+    AbilityRunInputs,
+    parse_ability_pages,
+)
+from muon.ingestion.bulbapedia.abilities.run import ParseRunError as AbilityParseRunError
+from muon.ingestion.bulbapedia.abilities.run import write_outputs as write_ability_outputs
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError, BulbapediaClient, build_http_client
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import (
@@ -118,6 +130,16 @@ MOVE_PARSE_ERRORS = (
     ABoxError,
 )
 
+ABILITY_PARSE_ERRORS = (
+    AbilityParseRunError,
+    SupCodeError,
+    CrossCheckError,
+    SnapshotError,
+    PageStoreError,
+    OntologyError,
+    ABoxError,
+)
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog=PROGRAM_NAME, description="muon knowledge graph tools")
@@ -166,7 +188,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parse.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to parse")
     parse.add_argument(
-        "page_type", choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE), help="the set of pages to parse"
+        "page_type",
+        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE),
+        help="the set of pages to parse",
     )
     parse.add_argument(
         "--title",
@@ -415,6 +439,62 @@ def execute_move_parse(titles: tuple[str, ...]) -> int:
     return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
 
 
+def run_ability_parse(request: AbilityParseRequest) -> AbilityParseRun:
+    """Parse the pinned ability pages and write the outputs. No Neo4j or LLM setting is read."""
+    inputs = AbilityRunInputs(
+        request, PageStore(), SnapshotStore(), OntologySettings().ontology_dir
+    )
+    run = parse_ability_pages(inputs)
+    write_ability_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
+    return run
+
+
+def format_ability_parse_report(report: AbilityParseReport, elapsed_seconds: float) -> str:
+    """The page counts, batch counts, notes per kind, cross-check results and failures."""
+    counts = report.batch_counts
+    lines = [
+        f"{PARSE_COMMAND} {BULBAPEDIA_SOURCE} {ABILITY_PAGE_TYPE}: done",
+        f"pages parsed: {report.pages_parsed}",
+        f"pages skipped: {report.pages_skipped}",
+        f"pages failed: {report.pages_failed}",
+    ]
+    lines.extend(
+        f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
+    )
+    lines.append(f"chunks: {sum(report.chunks_per_aspect.values())}")
+    lines.append(f"stubs: {sum(counts.stubs.values()) + sum(report.chunk_counts.stubs.values())}")
+    lines.append(f"edges: {sum(counts.edges.values()) + sum(report.chunk_counts.edges.values())}")
+    note_counts = Counter(note.kind.value for note in report.notes)
+    lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
+    if report.species_output_missing:
+        lines.append("cross-check: no species output, skipped")
+    else:
+        differences = Counter(difference.side.value for difference in report.holder_differences)
+        lines.extend(f"cross-check {side}: {count}" for side, count in sorted(differences.items()))
+    lines.append(f"unowned species stubs: {len(report.unowned_species_stubs)}")
+    lines.extend(f"unowned: {stub_id}" for stub_id in report.unowned_species_stubs)
+    lines.extend(
+        f"failed: {page.title}: {page.reason}"
+        for page in report.pages
+        if page.status is PageStatus.FAILED
+    )
+    lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
+    return "\n".join(lines)
+
+
+def execute_ability_parse(titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(PARSE_COMMAND, f"{BULBAPEDIA_SOURCE} {ABILITY_PAGE_TYPE}")
+    started = time.monotonic()
+    try:
+        run = run_ability_parse(AbilityParseRequest(titles=titles))
+    except ABILITY_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_ability_parse_report(run.report, time.monotonic() - started))
+    return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
+
+
 def format_progress(progress: PassProgress) -> str:
     return (
         f"{progress.ingest_pass.value}: {progress.done}/{progress.total} batches, "
@@ -577,6 +657,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_fetch(request)
     if arguments.command == PARSE_COMMAND and arguments.page_type == MOVE_PAGE_TYPE:
         return execute_move_parse(tuple(arguments.titles))
+    if arguments.command == PARSE_COMMAND and arguments.page_type == ABILITY_PAGE_TYPE:
+        return execute_ability_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND:
         return execute_parse(ParseRequest(titles=tuple(arguments.titles)))
 

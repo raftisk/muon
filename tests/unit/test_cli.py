@@ -13,6 +13,18 @@ from muon import cli
 from muon.config import Neo4jSettings, OntologySettings, Settings
 from muon.graph import GraphConnectionError, WriteSummary
 from muon.ingestion.batch import NodeRef
+from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
+from muon.ingestion.bulbapedia.abilities.crosscheck import (
+    CrossCheckError,
+    HolderDifference,
+    HolderSide,
+)
+from muon.ingestion.bulbapedia.abilities.run import (
+    AbilityParseReport,
+    AbilityParseRequest,
+    AbilityParseRun,
+)
+from muon.ingestion.bulbapedia.abilities.run import ParseRunError as AbilityParseRunError
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
@@ -696,6 +708,92 @@ def test_parse_move_failure_prints_error(
     assert f"parse bulbapedia move failed: {error}" in capsys.readouterr().err
 
 
+def build_ability_report(pages_failed: int = 0) -> AbilityParseReport:
+    return AbilityParseReport(
+        pages=(),
+        pages_parsed=314,
+        pages_skipped=0,
+        pages_failed=pages_failed,
+        skipped_per_reason={},
+        notes=(),
+        batch_counts=BatchCounts(owner_nodes={"Ability": 314}, stubs={}, edges={}, claims={}),
+        chunk_counts=BatchCounts(owner_nodes={"TextChunk": 2548}, stubs={}, edges={}, claims={}),
+        chunks_per_aspect={"effect": 1499, "flavor": 833, "trivia": 216},
+        dropped_templates=(),
+        removed_tables_total=0,
+        removed_tables_per_page={},
+        math_formulas_total=0,
+        math_formulas_per_page={},
+        abilities_per_category={},
+        species_output_missing=False,
+        holder_differences=(
+            HolderDifference(
+                ability_id="minds-eye", species_id="ursaluna", side=HolderSide.TABLE_ONLY
+            ),
+        ),
+        unowned_species_stubs=(),
+        abilities_without_pokeapi_row=("as-one", "cacophony"),
+        snapshot_commit="8a92bfa",
+        snapshot_files={},
+    )
+
+
+class RecordingAbilityParse:
+    """Stands in for `cli.run_ability_parse` and records the requests it ran."""
+
+    def __init__(self, outcome: AbilityParseReport | Exception) -> None:
+        self.outcome = outcome
+        self.requests: list[AbilityParseRequest] = []
+
+    def __call__(self, request: AbilityParseRequest) -> AbilityParseRun:
+        self.requests.append(request)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return AbilityParseRun(outputs=(), report=self.outcome)
+
+
+def test_parse_ability_reaches_the_ability_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parse = RecordingAbilityParse(build_ability_report())
+    monkeypatch.setattr(cli, "run_ability_parse", parse)
+
+    exit_code = cli.main(["parse", "bulbapedia", "ability", "--title", "Natural Cure (Ability)"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert parse.requests == [AbilityParseRequest(titles=("Natural Cure (Ability)",))]
+    output = capsys.readouterr().out
+    assert "pages parsed: 314" in output
+    assert "chunks: 2548" in output
+    assert "cross-check table_only: 1" in output
+    assert "unowned species stubs: 0" in output
+
+
+def test_parse_ability_exits_1_when_a_page_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "run_ability_parse", RecordingAbilityParse(build_ability_report(1)))
+
+    assert cli.main(["parse", "bulbapedia", "ability"]) == cli.EXIT_FAILURE
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        SupCodeError("LA names 'Legends: Arceus', which is no A-Box VersionGroup"),
+        CrossCheckError("cannot read species output 1.json"),
+        SnapshotError("ability_prose.csv is missing from the snapshot"),
+        AbilityParseRunError("Titles that are not pinned ability pages: ['X']"),
+    ],
+)
+def test_parse_ability_failure_prints_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    monkeypatch.setattr(cli, "run_ability_parse", RecordingAbilityParse(error))
+
+    assert cli.main(["parse", "bulbapedia", "ability"]) == cli.EXIT_FAILURE
+
+    assert f"parse bulbapedia ability failed: {error}" in capsys.readouterr().err
+
+
 def test_fetch_lists_the_valid_page_types(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         cli.main(["fetch", "bulbapedia", "moves"])
@@ -919,7 +1017,7 @@ def test_parse_reports_run_errors_with_exit_1(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["parse", "bulbapedia", "ability"], "'ability'"),
+        (["parse", "bulbapedia", "item"], "'item'"),
         (["parse", "serebii", "species"], "'serebii'"),
     ],
 )
