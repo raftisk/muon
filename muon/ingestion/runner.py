@@ -6,7 +6,8 @@ labels (`$(...)`), with names from the label materializer. A node merges on its
 class label, the universe label and `id`; an edge merges on (start, type, end) and
 carries its properties. A stub merges on the same key as a node and is set on
 create only, so it never changes a node that exists. It also purges a universe in
-transactions of at most `PURGE_BATCH_SIZE` nodes and counts what the universe holds.
+transactions of at most `PURGE_BATCH_SIZE` nodes, counts what the universe holds and
+lists the nodes of a class that are still stubs, those whose keys are `id` and `name` only.
 
 In upsert mode, a batch with claims first deletes the edges it owns and no longer
 lists. A claim row names an anchor, a relationship type and a direction; its
@@ -29,6 +30,7 @@ from muon.ingestion.schema import ensure_id_constraints
 from muon.ontology.materializer import NAME_PROPERTY, LabelMaterializer
 
 ID_PROPERTY = "id"
+STUB_KEYS = (ID_PROPERTY, NAME_PROPERTY)
 PURGE_BATCH_SIZE = 10_000
 
 
@@ -172,6 +174,13 @@ MATCH (:$($universe))-[r]->()
 RETURN type(r) AS type, count(*) AS count
 """
 
+LIST_STUB_IDS: LiteralString = """
+MATCH (n:$($label):$($universe))
+WHERE all(key IN keys(n) WHERE key IN $stub_keys)
+RETURN n.id AS id
+ORDER BY id
+"""
+
 
 class Runner:
     """Writes batches of one universe through a `GraphClient` and purges that universe."""
@@ -244,6 +253,24 @@ class Runner:
                 record["type"]: record["count"] for record in sort_records(type_records, "type")
             },
         )
+
+    async def list_stub_ids(self, class_iris: Iterable[str]) -> Mapping[str, tuple[str, ...]]:
+        """Return, per class label in sorted order, the sorted ids of the stubs of that class.
+
+        A stub is a universe node with the class label whose keys are `id` and `name` only.
+        A node of a subclass carries the label too, so it counts for its ancestors.
+        """
+        labels = sorted({self.materializer.map_class_label(class_iri) for class_iri in class_iris})
+        stub_ids: dict[str, tuple[str, ...]] = {}
+        for label in labels:
+            parameters = {
+                "label": label,
+                "universe": self.materializer.universe_label,
+                "stub_keys": list(STUB_KEYS),
+            }
+            records = await self.client.execute_read(LIST_STUB_IDS, parameters)
+            stub_ids[label] = tuple(record["id"] for record in records)
+        return stub_ids
 
 
 def build_statements(

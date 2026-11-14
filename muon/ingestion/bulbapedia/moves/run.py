@@ -5,10 +5,10 @@ report.
 network. It parses every pinned page, because the table checks and the machine id check
 need all of them, and keeps the outputs and report entries of the requested titles. The
 order is fixed: request check, snapshot index, pages, `check_tables`, `check_machine_fields`,
-`check_game_codes`, batches, machine id conflicts, cross-check, report. A page that breaks a
-rule fails alone and the run goes on; a request, snapshot, table, machine field, game code
-or machine conflict error stops the run before anything is written. Output files are
-byte-identical across runs.
+`check_game_codes`, `check_type_overrides`, batches, machine id conflicts, cross-check,
+report. A page that breaks a rule fails alone and the run goes on; a request, snapshot,
+table, machine field, game code or machine conflict error stops the run before anything is
+written. Output files are byte-identical across runs.
 
 A `{{p}}` mention in a chunk resolves through the species pins: the pinned title without
 its suffix is the species name, so a mention names the base species of a page.
@@ -45,6 +45,7 @@ from muon.ingestion.bulbapedia.moves.batches import (
     build_move_chunk_batch,
     check_game_codes,
     check_machine_fields,
+    check_type_overrides,
 )
 from muon.ingestion.bulbapedia.moves.page import (
     MoveNote,
@@ -448,6 +449,7 @@ def parse_move_pages(inputs: MoveRunInputs) -> MoveParseRun:
     seed = read_abox(model, inputs.ontology_dir)
     check_machine_fields(seed)
     check_game_codes(seed)
+    check_type_overrides(seed)
     abox = build_abox_index(seed)
     species_pins = inputs.store.read_manifest().list_pins(SPECIES_PAGE_TYPE)
     extracts = {
