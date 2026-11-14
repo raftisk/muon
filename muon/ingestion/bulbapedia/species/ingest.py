@@ -79,7 +79,9 @@ class MissingSeedError(Exception):
 
 @dataclass(frozen=True)
 class PassProgress:
-    ingest_pass: IngestPass
+    """Progress of 1 pass. `ingest_pass` is the pass enum of the page type that writes."""
+
+    ingest_pass: StrEnum
     done: int
     total: int
     elapsed_seconds: float
