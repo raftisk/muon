@@ -79,12 +79,11 @@ from muon.ingestion.bulbapedia.moves.run import (
 )
 from muon.ingestion.bulbapedia.pages import PageStore, PageStoreError
 from muon.ingestion.bulbapedia.runs import DEFAULT_OUTPUT_ROOT, PageStatus
+from muon.ingestion.bulbapedia.species.encounters import EncounterReport, EncounterTableError
 from muon.ingestion.bulbapedia.species.forms import OverrideError
 from muon.ingestion.bulbapedia.species.ingest import IngestRun, ingest_species, write_ingest_report
 from muon.ingestion.bulbapedia.species.run import (
-    PAGE_TYPE as PARSE_PAGE_TYPE,
-)
-from muon.ingestion.bulbapedia.species.run import (
+    CANDIDATE_FILE_NAME,
     ParseReport,
     ParseRequest,
     ParseRun,
@@ -92,6 +91,9 @@ from muon.ingestion.bulbapedia.species.run import (
     RunInputs,
     parse_species_pages,
     write_outputs,
+)
+from muon.ingestion.bulbapedia.species.run import (
+    PAGE_TYPE as PARSE_PAGE_TYPE,
 )
 from muon.ingestion.pokeapi.snapshot import (
     SnapshotError,
@@ -123,6 +125,14 @@ MISSING_PAGE_TYPE_MESSAGE = "fetch bulbapedia needs a page type"
 POKEAPI_OPTIONS_MESSAGE = "fetch pokeapi takes no page type, --title or --from-export"
 
 
+SPECIES_PARSE_ERRORS = (
+    ParseRunError,
+    OverrideError,
+    EncounterTableError,
+    OntologyError,
+    ABoxError,
+    PageStoreError,
+)
 MOVE_PARSE_ERRORS = (
     MoveParseRunError,
     TableError,
@@ -376,6 +386,7 @@ def format_parse_report(report: ParseReport, elapsed_seconds: float) -> str:
         lines.append(f"{label} edges: {sum(counts.edges.values())}")
     residue_counts = Counter(item.kind.value for item in report.residue)
     lines.extend(f"residue {kind}: {count}" for kind, count in sorted(residue_counts.items()))
+    lines.extend(format_encounter_lines(report.encounters))
     lines.extend(
         f"failed: {page.title}: {page.reason}"
         for page in report.pages
@@ -385,12 +396,24 @@ def format_parse_report(report: ParseReport, elapsed_seconds: float) -> str:
     return "\n".join(lines)
 
 
+def format_encounter_lines(report: EncounterReport) -> list[str]:
+    return [
+        f"encounter facts: {report.facts}",
+        f"encounter candidates: {report.candidate_occurrences}",
+        f"encounter locations: {len(report.locations)}",
+        f"encounter not_a_location: {len(report.not_a_location)}",
+        f"encounter unknown_location: {len(report.unknown_location)} titles, "
+        f"{report.unknown_location_occurrences} links",
+        f"location candidate file: {DEFAULT_OUTPUT_ROOT / CANDIDATE_FILE_NAME}",
+    ]
+
+
 def execute_parse(request: ParseRequest) -> int:
     failure_prefix = build_failure_prefix(PARSE_COMMAND, f"{BULBAPEDIA_SOURCE} {PARSE_PAGE_TYPE}")
     started = time.monotonic()
     try:
         run = run_parse(request)
-    except (ParseRunError, OverrideError, OntologyError, ABoxError, PageStoreError) as error:
+    except SPECIES_PARSE_ERRORS as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
@@ -558,7 +581,7 @@ def execute_ingest(settings: Settings, request: ParseRequest) -> int:
     started = time.monotonic()
     try:
         run = run_parse(request)
-    except (ParseRunError, OverrideError, OntologyError, ABoxError, PageStoreError) as error:
+    except SPECIES_PARSE_ERRORS as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
     parse_seconds = time.monotonic() - started

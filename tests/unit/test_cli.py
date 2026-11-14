@@ -54,11 +54,13 @@ from muon.ingestion.bulbapedia.moves.run import (
 )
 from muon.ingestion.bulbapedia.moves.run import ParseRunError as MoveParseRunError
 from muon.ingestion.bulbapedia.pages import PageStoreError
-from muon.ingestion.bulbapedia.runs import BatchCounts, PageResult, PageStatus
+from muon.ingestion.bulbapedia.runs import DEFAULT_OUTPUT_ROOT, BatchCounts, PageResult, PageStatus
+from muon.ingestion.bulbapedia.species.encounters import build_encounter_report
 from muon.ingestion.bulbapedia.species.extract import ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError
 from muon.ingestion.bulbapedia.species.ingest import IngestPass, IngestRun
 from muon.ingestion.bulbapedia.species.run import (
+    CANDIDATE_FILE_NAME,
     ParseReport,
     ParseRequest,
     ParseRun,
@@ -898,6 +900,7 @@ def build_parse_report(failed_titles: tuple[str, ...] = ()) -> ParseReport:
         abox_stub_misses=0,
         evolution_species_stub_misses=0,
         residue=residue,
+        encounters=build_encounter_report([]),
     )
 
 
@@ -977,6 +980,12 @@ def test_parse_prints_counts_and_residue_per_kind(
         "chunk stubs: 6",
         "chunk edges: 8",
         "residue evolution: 1",
+        "encounter facts: 0",
+        "encounter candidates: 0",
+        "encounter locations: 0",
+        "encounter not_a_location: 0",
+        "encounter unknown_location: 0 titles, 0 links",
+        f"location candidate file: {DEFAULT_OUTPUT_ROOT / CANDIDATE_FILE_NAME}",
     ]
     assert lines[-1].startswith("elapsed seconds: ")
 

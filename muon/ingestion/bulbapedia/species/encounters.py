@@ -28,6 +28,7 @@ from mwparserfromhell.nodes import Node, Tag, Template, Text, Wikilink
 from mwparserfromhell.wikicode import Wikicode
 
 from muon.ingestion.bulbapedia.pages import Page
+from muon.ingestion.bulbapedia.runs import ReportModel
 from muon.ingestion.bulbapedia.species.chunks import match_marker
 from muon.ingestion.bulbapedia.species.extract import ExtractModel, SpeciesPageExtract
 from muon.ingestion.bulbapedia.species.forms import ResolvedForm
@@ -649,3 +650,51 @@ def read_encounters(
         if kind == ROW_ENTRY:
             facts.extend(read_entry_row(row, extract, inputs, counts))
     return EncounterReading(facts=tuple(dict.fromkeys(facts)), counts=counts)
+
+
+class EncounterReport(ReportModel):
+    """The encounter outcomes of the requested pages. `candidate_occurrences` and
+    `unknown_location_occurrences` count every link, not every title."""
+
+    facts: int
+    rows: Mapping[str, int]
+    skipped_versions: Mapping[str, int]
+    unknown_versions: Mapping[str, int]
+    acquisitions: Mapping[str, int]
+    candidate_occurrences: int
+    unknown_location_occurrences: int
+    locations: Mapping[str, int]
+    not_a_location: Mapping[str, int]
+    unknown_location: Mapping[str, int]
+    unread_markers: Mapping[str, int]
+    unmatched_form_labels: Mapping[str, int]
+
+
+def sum_counts(readings: Iterable[EncounterReading]) -> EncounterCounts:
+    totals = EncounterCounts()
+    for reading in readings:
+        for name, counter in vars(reading.counts).items():
+            getattr(totals, name).update(counter)
+    return totals
+
+
+def sort_counter(counter: Counter[str]) -> dict[str, int]:
+    return dict(sorted(counter.items()))
+
+
+def build_encounter_report(readings: Sequence[EncounterReading]) -> EncounterReport:
+    totals = sum_counts(readings)
+    return EncounterReport(
+        facts=sum(len(reading.facts) for reading in readings),
+        rows=sort_counter(totals.rows),
+        skipped_versions=sort_counter(totals.skipped_versions),
+        unknown_versions=sort_counter(totals.unknown_versions),
+        acquisitions=sort_counter(totals.acquisitions),
+        candidate_occurrences=totals.candidates.total(),
+        unknown_location_occurrences=totals.unknown_location.total(),
+        locations=sort_counter(totals.locations),
+        not_a_location=sort_counter(totals.not_a_location),
+        unknown_location=sort_counter(totals.unknown_location),
+        unread_markers=sort_counter(totals.unread_markers),
+        unmatched_form_labels=sort_counter(totals.unmatched_form_labels),
+    )

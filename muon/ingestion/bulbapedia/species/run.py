@@ -11,6 +11,9 @@ A page gives 3 batches, even when the evolution batch or the chunk batch has no 
 record: its anchors and claims still delete what the page gave before. The species batch
 and the evolution batch come first and are independent of the chunk batch, which needs the
 species index of the whole run to resolve the species a chunk mentions.
+
+The encounters of a page are read against the location pins. A full run also writes the
+location candidate file, the title list of the next Special:Export of location pages.
 """
 
 from collections import Counter
@@ -27,6 +30,7 @@ from muon.ingestion.bulbapedia.batching import (
     ChunkBuildError,
     build_abox_index,
 )
+from muon.ingestion.bulbapedia.fetch import PAGE_TYPES
 from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore, write_text_atomically
 from muon.ingestion.bulbapedia.runs import (
     OUTPUT_SUFFIX,
@@ -47,6 +51,7 @@ from muon.ingestion.bulbapedia.runs import (
 from muon.ingestion.bulbapedia.species.batches import (
     CONDITION,
     POKEMON_SPECIES,
+    VERSION,
     ChunkBuild,
     ChunkInputs,
     EvolutionBuild,
@@ -57,6 +62,14 @@ from muon.ingestion.bulbapedia.species.batches import (
     build_species_batch,
     build_species_index,
     resolve_species,
+)
+from muon.ingestion.bulbapedia.species.encounters import (
+    EncounterInputs,
+    EncounterReading,
+    EncounterReport,
+    build_encounter_report,
+    check_version_rows,
+    read_encounters,
 )
 from muon.ingestion.bulbapedia.species.evolution import (
     MEGA_KIND,
@@ -72,14 +85,23 @@ from muon.ingestion.bulbapedia.species.extract import (
     SpeciesPageExtract,
 )
 from muon.ingestion.bulbapedia.species.forms import check_override_titles, rank_mega_forms
+from muon.ingestion.bulbapedia.species.locations import (
+    LOCATION_INFOBOXES,
+    LocationIndex,
+    build_location_index,
+    list_candidate_titles,
+)
 from muon.ingestion.bulbapedia.species.page import parse_species_page, read_infobox
 from muon.ingestion.bulbapedia.wikitext import split_sections
 from muon.ingestion.seed import read_abox
 from muon.ontology.model import load_ontology_model
 
 PAGE_TYPE = "species"
+LOCATION_PAGE_TYPE = "location"
 PAGE_OUTPUT_DIR = "species"
 REPORT_FILE_NAME = "species-report.json"
+CANDIDATE_FILE_NAME = "encounter-location-candidates.txt"
+LINE_BREAK = "\n"
 SHARE_DIGITS = 4
 NO_INFOBOX_REASON = "no Pokémon Infobox"
 RESIDUE_ID_TEMPLATE = "{page_id}:{kind}:{number}"
@@ -149,6 +171,7 @@ class ParseReport(ReportModel):
     abox_stub_misses: int
     evolution_species_stub_misses: int
     residue: tuple[ResidueItem, ...]
+    encounters: EncounterReport
 
 
 @dataclass(frozen=True)
@@ -165,6 +188,7 @@ class PageOutput:
     chunk_batch: GraphBatch
     notes: tuple[PageNote, ...]
     residue: tuple[ResidueItem, ...]
+    encounters: EncounterReading
 
 
 @dataclass(frozen=True)
@@ -172,12 +196,17 @@ class PageBatches:
     species: GraphBatch
     evolution: EvolutionBuild
     chunks: ChunkBuild
+    encounters: EncounterReading
 
 
 @dataclass(frozen=True)
 class ParseRun:
+    """The outputs and report of the requested pages, and the location candidate titles of
+    all of them."""
+
     outputs: tuple[PageOutput, ...]
     report: ParseReport
+    candidate_titles: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -427,6 +456,7 @@ def build_report(
         abox_stub_misses=abox_misses,
         evolution_species_stub_misses=species_misses,
         residue=tuple(item for o in outputs for item in o.residue),
+        encounters=build_encounter_report([o.encounters for o in outputs]),
     )
 
 
@@ -439,24 +469,50 @@ def build_output(page: Page, extract: SpeciesPageExtract, batches: PageBatches) 
         chunk_batch=batches.chunks.batch,
         notes=(*extract.notes, *batches.evolution.notes, *batches.chunks.notes),
         residue=build_residue_items(extract),
+        encounters=batches.encounters,
     )
 
 
-def parse_species_pages(inputs: RunInputs) -> ParseRun:
-    """Parse the pinned species pages and build the 3 batches of each.
+def read_location_index(store: PageStore) -> LocationIndex:
+    """Index the location pins against the titles every other page type pins."""
+    manifest = store.read_manifest()
+    pages = [
+        store.read_page(LOCATION_PAGE_TYPE, pin) for pin in manifest.list_pins(LOCATION_PAGE_TYPE)
+    ]
+    foreign = [
+        pin.title
+        for page_type in PAGE_TYPES
+        if page_type != LOCATION_PAGE_TYPE
+        for pin in manifest.list_pins(page_type)
+    ]
+    return build_location_index(pages, foreign, LOCATION_INFOBOXES)
 
-    Raises `ParseRunError` for a title that is not pinned and `OverrideError` for an
-    override that matches nothing, both before any page is read. The caller writes the
-    outputs with `write_outputs`.
+
+def read_page_encounters(
+    outputs: Iterable[tuple[Page, SpeciesPageExtract]], inputs: EncounterInputs
+) -> dict[str, EncounterReading]:
+    return {page.title: read_encounters(page, extract, inputs) for page, extract in outputs}
+
+
+def parse_species_pages(inputs: RunInputs) -> ParseRun:
+    """Parse the pinned species pages, build the 3 batches of each and read their encounters.
+
+    Raises `ParseRunError` for a title that is not pinned, `OverrideError` for an override
+    that matches nothing and `EncounterTableError` for an encounter table version the
+    A-Box lacks, all before any page is read. The caller writes the outputs with
+    `write_outputs`.
     """
     pins = inputs.store.read_manifest().list_pins(PAGE_TYPE)
     check_request(inputs.request, pins)
+    model = load_ontology_model(inputs.ontology_dir, UNIVERSE)
+    seed = read_abox(model, inputs.ontology_dir)
+    versions = frozenset(node.name for node in seed.nodes if node.class_iri == VERSION)
+    check_version_rows(versions)
     requested = set(inputs.request.titles) or {pin.title for pin in pins}
     pages = {pin.title: inputs.store.read_page(PAGE_TYPE, pin) for pin in pins}
     parsed = parse_pages(pages.values())
-    model = load_ontology_model(inputs.ontology_dir, UNIVERSE)
-    seed = read_abox(model, inputs.ontology_dir)
     abox = build_abox_index(seed)
+    locations = read_location_index(inputs.store)
     species_batches, failures = build_species_batches(parsed.extracts, abox)
     extracts = {title: parsed.extracts[title] for title in species_batches}
     index = build_species_index(extracts.values())
@@ -485,17 +541,31 @@ def parse_species_pages(inputs: RunInputs) -> ParseRun:
             if pair.page_title in requested
         ),
     )
+    kept = [
+        title
+        for title in pages
+        if title in requested and title in extracts and title not in chunk_failures
+    ]
+    encounters = read_page_encounters(
+        ((pages[title], extracts[title]) for title in kept), EncounterInputs(locations, versions)
+    )
     outputs = tuple(
         build_output(
             pages[title],
             extracts[title],
-            PageBatches(species_batches[title], builds[title], chunk_builds[title]),
+            PageBatches(
+                species_batches[title], builds[title], chunk_builds[title], encounters[title]
+            ),
         )
-        for title in pages
-        if title in requested and title in extracts and title not in chunk_failures
+        for title in kept
     )
     ordered_results = tuple(results[title] for title in pages if title in requested)
-    return ParseRun(outputs, build_report(outputs, ordered_results, context))
+    unknown = (t for reading in encounters.values() for t in reading.counts.unknown_location)
+    return ParseRun(
+        outputs,
+        build_report(outputs, ordered_results, context),
+        list_candidate_titles(locations, unknown),
+    )
 
 
 def serialize_output(output: PageOutput) -> str:
@@ -519,9 +589,14 @@ def serialize_report(report: ParseReport) -> str:
 
 def write_outputs(run: ParseRun, root: Path, is_full_run: bool) -> None:
     """Write the page outputs and the report under `root`, atomically. A full run also
-    deletes the output files of every page it produced no output for."""
+    deletes the output files of every page it produced no output for, and writes the
+    location candidate file: a `--title` run sees only some pages, and an export of a
+    partial list would replace the location pins with a partial set."""
     files = {
         f"{output.page.page_id}{OUTPUT_SUFFIX}": serialize_output(output) for output in run.outputs
     }
     write_page_files(root / PAGE_OUTPUT_DIR, files, is_full_run)
     write_text_atomically(root / REPORT_FILE_NAME, serialize_report(run.report))
+    if is_full_run:
+        candidates = "".join(f"{title}{LINE_BREAK}" for title in run.candidate_titles)
+        write_text_atomically(root / CANDIDATE_FILE_NAME, candidates)
