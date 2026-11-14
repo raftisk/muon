@@ -23,6 +23,7 @@ from muon.ingestion.bulbapedia.ingest import (
 )
 from muon.ingestion.bulbapedia.pages import PageStore
 from muon.ingestion.bulbapedia.species.batches import (
+    ENCOUNTER,
     EVOLUTION,
     FORM_CHANGE,
     LEARNSET_ENTRY,
@@ -55,8 +56,9 @@ PASS_MARKERS = {
     IngestPass.SPECIES: "CAN_LEARN",
     IngestPass.EVOLUTION: "EVOLVES_TO",
     IngestPass.CHUNK: "DESCRIBES",
+    IngestPass.ENCOUNTER: "HAS_ENCOUNTER",
 }
-PASS_ORDER = [IngestPass.SPECIES] * 2 + [IngestPass.EVOLUTION] * 2 + [IngestPass.CHUNK] * 2
+PASS_ORDER = [ingest_pass for ingest_pass in IngestPass for _ in range(2)]
 BATCHES_PER_PASS = 2
 
 
@@ -141,7 +143,14 @@ async def test_constraint_classes_cover_every_scope_and_stub_class(store: PageSt
 
     batches = [select_batch(o, p) for o in run.outputs for p in IngestPass]
     stubs = {stub.class_iri for batch in batches for stub in batch.stub_nodes}
-    assert {POKEMON_SPECIES, LEARNSET_ENTRY, FORM_CHANGE, EVOLUTION, TEXT_CHUNK} <= classes
+    assert {
+        POKEMON_SPECIES,
+        LEARNSET_ENTRY,
+        FORM_CHANGE,
+        EVOLUTION,
+        TEXT_CHUNK,
+        ENCOUNTER,
+    } <= classes
     assert stubs <= classes
 
 
@@ -151,6 +160,7 @@ def test_select_batch_returns_the_batch_of_the_pass(store: PageStore) -> None:
     assert select_batch(output, IngestPass.SPECIES) is output.species_batch
     assert select_batch(output, IngestPass.EVOLUTION) is output.evolution_batch
     assert select_batch(output, IngestPass.CHUNK) is output.chunk_batch
+    assert select_batch(output, IngestPass.ENCOUNTER) is output.encounter_batch
 
 
 async def test_a_missing_seed_node_stops_the_run_before_any_write(store: PageStore) -> None:
@@ -177,6 +187,7 @@ async def test_a_missing_seed_node_stops_the_run_before_any_write(store: PageSto
         (2, BETA, IngestPass.SPECIES, 1),
         (3, ALPHA, IngestPass.EVOLUTION, 2),
         (5, ALPHA, IngestPass.CHUNK, 3),
+        (8, BETA, IngestPass.ENCOUNTER, 4),
     ],
 )
 @pytest.mark.parametrize("error", [GraphQueryError("boom"), ValueError("bad batch")])
@@ -198,6 +209,7 @@ async def test_a_failed_batch_write_stops_every_later_batch_and_the_census(
     )
     assert [p.ingest_pass for p in result.report.passes] == list(IngestPass)[:passes_run]
     assert result.report.census is None
+    assert result.report.stub_ids is None
     assert len(client.reads) == 1
 
 
@@ -219,6 +231,7 @@ async def test_progress_comes_at_the_end_of_each_pass(store: PageStore) -> None:
         (IngestPass.SPECIES, 2, 2),
         (IngestPass.EVOLUTION, 2, 2),
         (IngestPass.CHUNK, 2, 2),
+        (IngestPass.ENCOUNTER, 2, 2),
     ]
     assert all(p.elapsed_seconds >= 0 for p in progress)
 
@@ -268,21 +281,25 @@ async def test_a_run_that_changes_nothing_lists_no_page_and_sums_to_zero(store: 
         assert totals.counters["relationships_deleted"] == 0
 
 
-async def test_the_census_is_read_when_nothing_stopped(store: PageStore) -> None:
+async def test_census_and_location_stub_ids_are_read_when_nothing_stopped(
+    store: PageStore,
+) -> None:
     client = RecordingGraphClient(
         read_records=[
             [],
             [{"label": "PokemonSpecies", "count": 2}, {"label": "Entity", "count": 3}],
             [{"type": "HAS_TYPE", "count": 2}],
+            [{"id": "digletts-cave"}],
         ]
     )
 
     result = await run_ingest(client, run_parse(store))
 
-    assert len(client.reads) == 3
+    assert len(client.reads) == 4
     assert result.report.census == CensusReport(
         labels={"Entity": 3, "PokemonSpecies": 2}, relationship_types={"HAS_TYPE": 2}
     )
+    assert result.report.stub_ids == {"Location": ("digletts-cave",)}
 
 
 async def test_a_title_run_reports_its_titles_and_writes_only_those_pages(store: PageStore) -> None:

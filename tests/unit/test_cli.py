@@ -1060,7 +1060,7 @@ def build_ingest_run(
         )
         for ingest_pass in IngestPass
     )
-    report = IngestReport(
+    report = StubIngestReport(
         titles=(),
         is_full_run=True,
         passes=passes,
@@ -1072,6 +1072,7 @@ def build_ingest_run(
         else CensusReport(
             labels={"Entity": 5, "PokemonSpecies": 2}, relationship_types={"HAS_TYPE": 2}
         ),
+        stub_ids=None if stop else {"Location": ("digletts-cave",)},
     )
     return IngestRun(report=report, elapsed_seconds=dict.fromkeys(IngestPass, 1.5))
 
@@ -1150,9 +1151,14 @@ def test_ingest_prints_the_parse_counts_the_pass_rows_and_the_census(
         "chunk: 2 batches in 1.5 s",
         "chunk nodes created: 7",
         "chunk nodes deleted: 0",
+        "encounter: 2 batches in 1.5 s",
+        "encounter nodes created: 7",
+        "encounter nodes deleted: 0",
         "nodes Entity: 5",
         "nodes PokemonSpecies: 2",
         "relationships HAS_TYPE: 2",
+        "stubs Location: 1",
+        "stub Location: digletts-cave",
     ]
 
 

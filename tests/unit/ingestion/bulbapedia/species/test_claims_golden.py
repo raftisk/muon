@@ -33,22 +33,26 @@ from muon.ingestion.bulbapedia.batching import (
     build_owner_claims,
     hash_chunk_text,
 )
-from muon.ingestion.bulbapedia.pages import Page
+from muon.ingestion.bulbapedia.pages import Page, PageStore
 from muon.ingestion.bulbapedia.species.batches import (
     CAN_LEARN,
     CHUNK_OWNER_CLAIMS,
     EVOLVES_TO,
     HAS_LEARNSET_ENTRY,
     SLOT,
+    VERSION,
     ChunkInputs,
     SpeciesIndex,
     build_chunk_batch,
+    build_encounter_batch,
     build_evolution_batch,
     build_species_batch,
     build_species_index,
 )
-from muon.ingestion.bulbapedia.species.extract import SpeciesPageExtract
+from muon.ingestion.bulbapedia.species.encounters import EncounterInputs, read_encounters
+from muon.ingestion.bulbapedia.species.extract import EncounterFact, SpeciesPageExtract
 from muon.ingestion.bulbapedia.species.page import parse_species_page
+from muon.ingestion.bulbapedia.species.run import LOCATION_PAGE_TYPE, read_location_index
 from muon.ingestion.runner import build_claim_rows, build_ids_by_label
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
@@ -433,3 +437,72 @@ def test_the_diglett_chunk_batch_claims_describes_at_both_forms_and_2_patterns_p
     assert claims["diglett"] == claims["diglett-alola"] == CHUNK_ANCHOR_PATTERNS
     assert all(claims[chunk_id] == CHUNK_CLAIM_PATTERNS for chunk_id in chunk_ids)
     assert len(diglett_chunks.claims) == 2 + 2 * len(chunk_ids)
+
+
+@pytest.fixture(scope="module")
+def diglett_facts(
+    extracts: dict[str, SpeciesPageExtract], read_pinned_page: Callable[[str], Page]
+) -> tuple[EncounterFact, ...]:
+    store = PageStore()
+    if not store.read_manifest().list_pins(LOCATION_PAGE_TYPE):
+        pytest.skip("no location pins: run `muon fetch bulbapedia location --from-export FILE`")
+    seed = read_abox(load_ontology_model(ONTOLOGY_DIR, "pkmn"), ONTOLOGY_DIR)
+    versions = frozenset(node.name for node in seed.nodes if node.class_iri == VERSION)
+    inputs = EncounterInputs(read_location_index(store), versions)
+    return read_encounters(read_pinned_page(DIGLETT), extracts[DIGLETT], inputs).facts
+
+
+def drop_facts(
+    facts: Iterable[EncounterFact], location_title: str, versions: frozenset[str] | None = None
+) -> list[EncounterFact]:
+    """Return the facts minus those of `location_title` for `diglett`, in `versions` or in all."""
+    return [
+        fact
+        for fact in facts
+        if not (
+            fact.species_id == "diglett"
+            and fact.location_title == location_title
+            and (versions is None or fact.version in versions)
+        )
+    ]
+
+
+def test_a_dropped_red_encounter_leaves_has_encounter_and_keeps_found_in(
+    extracts: dict[str, SpeciesPageExtract],
+    abox: AboxIndex,
+    diglett_facts: tuple[EncounterFact, ...],
+    materializer: LabelMaterializer,
+) -> None:
+    before = build_encounter_batch(extracts[DIGLETT], diglett_facts, abox)
+    edited = build_encounter_batch(
+        extracts[DIGLETT], drop_facts(diglett_facts, "Diglett's Cave", frozenset({"Red"})), abox
+    )
+    has_args = (ClaimDirection.OUT, "diglett", "HAS_ENCOUNTER")
+    found_args = (ClaimDirection.OUT, "diglett", "FOUND_IN")
+
+    assert "diglett:digletts-cave:red" in kept_ids(read_row(before, materializer, *has_args))
+    has_after = read_row(edited, materializer, *has_args)
+    assert "diglett:digletts-cave:red" not in kept_ids(has_after)
+    assert "diglett:digletts-cave:blue" in kept_ids(has_after)
+    assert has_after["owns_other_end"] is True
+    found_after = read_row(edited, materializer, *found_args)
+    assert "digletts-cave" in kept_ids(found_after)
+    assert found_after["owns_other_end"] is False
+    assert "diglett:digletts-cave:red" not in owner_ids(edited, materializer, "Encounter")
+
+
+def test_found_in_leaves_when_no_encounter_of_the_species_keeps_its_location(
+    extracts: dict[str, SpeciesPageExtract],
+    abox: AboxIndex,
+    diglett_facts: tuple[EncounterFact, ...],
+    materializer: LabelMaterializer,
+) -> None:
+    edited = build_encounter_batch(
+        extracts[DIGLETT], drop_facts(diglett_facts, "Diglett's Cave"), abox
+    )
+    found_args = (ClaimDirection.OUT, "diglett", "FOUND_IN")
+
+    found_after = read_row(edited, materializer, *found_args)
+    assert "digletts-cave" not in kept_ids(found_after)
+    assert "vermilion-city" in kept_ids(found_after)
+    assert not any(":digletts-cave:" in i for i in owner_ids(edited, materializer, "Encounter"))
