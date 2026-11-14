@@ -871,7 +871,7 @@ pkmn-shape:R1_RequiresRole a sh:NodeShape ;
 # of every touched Encounter.
 pkmn-shape:C1_Encounter a sh:NodeShape ;
     sh:name "C1" ;
-    sh:message "An encounter has 1 atLocation, 1 inVersion and 1 incoming hasEncounter, minLevel at most maxLevel and a chance from 1 to 100."@en ;
+    sh:message "An encounter has 1 atLocation, 1 inVersion, 1 incoming hasEncounter and 1 encounterKind, minLevel at most maxLevel and a chance from 1 to 100."@en ;
     sh:severity sh:Violation ;
     pkmn-shape:scope pkmn:Encounter ;
     sh:targetClass pkmn:Encounter ;
@@ -903,6 +903,15 @@ pkmn-shape:C1_Encounter a sh:NodeShape ;
         sh:class pkmn:PokemonSpecies
     ] ;
     sh:property [
+        sh:path pkmn:encounterKind ;
+        sh:name "C1" ;
+        sh:message "An encounter needs exactly 1 encounterKind: wild, raid, static, gift, snag or migration."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "wild" "raid" "static" "gift" "snag" "migration" )
+    ] ;
+    sh:property [
         sh:path pkmn:minLevel ;
         sh:name "C1" ;
         sh:message "minLevel must not exceed maxLevel."@en ;
@@ -918,4 +927,26 @@ pkmn-shape:C1_Encounter a sh:NodeShape ;
         sh:datatype xsd:integer ;
         sh:minInclusive 1 ;
         sh:maxInclusive 100
+    ] .
+
+# Encounter methods. The learnset methods share the property, so the list is a
+# shape of its own on Encounter.
+pkmn-shape:C3_EncounterMethod a sh:NodeShape ;
+    sh:name "C3" ;
+    sh:message "An encounter has at most 1 method, from the encounter method list."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Encounter ;
+    sh:targetClass pkmn:Encounter ;
+    sh:property [
+        sh:path pkmn:method ;
+        sh:name "C3" ;
+        sh:message "An encounter method is 1 of the encounter methods of the method definition."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in (
+            "surf" "old-rod" "good-rod" "super-rod" "fishing" "rock-smash" "headbutt"
+            "sos" "horde" "hidden-grotto" "poke-radar" "mass-outbreak" "wanderer"
+            "dexnav" "roaming" "max-raid" "dynamax-adventure" "tera-raid"
+            "static" "gift" "snag"
+        )
     ] .

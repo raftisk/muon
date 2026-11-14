@@ -15,10 +15,15 @@ AREA = 'ex:cave-1f a pkmn:LocationArea ; pkmn:id "cave-1f" .'
 REFERENCES = FIRE + SPECIES + GENERATION_NODE + GROUP + VERSION + AREA
 
 
-def encounter(properties: str = "pkmn:minLevel 5 ; pkmn:maxLevel 10 ; pkmn:chance 20") -> str:
+KIND = 'pkmn:encounterKind "wild"'
+
+
+def encounter(
+    properties: str = "pkmn:minLevel 5 ; pkmn:maxLevel 10 ; pkmn:chance 20", kind: str = KIND
+) -> str:
     return (
         'ex:encounter a pkmn:Encounter ; pkmn:id "charmander:cave-1f:red" ; '
-        f"pkmn:atLocation ex:cave-1f ; pkmn:inVersion ex:red ; {properties} ."
+        f"pkmn:atLocation ex:cave-1f ; pkmn:inVersion ex:red ; {kind} ; {properties} ."
     )
 
 
@@ -62,7 +67,7 @@ def test_encounter_with_two_incoming_links_fails(validate_fixture):
 def test_encounter_without_version_fails(validate_fixture):
     data = (
         REFERENCES
-        + 'ex:encounter a pkmn:Encounter ; pkmn:id "x" ; pkmn:atLocation ex:cave-1f .'
+        + f'ex:encounter a pkmn:Encounter ; pkmn:id "x" ; pkmn:atLocation ex:cave-1f ; {KIND} .'
         + LINK
     )
     assert validate_fixture(data).rule_ids == {"C1"}
@@ -72,3 +77,32 @@ def test_encounter_at_a_plain_location_conforms(validate_fixture):
     data = REFERENCES + 'ex:route a mo:Route ; pkmn:id "route-1" .'
     data += encounter().replace("ex:cave-1f", "ex:route") + LINK
     assert validate_fixture(data).conforms
+
+
+def test_coarse_encounter_with_a_method_conforms(validate_fixture):
+    data = REFERENCES + encounter('pkmn:method "rock-smash"') + LINK
+    assert validate_fixture(data).conforms
+
+
+def test_encounter_without_kind_fails(validate_fixture):
+    assert validate_fixture(REFERENCES + encounter(kind="") + LINK).rule_ids == {"C1"}
+
+
+def test_encounter_with_two_kinds_fails(validate_fixture):
+    data = REFERENCES + encounter(kind='pkmn:encounterKind "wild", "gift"') + LINK
+    assert validate_fixture(data).rule_ids == {"C1"}
+
+
+def test_unknown_kind_fails(validate_fixture):
+    data = REFERENCES + encounter(kind='pkmn:encounterKind "walk"') + LINK
+    assert validate_fixture(data).rule_ids == {"C1"}
+
+
+def test_unknown_method_fails(validate_fixture):
+    data = REFERENCES + encounter('pkmn:method "walk"') + LINK
+    assert validate_fixture(data).rule_ids == {"C3"}
+
+
+def test_learnset_method_on_an_encounter_fails(validate_fixture):
+    data = REFERENCES + encounter('pkmn:method "level"') + LINK
+    assert validate_fixture(data).rule_ids == {"C3"}
