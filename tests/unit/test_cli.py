@@ -19,6 +19,7 @@ from muon.ingestion.bulbapedia.abilities.crosscheck import (
     HolderDifference,
     HolderSide,
 )
+from muon.ingestion.bulbapedia.abilities.ingest import AbilityIngestRun, AbilityPass
 from muon.ingestion.bulbapedia.abilities.run import (
     AbilityParseReport,
     AbilityParseRequest,
@@ -1255,7 +1256,7 @@ def test_ingest_stops_on_invalid_settings_before_the_parse(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["ingest", "bulbapedia", "ability"], "'ability'"),
+        (["ingest", "bulbapedia", "item"], "'item'"),
         (["ingest", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -1485,3 +1486,64 @@ def test_move_ingest_stops_on_a_parse_error_before_the_graph(
     assert exit_code == cli.EXIT_FAILURE
     assert capsys.readouterr().err == f"ingest bulbapedia move failed: {error}\n"
     assert ingest.titles == []
+
+
+def build_ability_ingest_run() -> AbilityIngestRun:
+    report = StubIngestReport(
+        titles=(),
+        is_full_run=True,
+        passes=tuple(
+            PassTotals(ingest_pass=ingest_pass, batches_written=314, counters={})
+            for ingest_pass in AbilityPass
+        ),
+        changed_pages=(),
+        failed_pages=(),
+        stop=None,
+        census=CensusReport(labels={"Ability": 314}, relationship_types={}),
+        stub_ids={"Ability": ()},
+    )
+    return AbilityIngestRun(report=report, elapsed_seconds=dict.fromkeys(AbilityPass, 1.0))
+
+
+class RecordingAbilityIngest:
+    """Stands in for `cli.run_ability_ingest` and `cli.write_ability_ingest_report`."""
+
+    def __init__(self, outcome: AbilityIngestRun) -> None:
+        self.outcome = outcome
+        self.titles: list[tuple[str, ...]] = []
+        self.reports: list[StubIngestReport] = []
+
+    async def run(
+        self, settings: Settings, run: AbilityParseRun, titles: tuple[str, ...]
+    ) -> AbilityIngestRun:
+        self.titles.append(titles)
+        return self.outcome
+
+    def write_report(self, report: StubIngestReport) -> Path:
+        self.reports.append(report)
+        return Path("ability-ingest-report.json")
+
+
+@pytest.mark.usefixtures("settings")
+def test_ability_ingest_parses_ingests_and_prints_the_stubs(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parse = RecordingAbilityParse(build_ability_report())
+    ingest = RecordingAbilityIngest(build_ability_ingest_run())
+    monkeypatch.setattr(cli, "run_ability_parse", parse)
+    monkeypatch.setattr(cli, "run_ability_ingest", ingest.run)
+    monkeypatch.setattr(cli, "write_ability_ingest_report", ingest.write_report)
+
+    exit_code = cli.main(["ingest", "bulbapedia", "ability", "--title", "Natural Cure (Ability)"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert parse.requests == [AbilityParseRequest(titles=("Natural Cure (Ability)",))]
+    assert ingest.titles == [("Natural Cure (Ability)",)]
+    assert len(ingest.reports) == 1
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[lines.index("ingest bulbapedia ability: done") + 1 :] == [
+        "ability: 314 batches in 1.0 s",
+        "chunk: 314 batches in 1.0 s",
+        "nodes Ability: 314",
+        "stubs Ability: 0",
+    ]
