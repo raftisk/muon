@@ -13,14 +13,10 @@ and the evolution batch come first and are independent of the chunk batch, which
 species index of the whole run to resolve the species a chunk mentions.
 """
 
-import json
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from enum import StrEnum
 from pathlib import Path
-
-from pydantic import BaseModel, ConfigDict, Field
 
 from muon.ingestion.batch import GraphBatch, NodeRef
 from muon.ingestion.bulbapedia.batching import (
@@ -31,12 +27,22 @@ from muon.ingestion.bulbapedia.batching import (
     ChunkBuildError,
     build_abox_index,
 )
-from muon.ingestion.bulbapedia.pages import (
-    DEFAULT_ROOT,
-    Page,
-    PagePin,
-    PageStore,
-    write_text_atomically,
+from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore, write_text_atomically
+from muon.ingestion.bulbapedia.runs import (
+    OUTPUT_SUFFIX,
+    BatchCounts,
+    PageResult,
+    PageStatus,
+    ReportModel,
+    TemplateCount,
+    build_result,
+    count_batches,
+    count_nonzero,
+    dump_json,
+    find_unpinned_titles,
+    rank_templates,
+    serialize_batch,
+    write_page_files,
 )
 from muon.ingestion.bulbapedia.species.batches import (
     CONDITION,
@@ -69,14 +75,11 @@ from muon.ingestion.bulbapedia.species.forms import check_override_titles, rank_
 from muon.ingestion.bulbapedia.species.page import parse_species_page, read_infobox
 from muon.ingestion.bulbapedia.wikitext import split_sections
 from muon.ingestion.seed import read_abox
-from muon.ontology.model import extract_local_name, load_ontology_model
+from muon.ontology.model import load_ontology_model
 
 PAGE_TYPE = "species"
-DEFAULT_OUTPUT_ROOT = DEFAULT_ROOT / "parsed"
 PAGE_OUTPUT_DIR = "species"
 REPORT_FILE_NAME = "species-report.json"
-OUTPUT_SUFFIX = ".json"
-JSON_INDENT = 2
 SHARE_DIGITS = 4
 NO_INFOBOX_REASON = "no Pokémon Infobox"
 RESIDUE_ID_TEMPLATE = "{page_id}:{kind}:{number}"
@@ -84,24 +87,6 @@ RESIDUE_ID_TEMPLATE = "{page_id}:{kind}:{number}"
 
 class ParseRunError(Exception):
     """A request the run cannot start: a title that is not pinned."""
-
-
-class ReportModel(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-
-class PageStatus(StrEnum):
-    PARSED = "parsed"
-    SKIPPED = "skipped"
-    FAILED = "failed"
-
-
-class PageResult(ReportModel):
-    title: str
-    page_id: int
-    revision_id: int
-    status: PageStatus
-    reason: str | None
 
 
 class ResidueItem(ReportModel):
@@ -134,23 +119,6 @@ class UnownedPair(ReportModel):
 
     page_title: str
     evolution_id: str
-
-
-class TemplateCount(ReportModel):
-    """A template left out of chunk text and how often."""
-
-    name: str
-    count: int
-
-
-class BatchCounts(ReportModel):
-    """Counts by class local name (owner nodes and stubs) and property local name (edges
-    and claims)."""
-
-    owner_nodes: Mapping[str, int]
-    stubs: Mapping[str, int]
-    edges: Mapping[str, int]
-    claims: Mapping[str, int] = Field(default_factory=dict)
 
 
 class ParseReport(ReportModel):
@@ -250,20 +218,10 @@ def build_residue_items(extract: SpeciesPageExtract) -> tuple[ResidueItem, ...]:
     return tuple(items)
 
 
-def build_result(page: Page, status: PageStatus, reason: str | None = None) -> PageResult:
-    return PageResult(
-        title=page.title,
-        page_id=page.page_id,
-        revision_id=page.revision_id,
-        status=status,
-        reason=reason,
-    )
-
-
 def check_request(request: ParseRequest, pins: Iterable[PagePin]) -> None:
     """Stop a run before it writes anything: unknown titles and stale overrides."""
     pinned = {pin.title for pin in pins}
-    unknown = sorted(set(request.titles) - pinned)
+    unknown = find_unpinned_titles(request.titles, pinned)
     if unknown:
         raise ParseRunError(f"Titles that are not pinned: {unknown}")
     check_override_titles(pinned)
@@ -341,21 +299,6 @@ def find_unowned_pairs(
     return tuple(UnownedPair(page_title=t, evolution_id=i) for t, i in sorted(unowned))
 
 
-def count_batch(batches: Iterable[GraphBatch]) -> BatchCounts:
-    owners: Counter[str] = Counter()
-    stubs: Counter[str] = Counter()
-    edges: Counter[str] = Counter()
-    claims: Counter[str] = Counter()
-    for batch in batches:
-        owners.update(extract_local_name(node.class_iri) for node in batch.owner_nodes)
-        stubs.update(extract_local_name(node.class_iri) for node in batch.stub_nodes)
-        edges.update(extract_local_name(edge.property_iri) for edge in batch.edges)
-        claims.update(extract_local_name(claim.property_iri) for claim in batch.claims)
-    return BatchCounts(
-        owner_nodes=dict(owners), stubs=dict(stubs), edges=dict(edges), claims=dict(claims)
-    )
-
-
 def count_mega_forms_with_stone(page: Page, extract: SpeciesPageExtract) -> int:
     """Count the Mega form nodes of a page that the infobox gives a stone."""
     infobox = read_infobox(split_sections(page.wikitext)[0])
@@ -404,16 +347,14 @@ def count_dropped_templates(outputs: Iterable[PageOutput]) -> tuple[TemplateCoun
     totals: Counter[str] = Counter()
     for output in outputs:
         totals.update(output.extract.dropped_templates)
-    ranked = sorted(totals.items(), key=lambda item: (-item[1], item[0]))
-    return tuple(TemplateCount(name=name, count=count) for name, count in ranked)
+    return rank_templates(totals)
 
 
 def count_per_page(
     outputs: Iterable[PageOutput], read_count: Callable[[SpeciesPageExtract], int]
 ) -> dict[str, int]:
     """Map each page title whose extract gives a nonzero count to that count."""
-    counts = {o.extract.title: read_count(o.extract) for o in outputs}
-    return {title: count for title, count in sorted(counts.items()) if count}
+    return count_nonzero((o.extract.title, read_count(o.extract)) for o in outputs)
 
 
 def count_chunks_per_aspect(chunk_batches: Iterable[GraphBatch]) -> dict[str, int]:
@@ -449,9 +390,9 @@ def build_report(
         pages_parsed=sum(r.status is PageStatus.PARSED for r in results),
         pages_skipped=sum(r.status is PageStatus.SKIPPED for r in results),
         pages_failed=sum(r.status is PageStatus.FAILED for r in results),
-        species_counts=count_batch(o.species_batch for o in outputs),
-        evolution_counts=count_batch(evolution_batches),
-        chunk_counts=count_batch(chunk_batches),
+        species_counts=count_batches(o.species_batch for o in outputs),
+        evolution_counts=count_batches(evolution_batches),
+        chunk_counts=count_batches(chunk_batches),
         chunks_per_aspect=count_chunks_per_aspect(chunk_batches),
         dropped_templates=count_dropped_templates(outputs),
         removed_tables_total=sum(tables.values()),
@@ -557,17 +498,6 @@ def parse_species_pages(inputs: RunInputs) -> ParseRun:
     return ParseRun(outputs, build_report(outputs, ordered_results, context))
 
 
-def dump_json(data: object) -> str:
-    return json.dumps(data, sort_keys=True, ensure_ascii=False, indent=JSON_INDENT) + "\n"
-
-
-def serialize_batch(batch: GraphBatch) -> dict[str, object]:
-    """Dump a batch with its scope sorted: pydantic dumps a frozenset in hash order."""
-    data = batch.model_dump(mode="json")
-    data["scope"] = sorted(batch.scope)
-    return data
-
-
 def serialize_output(output: PageOutput) -> str:
     return dump_json(
         {
@@ -588,19 +518,10 @@ def serialize_report(report: ParseReport) -> str:
 
 
 def write_outputs(run: ParseRun, root: Path, is_full_run: bool) -> None:
-    """Write the page outputs and the report under `root`, atomically.
-
-    A full run also deletes the output files of every page it produced no output for, so
-    the directory depends on the run and not on the runs before it.
-    """
-    output_dir = root / PAGE_OUTPUT_DIR
-    kept = set()
-    for output in run.outputs:
-        name = f"{output.page.page_id}{OUTPUT_SUFFIX}"
-        kept.add(name)
-        write_text_atomically(output_dir / name, serialize_output(output))
+    """Write the page outputs and the report under `root`, atomically. A full run also
+    deletes the output files of every page it produced no output for."""
+    files = {
+        f"{output.page.page_id}{OUTPUT_SUFFIX}": serialize_output(output) for output in run.outputs
+    }
+    write_page_files(root / PAGE_OUTPUT_DIR, files, is_full_run)
     write_text_atomically(root / REPORT_FILE_NAME, serialize_report(run.report))
-    if is_full_run:
-        for path in output_dir.glob(f"*{OUTPUT_SUFFIX}"):
-            if path.name not in kept:
-                path.unlink()

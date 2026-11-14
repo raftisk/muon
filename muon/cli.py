@@ -1,7 +1,7 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
-`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move` and
-`muon ingest bulbapedia species|move`."""
+`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability` and
+`muon ingest bulbapedia species|move|ability`."""
 
 import argparse
 import asyncio
@@ -10,7 +10,7 @@ import secrets
 import sys
 import time
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import fields
 from pathlib import Path
 
@@ -19,6 +19,23 @@ from pydantic import SecretStr, ValidationError
 
 from muon.config import OntologySettings, Settings, get_settings
 from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
+from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
+from muon.ingestion.bulbapedia.abilities.crosscheck import CrossCheckError
+from muon.ingestion.bulbapedia.abilities.ingest import (
+    AbilityIngestRun,
+    ingest_abilities,
+    write_ability_ingest_report,
+)
+from muon.ingestion.bulbapedia.abilities.run import PAGE_TYPE as ABILITY_PAGE_TYPE
+from muon.ingestion.bulbapedia.abilities.run import (
+    AbilityParseReport,
+    AbilityParseRequest,
+    AbilityParseRun,
+    AbilityRunInputs,
+    parse_ability_pages,
+)
+from muon.ingestion.bulbapedia.abilities.run import ParseRunError as AbilityParseRunError
+from muon.ingestion.bulbapedia.abilities.run import write_outputs as write_ability_outputs
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError, BulbapediaClient, build_http_client
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import (
@@ -28,6 +45,13 @@ from muon.ingestion.bulbapedia.fetch import (
     FetchRequest,
     fetch_pages,
     import_pages,
+)
+from muon.ingestion.bulbapedia.ingest import (
+    IngestReport,
+    IngestRequest,
+    MissingSeedError,
+    PassProgress,
+    StubIngestReport,
 )
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
@@ -48,27 +72,19 @@ from muon.ingestion.bulbapedia.moves.run import (
     parse_move_pages,
 )
 from muon.ingestion.bulbapedia.moves.run import (
-    PageStatus as MovePageStatus,
-)
-from muon.ingestion.bulbapedia.moves.run import (
     ParseRunError as MoveParseRunError,
 )
 from muon.ingestion.bulbapedia.moves.run import (
     write_outputs as write_move_outputs,
 )
 from muon.ingestion.bulbapedia.pages import PageStore, PageStoreError
+from muon.ingestion.bulbapedia.runs import DEFAULT_OUTPUT_ROOT, PageStatus
 from muon.ingestion.bulbapedia.species.forms import OverrideError
-from muon.ingestion.bulbapedia.species.ingest import (
-    IngestRequest,
-    IngestRun,
-    MissingSeedError,
-    PassProgress,
-    ingest_species,
-    write_ingest_report,
+from muon.ingestion.bulbapedia.species.ingest import IngestRun, ingest_species, write_ingest_report
+from muon.ingestion.bulbapedia.species.run import (
+    PAGE_TYPE as PARSE_PAGE_TYPE,
 )
 from muon.ingestion.bulbapedia.species.run import (
-    DEFAULT_OUTPUT_ROOT,
-    PageStatus,
     ParseReport,
     ParseRequest,
     ParseRun,
@@ -76,9 +92,6 @@ from muon.ingestion.bulbapedia.species.run import (
     RunInputs,
     parse_species_pages,
     write_outputs,
-)
-from muon.ingestion.bulbapedia.species.run import (
-    PAGE_TYPE as PARSE_PAGE_TYPE,
 )
 from muon.ingestion.pokeapi.snapshot import (
     SnapshotError,
@@ -116,6 +129,16 @@ MOVE_PARSE_ERRORS = (
     MachineFieldError,
     GameCodeError,
     MachineConflictError,
+    SnapshotError,
+    PageStoreError,
+    OntologyError,
+    ABoxError,
+)
+
+ABILITY_PARSE_ERRORS = (
+    AbilityParseRunError,
+    SupCodeError,
+    CrossCheckError,
     SnapshotError,
     PageStoreError,
     OntologyError,
@@ -170,7 +193,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parse.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to parse")
     parse.add_argument(
-        "page_type", choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE), help="the set of pages to parse"
+        "page_type",
+        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE),
+        help="the set of pages to parse",
     )
     parse.add_argument(
         "--title",
@@ -186,7 +211,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ingest.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to ingest")
     ingest.add_argument(
-        "page_type", choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE), help="the set of pages to ingest"
+        "page_type",
+        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE),
+        help="the set of pages to ingest",
     )
     ingest.add_argument(
         "--title",
@@ -400,7 +427,7 @@ def format_move_parse_report(report: MoveParseReport, elapsed_seconds: float) ->
     lines.extend(
         f"failed: {page.title}: {page.reason}"
         for page in report.pages
-        if page.status is MovePageStatus.FAILED
+        if page.status is PageStatus.FAILED
     )
     lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
     return "\n".join(lines)
@@ -416,6 +443,62 @@ def execute_move_parse(titles: tuple[str, ...]) -> int:
         return EXIT_FAILURE
 
     print(format_move_parse_report(run.report, time.monotonic() - started))
+    return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
+
+
+def run_ability_parse(request: AbilityParseRequest) -> AbilityParseRun:
+    """Parse the pinned ability pages and write the outputs. No Neo4j or LLM setting is read."""
+    inputs = AbilityRunInputs(
+        request, PageStore(), SnapshotStore(), OntologySettings().ontology_dir
+    )
+    run = parse_ability_pages(inputs)
+    write_ability_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
+    return run
+
+
+def format_ability_parse_report(report: AbilityParseReport, elapsed_seconds: float) -> str:
+    """The page counts, batch counts, notes per kind, cross-check results and failures."""
+    counts = report.batch_counts
+    lines = [
+        f"{PARSE_COMMAND} {BULBAPEDIA_SOURCE} {ABILITY_PAGE_TYPE}: done",
+        f"pages parsed: {report.pages_parsed}",
+        f"pages skipped: {report.pages_skipped}",
+        f"pages failed: {report.pages_failed}",
+    ]
+    lines.extend(
+        f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
+    )
+    lines.append(f"chunks: {sum(report.chunks_per_aspect.values())}")
+    lines.append(f"stubs: {sum(counts.stubs.values()) + sum(report.chunk_counts.stubs.values())}")
+    lines.append(f"edges: {sum(counts.edges.values()) + sum(report.chunk_counts.edges.values())}")
+    note_counts = Counter(note.kind.value for note in report.notes)
+    lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
+    if report.species_output_missing:
+        lines.append("cross-check: no species output, skipped")
+    else:
+        differences = Counter(difference.side.value for difference in report.holder_differences)
+        lines.extend(f"cross-check {side}: {count}" for side, count in sorted(differences.items()))
+    lines.append(f"unowned species stubs: {len(report.unowned_species_stubs)}")
+    lines.extend(f"unowned: {stub_id}" for stub_id in report.unowned_species_stubs)
+    lines.extend(
+        f"failed: {page.title}: {page.reason}"
+        for page in report.pages
+        if page.status is PageStatus.FAILED
+    )
+    lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
+    return "\n".join(lines)
+
+
+def execute_ability_parse(titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(PARSE_COMMAND, f"{BULBAPEDIA_SOURCE} {ABILITY_PAGE_TYPE}")
+    started = time.monotonic()
+    try:
+        run = run_ability_parse(AbilityParseRequest(titles=titles))
+    except ABILITY_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_ability_parse_report(run.report, time.monotonic() - started))
     return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
 
 
@@ -438,14 +521,16 @@ async def run_ingest(settings: Settings, run: ParseRun, titles: tuple[str, ...])
         return await ingest_species(client, run, request)
 
 
-def format_ingest_report(ingest_run: IngestRun) -> str:
-    """The counters and seconds of each pass, the failed pages, the stop and the census."""
-    report = ingest_run.report
+def format_ingest_report(
+    page_type: str, report: IngestReport, elapsed_seconds: Mapping[str, float]
+) -> str:
+    """The counters and seconds of each pass, the failed pages, the stop, the census and,
+    for a report with stub ids, the stubs."""
     status = "stopped" if report.stop is not None else "done"
-    lines = [f"{INGEST_COMMAND} {BULBAPEDIA_SOURCE} {PARSE_PAGE_TYPE}: {status}"]
+    lines = [f"{INGEST_COMMAND} {BULBAPEDIA_SOURCE} {page_type}: {status}"]
     for totals in report.passes:
-        name = totals.ingest_pass.value
-        seconds = ingest_run.elapsed_seconds[totals.ingest_pass]
+        name = totals.ingest_pass
+        seconds = elapsed_seconds[totals.ingest_pass]
         lines.append(f"{name}: {totals.batches_written} batches in {seconds:.1f} s")
         lines.extend(
             f"{name} {counter.replace('_', ' ')}: {count}"
@@ -454,13 +539,17 @@ def format_ingest_report(ingest_run: IngestRun) -> str:
     lines.extend(f"failed: {page.page_title}: {page.reason}" for page in report.failed_pages)
     if report.stop is not None:
         stop = report.stop
-        lines.append(f"stopped: {stop.page_title} ({stop.ingest_pass.value}): {stop.error}")
+        lines.append(f"stopped: {stop.page_title} ({stop.ingest_pass}): {stop.error}")
     if report.census is not None:
         lines.extend(f"nodes {label}: {count}" for label, count in report.census.labels.items())
         lines.extend(
             f"relationships {name}: {count}"
             for name, count in report.census.relationship_types.items()
         )
+    stub_ids = report.stub_ids if isinstance(report, StubIngestReport) else None
+    for label, ids in (stub_ids or {}).items():
+        lines.append(f"stubs {label}: {len(ids)}")
+        lines.extend(f"stub {label}: {stub_id}" for stub_id in ids)
     return "\n".join(lines)
 
 
@@ -482,7 +571,7 @@ def execute_ingest(settings: Settings, request: ParseRequest) -> int:
 
     write_ingest_report(ingest_run.report)
     print(format_parse_report(run.report, parse_seconds))
-    print(format_ingest_report(ingest_run))
+    print(format_ingest_report(PARSE_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
     is_clean = not run.report.pages_failed and ingest_run.report.stop is None
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
@@ -495,36 +584,6 @@ async def run_move_ingest(
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_moves(client, run, request)
-
-
-def format_move_ingest_report(ingest_run: MoveIngestRun) -> str:
-    """The counters and seconds of each pass, the failed pages, the stop, the census and
-    the stubs."""
-    report = ingest_run.report
-    status = "stopped" if report.stop is not None else "done"
-    lines = [f"{INGEST_COMMAND} {BULBAPEDIA_SOURCE} {MOVE_PAGE_TYPE}: {status}"]
-    for totals in report.passes:
-        name = totals.ingest_pass.value
-        seconds = ingest_run.elapsed_seconds[totals.ingest_pass]
-        lines.append(f"{name}: {totals.batches_written} batches in {seconds:.1f} s")
-        lines.extend(
-            f"{name} {counter.replace('_', ' ')}: {count}"
-            for counter, count in totals.counters.items()
-        )
-    lines.extend(f"failed: {page.page_title}: {page.reason}" for page in report.failed_pages)
-    if report.stop is not None:
-        stop = report.stop
-        lines.append(f"stopped: {stop.page_title} ({stop.ingest_pass.value}): {stop.error}")
-    if report.census is not None:
-        lines.extend(f"nodes {label}: {count}" for label, count in report.census.labels.items())
-        lines.extend(
-            f"relationships {name}: {count}"
-            for name, count in report.census.relationship_types.items()
-        )
-    for label, ids in (report.stub_ids or {}).items():
-        lines.append(f"stubs {label}: {len(ids)}")
-        lines.extend(f"stub {label}: {stub_id}" for stub_id in ids)
-    return "\n".join(lines)
 
 
 def execute_move_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
@@ -545,7 +604,42 @@ def execute_move_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
 
     write_move_ingest_report(ingest_run.report)
     print(format_move_parse_report(run.report, parse_seconds))
-    print(format_move_ingest_report(ingest_run))
+    print(format_ingest_report(MOVE_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    is_clean = not run.report.pages_failed and ingest_run.report.stop is None
+    return EXIT_SUCCESS if is_clean else EXIT_FAILURE
+
+
+async def run_ability_ingest(
+    settings: Settings, run: AbilityParseRun, titles: tuple[str, ...]
+) -> AbilityIngestRun:
+    request = IngestRequest(
+        ontology_dir=settings.ontology.ontology_dir, titles=titles, on_progress=print_progress
+    )
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        return await ingest_abilities(client, run, request)
+
+
+def execute_ability_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(
+        INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {ABILITY_PAGE_TYPE}"
+    )
+    started = time.monotonic()
+    try:
+        run = run_ability_parse(AbilityParseRequest(titles=titles))
+    except ABILITY_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+    parse_seconds = time.monotonic() - started
+
+    try:
+        ingest_run = asyncio.run(run_ability_ingest(settings, run, titles))
+    except (MissingSeedError, GraphError, OntologyError, ABoxError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    write_ability_ingest_report(ingest_run.report)
+    print(format_ability_parse_report(run.report, parse_seconds))
+    print(format_ingest_report(ABILITY_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
     is_clean = not run.report.pages_failed and ingest_run.report.stop is None
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
@@ -605,6 +699,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_fetch(request)
     if arguments.command == PARSE_COMMAND and arguments.page_type == MOVE_PAGE_TYPE:
         return execute_move_parse(tuple(arguments.titles))
+    if arguments.command == PARSE_COMMAND and arguments.page_type == ABILITY_PAGE_TYPE:
+        return execute_ability_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND:
         return execute_parse(ParseRequest(titles=tuple(arguments.titles)))
 
@@ -617,6 +713,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if arguments.command == INGEST_COMMAND and arguments.page_type == MOVE_PAGE_TYPE:
         return execute_move_ingest(settings, tuple(arguments.titles))
+    if arguments.command == INGEST_COMMAND and arguments.page_type == ABILITY_PAGE_TYPE:
+        return execute_ability_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND:
         return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
     if arguments.command == PURGE_COMMAND:

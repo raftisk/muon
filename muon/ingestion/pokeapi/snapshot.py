@@ -2,10 +2,11 @@
 
 `<root>/manifest.json` pins 1 commit of the PokeAPI repository and the SHA-256 of every
 file in `SNAPSHOT_FILES`, and is committed. `<root>/csv/` holds the files and is
-gitignored. A plain fetch downloads the pinned files a clone lacks; `--update` moves the pin
-to the current commit of the default branch. Every read checks a file against its hash, so
-a parser never reads bytes that differ from the pin. Only `fetch_snapshot` touches the
-network.
+gitignored. A plain fetch downloads the pinned files a clone lacks, and pins a file of
+`SNAPSHOT_FILES` that the manifest lacks at the pinned commit, so adding a file keeps every
+other pin; `--update` moves the pin to the current commit of the default branch. Every read
+checks a file against its hash, so a parser never reads bytes that differ from the pin. Only
+`fetch_snapshot` touches the network.
 """
 
 import csv
@@ -40,6 +41,8 @@ FETCH_HINT = "run `muon fetch pokeapi`"
 UPDATE_HINT = "run `muon fetch pokeapi --update`"
 
 SNAPSHOT_FILES = (
+    "abilities.csv",
+    "ability_prose.csv",
     "items.csv",
     "machines.csv",
     "move_damage_classes.csv",
@@ -192,6 +195,15 @@ def download_pinned(
     return contents
 
 
+def pin_missing_files(
+    client: httpx.Client, manifest: SnapshotManifest, names: list[str]
+) -> tuple[SnapshotManifest, dict[str, bytes]]:
+    """Download `names` at the pinned commit and return the manifest with their hashes."""
+    contents = {name: download_file(client, manifest.commit, name) for name in names}
+    hashes = {name: compute_sha256(content) for name, content in contents.items()}
+    return manifest.model_copy(update={"files": {**manifest.files, **hashes}}), contents
+
+
 def fetch_snapshot(
     store: SnapshotStore, client: httpx.Client, is_update: bool
 ) -> SnapshotFetchReport:
@@ -213,16 +225,18 @@ def fetch_snapshot(
         pinned = store.read_manifest()
         if pinned is None:
             raise SnapshotError(f"no PokeAPI snapshot pin at {store.root}: {UPDATE_HINT}")
-        unpinned = sorted(set(SNAPSHOT_FILES) - set(pinned.files))
-        if unpinned:
-            raise SnapshotError(f"the pin lacks {', '.join(unpinned)}: {UPDATE_HINT}")
-        stale = [name for name in SNAPSHOT_FILES if not store.is_current(name, pinned.files[name])]
-        contents = download_pinned(client, pinned, stale)
-        manifest = pinned
-        requests = len(stale)
+        unpinned = [name for name in SNAPSHOT_FILES if name not in pinned.files]
+        stale = [
+            name
+            for name in SNAPSHOT_FILES
+            if name in pinned.files and not store.is_current(name, pinned.files[name])
+        ]
+        manifest, added = pin_missing_files(client, pinned, unpinned)
+        contents = {**download_pinned(client, pinned, stale), **added}
+        requests = len(stale) + len(unpinned)
     for name, content in contents.items():
         write_bytes_atomically(store.build_file_path(name), content)
-    if is_update:
+    if manifest != store.read_manifest():
         store.write_manifest(manifest)
     return SnapshotFetchReport(
         commit=manifest.commit, files_downloaded=len(contents), requests=requests

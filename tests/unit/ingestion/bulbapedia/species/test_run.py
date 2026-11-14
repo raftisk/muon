@@ -5,13 +5,13 @@ import pytest
 
 from muon.ingestion.bulbapedia import batching
 from muon.ingestion.bulbapedia.pages import PageStore
+from muon.ingestion.bulbapedia.runs import PageStatus
 from muon.ingestion.bulbapedia.species import forms
 from muon.ingestion.bulbapedia.species.extract import NoteKind, ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError, PageOverride
 from muon.ingestion.bulbapedia.species.run import (
     PAGE_OUTPUT_DIR,
     REPORT_FILE_NAME,
-    PageStatus,
     ParseRunError,
     write_outputs,
 )

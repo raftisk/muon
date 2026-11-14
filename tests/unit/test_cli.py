@@ -13,19 +13,39 @@ from muon import cli
 from muon.config import Neo4jSettings, OntologySettings, Settings
 from muon.graph import GraphConnectionError, WriteSummary
 from muon.ingestion.batch import NodeRef
+from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
+from muon.ingestion.bulbapedia.abilities.crosscheck import (
+    CrossCheckError,
+    HolderDifference,
+    HolderSide,
+)
+from muon.ingestion.bulbapedia.abilities.ingest import AbilityIngestRun, AbilityPass
+from muon.ingestion.bulbapedia.abilities.run import (
+    AbilityParseReport,
+    AbilityParseRequest,
+    AbilityParseRun,
+)
+from muon.ingestion.bulbapedia.abilities.run import ParseRunError as AbilityParseRunError
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
+from muon.ingestion.bulbapedia.ingest import (
+    CensusReport,
+    IngestReport,
+    IngestRequest,
+    IngestStop,
+    MissingSeedError,
+    PageFailure,
+    PassProgress,
+    PassTotals,
+    StubIngestReport,
+)
 from muon.ingestion.bulbapedia.moves.batches import MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
-    MoveIngestReport,
     MoveIngestRun,
-    MoveIngestStop,
     MovePass,
-    MovePassTotals,
 )
 from muon.ingestion.bulbapedia.moves.page import TableError
-from muon.ingestion.bulbapedia.moves.run import BatchCounts as MoveBatchCounts
 from muon.ingestion.bulbapedia.moves.run import (
     MachineConflictError,
     MoveParseReport,
@@ -34,24 +54,11 @@ from muon.ingestion.bulbapedia.moves.run import (
 )
 from muon.ingestion.bulbapedia.moves.run import ParseRunError as MoveParseRunError
 from muon.ingestion.bulbapedia.pages import PageStoreError
+from muon.ingestion.bulbapedia.runs import BatchCounts, PageResult, PageStatus
 from muon.ingestion.bulbapedia.species.extract import ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError
-from muon.ingestion.bulbapedia.species.ingest import (
-    CensusReport,
-    IngestPass,
-    IngestReport,
-    IngestRequest,
-    IngestRun,
-    IngestStop,
-    MissingSeedError,
-    PageFailure,
-    PassProgress,
-    PassTotals,
-)
+from muon.ingestion.bulbapedia.species.ingest import IngestPass, IngestRun
 from muon.ingestion.bulbapedia.species.run import (
-    BatchCounts,
-    PageResult,
-    PageStatus,
     ParseReport,
     ParseRequest,
     ParseRun,
@@ -627,12 +634,10 @@ def build_move_report(pages_failed: int = 0) -> MoveParseReport:
         pages_failed=pages_failed,
         skipped_per_reason={},
         notes=(),
-        batch_counts=MoveBatchCounts(
+        batch_counts=BatchCounts(
             owner_nodes={"Move": 848, "Machine": 2173}, stubs={}, edges={}, claims={}
         ),
-        chunk_counts=MoveBatchCounts(
-            owner_nodes={"TextChunk": 9176}, stubs={}, edges={}, claims={}
-        ),
+        chunk_counts=BatchCounts(owner_nodes={"TextChunk": 9176}, stubs={}, edges={}, claims={}),
         chunks_per_aspect={},
         dropped_templates=(),
         removed_tables_total=0,
@@ -702,6 +707,92 @@ def test_parse_move_failure_prints_error(
     assert cli.main(["parse", "bulbapedia", "move"]) == cli.EXIT_FAILURE
 
     assert f"parse bulbapedia move failed: {error}" in capsys.readouterr().err
+
+
+def build_ability_report(pages_failed: int = 0) -> AbilityParseReport:
+    return AbilityParseReport(
+        pages=(),
+        pages_parsed=314,
+        pages_skipped=0,
+        pages_failed=pages_failed,
+        skipped_per_reason={},
+        notes=(),
+        batch_counts=BatchCounts(owner_nodes={"Ability": 314}, stubs={}, edges={}, claims={}),
+        chunk_counts=BatchCounts(owner_nodes={"TextChunk": 2548}, stubs={}, edges={}, claims={}),
+        chunks_per_aspect={"effect": 1499, "flavor": 833, "trivia": 216},
+        dropped_templates=(),
+        removed_tables_total=0,
+        removed_tables_per_page={},
+        math_formulas_total=0,
+        math_formulas_per_page={},
+        abilities_per_category={},
+        species_output_missing=False,
+        holder_differences=(
+            HolderDifference(
+                ability_id="minds-eye", species_id="ursaluna", side=HolderSide.TABLE_ONLY
+            ),
+        ),
+        unowned_species_stubs=(),
+        abilities_without_pokeapi_row=("as-one", "cacophony"),
+        snapshot_commit="8a92bfa",
+        snapshot_files={},
+    )
+
+
+class RecordingAbilityParse:
+    """Stands in for `cli.run_ability_parse` and records the requests it ran."""
+
+    def __init__(self, outcome: AbilityParseReport | Exception) -> None:
+        self.outcome = outcome
+        self.requests: list[AbilityParseRequest] = []
+
+    def __call__(self, request: AbilityParseRequest) -> AbilityParseRun:
+        self.requests.append(request)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return AbilityParseRun(outputs=(), report=self.outcome)
+
+
+def test_parse_ability_reaches_the_ability_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parse = RecordingAbilityParse(build_ability_report())
+    monkeypatch.setattr(cli, "run_ability_parse", parse)
+
+    exit_code = cli.main(["parse", "bulbapedia", "ability", "--title", "Natural Cure (Ability)"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert parse.requests == [AbilityParseRequest(titles=("Natural Cure (Ability)",))]
+    output = capsys.readouterr().out
+    assert "pages parsed: 314" in output
+    assert "chunks: 2548" in output
+    assert "cross-check table_only: 1" in output
+    assert "unowned species stubs: 0" in output
+
+
+def test_parse_ability_exits_1_when_a_page_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "run_ability_parse", RecordingAbilityParse(build_ability_report(1)))
+
+    assert cli.main(["parse", "bulbapedia", "ability"]) == cli.EXIT_FAILURE
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        SupCodeError("LA names 'Legends: Arceus', which is no A-Box VersionGroup"),
+        CrossCheckError("cannot read species output 1.json"),
+        SnapshotError("ability_prose.csv is missing from the snapshot"),
+        AbilityParseRunError("Titles that are not pinned ability pages: ['X']"),
+    ],
+)
+def test_parse_ability_failure_prints_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    monkeypatch.setattr(cli, "run_ability_parse", RecordingAbilityParse(error))
+
+    assert cli.main(["parse", "bulbapedia", "ability"]) == cli.EXIT_FAILURE
+
+    assert f"parse bulbapedia ability failed: {error}" in capsys.readouterr().err
 
 
 def test_fetch_lists_the_valid_page_types(capsys: pytest.CaptureFixture[str]) -> None:
@@ -927,7 +1018,7 @@ def test_parse_reports_run_errors_with_exit_1(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["parse", "bulbapedia", "ability"], "'ability'"),
+        (["parse", "bulbapedia", "item"], "'item'"),
         (["parse", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -1165,7 +1256,7 @@ def test_ingest_stops_on_invalid_settings_before_the_parse(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["ingest", "bulbapedia", "ability"], "'ability'"),
+        (["ingest", "bulbapedia", "item"], "'item'"),
         (["ingest", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -1248,12 +1339,12 @@ async def test_run_ingest_gives_the_run_a_client_the_titles_and_the_progress_pri
     assert requests[0].on_progress is cli.print_progress
 
 
-def build_move_ingest_run(stop: MoveIngestStop | None = None) -> MoveIngestRun:
+def build_move_ingest_run(stop: IngestStop | None = None) -> MoveIngestRun:
     passes = tuple(
-        MovePassTotals(ingest_pass=ingest_pass, batches_written=848, counters={"nodes_created": 3})
+        PassTotals(ingest_pass=ingest_pass, batches_written=848, counters={"nodes_created": 3})
         for ingest_pass in MovePass
     )
-    report = MoveIngestReport(
+    report = StubIngestReport(
         titles=(),
         is_full_run=True,
         passes=passes,
@@ -1272,7 +1363,7 @@ class RecordingMoveIngest:
     def __init__(self, outcome: MoveIngestRun | Exception) -> None:
         self.outcome = outcome
         self.titles: list[tuple[str, ...]] = []
-        self.reports: list[MoveIngestReport] = []
+        self.reports: list[StubIngestReport] = []
 
     async def run(
         self, settings: Settings, run: MoveParseRun, titles: tuple[str, ...]
@@ -1282,7 +1373,7 @@ class RecordingMoveIngest:
             raise self.outcome
         return self.outcome
 
-    def write_report(self, report: MoveIngestReport) -> Path:
+    def write_report(self, report: StubIngestReport) -> Path:
         self.reports.append(report)
         return Path("move-ingest-report.json")
 
@@ -1344,7 +1435,7 @@ def test_move_ingest_prints_the_passes_the_census_and_the_stubs(
 def test_move_ingest_exits_1_for_a_stopped_run_and_still_writes_the_report(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    stop = MoveIngestStop(page_title="Surf (move)", ingest_pass=MovePass.CHUNK, error="boom")
+    stop = IngestStop(page_title="Surf (move)", ingest_pass=MovePass.CHUNK, error="boom")
     _, ingest = arrange_move_ingest(monkeypatch, build_move_ingest_run(stop))
 
     exit_code = cli.main(MOVE_INGEST_ARGV)
@@ -1395,3 +1486,64 @@ def test_move_ingest_stops_on_a_parse_error_before_the_graph(
     assert exit_code == cli.EXIT_FAILURE
     assert capsys.readouterr().err == f"ingest bulbapedia move failed: {error}\n"
     assert ingest.titles == []
+
+
+def build_ability_ingest_run() -> AbilityIngestRun:
+    report = StubIngestReport(
+        titles=(),
+        is_full_run=True,
+        passes=tuple(
+            PassTotals(ingest_pass=ingest_pass, batches_written=314, counters={})
+            for ingest_pass in AbilityPass
+        ),
+        changed_pages=(),
+        failed_pages=(),
+        stop=None,
+        census=CensusReport(labels={"Ability": 314}, relationship_types={}),
+        stub_ids={"Ability": ()},
+    )
+    return AbilityIngestRun(report=report, elapsed_seconds=dict.fromkeys(AbilityPass, 1.0))
+
+
+class RecordingAbilityIngest:
+    """Stands in for `cli.run_ability_ingest` and `cli.write_ability_ingest_report`."""
+
+    def __init__(self, outcome: AbilityIngestRun) -> None:
+        self.outcome = outcome
+        self.titles: list[tuple[str, ...]] = []
+        self.reports: list[StubIngestReport] = []
+
+    async def run(
+        self, settings: Settings, run: AbilityParseRun, titles: tuple[str, ...]
+    ) -> AbilityIngestRun:
+        self.titles.append(titles)
+        return self.outcome
+
+    def write_report(self, report: StubIngestReport) -> Path:
+        self.reports.append(report)
+        return Path("ability-ingest-report.json")
+
+
+@pytest.mark.usefixtures("settings")
+def test_ability_ingest_parses_ingests_and_prints_the_stubs(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parse = RecordingAbilityParse(build_ability_report())
+    ingest = RecordingAbilityIngest(build_ability_ingest_run())
+    monkeypatch.setattr(cli, "run_ability_parse", parse)
+    monkeypatch.setattr(cli, "run_ability_ingest", ingest.run)
+    monkeypatch.setattr(cli, "write_ability_ingest_report", ingest.write_report)
+
+    exit_code = cli.main(["ingest", "bulbapedia", "ability", "--title", "Natural Cure (Ability)"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert parse.requests == [AbilityParseRequest(titles=("Natural Cure (Ability)",))]
+    assert ingest.titles == [("Natural Cure (Ability)",)]
+    assert len(ingest.reports) == 1
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[lines.index("ingest bulbapedia ability: done") + 1 :] == [
+        "ability: 314 batches in 1.0 s",
+        "chunk: 314 batches in 1.0 s",
+        "nodes Ability: 314",
+        "stubs Ability: 0",
+    ]

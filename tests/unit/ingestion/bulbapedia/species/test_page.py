@@ -24,6 +24,7 @@ from muon.ingestion.bulbapedia.species.page import (
     read_form_facts,
     read_genus,
     read_infobox,
+    reduce_ability_name,
 )
 from muon.ingestion.bulbapedia.wikitext import split_sections
 
@@ -443,6 +444,15 @@ def test_a_small_caption_on_a_form_ability_moves_it_to_the_named_form() -> None:
     assert ability_names(facts["darmanitan-galar"])[0] == ("Gorilla Tactics", False)
     assert ability_names(facts["darmanitan-zen"])[0] == ("Sheer Force", False)
     assert ability_names(facts["darmanitan"])[0] == ("Sheer Force", False)
+
+
+def test_a_piped_ability_page_title_reads_as_the_ability_name() -> None:
+    value = (
+        "Protean (Ability){{!}}{{color2|000|Protean (Ability)|Protean}}<br/>"
+        "<small>Mega Greninja</small>"
+    )
+
+    assert reduce_ability_name(value) == "Protean"
 
 
 def test_a_caption_that_names_no_form_covers_the_unnamed_forms() -> None:

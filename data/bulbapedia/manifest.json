@@ -1,5 +1,1891 @@
 {
   "page_types": {
+    "ability": [
+      {
+        "title": "Adaptability (Ability)",
+        "page_id": 17624,
+        "revision_id": 4646986,
+        "sha1": "d113ac7b44e1d8337cc0df077f7befed1e1f8176"
+      },
+      {
+        "title": "Aerilate (Ability)",
+        "page_id": 185055,
+        "revision_id": 4629909,
+        "sha1": "53a6c585cb0f398e104b11f29540f557afcdf83a"
+      },
+      {
+        "title": "Aftermath (Ability)",
+        "page_id": 17625,
+        "revision_id": 4594867,
+        "sha1": "59a35b5a4bfde6f5b75825dedd74ef00b6794dba"
+      },
+      {
+        "title": "Air Lock (Ability)",
+        "page_id": 4152,
+        "revision_id": 4622616,
+        "sha1": "1501c41f0bd25b3ef8a6c2e425ca09f097221a1e"
+      },
+      {
+        "title": "Analytic (Ability)",
+        "page_id": 117437,
+        "revision_id": 4644857,
+        "sha1": "7bc1a4fb9831465c1e9ae9e329ff9271c5bbe0cd"
+      },
+      {
+        "title": "Anger Point (Ability)",
+        "page_id": 17631,
+        "revision_id": 4529389,
+        "sha1": "7b03531bf8ae6237b294f4af3ec93fbdd7123e76"
+      },
+      {
+        "title": "Anger Shell (Ability)",
+        "page_id": 274259,
+        "revision_id": 4620916,
+        "sha1": "dd218e7ace7655f530aaed99c035bd99e554fef9"
+      },
+      {
+        "title": "Anticipation (Ability)",
+        "page_id": 14243,
+        "revision_id": 4623821,
+        "sha1": "7ef2f7fa7438032cd06da8d56c1bc44540c051fe"
+      },
+      {
+        "title": "Arena Trap (Ability)",
+        "page_id": 4044,
+        "revision_id": 4594662,
+        "sha1": "9d981c7f29275a08ecadfab420524605eddd71b0"
+      },
+      {
+        "title": "Armor Tail (Ability)",
+        "page_id": 276134,
+        "revision_id": 4579317,
+        "sha1": "5c7c60346047ee4f6eb2f8af5d7c9ed5cadefeb1"
+      },
+      {
+        "title": "Aroma Veil (Ability)",
+        "page_id": 185057,
+        "revision_id": 4525852,
+        "sha1": "b6fb665c613f47a2903d778ca936217689ba3a38"
+      },
+      {
+        "title": "As One (Ability)",
+        "page_id": 257903,
+        "revision_id": 4579247,
+        "sha1": "171c9b52fac2fe003e04161d4099ba18019357d3"
+      },
+      {
+        "title": "Aura Break (Ability)",
+        "page_id": 184804,
+        "revision_id": 4650211,
+        "sha1": "e9326e8faa81bc47989e51a6f1b00ce67b8e837c"
+      },
+      {
+        "title": "Aura Guard (Ability)",
+        "page_id": 361185,
+        "revision_id": 4650804,
+        "sha1": "9603e2ae80fde7812c62a9c3dad9f5a75ac3ec7b"
+      },
+      {
+        "title": "Bad Dreams (Ability)",
+        "page_id": 17633,
+        "revision_id": 4514149,
+        "sha1": "329a73772e77939652475ae1617ccec1df1e0fcc"
+      },
+      {
+        "title": "Ball Fetch (Ability)",
+        "page_id": 238914,
+        "revision_id": 4628595,
+        "sha1": "a9c95c8a25617a2231aea251194bc95098e72669"
+      },
+      {
+        "title": "Battery (Ability)",
+        "page_id": 214193,
+        "revision_id": 4644855,
+        "sha1": "98709be46a7627ad7ee7502f7d15c64984a332e9"
+      },
+      {
+        "title": "Battle Armor (Ability)",
+        "page_id": 4081,
+        "revision_id": 4531228,
+        "sha1": "8e6d43e6acfb2971c758f470122f0b6ad7a78669"
+      },
+      {
+        "title": "Battle Bond (Ability)",
+        "page_id": 216308,
+        "revision_id": 4647508,
+        "sha1": "baefc2d25711d4340dc23bfd8b1a032a1b7a6164"
+      },
+      {
+        "title": "Beads of Ruin (Ability)",
+        "page_id": 277815,
+        "revision_id": 4654751,
+        "sha1": "cc1e9ad0d5d32c6304f58d638a6b1a2854d484e9"
+      },
+      {
+        "title": "Beast Boost (Ability)",
+        "page_id": 218223,
+        "revision_id": 4579244,
+        "sha1": "5eddd6b45d10d58534edddaf8beef7ff0b076d02"
+      },
+      {
+        "title": "Berserk (Ability)",
+        "page_id": 214116,
+        "revision_id": 4525877,
+        "sha1": "bab58aa2a758730c0db785d6cfe3e4edf06e62c8"
+      },
+      {
+        "title": "Big Pecks (Ability)",
+        "page_id": 111842,
+        "revision_id": 4630623,
+        "sha1": "e7166977338cd12538e46ef862b23b4700c60458"
+      },
+      {
+        "title": "Blaze (Ability)",
+        "page_id": 4142,
+        "revision_id": 4642712,
+        "sha1": "d85759ed878dffb118b4d4980652ea0c16ce1fbf"
+      },
+      {
+        "title": "Bulletproof (Ability)",
+        "page_id": 185041,
+        "revision_id": 4615195,
+        "sha1": "98ce8ad728fa041c1701651038f655b430ada2a8"
+      },
+      {
+        "title": "Cacophony (Ability)",
+        "page_id": 4151,
+        "revision_id": 4579269,
+        "sha1": "e433969d950851f97a3dc5e2ae1ed1adfb2904d0"
+      },
+      {
+        "title": "Cheek Pouch (Ability)",
+        "page_id": 181566,
+        "revision_id": 4525854,
+        "sha1": "5b766591f77a63307f11d232b22a55f4930d907a"
+      },
+      {
+        "title": "Chilling Neigh (Ability)",
+        "page_id": 257898,
+        "revision_id": 4579245,
+        "sha1": "719b8f3a24ebe932295af52be38e5eb06a17de68"
+      },
+      {
+        "title": "Chlorophyll (Ability)",
+        "page_id": 4110,
+        "revision_id": 4664246,
+        "sha1": "1d2ab069986c224ada1f6c889fecf7fae32a7395"
+      },
+      {
+        "title": "Clear Body (Ability)",
+        "page_id": 4105,
+        "revision_id": 4541239,
+        "sha1": "1c9dbe1c019736835ee6b87bd36c2eaf0447459e"
+      },
+      {
+        "title": "Cloud Nine (Ability)",
+        "page_id": 4090,
+        "revision_id": 4525726,
+        "sha1": "4dff0731b7d6f1b0a7e0be94622f9f70801363ed"
+      },
+      {
+        "title": "Color Change (Ability)",
+        "page_id": 4093,
+        "revision_id": 4632849,
+        "sha1": "eeee82da7fa7195717e48408829021ec35559da0"
+      },
+      {
+        "title": "Comatose (Ability)",
+        "page_id": 214167,
+        "revision_id": 4650845,
+        "sha1": "be4b4a6acc49d609216cf222498f6269cfabab7d"
+      },
+      {
+        "title": "Commander (Ability)",
+        "page_id": 277809,
+        "revision_id": 4665018,
+        "sha1": "940ac24708fbe8b543f52b7012e63305eb0aad0c"
+      },
+      {
+        "title": "Competitive (Ability)",
+        "page_id": 185056,
+        "revision_id": 4650819,
+        "sha1": "976552c5b8b48490ecb7f0a69a931335f7a417ac"
+      },
+      {
+        "title": "Compound Eyes (Ability)",
+        "page_id": 4091,
+        "revision_id": 4631188,
+        "sha1": "b4edacbfe3b235fff9d17e3a5955d152d84d8b8e"
+      },
+      {
+        "title": "Contrary (Ability)",
+        "page_id": 117340,
+        "revision_id": 4573328,
+        "sha1": "6cf705f7aae1a57ec33219f2c17b39894d183cf3"
+      },
+      {
+        "title": "Corrosion (Ability)",
+        "page_id": 214308,
+        "revision_id": 4633655,
+        "sha1": "e9a30938111d4ba6d66fa3d247e56e45f1474985"
+      },
+      {
+        "title": "Costar (Ability)",
+        "page_id": 277821,
+        "revision_id": 4399040,
+        "sha1": "9c4d6d5c5f8ed641d8437727014de23d5bc46460"
+      },
+      {
+        "title": "Cotton Down (Ability)",
+        "page_id": 238726,
+        "revision_id": 4070550,
+        "sha1": "b0e916c6c24f16ff74393beae8d2625125cc82d9"
+      },
+      {
+        "title": "Cud Chew (Ability)",
+        "page_id": 276135,
+        "revision_id": 4651370,
+        "sha1": "a475f7b7ae39a14c5caa73970da00678ab8866dc"
+      },
+      {
+        "title": "Curious Medicine (Ability)",
+        "page_id": 257115,
+        "revision_id": 4525898,
+        "sha1": "868102410e1ed5346bb3a6fdc439b4e84646b184"
+      },
+      {
+        "title": "Cursed Body (Ability)",
+        "page_id": 117629,
+        "revision_id": 4668726,
+        "sha1": "bd40cb5e049e06642bddcd4e3b1c238142d2ba7c"
+      },
+      {
+        "title": "Cute Charm (Ability)",
+        "page_id": 4132,
+        "revision_id": 4658647,
+        "sha1": "125b0f29dcfd6e4e3ee117df64e275b2d46be4ff"
+      },
+      {
+        "title": "Damp (Ability)",
+        "page_id": 4083,
+        "revision_id": 4647544,
+        "sha1": "285242947162299d7e8a01c99c89d44a5e466527"
+      },
+      {
+        "title": "Dancer (Ability)",
+        "page_id": 214967,
+        "revision_id": 4615203,
+        "sha1": "ff3a994812118e8390983e086e046d804b26e598"
+      },
+      {
+        "title": "Dark Aura (Ability)",
+        "page_id": 180567,
+        "revision_id": 4644788,
+        "sha1": "b74fcb61db0475d8ea8676c03a6ff77dcac2192e"
+      },
+      {
+        "title": "Dauntless Shield (Ability)",
+        "page_id": 244396,
+        "revision_id": 4529498,
+        "sha1": "7655db390e0534635d8d72238c559eefb75959b7"
+      },
+      {
+        "title": "Dazzling (Ability)",
+        "page_id": 214117,
+        "revision_id": 4579316,
+        "sha1": "c561791dcc7630a6195edd5d77bc41fd384fb3a3"
+      },
+      {
+        "title": "Defeatist (Ability)",
+        "page_id": 117624,
+        "revision_id": 4617991,
+        "sha1": "f00dfcc387ea53c4d820e0a3c57d6cc781dd0cff"
+      },
+      {
+        "title": "Defiant (Ability)",
+        "page_id": 117622,
+        "revision_id": 4628590,
+        "sha1": "65f40023a8abf48c852fc05df842700d04ef519e"
+      },
+      {
+        "title": "Delta Stream (Ability)",
+        "page_id": 198504,
+        "revision_id": 4586164,
+        "sha1": "620133ac9a3037f4666d7142fa914da8d3ce5256"
+      },
+      {
+        "title": "Desolate Land (Ability)",
+        "page_id": 195856,
+        "revision_id": 4512563,
+        "sha1": "819be385594a046385b55aeaf31a0a3c0d786e42"
+      },
+      {
+        "title": "Disguise (Ability)",
+        "page_id": 214599,
+        "revision_id": 4644791,
+        "sha1": "d258e707fb17febd49e2393d90438b803dedb971"
+      },
+      {
+        "title": "Download (Ability)",
+        "page_id": 14246,
+        "revision_id": 4515783,
+        "sha1": "eb469f40cda55840628118b8ae2c57f8aabd6401"
+      },
+      {
+        "title": "Dragon's Maw (Ability)",
+        "page_id": 252172,
+        "revision_id": 4573252,
+        "sha1": "880d24dff33c7b5bedfddb37c8e86a66975efed2"
+      },
+      {
+        "title": "Dragonize (Ability)",
+        "page_id": 354240,
+        "revision_id": 4629903,
+        "sha1": "00bb4379b1ebd4eb06ec050b84d46464bbc2802d"
+      },
+      {
+        "title": "Drizzle (Ability)",
+        "page_id": 4079,
+        "revision_id": 4647523,
+        "sha1": "5a28b500361916b5973daa43dc14269c6f9bc818"
+      },
+      {
+        "title": "Drought (Ability)",
+        "page_id": 4146,
+        "revision_id": 4644675,
+        "sha1": "84e6f2a7ae1a50c54ee38b99437c042426cc496d"
+      },
+      {
+        "title": "Dry Skin (Ability)",
+        "page_id": 14247,
+        "revision_id": 4647515,
+        "sha1": "7cd24e342b1f3d92f44223be986fdecda7d34d2a"
+      },
+      {
+        "title": "Early Bird (Ability)",
+        "page_id": 4124,
+        "revision_id": 4525756,
+        "sha1": "ac9f782f04e7d1699d16957be3a997330cd2d4d8"
+      },
+      {
+        "title": "Earth Eater (Ability)",
+        "page_id": 277628,
+        "revision_id": 4652993,
+        "sha1": "beda5fef11376fbe5f14be349e1520d2dde945ea"
+      },
+      {
+        "title": "Eelevate (Ability)",
+        "page_id": 357542,
+        "revision_id": 4624187,
+        "sha1": "7d19f4947d8791df298a8e2616dcd15677d9e23b"
+      },
+      {
+        "title": "Effect Spore (Ability)",
+        "page_id": 4103,
+        "revision_id": 4625884,
+        "sha1": "d208c6e9f72f9515eb0343cb48792a24156abefe"
+      },
+      {
+        "title": "Electric Surge (Ability)",
+        "page_id": 214112,
+        "revision_id": 4579307,
+        "sha1": "d311b9c7481748d87ec23a7f1df21f073fab4b24"
+      },
+      {
+        "title": "Electromorphosis (Ability)",
+        "page_id": 276280,
+        "revision_id": 4580606,
+        "sha1": "c99f5e790a0cc0af43c9828da47d13053f98ac43"
+      },
+      {
+        "title": "Embody Aspect (Ability)",
+        "page_id": 296000,
+        "revision_id": 4360891,
+        "sha1": "ed58e66f42b8c9661e1498026fa987204f43d843"
+      },
+      {
+        "title": "Emergency Exit (Ability)",
+        "page_id": 218211,
+        "revision_id": 4625890,
+        "sha1": "3248bce6fc4a6a6101b81d98fc19d544db8a046d"
+      },
+      {
+        "title": "Fairy Aura (Ability)",
+        "page_id": 180568,
+        "revision_id": 4644787,
+        "sha1": "286b4f1bc23cc38717f529b66709ee9b3a2710ce"
+      },
+      {
+        "title": "Filter (Ability)",
+        "page_id": 14328,
+        "revision_id": 4658331,
+        "sha1": "47b589d571bb85037c5fc14bea66a3cfaeeb7e08"
+      },
+      {
+        "title": "Fire Mane (Ability)",
+        "page_id": 357541,
+        "revision_id": 4579231,
+        "sha1": "a4feabeba87c2532447c78c0d9001ed9e6b78b51"
+      },
+      {
+        "title": "Flame Body (Ability)",
+        "page_id": 4125,
+        "revision_id": 4634387,
+        "sha1": "f696edcfc29a5ddfc3067dfe1b98e84d6af72dd9"
+      },
+      {
+        "title": "Flare Boost (Ability)",
+        "page_id": 118106,
+        "revision_id": 4514052,
+        "sha1": "5c5fc2a1a964d492b17a14c4875d0650f889a31f"
+      },
+      {
+        "title": "Flash Fire (Ability)",
+        "page_id": 4095,
+        "revision_id": 4624256,
+        "sha1": "7e9f32cba5ff993cb7c39ebbf172405f8f4711f7"
+      },
+      {
+        "title": "Flower Gift (Ability)",
+        "page_id": 59985,
+        "revision_id": 4520657,
+        "sha1": "3311cfdb167c9f12158d3d55aac2d1813f883b51"
+      },
+      {
+        "title": "Flower Veil (Ability)",
+        "page_id": 184522,
+        "revision_id": 4569844,
+        "sha1": "f95490eaa9720af32c21a2217d395677db5b2806"
+      },
+      {
+        "title": "Fluffy (Ability)",
+        "page_id": 214606,
+        "revision_id": 4670625,
+        "sha1": "7be61dc45ffd2294bbb974c4e9e702e7250d0150"
+      },
+      {
+        "title": "Forecast (Ability)",
+        "page_id": 4135,
+        "revision_id": 4622618,
+        "sha1": "5f355977a33de747a3f4a6113ed6723d9f91bc2d"
+      },
+      {
+        "title": "Forewarn (Ability)",
+        "page_id": 17635,
+        "revision_id": 4630585,
+        "sha1": "58e229d3ad111194006a504b9ff0f967110bbd13"
+      },
+      {
+        "title": "Friend Guard (Ability)",
+        "page_id": 117698,
+        "revision_id": 4525827,
+        "sha1": "68cc3b55524e401f72db0a63d954ecb76d2856a9"
+      },
+      {
+        "title": "Frisk (Ability)",
+        "page_id": 14327,
+        "revision_id": 4650826,
+        "sha1": "f9b82e25b1d2d55cc42b88f84d94d4e8c655f820"
+      },
+      {
+        "title": "Full Metal Body (Ability)",
+        "page_id": 213456,
+        "revision_id": 4512580,
+        "sha1": "0980f5727c7bbff8b21a0e411cdd36ea31ff2d72"
+      },
+      {
+        "title": "Fur Coat (Ability)",
+        "page_id": 182735,
+        "revision_id": 4603641,
+        "sha1": "8e527bc1938a4e4665933123bacb82ebf31cacc8"
+      },
+      {
+        "title": "Gale Wings (Ability)",
+        "page_id": 185058,
+        "revision_id": 4525865,
+        "sha1": "81d0fe2a22af75fc9135f91f0dc6a852e3b21c5b"
+      },
+      {
+        "title": "Galvanize (Ability)",
+        "page_id": 218220,
+        "revision_id": 4615208,
+        "sha1": "8093feec4fd337b32deece7a7b21a4e1bc036d16"
+      },
+      {
+        "title": "Gluttony (Ability)",
+        "page_id": 14250,
+        "revision_id": 4525786,
+        "sha1": "645d62f7100f6cdd9c7bf104b39bd1d7dd8962ec"
+      },
+      {
+        "title": "Good as Gold (Ability)",
+        "page_id": 277810,
+        "revision_id": 4636801,
+        "sha1": "25d065ef03c6a1c8abb5f32c2c5db9bc038f6e60"
+      },
+      {
+        "title": "Gooey (Ability)",
+        "page_id": 185061,
+        "revision_id": 4525870,
+        "sha1": "8dab4767ba02112b867713dc50147474ec58e929"
+      },
+      {
+        "title": "Gorilla Tactics (Ability)",
+        "page_id": 244413,
+        "revision_id": 4622388,
+        "sha1": "3cb4e7ae895127cf92e8a0cd881fe34b8b09200f"
+      },
+      {
+        "title": "Grass Pelt (Ability)",
+        "page_id": 185059,
+        "revision_id": 4625889,
+        "sha1": "ec1b6ddf866340875b465ce84b0ec0aa13492ca8"
+      },
+      {
+        "title": "Grassy Surge (Ability)",
+        "page_id": 216831,
+        "revision_id": 4580529,
+        "sha1": "5c9ee0af55fe647e0f2bed245e20e494df4cd9da"
+      },
+      {
+        "title": "Grim Neigh (Ability)",
+        "page_id": 257899,
+        "revision_id": 4579246,
+        "sha1": "95d1adc3974603fece21f675a8102033c5fade2b"
+      },
+      {
+        "title": "Guard Dog (Ability)",
+        "page_id": 277806,
+        "revision_id": 4625899,
+        "sha1": "5069ddf1bbb17a2fcd3cef6647fbc7b88217ef35"
+      },
+      {
+        "title": "Gulp Missile (Ability)",
+        "page_id": 240799,
+        "revision_id": 4655138,
+        "sha1": "921ac6dd581c383afbc5016fac63edd9f7a46cab"
+      },
+      {
+        "title": "Guts (Ability)",
+        "page_id": 4138,
+        "revision_id": 4525768,
+        "sha1": "b224b9b7eccc6a806d1789cf1387e4a077e00527"
+      },
+      {
+        "title": "Hadron Engine (Ability)",
+        "page_id": 277655,
+        "revision_id": 4658615,
+        "sha1": "59319f035b415ae41d4ae6ef979f66e065f28ea9"
+      },
+      {
+        "title": "Harvest (Ability)",
+        "page_id": 117294,
+        "revision_id": 4592683,
+        "sha1": "c36c2f4781cbe17ee392ee82e78376e9c0190ca1"
+      },
+      {
+        "title": "Healer (Ability)",
+        "page_id": 117669,
+        "revision_id": 4666872,
+        "sha1": "57ecb6666c96777a3b420ad674811e3bd143aff0"
+      },
+      {
+        "title": "Heatproof (Ability)",
+        "page_id": 14330,
+        "revision_id": 4525789,
+        "sha1": "72442de6f680b64e6b01eb6abc2b892f3a2a4fc6"
+      },
+      {
+        "title": "Heavy Metal (Ability)",
+        "page_id": 118009,
+        "revision_id": 4525829,
+        "sha1": "81fb0e978d7a406819b65cc230589791dea4ee08"
+      },
+      {
+        "title": "Honey Gather (Ability)",
+        "page_id": 14331,
+        "revision_id": 4615658,
+        "sha1": "b4b982af07f0b0c48a7d6014cf9b695df93d61ac"
+      },
+      {
+        "title": "Hospitality (Ability)",
+        "page_id": 294986,
+        "revision_id": 4602358,
+        "sha1": "396c90422dac299c6a3afbf37d3e91ebef9210e8"
+      },
+      {
+        "title": "Huge Power (Ability)",
+        "page_id": 4113,
+        "revision_id": 4639503,
+        "sha1": "14fb4290fb0e7885ffb83ed9ab179424efe7727c"
+      },
+      {
+        "title": "Hunger Switch (Ability)",
+        "page_id": 240152,
+        "revision_id": 4633269,
+        "sha1": "c2f2c5b8d371dbcab2ad0efdc11dbf2df84a8cfd"
+      },
+      {
+        "title": "Hustle (Ability)",
+        "page_id": 4131,
+        "revision_id": 4642718,
+        "sha1": "2bef18a7297186f1a1a8117b6ed98ece89330d4c"
+      },
+      {
+        "title": "Hydration (Ability)",
+        "page_id": 11319,
+        "revision_id": 4647460,
+        "sha1": "e5699560604f583b8416ffd2514ae32afc25e1be"
+      },
+      {
+        "title": "Hyper Cutter (Ability)",
+        "page_id": 4128,
+        "revision_id": 4589887,
+        "sha1": "b58aadc13ac22c6ab6026fa2b8663eec3558e975"
+      },
+      {
+        "title": "Ice Body (Ability)",
+        "page_id": 14332,
+        "revision_id": 4661762,
+        "sha1": "98860578292dc920e2d2ea07d04b725171833eb6"
+      },
+      {
+        "title": "Ice Face (Ability)",
+        "page_id": 244404,
+        "revision_id": 4633270,
+        "sha1": "5490cf6f6093dcbf85d41600e1065d29681a7101"
+      },
+      {
+        "title": "Ice Scales (Ability)",
+        "page_id": 244402,
+        "revision_id": 4512512,
+        "sha1": "767f989658021ee064e47fc26554c41f4b19bc6c"
+      },
+      {
+        "title": "Illuminate (Ability)",
+        "page_id": 4111,
+        "revision_id": 4657274,
+        "sha1": "acc3ce30be066d728be9e71cea06ddac1d340c98"
+      },
+      {
+        "title": "Illusion (Ability)",
+        "page_id": 105233,
+        "revision_id": 4579205,
+        "sha1": "d69bde81a5788fd6a9d5603c8a5bd173565317cf"
+      },
+      {
+        "title": "Immunity (Ability)",
+        "page_id": 4094,
+        "revision_id": 4525729,
+        "sha1": "757fe744b288db4ecc267d1a11ccee6b5e167c1a"
+      },
+      {
+        "title": "Imposter (Ability)",
+        "page_id": 117439,
+        "revision_id": 4647409,
+        "sha1": "b92d8139251baf3a10895833135d2735a0a29167"
+      },
+      {
+        "title": "Infiltrator (Ability)",
+        "page_id": 117957,
+        "revision_id": 4525843,
+        "sha1": "ab507aa4618ff5ed307e60ba73d1c30ac5f87ca9"
+      },
+      {
+        "title": "Innards Out (Ability)",
+        "page_id": 215260,
+        "revision_id": 4655267,
+        "sha1": "6b7d514dd4dcd7d006941796cf0d19a433db22b2"
+      },
+      {
+        "title": "Inner Focus (Ability)",
+        "page_id": 4115,
+        "revision_id": 4529707,
+        "sha1": "86473bbbeb1d7f91c4ec5053d178eb8af8fd31d2"
+      },
+      {
+        "title": "Insomnia (Ability)",
+        "page_id": 4092,
+        "revision_id": 4525728,
+        "sha1": "9d63215d2e1b456b9cdc97d7c837e7dc1de7d3ad"
+      },
+      {
+        "title": "Intimidate (Ability)",
+        "page_id": 4099,
+        "revision_id": 4667474,
+        "sha1": "57c7168f2278e3913fe86254ad225428111be667"
+      },
+      {
+        "title": "Intrepid Sword (Ability)",
+        "page_id": 244395,
+        "revision_id": 4529497,
+        "sha1": "f445fcf8675d586688460e0fd9e2e522adcd6376"
+      },
+      {
+        "title": "Iron Barbs (Ability)",
+        "page_id": 117424,
+        "revision_id": 4650823,
+        "sha1": "ca4051ec99de389296c33ecc833e9fe02ef28e56"
+      },
+      {
+        "title": "Iron Fist (Ability)",
+        "page_id": 14335,
+        "revision_id": 4626204,
+        "sha1": "31991fc270ef9d808dffe355304f838a1532d1e5"
+      },
+      {
+        "title": "Justified (Ability)",
+        "page_id": 117966,
+        "revision_id": 4587965,
+        "sha1": "e8fd5fae979e8a2b667831ebb0e9218c6a997e74"
+      },
+      {
+        "title": "Keen Eye (Ability)",
+        "page_id": 4127,
+        "revision_id": 4667473,
+        "sha1": "09531024304aaccad2152ef61e5f5cdf6da4dd89"
+      },
+      {
+        "title": "Klutz (Ability)",
+        "page_id": 17639,
+        "revision_id": 4525807,
+        "sha1": "b3f4ca5167b7ce361297c6a0eb60bee32dc411c5"
+      },
+      {
+        "title": "Leaf Guard (Ability)",
+        "page_id": 14336,
+        "revision_id": 4525806,
+        "sha1": "c38f08e1d8a7d6e4bcde80d04727d5c2cb76a82a"
+      },
+      {
+        "title": "Levitate (Ability)",
+        "page_id": 4073,
+        "revision_id": 4644793,
+        "sha1": "293595860cd609631d42ca04e60b7c582aa5c5ce"
+      },
+      {
+        "title": "Libero (Ability)",
+        "page_id": 244397,
+        "revision_id": 4572318,
+        "sha1": "da5f76370461bd67b7a7fb31576a8cbd9855137c"
+      },
+      {
+        "title": "Light Metal (Ability)",
+        "page_id": 118008,
+        "revision_id": 4525830,
+        "sha1": "0604d7dc073c2a02ff0e4d1a565a0d5c569f534f"
+      },
+      {
+        "title": "Lightning Rod (Ability)",
+        "page_id": 4107,
+        "revision_id": 4657179,
+        "sha1": "ed2b4a6e286e8e7538a7a8fbe05f2a236f9523eb"
+      },
+      {
+        "title": "Limber (Ability)",
+        "page_id": 4084,
+        "revision_id": 4525718,
+        "sha1": "13a49f09171623815cf6476fcb800774c24ebf35"
+      },
+      {
+        "title": "Lingering Aroma (Ability)",
+        "page_id": 277803,
+        "revision_id": 4512528,
+        "sha1": "f6ec48bf4c3bd7f99c5cb5538cba934fe6ad6cd1"
+      },
+      {
+        "title": "Liquid Ooze (Ability)",
+        "page_id": 4140,
+        "revision_id": 4652340,
+        "sha1": "9d484d4389564b261522a8c4bd8bb002a7697fc2"
+      },
+      {
+        "title": "Liquid Voice (Ability)",
+        "page_id": 218219,
+        "revision_id": 4647519,
+        "sha1": "830c8410f49ddbe2e9c8d65a062a484a57045289"
+      },
+      {
+        "title": "Long Reach (Ability)",
+        "page_id": 218218,
+        "revision_id": 4615227,
+        "sha1": "d659c87ce6e61d8eb7b3d1297bfcc4a6494b7350"
+      },
+      {
+        "title": "Magic Bounce (Ability)",
+        "page_id": 117948,
+        "revision_id": 4631651,
+        "sha1": "69a5dcc267622b8eb8379a250dc7c99e359ef95e"
+      },
+      {
+        "title": "Magic Guard (Ability)",
+        "page_id": 14337,
+        "revision_id": 4525803,
+        "sha1": "3e7b393087fd864c7ebd3c95bd1a4798330c75cb"
+      },
+      {
+        "title": "Magician (Ability)",
+        "page_id": 185039,
+        "revision_id": 4668132,
+        "sha1": "d3fde31b4b12146d56d86b61226592b6bbfce774"
+      },
+      {
+        "title": "Magma Armor (Ability)",
+        "page_id": 4116,
+        "revision_id": 4525749,
+        "sha1": "196ecaf285e4084013c64d11af6682632e98bc94"
+      },
+      {
+        "title": "Magnet Pull (Ability)",
+        "page_id": 4118,
+        "revision_id": 4613933,
+        "sha1": "f90766d421f127c941a41b1297193f4d17f6ff9c"
+      },
+      {
+        "title": "Marvel Scale (Ability)",
+        "page_id": 4139,
+        "revision_id": 4525769,
+        "sha1": "61cf69669d3331c9155876556d6a6a5085ffe772"
+      },
+      {
+        "title": "Mega Launcher (Ability)",
+        "page_id": 182514,
+        "revision_id": 4664304,
+        "sha1": "a509efcdf3ef9dde82440551f6bf3c60dd84b5d3"
+      },
+      {
+        "title": "Mega Sol (Ability)",
+        "page_id": 354239,
+        "revision_id": 4633952,
+        "sha1": "59a145dc6b5daad86c5e26583b0b89992567eb95"
+      },
+      {
+        "title": "Merciless (Ability)",
+        "page_id": 218212,
+        "revision_id": 4650818,
+        "sha1": "e29bd36426897f50176176a5a08617a476e21279"
+      },
+      {
+        "title": "Mimicry (Ability)",
+        "page_id": 244406,
+        "revision_id": 4525892,
+        "sha1": "fec075b6e9e066ebcfcd3bb82abad5326edf989c"
+      },
+      {
+        "title": "Mind's Eye (Ability)",
+        "page_id": 295856,
+        "revision_id": 4671057,
+        "sha1": "51d31738d9a3800e5994ea4290aaef8e4dabcee2"
+      },
+      {
+        "title": "Minus (Ability)",
+        "page_id": 4134,
+        "revision_id": 4525764,
+        "sha1": "d9d2aedfbca15abaf596e6bdd9aed0ac856b43f6"
+      },
+      {
+        "title": "Mirror Armor (Ability)",
+        "page_id": 240320,
+        "revision_id": 4587178,
+        "sha1": "2a079fae53a30601eeb102ec1c9a483bf5179bd8"
+      },
+      {
+        "title": "Misty Surge (Ability)",
+        "page_id": 216830,
+        "revision_id": 4580530,
+        "sha1": "3ee204310eec72a27a053872bfdc3127887cf402"
+      },
+      {
+        "title": "Mold Breaker (Ability)",
+        "page_id": 17640,
+        "revision_id": 4576945,
+        "sha1": "02d1191e703e5ff1ccb3024043881c970df6d24e"
+      },
+      {
+        "title": "Moody (Ability)",
+        "page_id": 118118,
+        "revision_id": 4525834,
+        "sha1": "2c08b8b58c1eb9c008b5d8fd13d902e66a9efcc6"
+      },
+      {
+        "title": "Motor Drive (Ability)",
+        "page_id": 17668,
+        "revision_id": 4587963,
+        "sha1": "d8ee2bc0df03c6e3ef7a677bc40ad70f14bf7021"
+      },
+      {
+        "title": "Moxie (Ability)",
+        "page_id": 118584,
+        "revision_id": 4579243,
+        "sha1": "9496eff27f6f7a4b11e179eeadc03627e4b0e4b6"
+      },
+      {
+        "title": "Multiscale (Ability)",
+        "page_id": 117476,
+        "revision_id": 4525831,
+        "sha1": "32d1a1e11f14d574e50a0b338a108e42a4b30e89"
+      },
+      {
+        "title": "Multitype (Ability)",
+        "page_id": 17669,
+        "revision_id": 4553077,
+        "sha1": "62ea0c48390fd64d6c645f90b7ee50e3160a4d80"
+      },
+      {
+        "title": "Mummy (Ability)",
+        "page_id": 115011,
+        "revision_id": 4650711,
+        "sha1": "a9dce2dd6603fba3f26870a218f28d2ca6dedd95"
+      },
+      {
+        "title": "Mycelium Might (Ability)",
+        "page_id": 277824,
+        "revision_id": 4573393,
+        "sha1": "91400131a91103d91c840abd4a11be75e9140665"
+      },
+      {
+        "title": "Natural Cure (Ability)",
+        "page_id": 4106,
+        "revision_id": 4644889,
+        "sha1": "12fe3294808af6d600ab9b1e415032924b37c826"
+      },
+      {
+        "title": "Neuroforce (Ability)",
+        "page_id": 226662,
+        "revision_id": 4644837,
+        "sha1": "ece20395d627c694717430386942aab9e3b035d9"
+      },
+      {
+        "title": "Neutralizing Gas (Ability)",
+        "page_id": 240317,
+        "revision_id": 4650847,
+        "sha1": "df08a9447b83ca2ff56b4b2fc6b6496682d6cfd9"
+      },
+      {
+        "title": "No Guard (Ability)",
+        "page_id": 56082,
+        "revision_id": 4606458,
+        "sha1": "b5713ff844bfd306c0868efa3218821bd52cbc0c"
+      },
+      {
+        "title": "Normalize (Ability)",
+        "page_id": 15665,
+        "revision_id": 4644880,
+        "sha1": "17b1f744b661b7f2862d30b6fcb5daedf40aa088"
+      },
+      {
+        "title": "Oblivious (Ability)",
+        "page_id": 4089,
+        "revision_id": 4525724,
+        "sha1": "b35a7c5bd7d3a770421c129243890b08bdbf902a"
+      },
+      {
+        "title": "Opportunist (Ability)",
+        "page_id": 277816,
+        "revision_id": 4650825,
+        "sha1": "79cb954584f6b8997c84826cbc982acd8220eaa2"
+      },
+      {
+        "title": "Orichalcum Pulse (Ability)",
+        "page_id": 277654,
+        "revision_id": 4658616,
+        "sha1": "e39ad174bc90c9ee2c6adf76e329afae4ff04144"
+      },
+      {
+        "title": "Overcoat (Ability)",
+        "page_id": 111644,
+        "revision_id": 4579265,
+        "sha1": "1adc3d1a95afd8254cef95c8146b32105b98226d"
+      },
+      {
+        "title": "Overgrow (Ability)",
+        "page_id": 4141,
+        "revision_id": 4592503,
+        "sha1": "5f2ed2aa6be8b72a52023f78fb49dc9cb2bfa002"
+      },
+      {
+        "title": "Own Tempo (Ability)",
+        "page_id": 4097,
+        "revision_id": 4534274,
+        "sha1": "34dc6ee6e94118ddfac69cea8bc6993109ea454c"
+      },
+      {
+        "title": "Parental Bond (Ability)",
+        "page_id": 181712,
+        "revision_id": 4587390,
+        "sha1": "76c42f790ced94f0d348676b902f9efb660d2c68"
+      },
+      {
+        "title": "Pastel Veil (Ability)",
+        "page_id": 242399,
+        "revision_id": 4512520,
+        "sha1": "9b193bdb6537b84486ba51b682a22298a6c26afa"
+      },
+      {
+        "title": "Perish Body (Ability)",
+        "page_id": 244412,
+        "revision_id": 4587983,
+        "sha1": "1cecb27aad012fe1540ffb10707b6f2c0d18589c"
+      },
+      {
+        "title": "Pickpocket (Ability)",
+        "page_id": 117614,
+        "revision_id": 4594813,
+        "sha1": "090d3e430c7c86e443a900337a3e41275c1b34b5"
+      },
+      {
+        "title": "Pickup (Ability)",
+        "page_id": 4129,
+        "revision_id": 4621344,
+        "sha1": "eab06e77fb804aeddc333ab6792f985dfa7bce29"
+      },
+      {
+        "title": "Piercing Drill (Ability)",
+        "page_id": 354523,
+        "revision_id": 4630999,
+        "sha1": "9d4e9df1bc314552f6882fc8055fa062b87b646b"
+      },
+      {
+        "title": "Pixilate (Ability)",
+        "page_id": 185035,
+        "revision_id": 4615243,
+        "sha1": "a60c84385a6cfa7784557f1d534df2e75958ae4b"
+      },
+      {
+        "title": "Plus (Ability)",
+        "page_id": 4133,
+        "revision_id": 4525763,
+        "sha1": "9673769c966b3e63a979e735dc9152c0a9d1ea09"
+      },
+      {
+        "title": "Poison Heal (Ability)",
+        "page_id": 15666,
+        "revision_id": 4547772,
+        "sha1": "2f1d203042790ab216f1f535ddf69994d59c1d35"
+      },
+      {
+        "title": "Poison Point (Ability)",
+        "page_id": 4114,
+        "revision_id": 4634598,
+        "sha1": "4974a30d61d3bef23ab0929d739de6850d27bf8b"
+      },
+      {
+        "title": "Poison Puppeteer (Ability)",
+        "page_id": 300831,
+        "revision_id": 4584694,
+        "sha1": "d1c8568bf2598f2d4496c12831e0968e476d2c89"
+      },
+      {
+        "title": "Poison Touch (Ability)",
+        "page_id": 118117,
+        "revision_id": 4593604,
+        "sha1": "747c2bcf8d1b961432cfb0ca4af6ecccebb89aa0"
+      },
+      {
+        "title": "Power Construct (Ability)",
+        "page_id": 214123,
+        "revision_id": 4638303,
+        "sha1": "ffbb695df29113bf5194b1260bfeb18cc2c3deef"
+      },
+      {
+        "title": "Power Spot (Ability)",
+        "page_id": 244405,
+        "revision_id": 4522958,
+        "sha1": "f30d3f81b24b26a7c6da6f996981ca537ea4f9e1"
+      },
+      {
+        "title": "Power of Alchemy (Ability)",
+        "page_id": 218224,
+        "revision_id": 4592274,
+        "sha1": "a63eaf441b814c8b2bcd679aa65284c039e36ca5"
+      },
+      {
+        "title": "Prankster (Ability)",
+        "page_id": 117965,
+        "revision_id": 4625886,
+        "sha1": "a79aaf1c816c8a074da6bf29cffb9c7d3887357c"
+      },
+      {
+        "title": "Pressure (Ability)",
+        "page_id": 4122,
+        "revision_id": 4594123,
+        "sha1": "5e6fa66082997b3d6f1ccf4ff454baee1966a480"
+      },
+      {
+        "title": "Primordial Sea (Ability)",
+        "page_id": 195920,
+        "revision_id": 4647513,
+        "sha1": "63d29f07bff6fc690c73266af0cae9a0538112f4"
+      },
+      {
+        "title": "Prism Armor (Ability)",
+        "page_id": 218222,
+        "revision_id": 4644836,
+        "sha1": "b8e83e520678d0780bad1481a76fbf5cd9d8b4e7"
+      },
+      {
+        "title": "Propeller Tail (Ability)",
+        "page_id": 244398,
+        "revision_id": 4647579,
+        "sha1": "08ff0bb9c29cbf9ec85da15ceaf08f484c59b276"
+      },
+      {
+        "title": "Protean (Ability)",
+        "page_id": 185036,
+        "revision_id": 4638776,
+        "sha1": "3d2b14f2dec7fbb009187ced51cef61f4a8c1908"
+      },
+      {
+        "title": "Protosynthesis (Ability)",
+        "page_id": 277651,
+        "revision_id": 4517504,
+        "sha1": "c5813998945848010eeda1adb69ccfcbb739c208"
+      },
+      {
+        "title": "Psychic Surge (Ability)",
+        "page_id": 216836,
+        "revision_id": 4586738,
+        "sha1": "bcebb4bed5e98a8a4c1ec7fa5e9ce1d7bbd73db3"
+      },
+      {
+        "title": "Punk Rock (Ability)",
+        "page_id": 244315,
+        "revision_id": 4666792,
+        "sha1": "6882854dacc9b245dadfcca1cd0cb7c29877f97f"
+      },
+      {
+        "title": "Pure Power (Ability)",
+        "page_id": 4149,
+        "revision_id": 4622617,
+        "sha1": "d9bba91e80d02ce979910e2ae6dddf8f14466737"
+      },
+      {
+        "title": "Purifying Salt (Ability)",
+        "page_id": 277804,
+        "revision_id": 4525899,
+        "sha1": "99025ba0755c8c2a1391d59b0bfe9c359b7e3e4f"
+      },
+      {
+        "title": "Quark Drive (Ability)",
+        "page_id": 277653,
+        "revision_id": 4512536,
+        "sha1": "3a07125c83485206095c3a51206a1272199e3664"
+      },
+      {
+        "title": "Queenly Majesty (Ability)",
+        "page_id": 216520,
+        "revision_id": 4579315,
+        "sha1": "77027644ebe9db6227009227aded22f2faf34284"
+      },
+      {
+        "title": "Quick Draw (Ability)",
+        "page_id": 252174,
+        "revision_id": 4525896,
+        "sha1": "a28e8534594f84d25b0d2ab1d9362e7d4105d348"
+      },
+      {
+        "title": "Quick Feet (Ability)",
+        "page_id": 14251,
+        "revision_id": 4647439,
+        "sha1": "edcaad70bdb14f7c74147cb5a5fa756ca095dc77"
+      },
+      {
+        "title": "RKS System (Ability)",
+        "page_id": 216499,
+        "revision_id": 4512579,
+        "sha1": "6cee989d3a124bc7291c8555dde22be333c39b64"
+      },
+      {
+        "title": "Rain Dish (Ability)",
+        "page_id": 4120,
+        "revision_id": 4647577,
+        "sha1": "6c69bf52f11b9017e9be0a594f1d7a300951a9b3"
+      },
+      {
+        "title": "Rattled (Ability)",
+        "page_id": 118116,
+        "revision_id": 4625892,
+        "sha1": "b4a91d38d706f6b99c3192e87a7eb43e742b4610"
+      },
+      {
+        "title": "Receiver (Ability)",
+        "page_id": 216042,
+        "revision_id": 4615527,
+        "sha1": "461fbdd3bd56968ac3e9dad46bbfd8b8e83232e1"
+      },
+      {
+        "title": "Reckless (Ability)",
+        "page_id": 19018,
+        "revision_id": 4623463,
+        "sha1": "d8e4d220bdd909006a36cca54994ff8a123a5faa"
+      },
+      {
+        "title": "Refrigerate (Ability)",
+        "page_id": 182733,
+        "revision_id": 4647100,
+        "sha1": "4938f05482eee095c411839700f7d0f6c87180bf"
+      },
+      {
+        "title": "Regenerator (Ability)",
+        "page_id": 117333,
+        "revision_id": 4573330,
+        "sha1": "153a63ce18f845486e77d435ac7883274a4bcd27"
+      },
+      {
+        "title": "Ripen (Ability)",
+        "page_id": 244403,
+        "revision_id": 4650824,
+        "sha1": "6b04e2544c1874f484b13da938581ce21338f427"
+      },
+      {
+        "title": "Rivalry (Ability)",
+        "page_id": 14211,
+        "revision_id": 4525783,
+        "sha1": "ccd353876985f2f7c4e949c684e101c93e09a31b"
+      },
+      {
+        "title": "Rock Head (Ability)",
+        "page_id": 4145,
+        "revision_id": 4652360,
+        "sha1": "77694aa7f5e0df0115fbb4ee30085516412311db"
+      },
+      {
+        "title": "Rocky Payload (Ability)",
+        "page_id": 277627,
+        "revision_id": 4573253,
+        "sha1": "1a157c310688a06f2374005b27a84431633455dc"
+      },
+      {
+        "title": "Rough Skin (Ability)",
+        "page_id": 4101,
+        "revision_id": 4630613,
+        "sha1": "a0d186a325ecf53bc062891b45aabea33eb1bcdd"
+      },
+      {
+        "title": "Run Away (Ability)",
+        "page_id": 4126,
+        "revision_id": 4647440,
+        "sha1": "da45cfc81f7cbedb78e5612a16afa82ef8d8083d"
+      },
+      {
+        "title": "Sand Force (Ability)",
+        "page_id": 117962,
+        "revision_id": 4525851,
+        "sha1": "4347156ac9d5e762a9a755f3be4838850686c41a"
+      },
+      {
+        "title": "Sand Rush (Ability)",
+        "page_id": 112085,
+        "revision_id": 4525839,
+        "sha1": "e3214020e8d58bf48a54feedb896f0fa8f8644b3"
+      },
+      {
+        "title": "Sand Spit (Ability)",
+        "page_id": 244401,
+        "revision_id": 4525890,
+        "sha1": "2b24c2c755af43975506a87d4d5b5e293dede736"
+      },
+      {
+        "title": "Sand Stream (Ability)",
+        "page_id": 4121,
+        "revision_id": 4579304,
+        "sha1": "a9a3c342ee1c06b46c202cdbfe567694cad0e2ef"
+      },
+      {
+        "title": "Sand Veil (Ability)",
+        "page_id": 4085,
+        "revision_id": 4625883,
+        "sha1": "9ba9efb9557f4ae558c27ad473a048c8b1dd7b47"
+      },
+      {
+        "title": "Sap Sipper (Ability)",
+        "page_id": 111793,
+        "revision_id": 4640859,
+        "sha1": "4d5d0e0295423f4702d5e9c996b79997d37c9047"
+      },
+      {
+        "title": "Schooling (Ability)",
+        "page_id": 215264,
+        "revision_id": 3899574,
+        "sha1": "cca33d63d9bbe783d82ff31f0f587533341a9093"
+      },
+      {
+        "title": "Scrappy (Ability)",
+        "page_id": 14213,
+        "revision_id": 4591320,
+        "sha1": "6aa31f4beedfec84ac744b45e073cb64bc815e20"
+      },
+      {
+        "title": "Screen Cleaner (Ability)",
+        "page_id": 244407,
+        "revision_id": 4525893,
+        "sha1": "a9e31fb07ce7c656e671cc0c2752c33014599c43"
+      },
+      {
+        "title": "Seed Sower (Ability)",
+        "page_id": 277624,
+        "revision_id": 4625897,
+        "sha1": "67b0dbca82251322be1973535379df6f3481a370"
+      },
+      {
+        "title": "Serene Grace (Ability)",
+        "page_id": 4108,
+        "revision_id": 4649774,
+        "sha1": "42038d01bd0a36c8d0db6087a1d965fc19ffe47e"
+      },
+      {
+        "title": "Shadow Shield (Ability)",
+        "page_id": 213458,
+        "revision_id": 4512581,
+        "sha1": "8ffc350ec9282aefc3cb8c7f0452b0ffeade7ad6"
+      },
+      {
+        "title": "Shadow Tag (Ability)",
+        "page_id": 4100,
+        "revision_id": 4579273,
+        "sha1": "0fdc6c53876b9b2b849652c1c1a65adde8c72bf1"
+      },
+      {
+        "title": "Sharpness (Ability)",
+        "page_id": 277602,
+        "revision_id": 4632869,
+        "sha1": "63e84a24e0bb9dea9b75b78fd5bf17869c919795"
+      },
+      {
+        "title": "Shed Skin (Ability)",
+        "page_id": 4137,
+        "revision_id": 4635833,
+        "sha1": "44a0dc77d00ce8833c8591670411e2284b2b0d90"
+      },
+      {
+        "title": "Sheer Force (Ability)",
+        "page_id": 109063,
+        "revision_id": 4615265,
+        "sha1": "27749caa47dbb73970cf09fee6594443134c668f"
+      },
+      {
+        "title": "Shell Armor (Ability)",
+        "page_id": 4150,
+        "revision_id": 4647465,
+        "sha1": "e83a0727562287f5985c999035be3287e7d6dab6"
+      },
+      {
+        "title": "Shield Dust (Ability)",
+        "page_id": 4096,
+        "revision_id": 4525731,
+        "sha1": "23c2f088ddc767412420cc750ea9f1f87885cf53"
+      },
+      {
+        "title": "Shields Down (Ability)",
+        "page_id": 214985,
+        "revision_id": 4622723,
+        "sha1": "f870914703ee5bb4269859b9b88b63850db9f160"
+      },
+      {
+        "title": "Simple (Ability)",
+        "page_id": 15668,
+        "revision_id": 4572298,
+        "sha1": "763ec6bd395d97e51eea299dc5035ea8b81509d6"
+      },
+      {
+        "title": "Skill Link (Ability)",
+        "page_id": 15669,
+        "revision_id": 4615266,
+        "sha1": "54f2d760de1f3f2f852d8467ca398aa8e0a0c803"
+      },
+      {
+        "title": "Slow Start (Ability)",
+        "page_id": 15723,
+        "revision_id": 4609233,
+        "sha1": "2f78aab83b2c003e4d76338f5023acae6fca6780"
+      },
+      {
+        "title": "Slush Rush (Ability)",
+        "page_id": 218217,
+        "revision_id": 4650852,
+        "sha1": "b3bb57ddede4c83beb49e29c540e2f49b60eed9a"
+      },
+      {
+        "title": "Sniper (Ability)",
+        "page_id": 12232,
+        "revision_id": 4647572,
+        "sha1": "eb813c6623f8a6cb42e16077c1f66f0c494fe0af"
+      },
+      {
+        "title": "Snow Cloak (Ability)",
+        "page_id": 15728,
+        "revision_id": 4613858,
+        "sha1": "4fde5a2e735df83039dc829828f3335d0493c66d"
+      },
+      {
+        "title": "Snow Warning (Ability)",
+        "page_id": 13615,
+        "revision_id": 4579305,
+        "sha1": "aef0e227424e94682d2ca8951eefa514077957c5"
+      },
+      {
+        "title": "Solar Power (Ability)",
+        "page_id": 16166,
+        "revision_id": 4525798,
+        "sha1": "39de86de2ef1490bc030e42c3fde43eba052e434"
+      },
+      {
+        "title": "Solid Rock (Ability)",
+        "page_id": 14198,
+        "revision_id": 4644803,
+        "sha1": "9709b0f16a66c26844f01429d50c3a3e74681b46"
+      },
+      {
+        "title": "Soul-Heart (Ability)",
+        "page_id": 213758,
+        "revision_id": 4640765,
+        "sha1": "c714a6d31090eb1477104102323c6c93d5f5e37c"
+      },
+      {
+        "title": "Soundproof (Ability)",
+        "page_id": 4119,
+        "revision_id": 4615270,
+        "sha1": "4df65c64073f7c78e9a03164c952b546fe48ced0"
+      },
+      {
+        "title": "Speed Boost (Ability)",
+        "page_id": 4080,
+        "revision_id": 4653011,
+        "sha1": "82a26b1c71274fef55c3cd4b5d8e6ff08bed3bd0"
+      },
+      {
+        "title": "Spicy Spray (Ability)",
+        "page_id": 354524,
+        "revision_id": 4647445,
+        "sha1": "8007b5c6f9c733ba462417deb5a1593acdd7fb6a"
+      },
+      {
+        "title": "Stakeout (Ability)",
+        "page_id": 213768,
+        "revision_id": 4625894,
+        "sha1": "ed3ce5eb33eeeb64d63882897acd6ae9e15af79f"
+      },
+      {
+        "title": "Stall (Ability)",
+        "page_id": 14208,
+        "revision_id": 4651541,
+        "sha1": "6feec1d83f35b2f77df6c39b69b7d31db1ed1026"
+      },
+      {
+        "title": "Stalwart (Ability)",
+        "page_id": 244400,
+        "revision_id": 4655269,
+        "sha1": "2ab24e8780a5df7f1f117df8b673ddc1f41a1800"
+      },
+      {
+        "title": "Stamina (Ability)",
+        "page_id": 214591,
+        "revision_id": 4605104,
+        "sha1": "d8034ff1a67c791b796e437d79cdcde976406134"
+      },
+      {
+        "title": "Stance Change (Ability)",
+        "page_id": 185031,
+        "revision_id": 4633275,
+        "sha1": "36ca71087570cdbb3ddef061907fc4178da1d75f"
+      },
+      {
+        "title": "Static (Ability)",
+        "page_id": 4086,
+        "revision_id": 4631635,
+        "sha1": "68e341d418a389bd28b0989e9c02b4dac0f81d40"
+      },
+      {
+        "title": "Steadfast (Ability)",
+        "page_id": 12230,
+        "revision_id": 4529402,
+        "sha1": "d9f41f1dffa2b321c6e16e5a92b94f4e2da932dc"
+      },
+      {
+        "title": "Steam Engine (Ability)",
+        "page_id": 239639,
+        "revision_id": 4587969,
+        "sha1": "2deb458dcf54fa4f16b1376d2e372836d0ef6ee5"
+      },
+      {
+        "title": "Steelworker (Ability)",
+        "page_id": 218214,
+        "revision_id": 4573250,
+        "sha1": "add769aa6fb95f0d5e68fb2b46c30b70546dc402"
+      },
+      {
+        "title": "Steely Spirit (Ability)",
+        "page_id": 244411,
+        "revision_id": 4625896,
+        "sha1": "de323c82848a8cb4f33b2155966af032a4cad8a0"
+      },
+      {
+        "title": "Stench (Ability)",
+        "page_id": 4078,
+        "revision_id": 4650817,
+        "sha1": "7ce7a1488db137192d9252068cf69801be3c55fe"
+      },
+      {
+        "title": "Sticky Hold (Ability)",
+        "page_id": 4136,
+        "revision_id": 4525766,
+        "sha1": "ed97004abc83523cf6919294564d4978802f9e52"
+      },
+      {
+        "title": "Storm Drain (Ability)",
+        "page_id": 16167,
+        "revision_id": 4647485,
+        "sha1": "046a8d5c63886c221f396ab693ac894d681c5013"
+      },
+      {
+        "title": "Strong Jaw (Ability)",
+        "page_id": 182734,
+        "revision_id": 4615272,
+        "sha1": "cbe8f1846a883f06ddb872f266a4fad6f1798028"
+      },
+      {
+        "title": "Sturdy (Ability)",
+        "page_id": 4082,
+        "revision_id": 4642717,
+        "sha1": "ab2aca0c5507009584dabdb95938f9bd9b97a3de"
+      },
+      {
+        "title": "Suction Cups (Ability)",
+        "page_id": 4098,
+        "revision_id": 4647524,
+        "sha1": "472a8bd3d0340d65b3426f971e70910e83c4f752"
+      },
+      {
+        "title": "Super Luck (Ability)",
+        "page_id": 14210,
+        "revision_id": 4591323,
+        "sha1": "49c2c36ecd5edf5f6dee4bd8b15081478ca057e2"
+      },
+      {
+        "title": "Supersweet Syrup (Ability)",
+        "page_id": 294173,
+        "revision_id": 4635873,
+        "sha1": "3dee0f8245999c762bd14de84390dd2969f66b1e"
+      },
+      {
+        "title": "Supreme Overlord (Ability)",
+        "page_id": 277819,
+        "revision_id": 4536609,
+        "sha1": "43dd24dde61392416219a97807c680f67ca81623"
+      },
+      {
+        "title": "Surge Surfer (Ability)",
+        "page_id": 215258,
+        "revision_id": 4525882,
+        "sha1": "00a533fe4de6803e6e20c76e63be81bc45a20649"
+      },
+      {
+        "title": "Swarm (Ability)",
+        "page_id": 4144,
+        "revision_id": 4624274,
+        "sha1": "554f48e4f4dfc974df55bb0defe31453a8a4bb8f"
+      },
+      {
+        "title": "Sweet Veil (Ability)",
+        "page_id": 180569,
+        "revision_id": 4525863,
+        "sha1": "10d1687060242bb3aa9a75472fbd477f501ee160"
+      },
+      {
+        "title": "Swift Swim (Ability)",
+        "page_id": 4109,
+        "revision_id": 4658529,
+        "sha1": "6bec8e7efbd3a8e3ec8c4dd35bdbaf238008afba"
+      },
+      {
+        "title": "Sword of Ruin (Ability)",
+        "page_id": 277813,
+        "revision_id": 4654748,
+        "sha1": "a29cf41e0550da683751ffc66971a0dd125ce55a"
+      },
+      {
+        "title": "Symbiosis (Ability)",
+        "page_id": 185060,
+        "revision_id": 4569912,
+        "sha1": "627ffb95fe01475a971c143a33701fa1749bd09e"
+      },
+      {
+        "title": "Synchronize (Ability)",
+        "page_id": 4104,
+        "revision_id": 4647382,
+        "sha1": "3b5f0f98cdeb62d86001b18eeb27ed6c92564c0b"
+      },
+      {
+        "title": "Tablets of Ruin (Ability)",
+        "page_id": 277814,
+        "revision_id": 4654747,
+        "sha1": "04fa15ddaa70245a887a1e21d370d37fe391cedd"
+      },
+      {
+        "title": "Tangled Feet (Ability)",
+        "page_id": 12231,
+        "revision_id": 4634073,
+        "sha1": "a79820f2394ab9bcf864d068be1d65a448203da7"
+      },
+      {
+        "title": "Tangling Hair (Ability)",
+        "page_id": 218073,
+        "revision_id": 4573291,
+        "sha1": "6f92805ebc10df257f6834957639b0905dbfbe8e"
+      },
+      {
+        "title": "Technician (Ability)",
+        "page_id": 14252,
+        "revision_id": 4632633,
+        "sha1": "60824fa4f0fb2a14b347e57be720e0890b1dd045"
+      },
+      {
+        "title": "Telepathy (Ability)",
+        "page_id": 117438,
+        "revision_id": 4606080,
+        "sha1": "b0385cf212f222dc2e12c18d8289195efb2e25b6"
+      },
+      {
+        "title": "Tera Shell (Ability)",
+        "page_id": 300828,
+        "revision_id": 4529431,
+        "sha1": "d6677349b4598d76417354ca9aa6baa913ec07dd"
+      },
+      {
+        "title": "Tera Shift (Ability)",
+        "page_id": 300827,
+        "revision_id": 4529430,
+        "sha1": "736ae88a7a78c96e70c4d91b539136350822cdef"
+      },
+      {
+        "title": "Teraform Zero (Ability)",
+        "page_id": 300829,
+        "revision_id": 4607337,
+        "sha1": "aa31d49fd590e9abce5288b7d4340097f59b8f36"
+      },
+      {
+        "title": "Teravolt (Ability)",
+        "page_id": 117724,
+        "revision_id": 4465202,
+        "sha1": "74dc101cb78f556d89a26ca3026644f9ed1b135c"
+      },
+      {
+        "title": "Thermal Exchange (Ability)",
+        "page_id": 277530,
+        "revision_id": 4625975,
+        "sha1": "07e90c511a78090f7b9cbb472e9281ae7b6ce7f7"
+      },
+      {
+        "title": "Thick Fat (Ability)",
+        "page_id": 4123,
+        "revision_id": 4627604,
+        "sha1": "45fb0faa86e2913bcb77bcd9032617119d777dda"
+      },
+      {
+        "title": "Tinted Lens (Ability)",
+        "page_id": 14214,
+        "revision_id": 4055264,
+        "sha1": "35443f93549d98d9189b5d1cd2f3ca554c8d6acc"
+      },
+      {
+        "title": "Torrent (Ability)",
+        "page_id": 4143,
+        "revision_id": 4647595,
+        "sha1": "505cc51ccd63bb43715c68a0d0fd9b5c697df749"
+      },
+      {
+        "title": "Tough Claws (Ability)",
+        "page_id": 183536,
+        "revision_id": 4635060,
+        "sha1": "602c17913b1a0922d6f2bc121aae6918eb558184"
+      },
+      {
+        "title": "Toxic Boost (Ability)",
+        "page_id": 118108,
+        "revision_id": 4514043,
+        "sha1": "b1b2f5fdee43afbcb80923858fe2ae13e2dc47cc"
+      },
+      {
+        "title": "Toxic Chain (Ability)",
+        "page_id": 287508,
+        "revision_id": 4573394,
+        "sha1": "ccb283c757943756ad7a9d331b5dcb4620c98db0"
+      },
+      {
+        "title": "Toxic Debris (Ability)",
+        "page_id": 277823,
+        "revision_id": 4525907,
+        "sha1": "66fb9e4a6a94c160f236927c72c65ad81e5cf5ff"
+      },
+      {
+        "title": "Trace (Ability)",
+        "page_id": 4112,
+        "revision_id": 4651043,
+        "sha1": "3f24d8102add8dcdcbb70560a553d511e751197f"
+      },
+      {
+        "title": "Transistor (Ability)",
+        "page_id": 252170,
+        "revision_id": 4573251,
+        "sha1": "73807c47e801bdc6ab0e8cc5f1bd1a311914267f"
+      },
+      {
+        "title": "Triage (Ability)",
+        "page_id": 214601,
+        "revision_id": 4666985,
+        "sha1": "ac34be9ca7a8f97d6a83afc67afb2964c66d9437"
+      },
+      {
+        "title": "Truant (Ability)",
+        "page_id": 4130,
+        "revision_id": 4631694,
+        "sha1": "a6ae9b939b3f12fee39cd0e56335669e0e6546a0"
+      },
+      {
+        "title": "Turboblaze (Ability)",
+        "page_id": 117993,
+        "revision_id": 4028099,
+        "sha1": "7d3062aa8eb4507e53cf644aaa5a1bdb3b2f521c"
+      },
+      {
+        "title": "Unaware (Ability)",
+        "page_id": 15662,
+        "revision_id": 4653106,
+        "sha1": "a96dca878b60129a4446d8bccf5267a0c50b3022"
+      },
+      {
+        "title": "Unburden (Ability)",
+        "page_id": 14206,
+        "revision_id": 4525788,
+        "sha1": "45570382152d5c25ac0f5d4794c2b9b842ed5319"
+      },
+      {
+        "title": "Unnerve (Ability)",
+        "page_id": 117618,
+        "revision_id": 4579248,
+        "sha1": "226995831a43040db1e50479b312759bf12a206e"
+      },
+      {
+        "title": "Unseen Fist (Ability)",
+        "page_id": 246814,
+        "revision_id": 4642450,
+        "sha1": "6473976b04c40128c0c1c7313b4237a6afaeca9b"
+      },
+      {
+        "title": "Vessel of Ruin (Ability)",
+        "page_id": 277812,
+        "revision_id": 4658492,
+        "sha1": "4435de0fa9c309db40f046f2b70f53a08e284bf1"
+      },
+      {
+        "title": "Victory Star (Ability)",
+        "page_id": 111642,
+        "revision_id": 4446858,
+        "sha1": "65f07e4d2e4fb183c9a9c4cc2e8c0254961f0340"
+      },
+      {
+        "title": "Vital Spirit (Ability)",
+        "page_id": 4147,
+        "revision_id": 4551531,
+        "sha1": "79760ee64cb9bc82c39f7f0dce8b2a0d50ad1af9"
+      },
+      {
+        "title": "Volt Absorb (Ability)",
+        "page_id": 4087,
+        "revision_id": 4644794,
+        "sha1": "3a34f78d869f8c12eefd4b360de5fd6ff214ee3c"
+      },
+      {
+        "title": "Wandering Spirit (Ability)",
+        "page_id": 244093,
+        "revision_id": 4632685,
+        "sha1": "0859e7eca1d989de2e6c4c4fe7c1f36ba977f6a1"
+      },
+      {
+        "title": "Water Absorb (Ability)",
+        "page_id": 4088,
+        "revision_id": 4647512,
+        "sha1": "02ffde4e2209e1fb5688f4f71bb7d42d997a6df1"
+      },
+      {
+        "title": "Water Bubble (Ability)",
+        "page_id": 218213,
+        "revision_id": 4647530,
+        "sha1": "29b7b0f6e0392b84dd766fb0912c747eb61aff36"
+      },
+      {
+        "title": "Water Compaction (Ability)",
+        "page_id": 215360,
+        "revision_id": 4587968,
+        "sha1": "946c47773c8aee178bf828635c2ec4c33b2774ed"
+      },
+      {
+        "title": "Water Veil (Ability)",
+        "page_id": 4117,
+        "revision_id": 4647458,
+        "sha1": "78d79127cec5a6a39b4595ed21eef7576386e1af"
+      },
+      {
+        "title": "Weak Armor (Ability)",
+        "page_id": 117699,
+        "revision_id": 4525828,
+        "sha1": "360ffb0f1834fe0a90428cddcae6e28036e4523f"
+      },
+      {
+        "title": "Well-Baked Body (Ability)",
+        "page_id": 277805,
+        "revision_id": 4634579,
+        "sha1": "c6ee43db0c03434ad8ab7a5990865e5338cb293d"
+      },
+      {
+        "title": "White Smoke (Ability)",
+        "page_id": 4148,
+        "revision_id": 4650844,
+        "sha1": "220ddbd675f2bc061ea195a580b8bef46073ae29"
+      },
+      {
+        "title": "Wimp Out (Ability)",
+        "page_id": 214596,
+        "revision_id": 4351234,
+        "sha1": "5bb917f409fc9df976685ac813fe7ede8b5b6f3c"
+      },
+      {
+        "title": "Wind Power (Ability)",
+        "page_id": 277578,
+        "revision_id": 4615286,
+        "sha1": "a8ef0321cd01bc8d32973db66b21ff4accda8835"
+      },
+      {
+        "title": "Wind Rider (Ability)",
+        "page_id": 277579,
+        "revision_id": 4662228,
+        "sha1": "1dc81cf814dba0a9dbb526586992c2f238fcede7"
+      },
+      {
+        "title": "Wonder Guard (Ability)",
+        "page_id": 4102,
+        "revision_id": 4639821,
+        "sha1": "0b10f7c987da212e6e39edc8f94c25a18d32fc2e"
+      },
+      {
+        "title": "Wonder Skin (Ability)",
+        "page_id": 117952,
+        "revision_id": 4515984,
+        "sha1": "eec27b5488a8ecc466304710c3d6c6286b5e69fe"
+      },
+      {
+        "title": "Zen Mode (Ability)",
+        "page_id": 117440,
+        "revision_id": 4523807,
+        "sha1": "fb502fdf9cd348b6100b492544c5405d1d655efe"
+      },
+      {
+        "title": "Zero to Hero (Ability)",
+        "page_id": 277807,
+        "revision_id": 4647588,
+        "sha1": "ec84499f3177ee74dfb9a360425cc1ee1872ba09"
+      }
+    ],
     "move": [
       {
         "title": "10,000,000 Volt Thunderbolt (move)",
