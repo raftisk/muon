@@ -29,6 +29,7 @@ from muon.ingestion.bulbapedia.fetch import (
     fetch_pages,
     import_pages,
 )
+from muon.ingestion.bulbapedia.ingest import IngestRequest, MissingSeedError, PassProgress
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
@@ -56,14 +57,7 @@ from muon.ingestion.bulbapedia.moves.run import (
 from muon.ingestion.bulbapedia.pages import PageStore, PageStoreError
 from muon.ingestion.bulbapedia.runs import DEFAULT_OUTPUT_ROOT, PageStatus
 from muon.ingestion.bulbapedia.species.forms import OverrideError
-from muon.ingestion.bulbapedia.species.ingest import (
-    IngestRequest,
-    IngestRun,
-    MissingSeedError,
-    PassProgress,
-    ingest_species,
-    write_ingest_report,
-)
+from muon.ingestion.bulbapedia.species.ingest import IngestRun, ingest_species, write_ingest_report
 from muon.ingestion.bulbapedia.species.run import (
     PAGE_TYPE as PARSE_PAGE_TYPE,
 )
@@ -440,7 +434,7 @@ def format_ingest_report(ingest_run: IngestRun) -> str:
     status = "stopped" if report.stop is not None else "done"
     lines = [f"{INGEST_COMMAND} {BULBAPEDIA_SOURCE} {PARSE_PAGE_TYPE}: {status}"]
     for totals in report.passes:
-        name = totals.ingest_pass.value
+        name = totals.ingest_pass
         seconds = ingest_run.elapsed_seconds[totals.ingest_pass]
         lines.append(f"{name}: {totals.batches_written} batches in {seconds:.1f} s")
         lines.extend(
@@ -450,7 +444,7 @@ def format_ingest_report(ingest_run: IngestRun) -> str:
     lines.extend(f"failed: {page.page_title}: {page.reason}" for page in report.failed_pages)
     if report.stop is not None:
         stop = report.stop
-        lines.append(f"stopped: {stop.page_title} ({stop.ingest_pass.value}): {stop.error}")
+        lines.append(f"stopped: {stop.page_title} ({stop.ingest_pass}): {stop.error}")
     if report.census is not None:
         lines.extend(f"nodes {label}: {count}" for label, count in report.census.labels.items())
         lines.extend(

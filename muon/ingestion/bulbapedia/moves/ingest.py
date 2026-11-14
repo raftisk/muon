@@ -12,7 +12,7 @@ Map:
 - `MoveIngestReport` holds counters and names, never a time, so equal runs give equal
   files. The seconds per pass travel in `MoveIngestRun` for the printed summary only.
 
-The seed check, the change counters and the census model come from the species ingest.
+The seed check, the change counters and the census model come from `bulbapedia/ingest.py`.
 This module knows the pkmn universe, as every ingestion module of a source does.
 """
 
@@ -26,10 +26,7 @@ from pathlib import Path
 from muon.graph import GraphClient, GraphError
 from muon.ingestion.batch import GraphBatch
 from muon.ingestion.bulbapedia.batching import MACHINE, MOVE, UNIVERSE
-from muon.ingestion.bulbapedia.moves.run import MovePageOutput, MoveParseRun
-from muon.ingestion.bulbapedia.pages import write_text_atomically
-from muon.ingestion.bulbapedia.runs import PageStatus, ReportModel, dump_json
-from muon.ingestion.bulbapedia.species.ingest import (
+from muon.ingestion.bulbapedia.ingest import (
     INGEST_OUTPUT_ROOT,
     PROGRESS_EVERY,
     CensusReport,
@@ -40,6 +37,9 @@ from muon.ingestion.bulbapedia.species.ingest import (
     check_seed,
     is_change,
 )
+from muon.ingestion.bulbapedia.moves.run import MovePageOutput, MoveParseRun
+from muon.ingestion.bulbapedia.pages import write_text_atomically
+from muon.ingestion.bulbapedia.runs import PageStatus, ReportModel, dump_json
 from muon.ingestion.runner import Runner, WriteMode
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer

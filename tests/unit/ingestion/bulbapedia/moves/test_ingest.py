@@ -10,6 +10,12 @@ import pytest
 
 from muon.graph import GraphQueryError, Statement
 from muon.ingestion.bulbapedia.batching import MACHINE, MOVE, PKMN, TEXT_CHUNK
+from muon.ingestion.bulbapedia.ingest import (
+    CensusReport,
+    IngestRequest,
+    MissingSeedError,
+    PassProgress,
+)
 from muon.ingestion.bulbapedia.moves import ingest
 from muon.ingestion.bulbapedia.moves import page as move_page
 from muon.ingestion.bulbapedia.moves.ingest import (
@@ -23,12 +29,6 @@ from muon.ingestion.bulbapedia.moves.ingest import (
     write_move_ingest_report,
 )
 from muon.ingestion.bulbapedia.moves.run import MoveParseRun
-from muon.ingestion.bulbapedia.species.ingest import (
-    CensusReport,
-    IngestRequest,
-    MissingSeedError,
-    PassProgress,
-)
 from muon.ingestion.runner import (
     LIST_STUB_IDS,
     MERGE_NODES_UPSERT,

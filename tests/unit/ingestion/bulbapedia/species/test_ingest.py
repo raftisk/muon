@@ -9,12 +9,19 @@ from typing import Any
 import pytest
 
 from muon.graph import GraphQueryError, Statement
+from muon.ingestion.bulbapedia import ingest
 from muon.ingestion.bulbapedia.batching import (
     PKMN,
     TEXT_CHUNK,
 )
+from muon.ingestion.bulbapedia.ingest import (
+    CensusReport,
+    IngestRequest,
+    IngestStop,
+    MissingSeedError,
+    PassProgress,
+)
 from muon.ingestion.bulbapedia.pages import PageStore
-from muon.ingestion.bulbapedia.species import ingest
 from muon.ingestion.bulbapedia.species.batches import (
     EVOLUTION,
     FORM_CHANGE,
@@ -23,13 +30,8 @@ from muon.ingestion.bulbapedia.species.batches import (
 )
 from muon.ingestion.bulbapedia.species.ingest import (
     INGEST_REPORT_FILE_NAME,
-    CensusReport,
     IngestPass,
-    IngestRequest,
     IngestRun,
-    IngestStop,
-    MissingSeedError,
-    PassProgress,
     ingest_species,
     list_constraint_classes,
     select_batch,
@@ -252,7 +254,7 @@ async def test_changed_pages_list_the_batches_that_created_or_deleted_something(
         assert totals.counters["nodes_created"] == sum(
             change.counters["nodes_created"]
             for change in report.changed_pages
-            if change.ingest_pass is totals.ingest_pass
+            if change.ingest_pass == totals.ingest_pass
         )
 
 

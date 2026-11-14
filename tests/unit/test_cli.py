@@ -16,6 +16,16 @@ from muon.ingestion.batch import NodeRef
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
+from muon.ingestion.bulbapedia.ingest import (
+    CensusReport,
+    IngestReport,
+    IngestRequest,
+    IngestStop,
+    MissingSeedError,
+    PageFailure,
+    PassProgress,
+    PassTotals,
+)
 from muon.ingestion.bulbapedia.moves.batches import MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestReport,
@@ -36,18 +46,7 @@ from muon.ingestion.bulbapedia.pages import PageStoreError
 from muon.ingestion.bulbapedia.runs import BatchCounts, PageResult, PageStatus
 from muon.ingestion.bulbapedia.species.extract import ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError
-from muon.ingestion.bulbapedia.species.ingest import (
-    CensusReport,
-    IngestPass,
-    IngestReport,
-    IngestRequest,
-    IngestRun,
-    IngestStop,
-    MissingSeedError,
-    PageFailure,
-    PassProgress,
-    PassTotals,
-)
+from muon.ingestion.bulbapedia.species.ingest import IngestPass, IngestRun
 from muon.ingestion.bulbapedia.species.run import (
     ParseReport,
     ParseRequest,
