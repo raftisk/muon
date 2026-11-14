@@ -1,35 +1,51 @@
-"""A parse run over the pinned move pages: extracts, pass 1 batches, cross-check and report.
+"""A parse run over the pinned move pages: extracts, pass 1 and 2 batches, cross-check and
+report.
 
 `parse_move_pages` reads the page cache, the PokeAPI snapshot and the ontology, never the
 network. It parses every pinned page, because the table checks and the machine id check
 need all of them, and keeps the outputs and report entries of the requested titles. The
 order is fixed: request check, snapshot index, pages, `check_tables`, `check_machine_fields`,
-batches, machine id conflicts, cross-check, report. A page that breaks a rule fails alone
-and the run goes on; a request, snapshot, table, machine field or machine conflict error
-stops the run before anything is written. Output files are byte-identical across runs.
+`check_game_codes`, batches, machine id conflicts, cross-check, report. A page that breaks a
+rule fails alone and the run goes on; a request, snapshot, table, machine field, game code
+or machine conflict error stops the run before anything is written. Output files are
+byte-identical across runs.
+
+A `{{p}}` mention in a chunk resolves through the species pins: the pinned title without
+its suffix is the species name, so a mention names the base species of a page.
 
 The cross-check reads the extracts and changes no batch (P7).
 """
 
 import json
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
-from muon.ingestion.batch import GraphBatch
+from muon.ingestion.batch import GraphBatch, NodeRecord
 from muon.ingestion.bulbapedia.batching import (
+    ASPECT,
     MACHINE,
     UNIVERSE,
     VERSION_GROUP,
     AboxIndex,
     BatchBuildError,
+    ChunkBuildError,
+    SpeciesResolver,
     build_abox_index,
 )
-from muon.ingestion.bulbapedia.moves.batches import build_move_batch, check_machine_fields
+from muon.ingestion.bulbapedia.fetch import PAGE_TYPES
+from muon.ingestion.bulbapedia.moves.batches import (
+    MoveChunkBuild,
+    MoveChunkInputs,
+    build_move_batch,
+    build_move_chunk_batch,
+    check_game_codes,
+    check_machine_fields,
+)
 from muon.ingestion.bulbapedia.moves.page import (
     MoveNote,
     MoveNoteKind,
@@ -55,6 +71,8 @@ from muon.ingestion.bulbapedia.pages import (
     PageStore,
     write_text_atomically,
 )
+from muon.ingestion.bulbapedia.species.batches import POKEMON_SPECIES
+from muon.ingestion.bulbapedia.species.forms import build_species_id
 from muon.ingestion.pokeapi.snapshot import (
     UPDATE_HINT,
     SnapshotError,
@@ -65,6 +83,8 @@ from muon.ingestion.seed import read_abox
 from muon.ontology.model import extract_local_name, load_ontology_model
 
 PAGE_TYPE = "move"
+SPECIES_PAGE_TYPE = "species"
+SPECIES_TITLE_SUFFIX = PAGE_TYPES[SPECIES_PAGE_TYPE].title_suffix
 DEFAULT_OUTPUT_ROOT = DEFAULT_ROOT / "parsed"
 PAGE_OUTPUT_DIR = "move"
 REPORT_FILE_NAME = "move-report.json"
@@ -117,6 +137,11 @@ class BatchCounts(ReportModel):
     claims: Mapping[str, int]
 
 
+class TemplateCount(ReportModel):
+    name: str
+    count: int
+
+
 class MoveParseReport(ReportModel):
     pages: tuple[PageResult, ...]
     pages_parsed: int
@@ -125,6 +150,13 @@ class MoveParseReport(ReportModel):
     skipped_per_reason: Mapping[str, int]
     notes: tuple[ReportNote, ...]
     batch_counts: BatchCounts
+    chunk_counts: BatchCounts
+    chunks_per_aspect: Mapping[str, int]
+    dropped_templates: tuple[TemplateCount, ...]
+    removed_tables_total: int
+    removed_tables_per_page: Mapping[str, int]
+    math_formulas_total: int
+    math_formulas_per_page: Mapping[str, int]
     moves_per_flag: Mapping[str, int]
     cross_check: tuple[CrossCheckDifference, ...]
     moves_without_pokeapi_row: tuple[str, ...]
@@ -152,6 +184,8 @@ class MovePageOutput:
     page: Page
     extract: MovePageExtract
     batch: GraphBatch
+    chunk_batch: GraphBatch
+    chunk_notes: tuple[MoveNote, ...]
 
 
 @dataclass(frozen=True)
@@ -171,7 +205,17 @@ class ParsedPages:
 @dataclass(frozen=True)
 class BuiltBatches:
     batches: Mapping[str, GraphBatch]
+    chunk_builds: Mapping[str, MoveChunkBuild]
     failures: Mapping[str, str]
+
+
+@dataclass(frozen=True)
+class BatchInputs:
+    """What both passes resolve against."""
+
+    abox: AboxIndex
+    index: PokeapiIndex
+    resolve_species: SpeciesResolver
 
 
 @dataclass(frozen=True)
@@ -230,17 +274,42 @@ def add_effect_note(extract: MovePageExtract, index: PokeapiIndex) -> MovePageEx
     return extract.model_copy(update={"notes": (*extract.notes, note)})
 
 
+def build_species_resolver(pins: Iterable[PagePin]) -> SpeciesResolver:
+    """Resolve a `{{p}}` target to a species stub when a pinned species page has that name."""
+    names = {
+        name: build_species_id(name)
+        for name in (pin.title.removesuffix(SPECIES_TITLE_SUFFIX) for pin in pins)
+    }
+
+    def resolve(target: str) -> NodeRecord | None:
+        if target not in names:
+            return None
+        return NodeRecord(class_iri=POKEMON_SPECIES, id=names[target], name=target)
+
+    return resolve
+
+
 def build_batches(
-    extracts: Mapping[str, MovePageExtract], abox: AboxIndex, index: PokeapiIndex
+    extracts: Mapping[str, MovePageExtract],
+    pages: Mapping[str, Page],
+    inputs: BatchInputs,
 ) -> BuiltBatches:
+    """Build both passes of every page. A page that fails either pass gets no batch."""
     batches: dict[str, GraphBatch] = {}
+    chunk_builds: dict[str, MoveChunkBuild] = {}
     failures: dict[str, str] = {}
     for title, extract in extracts.items():
+        effect_text = read_effect_text(inputs.index, extract.id)
+        chunk_inputs = MoveChunkInputs(inputs.abox, inputs.resolve_species, pages[title].permalink)
         try:
-            batches[title] = build_move_batch(extract, abox, read_effect_text(index, extract.id))
-        except BatchBuildError as error:
+            batch = build_move_batch(extract, inputs.abox, effect_text)
+            chunk_build = build_move_chunk_batch(extract, chunk_inputs)
+        except (BatchBuildError, ChunkBuildError) as error:
             failures[title] = str(error)
-    return BuiltBatches(batches=batches, failures=failures)
+            continue
+        batches[title] = batch
+        chunk_builds[title] = chunk_build
+    return BuiltBatches(batches=batches, chunk_builds=chunk_builds, failures=failures)
 
 
 def check_machine_conflicts(batches: Mapping[str, GraphBatch]) -> None:
@@ -274,11 +343,29 @@ def count_batches(batches: Iterable[GraphBatch]) -> BatchCounts:
     )
 
 
-def to_report_notes(extract: MovePageExtract) -> list[ReportNote]:
+def to_report_notes(output: MovePageOutput) -> list[ReportNote]:
+    title = output.extract.title
     return [
-        ReportNote(page_title=extract.title, kind=note.kind, field=note.field, detail=note.detail)
-        for note in extract.notes
+        ReportNote(page_title=title, kind=note.kind, field=note.field, detail=note.detail)
+        for note in (*output.extract.notes, *output.chunk_notes)
     ]
+
+
+def count_templates(outputs: Iterable[MovePageOutput]) -> tuple[TemplateCount, ...]:
+    """Sum the dropped templates of the pages, most dropped first, then by name."""
+    counts: Counter[str] = Counter()
+    for output in outputs:
+        counts.update(output.extract.dropped_templates)
+    ranked = sorted(counts.items(), key=lambda pair: (-pair[1], pair[0]))
+    return tuple(TemplateCount(name=name, count=count) for name, count in ranked)
+
+
+def count_per_page(
+    outputs: Iterable[MovePageOutput], read_count: Callable[[MovePageExtract], int]
+) -> dict[str, int]:
+    """Map each page title whose extract gives a nonzero count to that count."""
+    counts = {o.extract.title: read_count(o.extract) for o in outputs}
+    return {title: count for title, count in sorted(counts.items()) if count}
 
 
 @dataclass(frozen=True)
@@ -296,6 +383,11 @@ def build_report(
     """Collect the outcomes, notes, counts and cross-check of the requested pages."""
     index = inputs.snapshot.index
     flags: Counter[str] = Counter(flag for o in outputs for flag in o.extract.flags)
+    aspects: Counter[str] = Counter(
+        str(node.properties[ASPECT]) for o in outputs for node in o.chunk_batch.owner_nodes
+    )
+    tables = count_per_page(outputs, lambda extract: extract.removed_tables)
+    formulas = count_per_page(outputs, lambda extract: extract.math_formulas)
     skipped: Counter[str] = Counter(
         r.reason or "" for r in results if r.status is PageStatus.SKIPPED
     )
@@ -305,8 +397,15 @@ def build_report(
         pages_skipped=sum(r.status is PageStatus.SKIPPED for r in results),
         pages_failed=sum(r.status is PageStatus.FAILED for r in results),
         skipped_per_reason={reason.value: skipped[reason.value] for reason in SkipReason},
-        notes=tuple(note for o in outputs for note in to_report_notes(o.extract)),
+        notes=tuple(note for o in outputs for note in to_report_notes(o)),
         batch_counts=count_batches(o.batch for o in outputs),
+        chunk_counts=count_batches(o.chunk_batch for o in outputs),
+        chunks_per_aspect=dict(sorted(aspects.items())),
+        dropped_templates=count_templates(outputs),
+        removed_tables_total=sum(tables.values()),
+        removed_tables_per_page=tables,
+        math_formulas_total=sum(formulas.values()),
+        math_formulas_per_page=formulas,
         moves_per_flag=dict(sorted(flags.items())),
         cross_check=tuple(
             difference
@@ -332,11 +431,11 @@ def resolve_status(title: str, page: Page, parsed: ParsedPages, built: BuiltBatc
 
 
 def parse_move_pages(inputs: MoveRunInputs) -> MoveParseRun:
-    """Parse the pinned move pages and build the pass 1 batch of each.
+    """Parse the pinned move pages and build the pass 1 and pass 2 batches of each.
 
-    Raises `ParseRunError`, `SnapshotError`, `TableError`, `MachineFieldError` or
-    `MachineConflictError` before anything is written. The caller writes the outputs with
-    `write_outputs`.
+    Raises `ParseRunError`, `SnapshotError`, `TableError`, `MachineFieldError`,
+    `GameCodeError` or `MachineConflictError` before anything is written. The caller writes
+    the outputs with `write_outputs`.
     """
     pins = inputs.store.read_manifest().list_pins(PAGE_TYPE)
     check_request(inputs.request, pins)
@@ -348,15 +447,24 @@ def parse_move_pages(inputs: MoveRunInputs) -> MoveParseRun:
     model = load_ontology_model(inputs.ontology_dir, UNIVERSE)
     seed = read_abox(model, inputs.ontology_dir)
     check_machine_fields(seed)
+    check_game_codes(seed)
     abox = build_abox_index(seed)
+    species_pins = inputs.store.read_manifest().list_pins(SPECIES_PAGE_TYPE)
     extracts = {
         title: add_effect_note(extract, snapshot.index)
         for title, extract in parsed.extracts.items()
     }
-    built = build_batches(extracts, abox, snapshot.index)
+    batch_inputs = BatchInputs(abox, snapshot.index, build_species_resolver(species_pins))
+    built = build_batches(extracts, pages, batch_inputs)
     check_machine_conflicts(built.batches)
     outputs = tuple(
-        MovePageOutput(page=pages[title], extract=extracts[title], batch=built.batches[title])
+        MovePageOutput(
+            page=pages[title],
+            extract=extracts[title],
+            batch=built.batches[title],
+            chunk_batch=built.chunk_builds[title].batch,
+            chunk_notes=built.chunk_builds[title].notes,
+        )
         for title in pages
         if title in requested and title in built.batches
     )
@@ -396,6 +504,7 @@ def serialize_output(output: MovePageOutput) -> str:
             "revision_id": output.page.revision_id,
             "extract": output.extract.model_dump(mode="json"),
             "batch": serialize_batch(output.batch),
+            "chunk_batch": serialize_batch(output.chunk_batch),
         }
     )
 

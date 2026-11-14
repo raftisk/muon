@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from muon.ingestion.batch import ClaimDirection, GraphBatch, NodeRecord
+from muon.ingestion.bulbapedia import batching
 from muon.ingestion.bulbapedia.batching import (
     INTRODUCED_IN,
     MACHINE,
@@ -227,7 +228,8 @@ def edge_properties(
 def test_every_iri_constant_is_declared_in_the_ontology(model: OntologyModel) -> None:
     constants = {
         name: value
-        for name, value in vars(batches).items()
+        for module in (batches, batching)
+        for name, value in vars(module).items()
         if name.isupper() and isinstance(value, str) and value.startswith("https://muon.dev/ns/")
     }
     declared = model.classes | model.object_properties | model.datatype_properties

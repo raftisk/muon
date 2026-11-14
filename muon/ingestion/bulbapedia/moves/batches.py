@@ -1,4 +1,4 @@
-"""1 move page extract to its pass 1 batch.
+"""1 move page extract to its pass 1 and pass 2 batches.
 
 Pass 1 owns the Move and its Machines (scope {`Move`, `Machine`}). The Type, MoveDamageClass,
 MoveFlags, Generation and VersionGroups the move points at are A-Box stubs, resolved by
@@ -6,6 +6,11 @@ label so a missing name fails the page. The batch claims `hasType`, `hasDamageCl
 `hasFlag` and `introducedIn` out of the Move and `teachesMove` in from a Machine, owning the
 Machine, so an upsert prunes edges and machines the page no longer names. `inVersionGroup`
 is not claimed: the Machine id fixes its version group.
+
+Pass 2 owns the TextChunks of the page (scope {`TextChunk`}). Every chunk `describes` the
+Move, a flavor chunk links `fromWork` to its VersionGroups, and a mention links in through
+`mentionedIn`. The Move stub anchors the `describes` claim, so a page with no chunk left
+still removes the chunks it had.
 
 This module knows the pkmn universe, as every ingestion module of a source does.
 """
@@ -18,31 +23,47 @@ from muon.ingestion.batch import GraphBatch, NodeRecord, PropertyValue
 from muon.ingestion.bulbapedia.batching import (
     ALIASES,
     CORE,
+    DESCRIBES,
+    FROM_WORK,
     GENERATION,
     HAS_TYPE,
     IN,
     IN_VERSION_GROUP,
     INTRODUCED_IN,
     MACHINE,
+    MENTIONED_IN,
     MOVE,
     OUT,
     PKMN,
     TEACHES_MOVE,
+    TEXT_CHUNK,
     TYPE,
     VERSION_GROUP,
     AboxIndex,
+    BatchBuildError,
     ClaimRule,
+    MentionContext,
     Parts,
+    SpeciesResolver,
     assemble_batch,
+    build_chunk_record,
+    build_claims,
     build_edge,
     build_machine_id,
+    build_mention_parts,
     build_owner_claims,
+    build_stub,
+    build_work_parts,
+    describe_unresolved,
     drop_none,
     join_parts,
     list_owner_records,
+    number_chunks,
     require_abox,
     to_roman,
 )
+from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact
+from muon.ingestion.bulbapedia.moves.chunks import GAME_CODES
 from muon.ingestion.bulbapedia.moves.page import (
     DAMAGE_CLASS_KEY,
     GENERATION_KEY,
@@ -50,6 +71,8 @@ from muon.ingestion.bulbapedia.moves.page import (
     MACHINE_FIELDS,
     TYPE_KEY,
     MachineFact,
+    MoveNote,
+    MoveNoteKind,
     MovePageExtract,
 )
 
@@ -79,6 +102,17 @@ MOVE_SCOPE = frozenset({MOVE, MACHINE})
 FLAGS_FIELD = "flags"
 GENERATION_FIELD_PATTERN = re.compile(r"^(?:tm|hm|tr)(\d)$")
 
+GAME_CODE_FIELD = "game code"
+
+MOVE_CHUNK_SCOPE = frozenset({TEXT_CHUNK})
+MOVE_CHUNK_ANCHOR_CLAIMS = (ClaimRule(DESCRIBES, IN, TEXT_CHUNK, owns_other_end=True),)
+MOVE_CHUNK_OWNER_CLAIMS: dict[str, tuple[ClaimRule, ...]] = {
+    TEXT_CHUNK: (
+        ClaimRule(FROM_WORK, OUT, VERSION_GROUP, owns_other_end=False),
+        ClaimRule(MENTIONED_IN, IN, None, owns_other_end=False),
+    ),
+}
+
 MOVE_OWNER_CLAIMS: dict[str, tuple[ClaimRule, ...]] = {
     MOVE: (
         ClaimRule(HAS_TYPE, OUT, TYPE, owns_other_end=False),
@@ -92,6 +126,25 @@ MOVE_OWNER_CLAIMS: dict[str, tuple[ClaimRule, ...]] = {
 
 class MachineFieldError(Exception):
     """`MACHINE_FIELDS` names a version group the A-Box lacks or puts in another generation."""
+
+
+class GameCodeError(Exception):
+    """`GAME_CODES` names a version group the A-Box lacks."""
+
+
+@dataclass(frozen=True)
+class MoveChunkInputs:
+    """What pass 2 resolves against, and the permalink of the page its chunks cite."""
+
+    abox: AboxIndex
+    resolve_species: SpeciesResolver
+    source_url: str
+
+
+@dataclass(frozen=True)
+class MoveChunkBuild:
+    batch: GraphBatch
+    notes: tuple[MoveNote, ...]
 
 
 @dataclass(frozen=True)
@@ -221,3 +274,62 @@ def check_machine_fields(seed: GraphBatch) -> None:
         )
     if problems:
         raise MachineFieldError("; ".join(problems))
+
+
+def build_flavor_parts(
+    extract: MovePageExtract, fact: ChunkFact, chunk: NodeRecord, abox: AboxIndex
+) -> Parts:
+    """Build the `fromWork` edges of a flavor chunk. A label the A-Box lacks fails the page;
+    `check_game_codes` keeps that from happening."""
+    parts, missing = build_work_parts(fact, chunk, abox, VERSION_GROUP)
+    if missing:
+        raise BatchBuildError(extract.title, fact.section_path, GAME_CODE_FIELD, missing[0])
+    return parts
+
+
+def build_move_chunk_batch(extract: MovePageExtract, inputs: MoveChunkInputs) -> MoveChunkBuild:
+    """Build the pass 2 batch of 1 page.
+
+    Raises `ChunkBuildError` for a chunk id collision and `BatchBuildError` for a flavor
+    label the A-Box lacks. A mention that resolves to nothing becomes a note.
+    """
+    move = build_stub(MOVE, extract.name)
+    mentions = MentionContext(inputs.abox, inputs.resolve_species)
+    parts: list[Parts] = [Parts(nodes=(move,))]
+    notes: list[MoveNote] = []
+    for fact, label in number_chunks(extract.title, extract.chunks):
+        chunk = build_chunk_record(fact, label, move, inputs.source_url)
+        parts.append(Parts((chunk,), (build_edge(DESCRIBES, chunk, move),)))
+        if fact.aspect is ChunkAspect.FLAVOR:
+            parts.append(build_flavor_parts(extract, fact, chunk, inputs.abox))
+        mention_parts, unresolved = build_mention_parts(fact, chunk, move, mentions)
+        parts.append(mention_parts)
+        notes.extend(
+            MoveNote(
+                kind=MoveNoteKind.UNRESOLVED_MENTION,
+                field=fact.section_path,
+                detail=describe_unresolved(mention),
+            )
+            for mention in unresolved
+        )
+    joined = join_parts(parts)
+    claims = (
+        *build_claims([move.node_ref], MOVE_CHUNK_ANCHOR_CLAIMS),
+        *build_owner_claims(list_owner_records(joined, MOVE_CHUNK_SCOPE), MOVE_CHUNK_OWNER_CLAIMS),
+    )
+    return MoveChunkBuild(
+        batch=assemble_batch(MOVE_CHUNK_SCOPE, joined, claims), notes=tuple(notes)
+    )
+
+
+def check_game_codes(seed: GraphBatch) -> None:
+    """Fail unless every `GAME_CODES` label is an A-Box VersionGroup."""
+    groups = {node.name for node in seed.nodes if node.class_iri == VERSION_GROUP}
+    problems = [
+        f"{code} names {label!r}, which is no A-Box VersionGroup"
+        for code, labels in GAME_CODES.items()
+        for label in labels
+        if label not in groups
+    ]
+    if problems:
+        raise GameCodeError("; ".join(problems))

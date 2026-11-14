@@ -4,6 +4,7 @@ The parser tables name real moves, which a 3-page store lacks, so every test but
 test empties them.
 """
 
+import json
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -23,11 +24,12 @@ from muon.ingestion.bulbapedia.moves.run import (
     MoveRunInputs,
     PageStatus,
     ParseRunError,
+    build_species_resolver,
     parse_move_pages,
     serialize_output,
     write_outputs,
 )
-from muon.ingestion.bulbapedia.pages import Manifest, Page, PageStore, compute_sha1
+from muon.ingestion.bulbapedia.pages import Manifest, Page, PagePin, PageStore, compute_sha1
 from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotStore
 from tests.unit.ingestion.bulbapedia.moves.test_pokeapi import TABLES, write_snapshot
 
@@ -39,6 +41,19 @@ NO_INFOBOX = "Excavate (move)"
 BROKEN = "Broken (move)"
 TWIN = "Twin Ball (move)"
 PAGE_IDS = {SHADOW_BALL: 3858, Z_MOVE: 3901, NO_INFOBOX: 3902, BROKEN: 3903, TWIN: 3904}
+
+
+CHUNK_SECTIONS = """==Effect==
+Inflicts damage on {{p|Gengar}}.
+==Description==
+{{movedescentry|{{gameabbrev2|GS}}|Hurls a blob.}}
+{{movedescentry|{{gameabbrev2|C}}|Hurls a blob.}}
+==Trivia==
+* A {{roundy|x}} fact with <math>x^2</math>.
+{|
+|cell
+|}
+"""
 
 
 def move_wikitext(name: str, type_name: str = "Ghost", extra: str = "") -> str:
@@ -258,3 +273,61 @@ def test_tables_naming_moves_out_of_scope_stop_the_run(
 
     with pytest.raises(TableError, match="FLAG_OVERRIDES names dig"):
         run_parse(store, snapshot)
+
+
+def build_species_pin(title: str, page_id: int) -> PagePin:
+    page = Page(
+        title=title,
+        page_id=page_id,
+        revision_id=page_id,
+        timestamp=TIMESTAMP,
+        sha1=compute_sha1(title),
+        page_type="species",
+        wikitext=title,
+    )
+    return page.pin
+
+
+def test_build_species_resolver_reads_the_species_pins() -> None:
+    pins = [
+        build_species_pin("Gengar (Pokémon)", 94),
+        build_species_pin("Nidoran♀ (Pokémon)", 29),
+        build_species_pin("Mr. Mime (Pokémon)", 122),
+    ]
+    resolve = build_species_resolver(pins)
+
+    resolved = [resolve(name) for name in ("Gengar", "Nidoran♀", "Mr. Mime", "Gengar (Pokémon)")]
+
+    assert [(node.id, node.name) if node else None for node in resolved] == [
+        ("gengar", "Gengar"),
+        ("nidoran-f", "Nidoran♀"),
+        ("mr-mime", "Mr. Mime"),
+        None,
+    ]
+
+
+@pytest.mark.usefixtures("no_tables")
+def test_the_output_and_report_hold_the_chunk_batch(
+    tmp_path: Path, snapshot: SnapshotStore
+) -> None:
+    wikitexts = {SHADOW_BALL: move_wikitext("Shadow Ball", extra=CHUNK_SECTIONS)}
+    store = build_store(tmp_path / "data", wikitexts)
+    gengar = build_species_pin("Gengar (Pokémon)", 94)
+    store.write_manifest(store.read_manifest().replace_pins("species", [gengar]))
+
+    run = run_parse(store, snapshot)
+    (output,) = run.outputs
+    serialized = json.loads(serialize_output(output))
+
+    assert serialized["chunk_batch"]["scope"] == ["https://muon.dev/ns/core#TextChunk"]
+    assert run.report.chunks_per_aspect == {"effect": 1, "flavor": 1, "trivia": 1}
+    assert run.report.chunk_counts.edges == {"describes": 3, "fromWork": 2, "mentionedIn": 1}
+    assert [(t.name, t.count) for t in run.report.dropped_templates] == [("roundy", 1)]
+    assert (run.report.removed_tables_total, run.report.removed_tables_per_page) == (
+        1,
+        {SHADOW_BALL: 1},
+    )
+    assert (run.report.math_formulas_total, run.report.math_formulas_per_page) == (
+        1,
+        {SHADOW_BALL: 1},
+    )

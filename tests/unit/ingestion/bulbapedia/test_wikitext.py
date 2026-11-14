@@ -199,6 +199,8 @@ def test_read_params_keeps_the_last_repeat() -> None:
 
 # The cases marked "API" hold the text of Bulbapedia's own rendering of the example, read
 # once through `action=expandtemplates` on 2026-10-12.
+# The cases marked "ET" hold the text of the rendering read on Special:ExpandTemplates on
+# 2026-11-13, with links shown as their display text.
 TEMPLATE_CASES = [
     ("{{tt|Evo.|Evolves}}", "Evo."),
     ("{{color2|000|Fire Stone|text}}", "text"),
@@ -256,6 +258,117 @@ TEMPLATE_CASES = [
     ("{{TCG|Sword & Shield|Sword & Shield set}}", "Sword & Shield set"),  # API
     ("{{ScPkmn}}", "Pokémon"),
     ("{{!}}", "|"),
+    ("{{'}}", "'"),  # ET
+    ("{{status|paralysis|paralyzed}}", "paralyzed"),  # ET
+    ("{{status|burn}}", "burn"),  # ET
+    ("{{weather|Hail|hailstorm}}", "hailstorm"),  # ET
+    ("{{pmin|Brazil|Brazilian Portuguese}}", "Brazilian Portuguese"),  # ET
+    ("{{ga|Red|player}}", "player"),  # ET
+    ("{{tc|Ace Trainer|Cooltrainer}}", "Cooltrainer"),  # ET
+    ("{{b|Liechi}}", "Liechi"),  # ET
+    ("{{i|Poké Ball|normal Poké Ball}}", "normal Poké Ball"),  # ET
+    ("{{an|Steven Stone|Steven}}", "Steven"),  # ET
+    ("{{jwp|瓦割り|Tile Break}}", "Tile Break"),  # ET
+    ("{{vg|Pokémon Ranger}}", "Pokémon Ranger"),  # ET
+    ("{{GO|Mega Evolution|Mega-Evolved}}", "Mega-Evolved"),  # ET
+    ("{{adv|Professor Oak|her grandfather}}", "her grandfather"),  # ET
+    ("{{hi|ride Pokémon}}", "ride Pokémon"),  # ET
+    ("{{jpn|Pokémon Stadium|Japanese}}", "Japanese"),  # ET
+    ("{{fd|Urshifu|Single Strike Style}}", "Single Strike Style"),  # ET
+    ("{{poko|Ditto}}", "Ditto"),  # ET
+    ("{{sbw|self-destruct|on accident}}", "on accident"),  # ET
+    ("{{si|Gracidea|Gracidea garden}}", "Gracidea garden"),  # ET
+    ("{{un|Cameron}}", "Cameron"),  # ET
+    ("{{ka|Lily}}", "Lily"),  # ET
+    ("{{mas|Mega Evolution|Mega Evolving}}", "Mega Evolving"),  # ET
+    ("{{mov|Arceus|Arceus|12}}", "Arceus"),  # ET
+    (
+        "{{n|Kanto Classic Wi-Fi tournament announced|Kanto Classic Wi-Fi tournament}}",
+        "Kanto Classic Wi-Fi tournament",
+    ),  # ET
+    ("{{smw|Super Mushroom}}", "Super Mushroom"),  # ET
+    ("{{wk|Kirby (series)|''Kirby'' video game series}}", "Kirby video game series"),  # ET
+    ("{{few|Roy}}", "Roy"),  # ET
+    ("{{ci|Snowpoint}}", "Snowpoint"),  # ET
+    ("{{ho|Victory Road}}", "Victory Road"),  # ET
+    ("{{jo|Webster|Randy}}", "Randy"),  # ET
+    ("{{kal|Pokémon Research Lab|Sycamore Pokémon Lab}}", "Sycamore Pokémon Lab"),  # ET
+    ("{{al|Trainers' School}}", "Trainers' School"),  # ET
+    ("{{book|Pikachu's Vacation}}", "Pikachu's Vacation"),  # ET
+    ("{{ma|Volcanion and the Mechanical Marvel|manga adaptation}}", "manga adaptation"),  # ET
+    ("{{so|Black and White|opening}}", "opening"),  # ET
+    ("{{SSB|Pokémon Trainer|Ivysaur}}", "Ivysaur"),  # ET
+    ("{{UNITE|Zacian}}", "Zacian"),  # ET
+    ("{{wikipedia|mollusk}}", "mollusk"),  # ET
+    ("{{Template:Wp|ungulate}}", "ungulate"),  # ET
+    ("{{gdis|Battle Tower|II}}", "Battle Tower"),  # ET
+    ("{{gdis|Battle Frontier|III|Hoenn Battle Frontier}}", "Hoenn Battle Frontier"),  # ET
+    ("{{TP|Dawn|Ash's/Dawn's Aipom|Ambipom}}", "Ash's/Dawn's Aipom"),  # ET
+    ("{{file|102Exeggcute Dream.png|Dream World}}", "Dream World"),  # ET
+    ("{{lang|grc|ἤλεκτρον}}", "ἤλεκτρον"),  # ET
+    ("{{AP|Mankey|Primeape}}", "Mankey"),  # ET
+    ("{{j|憎し}}", "憎し"),  # ET
+    ("{{mdc|Archen|smd}}", "Archen"),  # ET
+    ("{{rtn|117|Hoenn}}", "117"),  # ET
+    ("{{v2|Black and White|s}}", "Black and White"),  # ET
+    ("{{TCG ID|Fossil|Gengar|5}}", "Gengar"),  # ET
+    ("{{TCG ID|Base Set|Blastoise|2|featured on}}", "featured on"),  # ET
+    ("{{rt|5|Alola}}", "Route 5"),  # ET
+    ("{{rt|228#Trainers|Sinnoh|Corbin}}", "Corbin"),  # ET
+    ("{{me|Lucario}}", "Mega Lucario"),  # ET
+    ("{{badge|Fen}}", "Fen Badge"),  # ET
+    ("{{egg2|Flying}}", "Flying Group"),  # ET
+    ("{{ct|Water}}", "Water-type"),  # ET
+    ("{{player}}", "player"),  # ET
+    ("{{player|a Trainer}}", "a Trainer"),  # ET
+    ("{{Tera}}", "Tera"),  # ET
+    ("{{Ash|main character}}", "main character"),  # ET
+    ("{{ashfr}}", "his friends"),  # ET
+    ("{{MTR|one member}}", "one member"),  # ET
+    ("{{season}}", "season"),  # ET
+    ("{{spin-off games|spin-off game}}", "spin-off game"),  # ET
+    ("{{LGPE}}", "Pokémon: Let's Go, Pikachu! and Let's Go, Eevee!"),  # ET
+    ("{{safari|Johto}}", "Safari Zone"),  # ET
+    ("{{Abilities}}", "Abilities"),  # ET
+    ("{{Berries}}", "Berries"),  # ET
+    ("{{Gary}}", "Gary"),  # ET
+    ("{{Todd}}", "Todd"),  # ET
+    ("{{TRT}}", "Team Rocket"),  # ET
+    ("{{Trading Card Game}}", "TCG"),  # ET
+    ("{{PTCG}}", "TCG"),  # ET
+    ("{{Trading Figure Game}}", "TFG"),  # ET
+    ("{{Pokémon XD}}", "Pokémon XD"),  # ET
+    ("{{XD}}", "XD"),  # ET
+    ("{{DetPikMov}}", "POKÉMON Detective Pikachu"),  # ET
+    ("{{STAB}}", "STAB"),  # ET
+    ("{{EV}}", "EV"),  # ET
+    ("{{IV}}", "IV"),  # ET
+    ("{{PP}}", "PP"),  # ET
+    ("{{ScBall}}", "Poké Ball"),  # ET
+    ("{{PDollar}}", "$"),  # ET
+    ("{{v|Gold and Silver|s}}", "Gold and Silver Versions"),  # ET
+    ("{{v|Crystal}}", "Crystal Version"),  # ET
+    ("{{2t|Electric|Flying}}", "Electric/Flying"),  # ET
+    ("{{frac|1|1}}", "1/1"),  # ET
+    ("{{sk|On a Roll|9}}", "On a Roll 9"),  # ET
+    ("{{sk|Turning On the Flash!}}", "Turning On the Flash!"),  # ET
+    ("{{sync|Ash|Pikachu}}", "Ash & Pikachu"),  # ET
+    ("{{TR|71|Leaf Storm}}", "TR71 (Leaf Storm)"),  # ET
+    ("{{Ruby|大草原|だいそうげん}}", "大草原(だいそうげん)"),  # ET
+    ("{{aniseries|OS}}", "Pokémon the Series: The Beginning"),  # ET
+    ("{{aniseries|AG}}", "Pokémon the Series: Ruby and Sapphire"),  # ET
+    ("{{aniseries|PTS}}", "Pokémon the Series"),  # ET
+    ("{{aniseries|DP|Diamond and Pearl}}", "Diamond and Pearl"),  # ET
+    ("{{aniseries}}", "Pokémon animated series"),  # ET
+    ("{{game4|BWB2W2}}", "Pokémon Black, White, Black 2, and White 2"),  # ET
+    ("{{game4|SMUSUM}}", "Pokémon Sun, Moon, Ultra Sun, and Ultra Moon"),  # ET
+    ("{{3v2|Diamond|Pearl|Platinum}}", "Diamond, Pearl, and Platinum"),  # ET
+    ("{{game2|Ruby|Sapphire|Emerald}}", "Pokémon Ruby, Sapphire, and Emerald"),  # ET
+    ("{{4v|Black|White|2}}", "Black, White, Black 2, and White 2"),  # ET
+    (
+        "{{game5|Gold|Silver|Crystal|HeartGold|SoulSilver}}",
+        "Pokémon Gold, Silver, Crystal, HeartGold, and SoulSilver",
+    ),  # ET
 ]
 
 
@@ -273,9 +386,20 @@ def test_to_plain_text_renders_text_templates(value: str, expected: str) -> None
 
 
 def test_to_plain_text_drops_layout_templates_that_carry_no_prose() -> None:
-    value = "a {{bulbanews|On the Origin of Species}} b {{left clear}} c {{aniseries|BW}} d"
+    value = "a {{bulbanews|On the Origin of Species}} b {{left clear}} c {{sup/9|SV}} d"
 
     assert to_plain_text(value) == "a b c d"
+
+
+def test_render_rule_shows_the_text_of_a_code_and_display_text_as_written() -> None:
+    rule = TextRule(params=("2", "1"), suffix=" x", codes={"AB": "Alpha Beta"})
+    code = mwparserfromhell.parse("{{c|AB}}").filter_templates()[0]
+    plain = mwparserfromhell.parse("{{c|CD}}").filter_templates()[0]
+    shown = mwparserfromhell.parse("{{c|AB|shown}}").filter_templates()[0]
+
+    assert render_rule(code, rule, frozenset()).text == "Alpha Beta"
+    assert render_rule(plain, rule, frozenset()).text == "CD x"
+    assert render_rule(shown, rule, frozenset()).text == "shown"
 
 
 def test_to_plain_text_drops_other_templates() -> None:
@@ -342,14 +466,14 @@ def test_read_plain_text_ignores_templates_in_removed_parts(value: str) -> None:
 
 
 def test_read_plain_text_lists_dropped_templates_in_page_order_with_repeats() -> None:
-    result = read_plain_text("a {{roundy|x}} b {{aniseries|BW}} c {{Roundy|y}} {{p|Onix}}")
+    result = read_plain_text("a {{roundy|x}} b {{bulbanews|BW}} c {{Roundy|y}} {{p|Onix}}")
 
     assert result.text == "a b c Onix"
-    assert result.dropped == ("roundy", "aniseries", "roundy")
+    assert result.dropped == ("roundy", "bulbanews", "roundy")
 
 
 def test_read_plain_text_does_not_list_templates_inside_removed_parts() -> None:
-    result = read_plain_text("x<ref>{{roundy}}</ref>[[File:A.png|{{aniseries|BW}}]]y")
+    result = read_plain_text("x<ref>{{roundy}}</ref>[[File:A.png|{{bulbanews|BW}}]]y")
 
     assert result.dropped == ()
 
@@ -536,6 +660,19 @@ def test_move_aliases_drop_footnotes_source_notes_and_commented_names() -> None:
         "Bola Bayangan",
         "シャドーボール",
     )
+
+
+def test_move_aliases_read_no_romanization_from_a_source_note() -> None:
+    wikitext = (
+        "==In other languages==\n{{Langtable\n"
+        "|fi=Kaksoisterä ([[S01|''Pokémon the Series'' season 1]])<br>"
+        "Tuplaterä (''[[Pokémon the Series: Ruby and Sapphire]]'')\n"
+        "|zh_cmn=暗影球 ''Ànyǐng Qiú''\n}}"
+    )
+
+    aliases = read_aliases(split_sections(wikitext), {}, "Double-Edge", MOVE_RULES)
+
+    assert aliases == ("Kaksoisterä", "Tuplaterä", "暗影球", "Ànyǐng Qiú")
 
 
 def test_move_rules_read_only_the_langtable() -> None:

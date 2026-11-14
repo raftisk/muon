@@ -15,7 +15,7 @@ species index of the whole run to resolve the species a chunk mentions.
 
 import json
 from collections import Counter
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -24,9 +24,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from muon.ingestion.batch import GraphBatch, NodeRef
 from muon.ingestion.bulbapedia.batching import (
+    ASPECT,
     UNIVERSE,
     AboxIndex,
     BatchBuildError,
+    ChunkBuildError,
     build_abox_index,
 )
 from muon.ingestion.bulbapedia.pages import (
@@ -37,11 +39,9 @@ from muon.ingestion.bulbapedia.pages import (
     write_text_atomically,
 )
 from muon.ingestion.bulbapedia.species.batches import (
-    ASPECT,
     CONDITION,
     POKEMON_SPECIES,
     ChunkBuild,
-    ChunkBuildError,
     ChunkInputs,
     EvolutionBuild,
     SpeciesIndex,
@@ -163,6 +163,10 @@ class ParseReport(ReportModel):
     chunk_counts: BatchCounts
     chunks_per_aspect: Mapping[str, int]
     dropped_templates: tuple[TemplateCount, ...]
+    removed_tables_total: int
+    removed_tables_per_page: Mapping[str, int]
+    math_formulas_total: int
+    math_formulas_per_page: Mapping[str, int]
     pages_without_chunks: tuple[str, ...]
     form_candidates: tuple[FormCandidateEntry, ...]
     overrides_applied: tuple[ReportNote, ...]
@@ -404,6 +408,14 @@ def count_dropped_templates(outputs: Iterable[PageOutput]) -> tuple[TemplateCoun
     return tuple(TemplateCount(name=name, count=count) for name, count in ranked)
 
 
+def count_per_page(
+    outputs: Iterable[PageOutput], read_count: Callable[[SpeciesPageExtract], int]
+) -> dict[str, int]:
+    """Map each page title whose extract gives a nonzero count to that count."""
+    counts = {o.extract.title: read_count(o.extract) for o in outputs}
+    return {title: count for title, count in sorted(counts.items()) if count}
+
+
 def count_chunks_per_aspect(chunk_batches: Iterable[GraphBatch]) -> dict[str, int]:
     aspects: Counter[str] = Counter()
     for batch in chunk_batches:
@@ -430,6 +442,8 @@ def build_report(
     chunk_batches = [o.chunk_batch for o in outputs]
     evolutions = [node for batch in evolution_batches for node in batch.owner_nodes]
     structured = sum(CONDITION not in node.properties for node in evolutions)
+    tables = count_per_page(outputs, lambda extract: extract.removed_tables)
+    formulas = count_per_page(outputs, lambda extract: extract.math_formulas)
     return ParseReport(
         pages=results,
         pages_parsed=sum(r.status is PageStatus.PARSED for r in results),
@@ -440,6 +454,10 @@ def build_report(
         chunk_counts=count_batch(chunk_batches),
         chunks_per_aspect=count_chunks_per_aspect(chunk_batches),
         dropped_templates=count_dropped_templates(outputs),
+        removed_tables_total=sum(tables.values()),
+        removed_tables_per_page=tables,
+        math_formulas_total=sum(formulas.values()),
+        math_formulas_per_page=formulas,
         pages_without_chunks=tuple(
             o.extract.title for o in outputs if not o.chunk_batch.owner_nodes
         ),

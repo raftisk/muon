@@ -10,6 +10,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from muon.ingestion.bulbapedia.chunking import ChunkFact
+
 
 class PageParseError(Exception):
     """A page broke a rule that has no residue path. The message names all 4 fields."""
@@ -53,6 +55,7 @@ class NoteKind(StrEnum):
     UNRESOLVED_MENTION = "unresolved_mention"
     UNMATCHED_FORM_LABEL = "unmatched_form_label"
     UNKNOWN_VERSION = "unknown_version"
+    LONG_CHUNK = "long_chunk"
 
 
 class PageNote(ExtractModel):
@@ -191,39 +194,12 @@ class FormChangeFact(ExtractModel):
     held_item: str
 
 
-class ChunkAspect(StrEnum):
-    BIOLOGY = "biology"
-    ORIGIN = "origin"
-    TRIVIA = "trivia"
-    POKEDEX = "pokedex"
-
-
-class MentionRef(ExtractModel):
-    """A typed template that rendered into a chunk: its name and its raw 1st parameter."""
-
-    template: str
-    target: str
-
-
-class ChunkFact(ExtractModel):
-    """1 chunk in Bulbapedia terms. `subject_id` is a form id of the page.
-
-    `versions` holds the game names of a Pokédex entry, in page order, and is empty for
-    every other aspect.
-    """
-
-    subject_id: str
-    aspect: ChunkAspect
-    section_path: str
-    text: str
-    mentions: tuple[MentionRef, ...]
-    versions: tuple[str, ...] = ()
-
-
 class SpeciesPageExtract(ExtractModel):
     """Everything 1 pinned page yields. `forms` lists the base node first.
 
     `dropped_templates` counts the templates left out of chunk text, by normalized name.
+    `removed_tables` and `math_formulas` count the tables left out of prose chunks and the
+    `<math>` formulas kept in them as LaTeX source.
     """
 
     title: str
@@ -238,3 +214,5 @@ class SpeciesPageExtract(ExtractModel):
     notes: tuple[PageNote, ...]
     chunks: tuple[ChunkFact, ...] = ()
     dropped_templates: Mapping[str, int] = Field(default_factory=dict)
+    removed_tables: int = 0
+    math_formulas: int = 0

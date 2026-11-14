@@ -11,6 +11,7 @@ import pytest
 from muon.graph import GraphQueryError, Statement
 from muon.ingestion.bulbapedia.batching import (
     PKMN,
+    TEXT_CHUNK,
 )
 from muon.ingestion.bulbapedia.pages import PageStore
 from muon.ingestion.bulbapedia.species import ingest
@@ -19,7 +20,6 @@ from muon.ingestion.bulbapedia.species.batches import (
     FORM_CHANGE,
     LEARNSET_ENTRY,
     POKEMON_SPECIES,
-    TEXT_CHUNK,
 )
 from muon.ingestion.bulbapedia.species.ingest import (
     INGEST_REPORT_FILE_NAME,

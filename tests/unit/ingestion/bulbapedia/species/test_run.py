@@ -3,8 +3,9 @@ from pathlib import Path
 
 import pytest
 
+from muon.ingestion.bulbapedia import batching
 from muon.ingestion.bulbapedia.pages import PageStore
-from muon.ingestion.bulbapedia.species import batches, forms
+from muon.ingestion.bulbapedia.species import forms
 from muon.ingestion.bulbapedia.species.extract import NoteKind, ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError, PageOverride
 from muon.ingestion.bulbapedia.species.run import (
@@ -261,7 +262,7 @@ def test_a_title_run_does_not_delete_other_outputs(tmp_path: Path, store: PageSt
 
 
 TRIVIA = (
-    "==Trivia==\n* Alpha meets {{p|Beta}} and {{p|Nobody}} near {{roundy|x}}{{aniseries|BW}}.\n"
+    "==Trivia==\n* Alpha meets {{p|Beta}} and {{p|Nobody}} near {{roundy|x}}{{bulbanews|BW}}.\n"
 )
 POKEDEX = (
     "==Game data==\n===Pokédex entries===\n{{Dex/Entry1|v=Gold|entry=First text.}}\n"
@@ -296,7 +297,7 @@ def test_a_page_with_chunk_sections_gets_chunks_and_one_without_gets_anchors_and
 
 def test_the_report_counts_chunks_per_class_aspect_and_dropped_template(tmp_path: Path) -> None:
     trivia_beta = (
-        "==Trivia==\n* One {{roundy|x}}.\n* Two {{aniseries|BW}} {{zeta}} {{zeta}} {{zeta}}.\n"
+        "==Trivia==\n* One {{roundy|x}}.\n* Two {{bulbanews|BW}} {{zeta}} {{zeta}} {{zeta}}.\n"
     )
     run = run_parse(chunk_wikitexts(tmp_path, alpha=TRIVIA + POKEDEX, beta=trivia_beta))
 
@@ -308,7 +309,7 @@ def test_the_report_counts_chunks_per_class_aspect_and_dropped_template(tmp_path
     assert report.chunk_counts.claims == {"describes": 2, "fromWork": 5, "mentionedIn": 5}
     assert [(t.name, t.count) for t in report.dropped_templates] == [
         ("zeta", 3),
-        ("aniseries", 2),
+        ("bulbanews", 2),
         ("roundy", 2),
     ]
 
@@ -317,7 +318,7 @@ def test_dropped_templates_are_sorted_by_count_then_name(tmp_path: Path) -> None
     run = run_parse(chunk_wikitexts(tmp_path, alpha=TRIVIA))
 
     assert [(t.name, t.count) for t in run.report.dropped_templates] == [
-        ("aniseries", 1),
+        ("bulbanews", 1),
         ("roundy", 1),
     ]
 
@@ -332,7 +333,7 @@ def test_chunk_notes_reach_the_report(tmp_path: Path) -> None:
 def test_a_chunk_id_collision_fails_only_its_page(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(batches, "hash_chunk_text", lambda text: "deadbeef")
+    monkeypatch.setattr(batching, "hash_chunk_text", lambda text: "deadbeef")
     run = run_parse(chunk_wikitexts(tmp_path, alpha=POKEDEX))
 
     failed = [r for r in run.report.pages if r.status is PageStatus.FAILED]
@@ -352,7 +353,7 @@ def test_the_chunk_batch_is_written_and_a_second_run_is_identical(tmp_path: Path
     data = json.loads((first / PAGE_OUTPUT_DIR / "101.json").read_text(encoding="utf-8"))
     assert data["chunk_batch"]["scope"] == ["https://muon.dev/ns/core#TextChunk"]
     assert data["extract"]["chunks"]
-    assert data["extract"]["dropped_templates"] == {"aniseries": 1, "roundy": 1}
+    assert data["extract"]["dropped_templates"] == {"bulbanews": 1, "roundy": 1}
     beta = json.loads((first / PAGE_OUTPUT_DIR / "102.json").read_text())
     assert [node["id"] for node in beta["chunk_batch"]["nodes"]] == ["beta"]
     assert len(beta["chunk_batch"]["claims"]) == len(CHUNK_ANCHOR_PATTERNS)
