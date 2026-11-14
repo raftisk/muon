@@ -27,8 +27,11 @@ from dataclasses import dataclass, field
 from mwparserfromhell.nodes import Node, Tag, Template, Text, Wikilink
 from mwparserfromhell.wikicode import Wikicode
 
+from muon.ingestion.batch import GraphBatch
+from muon.ingestion.bulbapedia.batching import LOCATION
 from muon.ingestion.bulbapedia.pages import Page
-from muon.ingestion.bulbapedia.runs import ReportModel
+from muon.ingestion.bulbapedia.runs import BatchCounts, ReportModel, count_batches
+from muon.ingestion.bulbapedia.species.batches import ENCOUNTER_KIND, IN_VERSION, METHOD
 from muon.ingestion.bulbapedia.species.chunks import match_marker
 from muon.ingestion.bulbapedia.species.extract import EncounterFact, SpeciesPageExtract
 from muon.ingestion.bulbapedia.species.forms import ResolvedForm
@@ -200,6 +203,7 @@ METHOD_KINDS: Mapping[str, str] = {
     GIFT: GIFT,
     SNAG: SNAG,
 }
+NO_METHOD_LABEL = "none"
 NO_METHOD_KIND = "wild"
 ENCOUNTER_KINDS = ("wild", "raid", STATIC, GIFT, SNAG, PAL_PARK_ROW.kind)
 NAMESPACE_PREFIXES = ("File:", "Image:", "Category:", ":Category:", "Template:")
@@ -643,10 +647,17 @@ def read_encounters(
 
 
 class EncounterReport(ReportModel):
-    """The encounter outcomes of the requested pages. `candidate_occurrences` and
-    `unknown_location_occurrences` count every link, not every title."""
+    """The encounter outcomes and batch counts of the requested pages.
+    `candidate_occurrences` and `unknown_location_occurrences` count every link, not every
+    title. `per_version` is keyed by Version id, and `per_method` counts an encounter with
+    no method under `NO_METHOD_LABEL`."""
 
     facts: int
+    encounter_counts: BatchCounts
+    per_method: Mapping[str, int]
+    per_kind: Mapping[str, int]
+    per_version: Mapping[str, int]
+    location_stubs: int
     rows: Mapping[str, int]
     skipped_versions: Mapping[str, int]
     unknown_versions: Mapping[str, int]
@@ -672,10 +683,34 @@ def sort_counter(counter: Counter[str]) -> dict[str, int]:
     return dict(sorted(counter.items()))
 
 
-def build_encounter_report(readings: Sequence[EncounterReading]) -> EncounterReport:
+def build_encounter_report(
+    readings: Sequence[EncounterReading], batches: Sequence[GraphBatch]
+) -> EncounterReport:
     totals = sum_counts(readings)
+    owners = [node for batch in batches for node in batch.owner_nodes]
     return EncounterReport(
         facts=sum(len(reading.facts) for reading in readings),
+        encounter_counts=count_batches(batches),
+        per_method=sort_counter(
+            Counter(str(node.properties.get(METHOD, NO_METHOD_LABEL)) for node in owners)
+        ),
+        per_kind=sort_counter(Counter(str(node.properties[ENCOUNTER_KIND]) for node in owners)),
+        per_version=sort_counter(
+            Counter(
+                edge.end.id
+                for batch in batches
+                for edge in batch.edges
+                if edge.property_iri == IN_VERSION
+            )
+        ),
+        location_stubs=len(
+            {
+                node.id
+                for batch in batches
+                for node in batch.stub_nodes
+                if node.class_iri == LOCATION
+            }
+        ),
         rows=sort_counter(totals.rows),
         skipped_versions=sort_counter(totals.skipped_versions),
         unknown_versions=sort_counter(totals.unknown_versions),

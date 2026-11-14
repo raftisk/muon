@@ -900,7 +900,7 @@ def build_parse_report(failed_titles: tuple[str, ...] = ()) -> ParseReport:
         abox_stub_misses=0,
         evolution_species_stub_misses=0,
         residue=residue,
-        encounters=build_encounter_report([]),
+        encounters=build_encounter_report([], []),
     )
 
 
@@ -981,6 +981,8 @@ def test_parse_prints_counts_and_residue_per_kind(
         "chunk edges: 8",
         "residue evolution: 1",
         "encounter facts: 0",
+        "encounter owner nodes: 0",
+        "encounter location stubs: 0",
         "encounter candidates: 0",
         "encounter locations: 0",
         "encounter not_a_location: 0",

@@ -7,6 +7,7 @@ from muon.ingestion.bulbapedia import batching
 from muon.ingestion.bulbapedia.pages import Page, PageStore, compute_sha1
 from muon.ingestion.bulbapedia.runs import PageStatus
 from muon.ingestion.bulbapedia.species import encounters, forms, run
+from muon.ingestion.bulbapedia.species.batches import ENCOUNTER, ENCOUNTER_SCOPE, POKEMON_SPECIES
 from muon.ingestion.bulbapedia.species.encounters import EncounterTableError
 from muon.ingestion.bulbapedia.species.extract import NoteKind, ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError, PageOverride
@@ -461,3 +462,29 @@ def test_a_table_version_outside_the_abox_stops_the_run(
         run_parse(store)
 
     assert not (tmp_path / "parsed").exists()
+
+
+def test_every_parsed_page_has_an_encounter_batch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(run, "LOCATION_INFOBOXES", frozenset({LOCATION_INFOBOX}))
+    parse = run_parse(build_encounter_store(tmp_path / "data", ("Cave", "Lake")))
+
+    assert [o.page.title for o in parse.outputs] == [ALPHA, BETA]
+    for output in parse.outputs:
+        assert output.encounter_batch.scope == ENCOUNTER_SCOPE
+    root = tmp_path / "parsed"
+    write_outputs(parse, root, is_full_run=True)
+    alpha = json.loads((root / PAGE_OUTPUT_DIR / "101.json").read_text(encoding="utf-8"))
+    owners = [n["id"] for n in alpha["encounter_batch"]["nodes"] if n["class_iri"] == ENCOUNTER]
+    assert owners == ["alpha:cave:red:surf", "alpha:lake:red:surf"]
+
+
+def test_a_page_without_game_locations_gives_anchors_and_claims_only(tmp_path: Path) -> None:
+    parse = run_parse(build_encounter_store(tmp_path / "data", ("Cave", "Lake")))
+
+    beta = next(o for o in parse.outputs if o.page.title == BETA)
+    assert beta.encounter_batch.owner_nodes == ()
+    assert beta.encounter_batch.edges == ()
+    assert {node.class_iri for node in beta.encounter_batch.nodes} == {POKEMON_SPECIES}
+    assert beta.encounter_batch.claims

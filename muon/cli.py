@@ -399,6 +399,9 @@ def format_parse_report(report: ParseReport, elapsed_seconds: float) -> str:
 def format_encounter_lines(report: EncounterReport) -> list[str]:
     return [
         f"encounter facts: {report.facts}",
+        f"encounter owner nodes: {sum(report.encounter_counts.owner_nodes.values())}",
+        f"encounter location stubs: {report.location_stubs}",
+        *(f"encounter kind {kind}: {count}" for kind, count in report.per_kind.items()),
         f"encounter candidates: {report.candidate_occurrences}",
         f"encounter locations: {len(report.locations)}",
         f"encounter not_a_location: {len(report.not_a_location)}",

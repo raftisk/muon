@@ -1,4 +1,4 @@
-"""A parse run over the pinned species pages: extracts, 3 batches, residue, report and files.
+"""A parse run over the pinned species pages: extracts, 4 batches, residue, report and files.
 
 `parse_species_pages` reads the page cache only. It parses every pinned page, because the
 species index that resolves evolution references needs all of them, and keeps the outputs
@@ -7,12 +7,13 @@ run goes on; an override that matches nothing and an unknown `--title` stop the 
 anything is written. Output files are byte-identical across runs: sets are sorted, JSON
 keys are sorted and the report holds no time.
 
-A page gives 3 batches, even when the evolution batch or the chunk batch has no owner
+A page gives 4 batches, even when the evolution, chunk or encounter batch has no owner
 record: its anchors and claims still delete what the page gave before. The species batch
 and the evolution batch come first and are independent of the chunk batch, which needs the
 species index of the whole run to resolve the species a chunk mentions.
 
-The encounters of a page are read against the location pins. A full run also writes the
+The encounters of a page are read against the location pins and become its encounter
+batch. A full run also writes the
 location candidate file, the title list of the next Special:Export of location pages.
 """
 
@@ -58,6 +59,7 @@ from muon.ingestion.bulbapedia.species.batches import (
     SpeciesIndex,
     build_change_id,
     build_chunk_batch,
+    build_encounter_batch,
     build_evolution_batch,
     build_species_batch,
     build_species_index,
@@ -186,6 +188,7 @@ class PageOutput:
     species_batch: GraphBatch
     evolution_batch: GraphBatch
     chunk_batch: GraphBatch
+    encounter_batch: GraphBatch
     notes: tuple[PageNote, ...]
     residue: tuple[ResidueItem, ...]
     encounters: EncounterReading
@@ -197,6 +200,7 @@ class PageBatches:
     evolution: EvolutionBuild
     chunks: ChunkBuild
     encounters: EncounterReading
+    encounter_batch: GraphBatch
 
 
 @dataclass(frozen=True)
@@ -456,7 +460,9 @@ def build_report(
         abox_stub_misses=abox_misses,
         evolution_species_stub_misses=species_misses,
         residue=tuple(item for o in outputs for item in o.residue),
-        encounters=build_encounter_report([o.encounters for o in outputs]),
+        encounters=build_encounter_report(
+            [o.encounters for o in outputs], [o.encounter_batch for o in outputs]
+        ),
     )
 
 
@@ -467,6 +473,7 @@ def build_output(page: Page, extract: SpeciesPageExtract, batches: PageBatches) 
         species_batch=batches.species,
         evolution_batch=batches.evolution.batch,
         chunk_batch=batches.chunks.batch,
+        encounter_batch=batches.encounter_batch,
         notes=(*extract.notes, *batches.evolution.notes, *batches.chunks.notes),
         residue=build_residue_items(extract),
         encounters=batches.encounters,
@@ -495,7 +502,7 @@ def read_page_encounters(
 
 
 def parse_species_pages(inputs: RunInputs) -> ParseRun:
-    """Parse the pinned species pages, build the 3 batches of each and read their encounters.
+    """Parse the pinned species pages and build the 4 batches of each.
 
     Raises `ParseRunError` for a title that is not pinned, `OverrideError` for an override
     that matches nothing and `EncounterTableError` for an encounter table version the
@@ -554,7 +561,11 @@ def parse_species_pages(inputs: RunInputs) -> ParseRun:
             pages[title],
             extracts[title],
             PageBatches(
-                species_batches[title], builds[title], chunk_builds[title], encounters[title]
+                species_batches[title],
+                builds[title],
+                chunk_builds[title],
+                encounters[title],
+                build_encounter_batch(extracts[title], encounters[title].facts, abox),
             ),
         )
         for title in kept
@@ -578,6 +589,7 @@ def serialize_output(output: PageOutput) -> str:
             "species_batch": serialize_batch(output.species_batch),
             "evolution_batch": serialize_batch(output.evolution_batch),
             "chunk_batch": serialize_batch(output.chunk_batch),
+            "encounter_batch": serialize_batch(output.encounter_batch),
             "residue": [item.model_dump(mode="json") for item in output.residue],
         }
     )
