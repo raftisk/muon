@@ -194,6 +194,16 @@ class FormChangeFact(ExtractModel):
     held_item: str
 
 
+class EncounterFact(ExtractModel):
+    """1 coarse encounter: a species node of the page at a location title in a version."""
+
+    species_id: str
+    location_title: str
+    version: str
+    method: str | None
+    kind: str
+
+
 class SpeciesPageExtract(ExtractModel):
     """Everything 1 pinned page yields. `forms` lists the base node first.
 

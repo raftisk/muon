@@ -30,7 +30,7 @@ from mwparserfromhell.wikicode import Wikicode
 from muon.ingestion.bulbapedia.pages import Page
 from muon.ingestion.bulbapedia.runs import ReportModel
 from muon.ingestion.bulbapedia.species.chunks import match_marker
-from muon.ingestion.bulbapedia.species.extract import ExtractModel, SpeciesPageExtract
+from muon.ingestion.bulbapedia.species.extract import EncounterFact, SpeciesPageExtract
 from muon.ingestion.bulbapedia.species.forms import ResolvedForm
 from muon.ingestion.bulbapedia.species.locations import (
     LocationIndex,
@@ -207,16 +207,6 @@ NAMESPACE_PREFIXES = ("File:", "Image:", "Category:", ":Category:", "Template:")
 
 class EncounterTableError(Exception):
     """A table row names a version the A-Box lacks."""
-
-
-class EncounterFact(ExtractModel):
-    """1 coarse encounter: a species node of the page at a location title in a version."""
-
-    species_id: str
-    location_title: str
-    version: str
-    method: str | None
-    kind: str
 
 
 @dataclass(frozen=True)
