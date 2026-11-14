@@ -48,9 +48,6 @@ from muon.ingestion.bulbapedia.moves.run import (
     parse_move_pages,
 )
 from muon.ingestion.bulbapedia.moves.run import (
-    PageStatus as MovePageStatus,
-)
-from muon.ingestion.bulbapedia.moves.run import (
     ParseRunError as MoveParseRunError,
 )
 from muon.ingestion.bulbapedia.moves.run import (
@@ -399,7 +396,7 @@ def format_move_parse_report(report: MoveParseReport, elapsed_seconds: float) ->
     lines.extend(
         f"failed: {page.title}: {page.reason}"
         for page in report.pages
-        if page.status is MovePageStatus.FAILED
+        if page.status is PageStatus.FAILED
     )
     lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
     return "\n".join(lines)

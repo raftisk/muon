@@ -6,6 +6,9 @@ Map:
   template ranking (`TemplateCount`, `rank_templates`).
 - Requests: `find_unpinned_titles` lists the requested titles no pin has; each page type
   words its own error.
+- Mentions: `build_species_resolver` resolves a `{{p}}` target through the species pins.
+  The pinned title without its suffix is the species name, so a mention names the base
+  species of a page.
 - Files: `dump_json` and `serialize_batch` give the same bytes for the same run, and
   `write_page_files` writes the page outputs of a run and, on a full run, deletes the rest.
 
@@ -20,13 +23,19 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from muon.ingestion.batch import GraphBatch
-from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT, Page, write_text_atomically
+from muon.ingestion.batch import GraphBatch, NodeRecord
+from muon.ingestion.bulbapedia.batching import SpeciesResolver
+from muon.ingestion.bulbapedia.fetch import PAGE_TYPES
+from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT, Page, PagePin, write_text_atomically
+from muon.ingestion.bulbapedia.species.batches import POKEMON_SPECIES
+from muon.ingestion.bulbapedia.species.forms import build_species_id
 from muon.ontology.model import extract_local_name
 
 DEFAULT_OUTPUT_ROOT = DEFAULT_ROOT / "parsed"
 OUTPUT_SUFFIX = ".json"
 JSON_INDENT = 2
+SPECIES_PAGE_TYPE = "species"
+SPECIES_TITLE_SUFFIX = PAGE_TYPES[SPECIES_PAGE_TYPE].title_suffix
 
 
 class ReportModel(BaseModel):
@@ -77,6 +86,21 @@ def build_result(page: Page, status: PageStatus, reason: str | None = None) -> P
 def find_unpinned_titles(titles: Iterable[str], pinned: Iterable[str]) -> list[str]:
     """Return the titles that no pin has, sorted."""
     return sorted(set(titles) - set(pinned))
+
+
+def build_species_resolver(pins: Iterable[PagePin]) -> SpeciesResolver:
+    """Resolve a `{{p}}` target to a species stub when a pinned species page has that name."""
+    names = {
+        name: build_species_id(name)
+        for name in (pin.title.removesuffix(SPECIES_TITLE_SUFFIX) for pin in pins)
+    }
+
+    def resolve(target: str) -> NodeRecord | None:
+        if target not in names:
+            return None
+        return NodeRecord(class_iri=POKEMON_SPECIES, id=names[target], name=target)
+
+    return resolve
 
 
 def count_batches(batches: Iterable[GraphBatch]) -> BatchCounts:

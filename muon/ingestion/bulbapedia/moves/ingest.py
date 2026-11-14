@@ -26,14 +26,9 @@ from pathlib import Path
 from muon.graph import GraphClient, GraphError
 from muon.ingestion.batch import GraphBatch
 from muon.ingestion.bulbapedia.batching import MACHINE, MOVE, UNIVERSE
-from muon.ingestion.bulbapedia.moves.run import (
-    MovePageOutput,
-    MoveParseRun,
-    PageStatus,
-    ReportModel,
-    dump_json,
-)
+from muon.ingestion.bulbapedia.moves.run import MovePageOutput, MoveParseRun
 from muon.ingestion.bulbapedia.pages import write_text_atomically
+from muon.ingestion.bulbapedia.runs import PageStatus, ReportModel, dump_json
 from muon.ingestion.bulbapedia.species.ingest import (
     INGEST_OUTPUT_ROOT,
     PROGRESS_EVERY,

@@ -25,7 +25,6 @@ from muon.ingestion.bulbapedia.moves.ingest import (
     MovePassTotals,
 )
 from muon.ingestion.bulbapedia.moves.page import TableError
-from muon.ingestion.bulbapedia.moves.run import BatchCounts as MoveBatchCounts
 from muon.ingestion.bulbapedia.moves.run import (
     MachineConflictError,
     MoveParseReport,
@@ -625,12 +624,10 @@ def build_move_report(pages_failed: int = 0) -> MoveParseReport:
         pages_failed=pages_failed,
         skipped_per_reason={},
         notes=(),
-        batch_counts=MoveBatchCounts(
+        batch_counts=BatchCounts(
             owner_nodes={"Move": 848, "Machine": 2173}, stubs={}, edges={}, claims={}
         ),
-        chunk_counts=MoveBatchCounts(
-            owner_nodes={"TextChunk": 9176}, stubs={}, edges={}, claims={}
-        ),
+        chunk_counts=BatchCounts(owner_nodes={"TextChunk": 9176}, stubs={}, edges={}, claims={}),
         chunks_per_aspect={},
         dropped_templates=(),
         removed_tables_total=0,

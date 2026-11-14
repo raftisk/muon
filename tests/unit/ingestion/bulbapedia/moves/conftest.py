@@ -11,8 +11,8 @@ import pytest
 from muon.ingestion.bulbapedia.batching import UNIVERSE, build_abox_index
 from muon.ingestion.bulbapedia.moves.batches import MoveChunkInputs
 from muon.ingestion.bulbapedia.moves.page import MovePageExtract, parse_move_page
-from muon.ingestion.bulbapedia.moves.run import SPECIES_PAGE_TYPE, build_species_resolver
 from muon.ingestion.bulbapedia.pages import FETCH_HINT, Page, PageStore
+from muon.ingestion.bulbapedia.runs import SPECIES_PAGE_TYPE, build_species_resolver
 from muon.ingestion.seed import read_abox
 from muon.ontology.model import load_ontology_model
 

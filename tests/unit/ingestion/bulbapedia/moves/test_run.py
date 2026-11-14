@@ -22,14 +22,13 @@ from muon.ingestion.bulbapedia.moves.run import (
     MoveParseRequest,
     MoveParseRun,
     MoveRunInputs,
-    PageStatus,
     ParseRunError,
-    build_species_resolver,
     parse_move_pages,
     serialize_output,
     write_outputs,
 )
 from muon.ingestion.bulbapedia.pages import Manifest, Page, PagePin, PageStore, compute_sha1
+from muon.ingestion.bulbapedia.runs import PageStatus, build_species_resolver
 from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotStore
 from tests.unit.ingestion.bulbapedia.moves.test_pokeapi import TABLES, write_snapshot
 
