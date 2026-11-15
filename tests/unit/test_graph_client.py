@@ -4,12 +4,17 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from neo4j import AsyncGraphDatabase
 from neo4j.exceptions import CypherSyntaxError, ServiceUnavailable, TransientError
+from neo4j.graph import Graph, Node, Path, Relationship
+from neo4j.time import Date
 from pydantic import SecretStr
 
 from muon.config import Neo4jSettings
 from muon.graph import (
     GraphConnectionError,
+    GraphNode,
+    GraphPath,
     GraphQueryError,
+    GraphRelationship,
     Neo4jGraphClient,
     Statement,
     WriteSummary,
@@ -99,7 +104,7 @@ async def test_execute_read_uses_managed_read_transaction(
 
     assert records == [{"name": "x"}]
     driver.session.assert_called_once_with(database=DATABASE)
-    session.execute_read.assert_awaited_once_with(fetch_records, READ_QUERY, {"name": "x"})
+    session.execute_read.assert_awaited_once_with(fetch_records, READ_QUERY, {"name": "x"}, None)
 
 
 async def test_execute_write_uses_managed_write_transaction(
@@ -129,13 +134,62 @@ async def test_query_error_is_wrapped(
 
 
 async def test_fetch_records_returns_dicts() -> None:
-    records = [MagicMock(data=MagicMock(return_value={"name": name})) for name in ("a", "b")]
-    result = MagicMock()
-    result.__aiter__.return_value = records
-    tx = AsyncMock()
-    tx.run.return_value = result
+    tx = build_read_tx([{"name": "a"}, {"name": "b"}])
 
     assert await fetch_records(tx, READ_QUERY, {}) == [{"name": "a"}, {"name": "b"}]
+
+
+async def test_fetch_records_stops_at_the_cap() -> None:
+    tx = build_read_tx([{"n": 1}, {"n": 2}, {"n": 3}])
+
+    assert await fetch_records(tx, READ_QUERY, {}, max_records=2) == [{"n": 1}, {"n": 2}]
+
+
+async def test_fetch_records_converts_nodes_in_lists() -> None:
+    graph = Graph()
+    nodes = [build_node(graph, "1", ["A", "B"], {"id": "x"}), build_node(graph, "2", ["A"], {})]
+    tx = build_read_tx([{"nodes": nodes, "count": 2}])
+
+    rows = await fetch_records(tx, READ_QUERY, {})
+
+    assert rows == [
+        {
+            "nodes": [
+                GraphNode("1", frozenset({"A", "B"}), {"id": "x"}),
+                GraphNode("2", frozenset({"A"}), {}),
+            ],
+            "count": 2,
+        }
+    ]
+
+
+async def test_fetch_records_converts_a_path() -> None:
+    graph = Graph()
+    start = build_node(graph, "1", ["A"], {})
+    end = build_node(graph, "2", ["B"], {})
+    edge = build_relationship(graph, "r1", "KNOWS", start, end)
+    path = Path(start, edge)
+    tx = build_read_tx([{"p": path}])
+
+    rows = await fetch_records(tx, READ_QUERY, {})
+
+    assert rows == [
+        {
+            "p": GraphPath(
+                nodes=(
+                    GraphNode("1", frozenset({"A"}), {}),
+                    GraphNode("2", frozenset({"B"}), {}),
+                ),
+                relationships=(GraphRelationship("r1", "KNOWS", "1", "2", {"since": 1}),),
+            )
+        }
+    ]
+
+
+async def test_fetch_records_turns_temporal_values_into_strings() -> None:
+    tx = build_read_tx([{"day": Date(2026, 11, 15), "tags": ["x"]}])
+
+    assert await fetch_records(tx, READ_QUERY, {}) == [{"day": "2026-11-15", "tags": ["x"]}]
 
 
 async def test_consume_counters_maps_fields() -> None:
@@ -149,6 +203,32 @@ async def test_consume_counters_maps_fields() -> None:
 async def test_use_outside_context_raises(settings: Neo4jSettings) -> None:
     with pytest.raises(RuntimeError, match="outside 'async with'"):
         await Neo4jGraphClient(settings).execute_read(READ_QUERY)
+
+
+def build_read_tx(rows: list[dict[str, Any]]) -> AsyncMock:
+    records = [MagicMock(items=MagicMock(return_value=list(row.items()))) for row in rows]
+    result = MagicMock()
+    result.__aiter__.return_value = records
+    tx = AsyncMock()
+    tx.run.return_value = result
+    return tx
+
+
+def build_node(
+    graph: Graph, element_id: str, labels: list[str], properties: dict[str, Any]
+) -> Node:
+    node = Node(graph, element_id, 0, labels, properties)
+    return node
+
+
+def build_relationship(
+    graph: Graph, element_id: str, type_: str, start: Node, end: Node
+) -> Relationship:
+    typed_class = type(type_, (Relationship,), {})
+    relationship = typed_class(graph, element_id, 0, {"since": 1})
+    relationship._start_node = start
+    relationship._end_node = end
+    return relationship
 
 
 def build_result(counter_values: dict[str, Any]) -> AsyncMock:
