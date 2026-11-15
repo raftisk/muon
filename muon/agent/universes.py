@@ -25,13 +25,18 @@ class UniverseError(Exception):
 
 
 class UniverseManifest(BaseModel):
-    """The contents of `universe.toml`. `notes` is a path relative to the plugin folder."""
+    """The contents of `universe.toml`.
+
+    `notes` is a path relative to the plugin folder. `attribution` is the credit line an
+    answer prints when it cites text from the universe's source.
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     prefix: str
     name: str
     notes: str
+    attribution: str | None = None
 
 
 @dataclass(frozen=True)

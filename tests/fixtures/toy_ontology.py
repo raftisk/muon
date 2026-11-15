@@ -21,3 +21,10 @@ def copy_toy_ontology(target_dir: Path) -> Path:
     for subdir in FIXTURE_SUBDIRS:
         shutil.copytree(FIXTURE_ONTOLOGY_DIR / subdir, target_dir / subdir)
     return target_dir
+
+
+def add_alt_universe_t_box(ontology_dir: Path) -> None:
+    """Write a T-Box for `ALT_UNIVERSE` into `ontology_dir`, a renamed copy of the toy one."""
+    toy_t_box = (ontology_dir / "universes" / f"{TOY_UNIVERSE}.ttl").read_text(encoding="utf-8")
+    alt_t_box = toy_t_box.replace(TOY_UNIVERSE, ALT_UNIVERSE).replace("Toy", "Alt")
+    (ontology_dir / "universes" / f"{ALT_UNIVERSE}.ttl").write_text(alt_t_box, encoding="utf-8")
