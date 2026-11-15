@@ -2,13 +2,23 @@
 
 from muon.graph.client import Neo4jGraphClient
 from muon.graph.errors import GraphConnectionError, GraphError, GraphQueryError
-from muon.graph.protocol import GraphClient, Statement, WriteSummary
+from muon.graph.protocol import (
+    GraphClient,
+    GraphNode,
+    GraphPath,
+    GraphRelationship,
+    Statement,
+    WriteSummary,
+)
 
 __all__ = [
     "GraphClient",
     "GraphConnectionError",
     "GraphError",
+    "GraphNode",
+    "GraphPath",
     "GraphQueryError",
+    "GraphRelationship",
     "Neo4jGraphClient",
     "Statement",
     "WriteSummary",

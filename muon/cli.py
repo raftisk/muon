@@ -1,11 +1,13 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
 `muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability`,
-`muon ingest bulbapedia species|move|ability` and `muon schema <prefix> [--refresh] [--json]`."""
+`muon ingest bulbapedia species|move|ability`, `muon schema <prefix> [--refresh] [--json]` and
+`muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]`."""
 
 import argparse
 import asyncio
 import getpass
+import re
 import secrets
 import sys
 import time
@@ -17,8 +19,11 @@ from pathlib import Path
 import httpx
 from pydantic import SecretStr, ValidationError
 
-from muon.agent.universes import UniverseError, UniversePlugin, discover_universes
-from muon.config import OntologySettings, Settings, get_settings
+from muon.agent.ask import AskRequest, AskResult, ask
+from muon.agent.routing import AgentRuntime, RoutingError, select_universe
+from muon.agent.universes import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
+from muon.config import AgentSettings, OntologySettings, Settings, get_settings
+from muon.generation.answer import CLAIM_MARKER_PATTERN, Claim
 from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
 from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
 from muon.ingestion.bulbapedia.abilities.crosscheck import CrossCheckError
@@ -104,6 +109,7 @@ from muon.ingestion.pokeapi.snapshot import (
 )
 from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, seed_universe
+from muon.llm.client import ModelCallError, create_chat_model
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyError, load_ontology_model
 from muon.retrieval.context import (
@@ -116,6 +122,15 @@ from muon.retrieval.context import (
     SchemaRequest,
     load_schema_context,
 )
+from muon.retrieval.evidence import (
+    Cell,
+    Evidence,
+    EvidenceBundle,
+    NodeCell,
+    NodeKey,
+    PathCell,
+    RelationshipCell,
+)
 from muon.retrieval.schema import SchemaIntrospectionError
 
 EXIT_SUCCESS = 0
@@ -127,8 +142,16 @@ FETCH_COMMAND = "fetch"
 PARSE_COMMAND = "parse"
 INGEST_COMMAND = "ingest"
 SCHEMA_COMMAND = "schema"
+ASK_COMMAND = "ask"
+ASK_TARGET = "question"
 BULBAPEDIA_SOURCE = "bulbapedia"
 POKEAPI_SOURCE = "pokeapi"
+TEXT_CHUNK_LABEL = "TextChunk"
+ASK_JSON_INDENT = 2
+TABLE_COLUMN_SEPARATOR = " | "
+TABLE_PATH_SEPARATOR = " > "
+TABLE_LIST_SEPARATOR = ", "
+AGENT_VARIABLE_PREFIX = "MUON_AGENT_"
 PASSWORD_PROMPT = "Neo4j password: "
 PASSWORD_ENCODING = "utf-8"
 PASSWORD_MISMATCH_MESSAGE = "the password does not match NEO4J_PASSWORD"
@@ -259,6 +282,25 @@ def build_parser() -> argparse.ArgumentParser:
         dest="is_json",
         help="print the schema as JSON instead of the prompt text",
     )
+    ask_parser = commands.add_parser(
+        ASK_COMMAND, help="answer a question from the graph of a universe"
+    )
+    ask_parser.add_argument("question", help="the question, in English")
+    ask_parser.add_argument(
+        "--universe", help="universe prefix; optional while only 1 universe is registered"
+    )
+    ask_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="is_json",
+        help="print the answer, the evidence and the stats as 1 JSON document",
+    )
+    ask_parser.add_argument(
+        "--show-cypher",
+        action="store_true",
+        dest="should_show_cypher",
+        help="list the queries that ran, after the answer",
+    )
     return parser
 
 
@@ -266,6 +308,8 @@ def describe_target(arguments: argparse.Namespace) -> str:
     """Name what a command works on: the universe prefix, or the source and page type."""
     if arguments.command == INGEST_COMMAND:
         return f"{arguments.source} {arguments.page_type}"
+    if arguments.command == ASK_COMMAND:
+        return str(arguments.universe or ASK_TARGET)
     return str(arguments.prefix)
 
 
@@ -784,6 +828,185 @@ def execute_schema(settings: Settings, arguments: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def render_node_name(key: NodeKey, evidence: Evidence) -> str:
+    node = evidence.graph_slice.find_node(key)
+    return node.name if node is not None and node.name else key.id
+
+
+def render_table_cell(cell: Cell, evidence: Evidence) -> str:
+    """Show a cell for a reader: nodes by name, relationships by type, paths by node names."""
+    if isinstance(cell, NodeCell):
+        return render_node_name(cell.key, evidence)
+    if isinstance(cell, RelationshipCell):
+        return cell.type
+    if isinstance(cell, PathCell):
+        return TABLE_PATH_SEPARATOR.join(render_node_name(key, evidence) for key in cell.nodes)
+    if isinstance(cell, list):
+        return TABLE_LIST_SEPARATOR.join(render_table_cell(item, evidence) for item in cell)
+    if isinstance(cell, dict):
+        return TABLE_LIST_SEPARATOR.join(
+            f"{name}: {render_table_cell(item, evidence)}" for name, item in cell.items()
+        )
+    return "" if cell is None else str(cell)
+
+
+def render_table(evidence: Evidence) -> str:
+    """Print every row of the evidence item, columns padded to their widest cell."""
+    rows = [
+        [render_table_cell(row.get(column), evidence) for column in evidence.columns]
+        for row in evidence.rows
+    ]
+    table = [list(evidence.columns), *rows]
+    widths = [max(len(line[index]) for line in table) for index in range(len(evidence.columns))]
+    lines = [
+        TABLE_COLUMN_SEPARATOR.join(
+            cell.ljust(width) for cell, width in zip(line, widths, strict=True)
+        ).rstrip()
+        for line in table
+    ]
+    return "\n".join([evidence.purpose, *lines])
+
+
+def number_footnotes(text: str) -> tuple[str, list[str]]:
+    """Turn claim markers into footnote numbers in order of first use."""
+    claim_ids: list[str] = []
+
+    def replace_marker(match: re.Match[str]) -> str:
+        claim_id = match.group(1)
+        if claim_id not in claim_ids:
+            claim_ids.append(claim_id)
+        return f"[{claim_ids.index(claim_id) + 1}]"
+
+    return CLAIM_MARKER_PATTERN.sub(replace_marker, text), claim_ids
+
+
+def render_source(number: int, claim: Claim, bundle: EvidenceBundle) -> tuple[list[str], bool]:
+    """Return the lines of 1 footnote in the sources block, and whether it cites a chunk."""
+    cited = [item for item in map(bundle.get, claim.evidence_ids) if item is not None]
+    names: list[str] = []
+    urls: list[str] = []
+    for key in claim.node_keys:
+        node = next((n for n in (e.graph_slice.find_node(key) for e in cited) if n), None)
+        if node is None:
+            continue
+        names.append(node.name or key.id)
+        if key.label == TEXT_CHUNK_LABEL and node.source_url:
+            urls.append(node.source_url)
+    purposes = "; ".join(item.purpose for item in cited)
+    line = f"[{number}] {purposes}" + (f" ({', '.join(names)})" if names else "")
+    return [line, *(f"    {url}" for url in urls)], any(
+        key.label == TEXT_CHUNK_LABEL for key in claim.node_keys
+    )
+
+
+def render_answer(result: AskResult, attribution: str | None) -> str:
+    """Render the answer for a reader.
+
+    Shows footnote numbers, assumptions, the tables the answer asked for in full, the
+    sources, the attribution when a text chunk is cited, and the warnings. It never shows
+    a node id, an evidence id, a label or a query.
+    """
+    answer, bundle = result.answer, result.bundle
+    text, cited_claim_ids = number_footnotes(answer.text)
+    sections = [text]
+    if answer.assumptions:
+        sections.append("\n".join(["Assumptions:", *(f"- {item}" for item in answer.assumptions)]))
+    for evidence_id in answer.table_evidence_ids:
+        evidence = bundle.get(evidence_id)
+        if evidence is not None and evidence.rows:
+            sections.append(render_table(evidence))
+    claims = {claim.id: claim for claim in answer.claims}
+    source_lines: list[str] = []
+    is_chunk_cited = False
+    for number, claim_id in enumerate(cited_claim_ids, start=1):
+        if claim_id in claims:
+            lines, has_chunk = render_source(number, claims[claim_id], bundle)
+            source_lines.extend(lines)
+            is_chunk_cited = is_chunk_cited or has_chunk
+    if source_lines:
+        sections.append("\n".join(["Sources", *source_lines]))
+    if is_chunk_cited and attribution:
+        sections.append(attribution)
+    if answer.warnings:
+        sections.append("\n".join(["Warnings:", *(f"- {item}" for item in answer.warnings)]))
+    return "\n\n".join(sections)
+
+
+def render_queries(bundle: EvidenceBundle) -> str:
+    """List every query in call order with its purpose, status and row count."""
+    lines = ["Queries"]
+    for number, item in enumerate(bundle.items, start=1):
+        lines.append(f"{number}. {item.purpose} [{item.status}, {item.row_count} rows]")
+        lines.append(f"   {item.query}")
+    return "\n".join(lines)
+
+
+def format_ask_status(result: AskResult) -> str:
+    stats = result.stats
+    input_tokens = sum(step.input_tokens for step in stats.steps)
+    output_tokens = sum(step.output_tokens for step in stats.steps)
+    return (
+        f"{ASK_COMMAND} {result.answer.universe}: {stats.cypher_calls} queries, "
+        f"{input_tokens} input and {output_tokens} output tokens, "
+        f"{stats.total_latency_seconds:.1f} s"
+    )
+
+
+def describe_missing_agent_settings(error: ValidationError) -> str:
+    names = sorted(
+        {f"{AGENT_VARIABLE_PREFIX}{str(detail['loc'][0]).upper()}" for detail in error.errors()}
+    )
+    return f"missing or invalid settings: {', '.join(names)}"
+
+
+async def run_ask(
+    settings: Settings,
+    agent_settings: AgentSettings,
+    registry: UniverseRegistry,
+    request: AskRequest,
+) -> AskResult:
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        runtime = AgentRuntime(client, create_chat_model(agent_settings), agent_settings)
+        return await ask(request, registry, settings, runtime)
+
+
+def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
+    failure_prefix = build_failure_prefix(ASK_COMMAND, describe_target(arguments))
+    try:
+        agent_settings = AgentSettings()
+    except ValidationError as error:
+        print(f"{failure_prefix} {describe_missing_agent_settings(error)}", file=sys.stderr)
+        return EXIT_FAILURE
+    try:
+        registry = discover_universes(
+            settings.universes.universes_dir, settings.ontology.ontology_dir
+        )
+        plugin = select_universe(registry, arguments.universe)
+        request = AskRequest(question=arguments.question, universe=plugin.prefix)
+        result = asyncio.run(run_ask(settings, agent_settings, registry, request))
+    except (
+        UniverseError,
+        RoutingError,
+        OntologyError,
+        GraphError,
+        SchemaIntrospectionError,
+        SchemaCacheError,
+        ModelCallError,
+    ) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    if arguments.is_json:
+        print(result.model_dump_json(indent=ASK_JSON_INDENT))
+        return EXIT_SUCCESS
+    print(render_answer(result, plugin.manifest.attribution))
+    if arguments.should_show_cypher:
+        print()
+        print(render_queries(result.bundle))
+    print(format_ask_status(result), file=sys.stderr)
+    return EXIT_SUCCESS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command in `argv` and return the process exit code."""
     parser = build_parser()
@@ -828,4 +1051,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_purge(settings, arguments.prefix)
     if arguments.command == SCHEMA_COMMAND:
         return execute_schema(settings, arguments)
+    if arguments.command == ASK_COMMAND:
+        return execute_ask(settings, arguments)
     return execute_seed(settings, arguments.prefix)

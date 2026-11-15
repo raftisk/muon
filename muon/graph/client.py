@@ -1,5 +1,6 @@
 """Neo4j implementation of `GraphClient`, built on the async driver."""
 
+import datetime
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import TracebackType
@@ -12,12 +13,25 @@ from neo4j.exceptions import (
     ServiceUnavailable,
     SessionExpired,
 )
+from neo4j.graph import Node, Path, Relationship
+from neo4j.spatial import Point
+from neo4j.time import Date, DateTime, Duration, Time
 
 from muon.config import Neo4jSettings
 from muon.graph.errors import GraphConnectionError, GraphQueryError
-from muon.graph.protocol import Statement, WriteSummary
+from muon.graph.protocol import GraphNode, GraphPath, GraphRelationship, Statement, WriteSummary
 
 READ_OPERATION = "read"
+STRING_VALUE_TYPES = (
+    Date,
+    DateTime,
+    Duration,
+    Time,
+    Point,
+    datetime.date,
+    datetime.time,
+    datetime.timedelta,
+)
 WRITE_OPERATION = "write"
 
 
@@ -65,14 +79,19 @@ class Neo4jGraphClient:
             self.driver = None
 
     async def execute_read(
-        self, query: LiteralString, parameters: Mapping[str, Any] | None = None
+        self,
+        query: LiteralString,
+        parameters: Mapping[str, Any] | None = None,
+        max_records: int | None = None,
     ) -> list[dict[str, Any]]:
         driver = self.require_driver()
         query_parameters = dict(parameters or {})
         context = describe_query(READ_OPERATION, self.settings.database, query, query_parameters)
         with wrap_driver_errors(context):
             async with driver.session(database=self.settings.database) as session:
-                return await session.execute_read(fetch_records, query, query_parameters)
+                return await session.execute_read(
+                    fetch_records, query, query_parameters, max_records
+                )
 
     async def execute_write(
         self, query: LiteralString, parameters: Mapping[str, Any] | None = None
@@ -119,11 +138,55 @@ def wrap_driver_errors(context: str) -> Iterator[None]:
 
 
 async def fetch_records(
-    tx: AsyncManagedTransaction, query: LiteralString, parameters: dict[str, Any]
+    tx: AsyncManagedTransaction,
+    query: LiteralString,
+    parameters: dict[str, Any],
+    max_records: int | None = None,
 ) -> list[dict[str, Any]]:
-    """Read every record inside the transaction; results are unusable after it ends."""
+    """Read up to `max_records` records inside the transaction and convert their values.
+
+    Results are unusable after the transaction ends, so the conversion happens here.
+    """
     result = await tx.run(query, parameters)
-    return [record.data() async for record in result]
+    rows: list[dict[str, Any]] = []
+    async for record in result:
+        if max_records is not None and len(rows) >= max_records:
+            break
+        rows.append({key: convert_graph_value(value) for key, value in record.items()})  # type: ignore[no-untyped-call]
+    return rows
+
+
+def convert_graph_value(value: Any) -> Any:
+    """Turn driver graph, temporal and spatial values into muon values, recursively."""
+    if isinstance(value, Node):
+        return GraphNode(value.element_id, frozenset(value.labels), dict(value))
+    if isinstance(value, Relationship):
+        return convert_relationship(value)
+    if isinstance(value, Path):
+        return GraphPath(
+            nodes=tuple(convert_graph_value(node) for node in value.nodes),
+            relationships=tuple(convert_relationship(edge) for edge in value.relationships),
+        )
+    if isinstance(value, list):
+        return [convert_graph_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: convert_graph_value(item) for key, item in value.items()}
+    if isinstance(value, STRING_VALUE_TYPES):
+        return str(value)
+    return value
+
+
+def convert_relationship(relationship: Relationship) -> GraphRelationship:
+    start, end = relationship.start_node, relationship.end_node
+    if start is None or end is None or start.element_id is None or end.element_id is None:
+        raise GraphQueryError(f"Relationship {relationship.element_id} has no end nodes")
+    return GraphRelationship(
+        element_id=relationship.element_id,
+        type=relationship.type,
+        start_element_id=start.element_id,
+        end_element_id=end.element_id,
+        properties=dict(relationship),
+    )
 
 
 async def consume_counters(

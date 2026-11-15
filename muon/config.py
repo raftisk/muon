@@ -24,6 +24,10 @@ DEFAULT_MAX_CONNECTION_POOL_SIZE = 100
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 600.0
 DEFAULT_MAX_RETRIES = 2
 
+DEFAULT_MAX_TOOL_CALLS = 10
+DEFAULT_MAX_CYPHER_CALLS = 2
+DEFAULT_MAX_CHECK_RETRIES = 1
+
 
 class Neo4jSettings(BaseSettings):
     """Connection settings for the Neo4j instance, read from `NEO4J_*` variables."""
@@ -85,11 +89,27 @@ class EmbeddingSettings(ProviderSettings):
     dimensions: int | None = Field(default=None, gt=0)
 
 
+class AgentSettings(ProviderSettings):
+    """Agent provider and loop limits, read from `MUON_AGENT_*` variables.
+
+    `max_tool_calls` caps all tool calls of 1 question, `max_cypher_calls` caps the
+    `run_cypher` calls, and `max_check_retries` is the number of generator reruns after
+    a failed citation check (0 disables the rerun).
+    """
+
+    model_config = SettingsConfigDict(env_prefix="MUON_AGENT_", env_file=ENV_FILE, extra="ignore")
+
+    max_tool_calls: int = Field(default=DEFAULT_MAX_TOOL_CALLS, gt=0)
+    max_cypher_calls: int = Field(default=DEFAULT_MAX_CYPHER_CALLS, gt=0)
+    max_check_retries: int = Field(default=DEFAULT_MAX_CHECK_RETRIES, ge=0)
+
+
 class Settings(BaseModel):
     """Settings every graph command needs.
 
-    `LLMSettings` and `EmbeddingSettings` stay out, so a command that calls no model
-    runs without `MUON_LLM_*` or `MUON_EMBEDDING_*` variables.
+    `LLMSettings`, `EmbeddingSettings` and `AgentSettings` stay out, so a command that
+    calls no model runs without `MUON_LLM_*`, `MUON_EMBEDDING_*` or `MUON_AGENT_*`
+    variables.
     """
 
     neo4j: Neo4jSettings = Field(default_factory=Neo4jSettings)

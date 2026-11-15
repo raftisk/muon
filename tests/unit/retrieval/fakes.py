@@ -19,13 +19,17 @@ class QueryGraphClient:
         self.reads: list[tuple[str, Mapping[str, Any]]] = []
 
     async def execute_read(
-        self, query: LiteralString, parameters: Mapping[str, Any] | None = None
+        self,
+        query: LiteralString,
+        parameters: Mapping[str, Any] | None = None,
+        max_records: int | None = None,
     ) -> list[dict[str, Any]]:
         if query not in self.answers:
             raise AssertionError(f"Unexpected read: {query}")
         used_parameters = parameters or {}
         self.reads.append((query, used_parameters))
-        return self.answers[query](used_parameters)
+        rows = self.answers[query](used_parameters)
+        return rows if max_records is None else rows[:max_records]
 
     async def execute_write(
         self, query: LiteralString, parameters: Mapping[str, Any] | None = None

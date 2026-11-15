@@ -1,4 +1,4 @@
-"""The agent and retrieval layers name no universe (spec scenario 6.1)."""
+"""The agent, retrieval and generation layers name no universe and never write."""
 
 import re
 from pathlib import Path
@@ -12,7 +12,10 @@ from muon.ontology.model import extract_local_name
 UNIVERSE_PREFIX = "pkmn"
 UNIVERSE_NAMESPACE = f"https://muon.dev/ns/{UNIVERSE_PREFIX}#"
 UNIVERSE_TBOX = PROJECT_ROOT / "ontology" / "universes" / f"{UNIVERSE_PREFIX}.ttl"
-UNIVERSE_FREE_PACKAGES = ("agent", "retrieval")
+UNIVERSE_FREE_PACKAGES = ("agent", "retrieval", "generation")
+SOURCE_PATTERNS = ("*.py", "prompts/*.md")
+READ_ONLY_PACKAGES = ("retrieval", "generation")
+WRITE_METHOD_PATTERN = re.compile(r"\bexecute_write(_batch)?\b")
 
 
 def list_universe_class_names() -> list[str]:
@@ -34,17 +37,35 @@ def find_violations(source_path: Path, patterns: dict[str, re.Pattern[str]]) -> 
     return violations
 
 
-def test_agent_and_retrieval_name_no_universe_or_universe_class() -> None:
+def list_source_paths(packages: tuple[str, ...]) -> list[Path]:
+    return [
+        path
+        for package in packages
+        for pattern in SOURCE_PATTERNS
+        for path in sorted((PROJECT_ROOT / "muon" / package).rglob(pattern))
+    ]
+
+
+def test_engine_packages_name_no_universe_or_universe_class() -> None:
     names = [UNIVERSE_PREFIX, *list_universe_class_names()]
     patterns = {name: re.compile(rf"\b{re.escape(name)}\b") for name in names}
-    source_paths = [
-        path
-        for package in UNIVERSE_FREE_PACKAGES
-        for path in sorted((PROJECT_ROOT / "muon" / package).rglob("*.py"))
-    ]
+    source_paths = list_source_paths(UNIVERSE_FREE_PACKAGES)
 
     violations = [
         violation for path in source_paths for violation in find_violations(path, patterns)
+    ]
+
+    assert source_paths
+    assert violations == []
+
+
+def test_retrieval_and_generation_never_call_a_write_method() -> None:
+    source_paths = list_source_paths(READ_ONLY_PACKAGES)
+
+    violations = [
+        violation
+        for path in source_paths
+        for violation in find_violations(path, {"a write method": WRITE_METHOD_PATTERN})
     ]
 
     assert source_paths

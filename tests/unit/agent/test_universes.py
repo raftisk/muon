@@ -8,7 +8,12 @@ from muon.agent.universes import (
     UniverseRegistry,
     discover_universes,
 )
-from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
+from tests.fixtures.toy_ontology import (
+    ALT_UNIVERSE,
+    TOY_UNIVERSE,
+    add_alt_universe_t_box,
+    copy_toy_ontology,
+)
 from tests.fixtures.toy_plugin import TOY_NAME, TOY_NOTES_TEXT, write_toy_plugin
 
 
@@ -126,3 +131,14 @@ def test_invalid_toml_names_the_file(universes_dir: Path, ontology_dir: Path) ->
 def test_missing_universes_folder_raises(tmp_path: Path, ontology_dir: Path) -> None:
     with pytest.raises(UniverseError, match="does not exist"):
         discover_universes(tmp_path / "nowhere", ontology_dir)
+
+
+def test_attribution_is_optional_and_read(universes_dir: Path, ontology_dir: Path) -> None:
+    add_alt_universe_t_box(ontology_dir)
+    write_toy_plugin(universes_dir)
+    write_toy_plugin(universes_dir, prefix=ALT_UNIVERSE, attribution="Credit line")
+
+    registry = discover_universes(universes_dir, ontology_dir)
+
+    assert registry.get(TOY_UNIVERSE).manifest.attribution is None
+    assert registry.get(ALT_UNIVERSE).manifest.attribution == "Credit line"

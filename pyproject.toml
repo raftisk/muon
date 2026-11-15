@@ -5,6 +5,8 @@ description = "Multi-universe ontology and GraphRAG engine"
 requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28.1",
+    "langchain>=1.5,<2",
+    "langchain-openai>=1.8,<2",
     "mwparserfromhell>=0.7.2",
     "neo4j",
     "openai>=3.31,<4",
