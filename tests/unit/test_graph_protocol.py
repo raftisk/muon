@@ -17,9 +17,12 @@ EMPTY_SUMMARY = WriteSummary(
 
 class FakeGraphClient:
     async def execute_read(
-        self, query: LiteralString, parameters: Mapping[str, Any] | None = None
+        self,
+        query: LiteralString,
+        parameters: Mapping[str, Any] | None = None,
+        max_records: int | None = None,
     ) -> list[dict[str, Any]]:
-        return CANNED_RECORDS
+        return CANNED_RECORDS if max_records is None else CANNED_RECORDS[:max_records]
 
     async def execute_write(
         self, query: LiteralString, parameters: Mapping[str, Any] | None = None
@@ -36,3 +39,7 @@ fake_client: GraphClient = FakeGraphClient()
 
 async def test_fake_client_returns_canned_records() -> None:
     assert await fake_client.execute_read("MATCH (n) RETURN n.name AS name") == CANNED_RECORDS
+
+
+async def test_fake_client_applies_the_record_cap() -> None:
+    assert await fake_client.execute_read("MATCH (n) RETURN n.name AS name", max_records=0) == []

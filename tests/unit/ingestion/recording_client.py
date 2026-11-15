@@ -48,10 +48,14 @@ class RecordingGraphClient:
         return [call for call in self.calls if isinstance(call, list)]
 
     async def execute_read(
-        self, query: LiteralString, parameters: Mapping[str, Any] | None = None
+        self,
+        query: LiteralString,
+        parameters: Mapping[str, Any] | None = None,
+        max_records: int | None = None,
     ) -> list[dict[str, Any]]:
         self.reads.append((query, parameters))
-        return self.queued_read_records.pop(0) if self.queued_read_records else []
+        rows = self.queued_read_records.pop(0) if self.queued_read_records else []
+        return rows if max_records is None else rows[:max_records]
 
     async def execute_write(
         self, query: LiteralString, parameters: Mapping[str, Any] | None = None
