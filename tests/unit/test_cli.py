@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 from collections.abc import Callable
 from dataclasses import fields
 from pathlib import Path
@@ -10,6 +11,7 @@ import httpx
 import pytest
 
 from muon import cli
+from muon.agent.universes import UniversePlugin
 from muon.config import Neo4jSettings, OntologySettings, Settings
 from muon.graph import GraphConnectionError, WriteSummary
 from muon.ingestion.batch import NodeRef
@@ -71,6 +73,12 @@ from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotFetchReport
 from muon.ingestion.runner import RunReport
 from muon.ingestion.seed import ABoxError
 from muon.ontology.model import OntologyError
+from muon.retrieval.context import CacheStatus, SchemaCacheError, SchemaContext
+from muon.retrieval.schema import (
+    GraphSchema,
+    NodeLabelSchema,
+    SchemaIntrospectionError,
+)
 
 PREFIX = "muontoy"
 SECRET = "secret-check"
@@ -1564,3 +1572,143 @@ def test_ability_ingest_parses_ingests_and_prints_the_stubs(
         "nodes Ability: 314",
         "stubs Ability: 0",
     ]
+
+
+SCHEMA_PREFIX = "pkmn"
+SCHEMA_TEXT = "# Graph schema: Toy (pkmn)\n\n## Notes\n\nSchema notes.\n"
+SCHEMA_CACHE_PATH = Path("data/schema/pkmn.json")
+
+
+def build_schema_context(cache_status: CacheStatus = CacheStatus.HIT) -> SchemaContext:
+    graph_schema = GraphSchema(
+        universe=SCHEMA_PREFIX,
+        node_labels=(
+            NodeLabelSchema(label="Widget", count=2, ancestor_labels=("Entity",), properties=()),
+        ),
+        relationship_types=(),
+        patterns=(),
+    )
+    return SchemaContext(
+        graph_schema=graph_schema,
+        notes="Schema notes.\n",
+        text=SCHEMA_TEXT,
+        cache_status=cache_status,
+        cache_path=SCHEMA_CACHE_PATH,
+    )
+
+
+class RecordingSchemaRun:
+    """Stands in for `cli.run_schema` and records the plugin and refresh flag it ran with."""
+
+    def __init__(self, outcome: SchemaContext | Exception) -> None:
+        self.outcome = outcome
+        self.calls: list[tuple[UniversePlugin, bool]] = []
+
+    async def __call__(
+        self, settings: Settings, plugin: UniversePlugin, should_refresh: bool
+    ) -> SchemaContext:
+        self.calls.append((plugin, should_refresh))
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return self.outcome
+
+
+def test_schema_parser_accepts_its_options() -> None:
+    arguments = cli.build_parser().parse_args(["schema", SCHEMA_PREFIX, "--refresh", "--json"])
+
+    assert (arguments.prefix, arguments.refresh, arguments.is_json) == (SCHEMA_PREFIX, True, True)
+
+
+@pytest.mark.usefixtures("settings")
+def test_schema_prints_the_text_and_a_status_line(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    run = RecordingSchemaRun(build_schema_context())
+    monkeypatch.setattr(cli, "run_schema", run)
+
+    exit_code = cli.main(["schema", SCHEMA_PREFIX])
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_SUCCESS
+    assert captured.out == SCHEMA_TEXT
+    assert re.fullmatch(r"schema pkmn: cache used in \d+\.\d\d s\n", captured.err)
+    assert [(plugin.prefix, refresh) for plugin, refresh in run.calls] == [(SCHEMA_PREFIX, False)]
+
+
+@pytest.mark.usefixtures("settings")
+def test_schema_json_prints_the_schema_without_the_notes(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    context = build_schema_context()
+    run = RecordingSchemaRun(context)
+    monkeypatch.setattr(cli, "run_schema", run)
+
+    exit_code = cli.main(["schema", SCHEMA_PREFIX, "--json", "--refresh"])
+
+    output = capsys.readouterr().out
+    assert exit_code == cli.EXIT_SUCCESS
+    assert GraphSchema.model_validate_json(output) == context.graph_schema
+    assert "Schema notes" not in output
+    assert run.calls[0][1] is True
+
+
+@pytest.mark.usefixtures("settings")
+def test_schema_of_an_unknown_prefix_fails_before_any_connection(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fail_if_built(*arguments: object) -> None:
+        raise AssertionError("the graph client was built")
+
+    monkeypatch.setattr(cli, "Neo4jGraphClient", fail_if_built)
+
+    exit_code = cli.main(["schema", PREFIX])
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_FAILURE
+    assert f"schema {PREFIX} failed: Unknown universe '{PREFIX}'; known: pkmn" in captured.err
+    assert captured.out == ""
+
+
+@pytest.mark.usefixtures("settings")
+@pytest.mark.parametrize(
+    "error",
+    [
+        OntologyError("Missing universe T-Box universes/pkmn.ttl"),
+        GraphConnectionError(CONNECTION_MESSAGE),
+        SchemaIntrospectionError("Universe 'pkmn' has no nodes; run `muon seed pkmn` first"),
+        SchemaCacheError("Failed to write schema cache data/schema/pkmn.json: disk full"),
+    ],
+)
+def test_schema_failure_prints_the_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    monkeypatch.setattr(cli, "run_schema", RecordingSchemaRun(error))
+
+    exit_code = cli.main(["schema", SCHEMA_PREFIX])
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_FAILURE
+    assert f"schema {SCHEMA_PREFIX} failed: {error}" in captured.err
+    assert SECRET not in captured.err
+    assert captured.out == ""
+
+
+@pytest.mark.parametrize(
+    ("cache_status", "expected"),
+    [
+        (CacheStatus.HIT, "schema pkmn: cache used in 0.04 s"),
+        (CacheStatus.MISSING, "schema pkmn: rebuilt (missing) in 0.04 s"),
+        (CacheStatus.STALE, "schema pkmn: rebuilt (stale) in 0.04 s"),
+        (CacheStatus.REFRESHED, "schema pkmn: rebuilt (refresh) in 0.04 s"),
+        (
+            CacheStatus.INVALID,
+            f"schema pkmn: rebuilt (invalid: {SCHEMA_CACHE_PATH}) in 0.04 s",
+        ),
+    ],
+)
+def test_schema_status_line_names_how_the_schema_was_obtained(
+    cache_status: CacheStatus, expected: str
+) -> None:
+    context = build_schema_context(cache_status)
+
+    assert cli.format_schema_status(SCHEMA_PREFIX, context, 0.04) == expected
