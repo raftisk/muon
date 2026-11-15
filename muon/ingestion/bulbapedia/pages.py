@@ -9,8 +9,6 @@ touches the network.
 
 import hashlib
 import json
-import os
-import tempfile
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Self
@@ -19,12 +17,12 @@ from urllib.parse import quote
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError
 
 from muon.config import PROJECT_ROOT
+from muon.files import write_text_atomically
 
 DEFAULT_ROOT = PROJECT_ROOT / "data" / "bulbapedia"
 MANIFEST_FILE_NAME = "manifest.json"
 PAGES_DIR_NAME = "pages"
 PAGE_FILE_SUFFIX = ".json"
-TEMP_FILE_SUFFIX = ".tmp"
 TEXT_ENCODING = "utf-8"
 JSON_INDENT = 2
 PERMALINK_TEMPLATE = (
@@ -40,21 +38,6 @@ FETCH_HINT = "run `muon fetch bulbapedia {page_type}`"
 def compute_sha1(text: str) -> str:
     """Return the hex SHA-1 of the UTF-8 bytes of `text`, the value the API reports as `sha1`."""
     return hashlib.sha1(text.encode(TEXT_ENCODING)).hexdigest()
-
-
-def write_text_atomically(path: Path, text: str) -> None:
-    """Write `text` to `path`. A reader sees the old file or the new one, never a partial write."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temp_name = tempfile.mkstemp(
-        dir=path.parent, prefix=f".{path.name}.", suffix=TEMP_FILE_SUFFIX
-    )
-    temp_path = Path(temp_name)
-    try:
-        with os.fdopen(descriptor, "w", encoding=TEXT_ENCODING) as handle:
-            handle.write(text)
-        temp_path.replace(path)
-    finally:
-        temp_path.unlink(missing_ok=True)
 
 
 class PagePin(BaseModel):
