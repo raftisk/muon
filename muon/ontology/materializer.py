@@ -5,6 +5,7 @@ relationship type or a node property name.
 """
 
 import re
+from collections.abc import Mapping
 
 from rdflib.namespace import RDFS
 
@@ -47,6 +48,18 @@ class LabelMaterializer:
     def list_ontology_labels(self) -> frozenset[str]:
         """Return the label of every named class, the set a node's ontology labels come from."""
         return frozenset(extract_local_name(class_iri) for class_iri in self.model.classes)
+
+    def map_ancestor_labels(self) -> Mapping[str, frozenset[str]]:
+        """Map every class label to the labels of its strict ancestors.
+
+        The universe label is not included.
+        """
+        return {
+            self.map_class_label(class_iri): frozenset(
+                extract_local_name(ancestor) for ancestor in ancestors
+            )
+            for class_iri, ancestors in self.model.ancestors.items()
+        }
 
     def map_relationship_type(self, property_iri: str) -> str:
         return format_relationship_type(extract_local_name(property_iri))

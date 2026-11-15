@@ -16,6 +16,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from muon.files import write_text_atomically
 from muon.ingestion.batch import GraphBatch
 from muon.ingestion.bulbapedia.abilities.batches import (
     AbilityChunkBuild,
@@ -57,7 +58,7 @@ from muon.ingestion.bulbapedia.batching import (
     ChunkBuildError,
     build_abox_index,
 )
-from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore, write_text_atomically
+from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore
 from muon.ingestion.bulbapedia.runs import (
     DEFAULT_OUTPUT_ROOT,
     OUTPUT_SUFFIX,

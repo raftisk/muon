@@ -18,6 +18,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from muon.files import write_text_atomically
 from muon.ingestion.batch import GraphBatch
 from muon.ingestion.bulbapedia.batching import (
     ASPECT,
@@ -57,7 +58,7 @@ from muon.ingestion.bulbapedia.moves.pokeapi import (
     list_unmatched_pokeapi_moves,
     read_effect_text,
 )
-from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore, write_text_atomically
+from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore
 from muon.ingestion.bulbapedia.runs import (
     OUTPUT_SUFFIX,
     SPECIES_PAGE_TYPE,

@@ -13,6 +13,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = PROJECT_ROOT / ".env"
 DEFAULT_ONTOLOGY_DIR = PROJECT_ROOT / "ontology"
+DEFAULT_UNIVERSES_DIR = PROJECT_ROOT / "muon" / "universes"
+DEFAULT_SCHEMA_CACHE_DIR = PROJECT_ROOT / "data" / "schema"
 
 DEFAULT_DATABASE = "neo4j"
 DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30.0
@@ -42,6 +44,15 @@ class OntologySettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MUON_", env_file=ENV_FILE, extra="ignore")
 
     ontology_dir: Path = DEFAULT_ONTOLOGY_DIR
+
+
+class UniverseSettings(BaseSettings):
+    """Locations of the universe plugins and the schema cache, read from `MUON_*` variables."""
+
+    model_config = SettingsConfigDict(env_prefix="MUON_", env_file=ENV_FILE, extra="ignore")
+
+    universes_dir: Path = DEFAULT_UNIVERSES_DIR
+    schema_cache_dir: Path = DEFAULT_SCHEMA_CACHE_DIR
 
 
 class ProviderSettings(BaseSettings):
@@ -83,6 +94,7 @@ class Settings(BaseModel):
 
     neo4j: Neo4jSettings = Field(default_factory=Neo4jSettings)
     ontology: OntologySettings = Field(default_factory=OntologySettings)
+    universes: UniverseSettings = Field(default_factory=UniverseSettings)
 
 
 @functools.cache

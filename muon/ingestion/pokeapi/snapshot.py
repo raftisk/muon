@@ -13,8 +13,6 @@ import csv
 import hashlib
 import io
 import json
-import os
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,7 +20,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from muon.config import PROJECT_ROOT
-from muon.ingestion.bulbapedia.pages import write_text_atomically
+from muon.files import write_bytes_atomically, write_text_atomically
 
 REPOSITORY = "PokeAPI/pokeapi"
 DEFAULT_BRANCH = "master"
@@ -34,7 +32,6 @@ OK_STATUS_CODE = 200
 DEFAULT_ROOT = PROJECT_ROOT / "data" / "pokeapi"
 MANIFEST_FILE_NAME = "manifest.json"
 CSV_DIR_NAME = "csv"
-TEMP_FILE_SUFFIX = ".tmp"
 TEXT_ENCODING = "utf-8"
 JSON_INDENT = 2
 FETCH_HINT = "run `muon fetch pokeapi`"
@@ -83,21 +80,6 @@ class SnapshotFetchReport:
 
 def compute_sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
-
-
-def write_bytes_atomically(path: Path, content: bytes) -> None:
-    """Write `content` to `path`. A reader sees the old file or the new one, never part."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temp_name = tempfile.mkstemp(
-        dir=path.parent, prefix=f".{path.name}.", suffix=TEMP_FILE_SUFFIX
-    )
-    temp_path = Path(temp_name)
-    try:
-        with os.fdopen(descriptor, "wb") as handle:
-            handle.write(content)
-        temp_path.replace(path)
-    finally:
-        temp_path.unlink(missing_ok=True)
 
 
 class SnapshotStore:

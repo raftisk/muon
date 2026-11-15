@@ -23,10 +23,11 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from muon.files import write_text_atomically
 from muon.ingestion.batch import GraphBatch, NodeRecord
 from muon.ingestion.bulbapedia.batching import SpeciesResolver
 from muon.ingestion.bulbapedia.fetch import PAGE_TYPES
-from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT, Page, PagePin, write_text_atomically
+from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT, Page, PagePin
 from muon.ingestion.bulbapedia.species.batches import POKEMON_SPECIES
 from muon.ingestion.bulbapedia.species.forms import build_species_id
 from muon.ontology.model import extract_local_name

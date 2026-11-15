@@ -22,6 +22,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from muon.files import write_text_atomically
 from muon.ingestion.batch import GraphBatch, NodeRef
 from muon.ingestion.bulbapedia.batching import (
     ASPECT,
@@ -32,7 +33,7 @@ from muon.ingestion.bulbapedia.batching import (
     build_abox_index,
 )
 from muon.ingestion.bulbapedia.fetch import PAGE_TYPES
-from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore, write_text_atomically
+from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore
 from muon.ingestion.bulbapedia.runs import (
     OUTPUT_SUFFIX,
     BatchCounts,

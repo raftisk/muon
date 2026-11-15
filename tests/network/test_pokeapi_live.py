@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from muon.files import write_bytes_atomically
 from muon.ingestion.bulbapedia.api import build_http_client
 from muon.ingestion.pokeapi import snapshot
 from muon.ingestion.pokeapi.snapshot import (
@@ -22,7 +23,7 @@ def test_live_repository_serves_a_csv_file_at_its_current_commit(tmp_path: Path)
     with build_http_client() as client:
         commit = resolve_commit(client)
         content = download_file(client, commit, FILE_NAME)
-    snapshot.write_bytes_atomically(store.build_file_path(FILE_NAME), content)
+    write_bytes_atomically(store.build_file_path(FILE_NAME), content)
     store.write_manifest(
         SnapshotManifest(
             repository=snapshot.REPOSITORY,

@@ -1,7 +1,7 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
-`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability` and
-`muon ingest bulbapedia species|move|ability`."""
+`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability`,
+`muon ingest bulbapedia species|move|ability` and `muon schema <prefix> [--refresh] [--json]`."""
 
 import argparse
 import asyncio
@@ -17,6 +17,7 @@ from pathlib import Path
 import httpx
 from pydantic import SecretStr, ValidationError
 
+from muon.agent.universes import UniverseError, UniversePlugin, discover_universes
 from muon.config import OntologySettings, Settings, get_settings
 from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
 from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
@@ -105,6 +106,17 @@ from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, seed_universe
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyError, load_ontology_model
+from muon.retrieval.context import (
+    JSON_INDENT as SCHEMA_JSON_INDENT,
+)
+from muon.retrieval.context import (
+    CacheStatus,
+    SchemaCacheError,
+    SchemaContext,
+    SchemaRequest,
+    load_schema_context,
+)
+from muon.retrieval.schema import SchemaIntrospectionError
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -114,6 +126,7 @@ PURGE_COMMAND = "purge"
 FETCH_COMMAND = "fetch"
 PARSE_COMMAND = "parse"
 INGEST_COMMAND = "ingest"
+SCHEMA_COMMAND = "schema"
 BULBAPEDIA_SOURCE = "bulbapedia"
 POKEAPI_SOURCE = "pokeapi"
 PASSWORD_PROMPT = "Neo4j password: "
@@ -232,6 +245,19 @@ def build_parser() -> argparse.ArgumentParser:
         dest="titles",
         metavar="TITLE",
         help="ingest only this page (repeatable)",
+    )
+    schema = commands.add_parser(
+        SCHEMA_COMMAND, help="print the schema context of a universe, built from the live graph"
+    )
+    schema.add_argument("prefix", help="universe prefix, the folder name of the plugin")
+    schema.add_argument(
+        "--refresh", action="store_true", help="introspect the graph although the cache is current"
+    )
+    schema.add_argument(
+        "--json",
+        action="store_true",
+        dest="is_json",
+        help="print the schema as JSON instead of the prompt text",
     )
     return parser
 
@@ -703,6 +729,61 @@ def execute_purge(settings: Settings, prefix: str) -> int:
     return EXIT_SUCCESS
 
 
+SCHEMA_REBUILD_REASONS = {
+    CacheStatus.MISSING: "missing",
+    CacheStatus.STALE: "stale",
+    CacheStatus.REFRESHED: "refresh",
+}
+
+
+def format_schema_status(prefix: str, context: SchemaContext, elapsed_seconds: float) -> str:
+    """Name how the schema was obtained and how long it took, for stderr."""
+    if context.cache_status is CacheStatus.HIT:
+        outcome = "cache used"
+    elif context.cache_status is CacheStatus.INVALID:
+        outcome = f"rebuilt (invalid: {context.cache_path})"
+    else:
+        outcome = f"rebuilt ({SCHEMA_REBUILD_REASONS[context.cache_status]})"
+    return f"{SCHEMA_COMMAND} {prefix}: {outcome} in {elapsed_seconds:.2f} s"
+
+
+async def run_schema(
+    settings: Settings, plugin: UniversePlugin, should_refresh: bool
+) -> SchemaContext:
+    model = load_ontology_model(settings.ontology.ontology_dir, plugin.prefix)
+    request = SchemaRequest(plugin, LabelMaterializer(model), should_refresh)
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        return await load_schema_context(client, request, settings.universes.schema_cache_dir)
+
+
+def execute_schema(settings: Settings, arguments: argparse.Namespace) -> int:
+    prefix = arguments.prefix
+    failure_prefix = build_failure_prefix(SCHEMA_COMMAND, prefix)
+    try:
+        registry = discover_universes(
+            settings.universes.universes_dir, settings.ontology.ontology_dir
+        )
+        plugin = registry.get(prefix)
+    except UniverseError as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    started_at = time.perf_counter()
+    try:
+        context = asyncio.run(run_schema(settings, plugin, arguments.refresh))
+    except (OntologyError, GraphError, SchemaIntrospectionError, SchemaCacheError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    elapsed_seconds = time.perf_counter() - started_at
+    if arguments.is_json:
+        print(context.graph_schema.model_dump_json(indent=SCHEMA_JSON_INDENT))
+    else:
+        print(context.text, end="")
+    print(format_schema_status(prefix, context, elapsed_seconds), file=sys.stderr)
+    return EXIT_SUCCESS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command in `argv` and return the process exit code."""
     parser = build_parser()
@@ -745,4 +826,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
     if arguments.command == PURGE_COMMAND:
         return execute_purge(settings, arguments.prefix)
+    if arguments.command == SCHEMA_COMMAND:
+        return execute_schema(settings, arguments)
     return execute_seed(settings, arguments.prefix)

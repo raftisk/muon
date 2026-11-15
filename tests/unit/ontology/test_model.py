@@ -9,6 +9,7 @@ from muon.ontology.model import (
     OntologyModel,
     build_ontology_model,
     extract_local_name,
+    list_ontology_paths,
     load_ontology_model,
 )
 from tests.unit.ontology.conftest import REAL_ONTOLOGY_DIR
@@ -115,5 +116,34 @@ def test_broken_turtle_names_path(tmp_path: Path) -> None:
 
     with pytest.raises(OntologyError) as error_info:
         load_ontology_model(ontology_dir, "ex")
+
+    assert str(ontology_dir / "universes" / "ex.ttl") in str(error_info.value)
+
+
+def test_list_ontology_paths_gives_core_files_sorted_then_the_universe_file() -> None:
+    paths = list_ontology_paths(REAL_ONTOLOGY_DIR, "pkmn")
+
+    core_paths = sorted((REAL_ONTOLOGY_DIR / "core").glob("*.ttl"))
+    assert paths == (*core_paths, REAL_ONTOLOGY_DIR / "universes" / "pkmn.ttl")
+
+
+@pytest.mark.parametrize("universe", ["Pk-mn", "../x", ""])
+def test_list_ontology_paths_rejects_an_invalid_prefix(tmp_path: Path, universe: str) -> None:
+    with pytest.raises(OntologyError, match="Invalid universe prefix"):
+        list_ontology_paths(tmp_path, universe)
+
+
+def test_list_ontology_paths_rejects_an_empty_core(tmp_path: Path) -> None:
+    (tmp_path / "core").mkdir()
+
+    with pytest.raises(OntologyError, match="No core ttl files"):
+        list_ontology_paths(tmp_path, "ex")
+
+
+def test_list_ontology_paths_names_a_missing_universe_file(tmp_path: Path) -> None:
+    ontology_dir = write_ontology_dir(tmp_path, "ex", universe_ttl=None)
+
+    with pytest.raises(OntologyError, match="Missing universe T-Box") as error_info:
+        list_ontology_paths(ontology_dir, "ex")
 
     assert str(ontology_dir / "universes" / "ex.ttl") in str(error_info.value)

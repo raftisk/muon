@@ -8,12 +8,15 @@ from pydantic import ValidationError
 from muon.config import (
     DEFAULT_MAX_RETRIES,
     DEFAULT_REQUEST_TIMEOUT_SECONDS,
+    DEFAULT_SCHEMA_CACHE_DIR,
+    DEFAULT_UNIVERSES_DIR,
     PROJECT_ROOT,
     EmbeddingSettings,
     LLMSettings,
     Neo4jSettings,
     OntologySettings,
     Settings,
+    UniverseSettings,
     get_settings,
 )
 
@@ -193,5 +196,34 @@ def test_settings_aggregate_holds_no_provider_group(monkeypatch: pytest.MonkeyPa
 
     settings = Settings()
 
-    assert set(Settings.model_fields) == {"neo4j", "ontology"}
+    assert set(Settings.model_fields) == {"neo4j", "ontology", "universes"}
     assert settings.neo4j.uri == "neo4j://env-host:7687"
+
+
+def test_universe_settings_default_to_repo_folders(tmp_path: Path) -> None:
+    settings = UniverseSettings(_env_file=tmp_path / ".env")
+
+    assert settings.universes_dir == DEFAULT_UNIVERSES_DIR == PROJECT_ROOT / "muon" / "universes"
+    assert settings.schema_cache_dir == DEFAULT_SCHEMA_CACHE_DIR == PROJECT_ROOT / "data" / "schema"
+
+
+def test_universe_env_vars_override_the_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MUON_UNIVERSES_DIR", str(tmp_path / "plugins"))
+    monkeypatch.setenv("MUON_SCHEMA_CACHE_DIR", str(tmp_path / "cache"))
+
+    settings = UniverseSettings(_env_file=tmp_path / ".env")
+
+    assert settings.universes_dir == tmp_path / "plugins"
+    assert settings.schema_cache_dir == tmp_path / "cache"
+
+
+def test_settings_build_with_only_neo4j_variables(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NEO4J_URI", "neo4j://env-host:7687")
+    monkeypatch.setenv("NEO4J_USERNAME", "env-user")
+    monkeypatch.setenv("NEO4J_PASSWORD", "env-secret")
+
+    settings = Settings()
+
+    assert settings.universes.universes_dir == DEFAULT_UNIVERSES_DIR

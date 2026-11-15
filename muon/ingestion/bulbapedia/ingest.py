@@ -23,10 +23,11 @@ from dataclasses import asdict, dataclass
 from enum import StrEnum
 from pathlib import Path
 
+from muon.files import write_text_atomically
 from muon.graph import GraphClient, GraphError
 from muon.ingestion.batch import GraphBatch, NodeRef
 from muon.ingestion.bulbapedia.batching import UNIVERSE
-from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT, write_text_atomically
+from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT
 from muon.ingestion.bulbapedia.runs import PageResult, PageStatus, ReportModel, dump_json
 from muon.ingestion.runner import Runner, RunReport, UniverseCensus, WriteMode
 from muon.ingestion.seed import find_missing_seed_nodes, read_abox
