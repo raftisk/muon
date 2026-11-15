@@ -55,3 +55,13 @@ def test_ontology_labels(materializer: LabelMaterializer) -> None:
 
     assert len(labels) == TOTAL_CLASSES
     assert "Concept" in labels
+
+
+def test_ancestor_labels(materializer: LabelMaterializer) -> None:
+    ancestor_labels = materializer.map_ancestor_labels()
+
+    assert len(ancestor_labels) == TOTAL_CLASSES
+    assert ancestor_labels["Region"] == {"Location", "Entity"}
+    assert ancestor_labels["HeldItem"] == {"Item", "Object", "Entity"}
+    assert ancestor_labels["Generation"] == {"Series", "Source", "Meta"}
+    assert all("pkmn" not in labels for labels in ancestor_labels.values())

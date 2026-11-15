@@ -91,8 +91,8 @@ def compute_ancestors(tbox: Graph, classes: frozenset[str]) -> dict[str, frozens
     return ancestors
 
 
-def load_ontology_model(ontology_dir: Path, universe: str) -> OntologyModel:
-    """Parse `core/*.ttl` and `universes/<universe>.ttl` under `ontology_dir`."""
+def list_ontology_paths(ontology_dir: Path, universe: str) -> tuple[Path, ...]:
+    """Return the sorted `core/*.ttl` paths followed by `universes/<universe>.ttl`."""
     if not UNIVERSE_PREFIX_PATTERN.fullmatch(universe):
         raise OntologyError(
             f"Invalid universe prefix {universe!r}: expected {UNIVERSE_PREFIX_PATTERN.pattern}"
@@ -103,9 +103,13 @@ def load_ontology_model(ontology_dir: Path, universe: str) -> OntologyModel:
     universe_path = ontology_dir / UNIVERSES_DIR_NAME / f"{universe}{TTL_SUFFIX}"
     if not universe_path.is_file():
         raise OntologyError(f"Missing universe T-Box {universe_path}")
+    return (*core_paths, universe_path)
 
+
+def load_ontology_model(ontology_dir: Path, universe: str) -> OntologyModel:
+    """Parse `core/*.ttl` and `universes/<universe>.ttl` under `ontology_dir`."""
     tbox = Graph()
-    for path in [*core_paths, universe_path]:
+    for path in list_ontology_paths(ontology_dir, universe):
         try:
             tbox.parse(path, format=TURTLE_FORMAT)
         except BadSyntax as error:
