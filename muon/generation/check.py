@@ -43,6 +43,8 @@ def check_claim(claim: Claim, bundle: EvidenceBundle) -> list[CitationIssue]:
         return [CitationIssue(claim.id, f"{claim.id} cites no evidence")]
     issues: list[CitationIssue] = []
     cited = find_cited_evidence(claim, bundle, issues)
+    if not cited:
+        return issues
     for key in claim.node_keys:
         if not any(evidence.graph_slice.find_node(key) is not None for evidence in cited):
             issues.append(
