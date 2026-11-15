@@ -1,1 +1,1 @@
-"""Generation layer: the answer models, the generator call and the citation checker."""
+"""Answer writing: the answer models, the generator call and the citation checker."""
