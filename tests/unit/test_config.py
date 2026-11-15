@@ -3,7 +3,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from muon.config import (
     DEFAULT_MAX_RETRIES,
@@ -11,6 +11,7 @@ from muon.config import (
     DEFAULT_SCHEMA_CACHE_DIR,
     DEFAULT_UNIVERSES_DIR,
     PROJECT_ROOT,
+    AgentSettings,
     EmbeddingSettings,
     LLMSettings,
     Neo4jSettings,
@@ -227,3 +228,48 @@ def test_settings_build_with_only_neo4j_variables(monkeypatch: pytest.MonkeyPatc
     settings = Settings()
 
     assert settings.universes.universes_dir == DEFAULT_UNIVERSES_DIR
+
+
+def build_agent_settings(**overrides: int) -> AgentSettings:
+    return AgentSettings(
+        _env_file=None,
+        base_url="https://agent.test/v1",
+        api_key=SecretStr("k"),
+        model="m",
+        **overrides,
+    )
+
+
+def test_agent_settings_default_limits() -> None:
+    settings = build_agent_settings()
+
+    assert settings.max_tool_calls == 10
+    assert settings.max_cypher_calls == 2
+    assert settings.max_check_retries == 1
+
+
+def test_agent_env_vars_override_the_limits(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MUON_AGENT_BASE_URL", "https://agent.test/v1")
+    monkeypatch.setenv("MUON_AGENT_API_KEY", "k")
+    monkeypatch.setenv("MUON_AGENT_MODEL", "m")
+    monkeypatch.setenv("MUON_AGENT_MAX_CYPHER_CALLS", "4")
+
+    assert AgentSettings(_env_file=None).max_cypher_calls == 4
+
+
+def test_agent_settings_reject_zero_tool_calls() -> None:
+    with pytest.raises(ValidationError):
+        build_agent_settings(max_tool_calls=0)
+
+
+def test_agent_settings_accept_zero_check_retries() -> None:
+    assert build_agent_settings(max_check_retries=0).max_check_retries == 0
+
+
+def test_settings_build_without_agent_variables(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NEO4J_URI", "neo4j://env-host:7687")
+    monkeypatch.setenv("NEO4J_USERNAME", "env-user")
+    monkeypatch.setenv("NEO4J_PASSWORD", "env-secret")
+
+    assert "agent" not in Settings.model_fields
+    Settings()

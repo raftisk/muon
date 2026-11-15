@@ -6,7 +6,7 @@ import pytest
 from pydantic import BaseModel, SecretStr
 
 from muon.config import EmbeddingSettings, LLMSettings
-from muon.llm import create_client
+from muon.llm import create_chat_model, create_client
 from tests.unit.llm.fakes import build_mock_http_client, chat_completion_body, embedding_body
 
 CHAT_URL = "https://chat.test/v1"
@@ -158,3 +158,22 @@ async def test_embeddings_call_returns_indexed_vectors() -> None:
     assert [item.embedding for item in response.data] == vectors
     assert str(requests[0].url) == f"{EMBEDDING_URL}/embeddings"
     assert json.loads(requests[0].content)["dimensions"] == 4
+
+
+def test_chat_model_takes_the_settings_values() -> None:
+    settings = build_llm_settings(max_retries=3)
+
+    chat_model = create_chat_model(settings)
+
+    assert chat_model.model_name == CHAT_MODEL
+    assert chat_model.openai_api_base == CHAT_URL
+    assert chat_model.request_timeout == TIMEOUT_SECONDS
+    assert chat_model.max_retries == 3
+    assert chat_model.openai_api_key is not None
+    assert chat_model.openai_api_key.get_secret_value() == CHAT_KEY
+
+
+def test_chat_model_keeps_the_key_secret_in_repr() -> None:
+    chat_model = create_chat_model(build_llm_settings())
+
+    assert CHAT_KEY not in repr(chat_model)

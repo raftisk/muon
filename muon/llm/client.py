@@ -1,8 +1,18 @@
-"""Builds `AsyncOpenAI` clients from provider settings."""
+"""Builds `AsyncOpenAI` and LangChain chat clients from provider settings."""
 
+from langchain_openai import ChatOpenAI
 from openai import AsyncOpenAI
 
 from muon.config import ProviderSettings
+
+
+class ModelCallError(Exception):
+    """A model call failed after the SDK retries; names the step and the model."""
+
+    def __init__(self, step: str, model: str, reason: str) -> None:
+        super().__init__(f"Model call failed in the {step} step (model {model}): {reason}")
+        self.step = step
+        self.model = model
 
 
 def create_client(settings: ProviderSettings) -> AsyncOpenAI:
@@ -14,6 +24,17 @@ def create_client(settings: ProviderSettings) -> AsyncOpenAI:
     return AsyncOpenAI(
         base_url=settings.base_url,
         api_key=settings.api_key.get_secret_value(),
+        timeout=settings.timeout,
+        max_retries=settings.max_retries,
+    )
+
+
+def create_chat_model(settings: ProviderSettings) -> ChatOpenAI:
+    """Return a LangChain chat model for the endpoint, key, model, timeout and retries."""
+    return ChatOpenAI(
+        base_url=settings.base_url,
+        api_key=settings.api_key,
+        model=settings.model,
         timeout=settings.timeout,
         max_retries=settings.max_retries,
     )
