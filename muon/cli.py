@@ -3,7 +3,7 @@
 `muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability`,
 `muon ingest bulbapedia species|move|ability`, `muon schema <prefix> [--refresh] [--json]` and
 `muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]` and
-`muon eval PREFIX [--question ID ...] [--output-dir DIR]`."""
+`muon eval PREFIX [--set NAME ...] [--question ID ...] [--output-dir DIR]`."""
 
 import argparse
 import asyncio
@@ -26,7 +26,7 @@ from muon.agent.routing import AgentRuntime, RoutingError, StepTracker, select_u
 from muon.agent.universes import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
 from muon.config import AgentSettings, OntologySettings, Settings, get_settings
 from muon.console import STDERR, STDOUT, EvalDisplay, StepDisplay, build_eval_summary
-from muon.evaluation.questions import EvalError, load_questions
+from muon.evaluation.questions import EvalError, load_eval_sets, select_questions
 from muon.evaluation.run import (
     DEFAULT_EVAL_DIR,
     EvalRequest,
@@ -317,6 +317,14 @@ def build_parser() -> argparse.ArgumentParser:
         EVAL_COMMAND, help="ask the eval questions of a universe and score the answers"
     )
     eval_parser.add_argument("prefix", help="universe prefix, the folder name of the plugin")
+    eval_parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        dest="set_names",
+        metavar="NAME",
+        help="run only this eval set (repeatable; default: every set)",
+    )
     eval_parser.add_argument(
         "--question",
         action="append",
@@ -1080,16 +1088,18 @@ def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
             settings.universes.universes_dir, settings.ontology.ontology_dir
         )
         plugin = select_universe(registry, arguments.prefix)
-        eval_set = load_questions(plugin)
-        questions = eval_set.select(arguments.question_ids) if arguments.question_ids else None
+        eval_sets = load_eval_sets(plugin, arguments.set_names)
         request = EvalRequest(
             prefix=plugin.prefix,
-            questions=eval_set.questions if questions is None else questions,
-            source_hash=eval_set.source_hash,
+            questions=select_questions(eval_sets, arguments.question_ids),
+            set_hashes={eval_set.name: eval_set.source_hash for eval_set in eval_sets},
             settings=settings,
             started_at=datetime.now(UTC),
         )
-        STDOUT.print(f"{EVAL_COMMAND} {plugin.prefix}: {len(request.questions)} questions")
+        set_names = ", ".join(eval_set.name for eval_set in eval_sets)
+        STDOUT.print(
+            f"{EVAL_COMMAND} {plugin.prefix} ({set_names}): {len(request.questions)} questions"
+        )
         with EvalDisplay(STDOUT, request.questions) as display:
             context = AgentContext(settings, agent_settings, registry, display)
             tracked = replace(request, on_result=display.handle_result)

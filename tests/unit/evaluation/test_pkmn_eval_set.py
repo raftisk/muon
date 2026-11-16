@@ -4,7 +4,7 @@ import pytest
 
 from muon.agent.universes import discover_universes
 from muon.config import DEFAULT_ONTOLOGY_DIR, DEFAULT_UNIVERSES_DIR
-from muon.evaluation.questions import EvalQuestion, load_questions
+from muon.evaluation.questions import EvalQuestion, load_eval_sets
 
 QUESTION_COUNT = 30
 FAMILIES = frozenset({"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S9", "S11", "S18"})
@@ -13,9 +13,10 @@ WRITE_WORD_PATTERN = re.compile(r"\b(SET|CREATE|MERGE|DELETE|REMOVE|DROP|CALL)\b
 LIMIT_PATTERN = re.compile(r"\bLIMIT\b", re.IGNORECASE)
 LIMITED_IDS = frozenset({"Q08"})
 
-QUESTIONS = load_questions(
-    discover_universes(DEFAULT_UNIVERSES_DIR, DEFAULT_ONTOLOGY_DIR).get("pkmn")
-).questions
+(GENERAL_SET,) = load_eval_sets(
+    discover_universes(DEFAULT_UNIVERSES_DIR, DEFAULT_ONTOLOGY_DIR).get("pkmn"), ["general"]
+)
+QUESTIONS = GENERAL_SET.questions
 
 
 def test_the_set_holds_30_questions_in_id_order() -> None:

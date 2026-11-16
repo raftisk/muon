@@ -31,7 +31,7 @@ from muon.evaluation.eval_scores import (
     resolve_gold,
     score_answer,
 )
-from muon.evaluation.questions import EvalQuestion
+from muon.evaluation.questions import SelectedQuestion
 from muon.files import write_text_atomically
 from muon.generation.generate import PROMPT_PATH as GENERATE_PROMPT_PATH
 from muon.graph import GraphConnectionError
@@ -48,7 +48,7 @@ JSON_SUFFIX = ".json"
 JSON_INDENT = 2
 MAX_LISTED_NODES = 20
 GIT_COMMAND = ("git", "rev-parse", "HEAD")
-HASH_QUESTIONS = "questions"
+HASH_QUESTIONS_PREFIX = "questions:"
 HASH_RETRIEVE_PROMPT = "retrieve_prompt"
 HASH_GENERATE_PROMPT = "generate_prompt"
 HASH_NOTES = "notes"
@@ -101,6 +101,7 @@ class RunRecord(RunModel):
     """1 question of a run: its outcome, and for an answered one the nodes and the score."""
 
     question_id: str
+    set_name: str
     family: str
     question: str
     reference: str
@@ -138,6 +139,7 @@ class RunTotals(RunModel):
 
 class QuestionSummary(RunModel):
     question_id: str
+    set_name: str
     family: str
     status: RunStatus
     error: str | None
@@ -149,6 +151,7 @@ class RunFile(RunModel):
 
     meta: RunMeta
     totals: RunTotals
+    set_totals: dict[str, RunTotals]
     stop: str | None
     questions: tuple[QuestionSummary, ...]
 
@@ -157,12 +160,13 @@ class RunFile(RunModel):
 class EvalRequest:
     """The questions to ask, the universe to ask them in and the time the run started.
 
-    `on_result` is called with each record as soon as its question finishes.
+    `set_hashes` holds the sha256 of the question file of each set in the run. `on_result` is
+    called with each record as soon as its question finishes.
     """
 
     prefix: str
-    questions: tuple[EvalQuestion, ...]
-    source_hash: str
+    questions: tuple[SelectedQuestion, ...]
+    set_hashes: dict[str, str]
     settings: Settings
     started_at: datetime
     on_result: Callable[[RunRecord], None] | None = None
@@ -194,14 +198,16 @@ def build_census(schema: GraphSchema) -> Census:
 
 
 async def ask_record(
-    question: EvalQuestion, gold: Sequence[ScoredNode], ask_text: AskText
+    selected: SelectedQuestion, gold: Sequence[ScoredNode], ask_text: AskText
 ) -> RunRecord:
     """Ask 1 question and score its answer. A `ModelCallError` becomes an error record."""
+    question = selected.question
     try:
         result = await ask_text(question.question)
     except ModelCallError as error:
         return RunRecord(
             question_id=question.id,
+            set_name=selected.set_name,
             family=question.family,
             question=question.question,
             reference=question.reference,
@@ -214,6 +220,7 @@ async def ask_record(
     comparison = compare_nodes(result, gold)
     return RunRecord(
         question_id=question.id,
+        set_name=selected.set_name,
         family=question.family,
         question=question.question,
         reference=question.reference,
@@ -240,8 +247,8 @@ async def run_eval(
     scope = await build_scope(runtime.client, plugin, request.settings)
     with runtime.progress.step(GOLD_STEP):
         gold = {
-            question.id: await resolve_gold(question, scope, runtime.client)
-            for question in request.questions
+            selected.question.id: await resolve_gold(selected.question, scope, runtime.client)
+            for selected in request.questions
         }
     agent_settings = runtime.agent_settings
     meta = build_meta(request, agent_settings, scope.schema_context.graph_schema, plugin.notes_path)
@@ -252,11 +259,12 @@ async def run_eval(
 
     records: list[RunRecord] = []
     stop: str | None = None
-    for question in request.questions:
+    for selected in request.questions:
+        question_id = selected.question.id
         try:
-            record = await ask_record(question, gold[question.id], ask_text)
+            record = await ask_record(selected, gold[question_id], ask_text)
         except GraphConnectionError as error:
-            stop = f"{question.id}: {error}"
+            stop = f"{question_id}: {error}"
             break
         records.append(record)
         if request.on_result is not None:
@@ -280,7 +288,10 @@ def build_meta(
         max_cypher_calls=agent_settings.max_cypher_calls,
         max_check_retries=agent_settings.max_check_retries,
         hashes={
-            HASH_QUESTIONS: request.source_hash,
+            **{
+                f"{HASH_QUESTIONS_PREFIX}{name}": value
+                for name, value in request.set_hashes.items()
+            },
             HASH_RETRIEVE_PROMPT: hash_file(RETRIEVE_PROMPT_PATH),
             HASH_GENERATE_PROMPT: hash_file(GENERATE_PROMPT_PATH),
             HASH_NOTES: hash_file(notes_path),
@@ -289,12 +300,12 @@ def build_meta(
     )
 
 
-def summarize(run: EvalRun) -> RunTotals:
-    scores = [record.score for record in run.records if record.score is not None]
+def summarize(records: Sequence[RunRecord]) -> RunTotals:
+    scores = [record.score for record in records if record.score is not None]
     count = len(scores)
     return RunTotals(
-        question_count=len(run.records),
-        error_count=len(run.records) - count,
+        question_count=len(records),
+        error_count=len(records) - count,
         valid_count=sum(1 for score in scores if score.is_citation_valid),
         mean_precision=sum(score.precision for score in scores) / count if count else 0.0,
         mean_recall=sum(score.recall for score in scores) / count if count else 0.0,
@@ -306,6 +317,14 @@ def summarize(run: EvalRun) -> RunTotals:
         reasoning_tokens=sum(score.reasoning_tokens for score in scores),
         model_calls=sum(score.model_calls for score in scores),
     )
+
+
+def summarize_sets(run: EvalRun) -> dict[str, RunTotals]:
+    """The totals of each set that has a record, in order of first appearance."""
+    by_set: dict[str, list[RunRecord]] = {}
+    for record in run.records:
+        by_set.setdefault(record.set_name, []).append(record)
+    return {name: summarize(records) for name, records in by_set.items()}
 
 
 def format_node(node: ScoredNode) -> str:
@@ -323,7 +342,7 @@ def format_node_list(nodes: Sequence[ScoredNode]) -> str:
 def render_record(record: RunRecord) -> str:
     """The review section of 1 question."""
     lines = [
-        f"## {record.question_id} ({record.family})",
+        f"## {record.question_id} ({record.set_name}, {record.family})",
         "",
         f"Question: {record.question}",
         f"Reference: {record.reference}",
@@ -380,11 +399,13 @@ def write_run(run: EvalRun, output_dir: Path) -> Path:
         write_text_atomically(answer_path, record.model_dump_json(indent=JSON_INDENT))
     run_file = RunFile(
         meta=run.meta,
-        totals=summarize(run),
+        totals=summarize(run.records),
+        set_totals=summarize_sets(run),
         stop=run.stop,
         questions=tuple(
             QuestionSummary(
                 question_id=record.question_id,
+                set_name=record.set_name,
                 family=record.family,
                 status=record.status,
                 error=record.error,

@@ -97,24 +97,41 @@ def test_evals_is_optional_and_resolved_against_the_folder(
 ) -> None:
     add_alt_universe_t_box(ontology_dir)
     write_toy_plugin(universes_dir)
-    folder = write_toy_plugin(universes_dir, prefix=ALT_UNIVERSE, evals="evals.toml")
-    (folder / "evals.toml").write_text("", encoding="utf-8")
+    folder = write_toy_plugin(
+        universes_dir,
+        prefix=ALT_UNIVERSE,
+        evals={"general": "evals/general.toml", "extra-set": "extra.toml"},
+    )
+    (folder / "evals").mkdir()
+    (folder / "evals" / "general.toml").write_text("", encoding="utf-8")
+    (folder / "extra.toml").write_text("", encoding="utf-8")
 
     registry = discover_universes(universes_dir, ontology_dir)
 
-    assert registry.get(TOY_UNIVERSE).evals_path is None
-    assert registry.get(ALT_UNIVERSE).evals_path == folder / "evals.toml"
+    assert registry.get(TOY_UNIVERSE).eval_paths == {}
+    assert registry.get(ALT_UNIVERSE).eval_paths == {
+        "general": folder / "evals" / "general.toml",
+        "extra-set": folder / "extra.toml",
+    }
+
+
+@pytest.mark.parametrize("set_name", ["General", "1st", "has_underscore", ""])
+def test_a_bad_eval_set_name_raises(universes_dir: Path, ontology_dir: Path, set_name: str) -> None:
+    write_toy_plugin(universes_dir, evals={set_name: "evals.toml"})
+
+    with pytest.raises(UniverseError, match="eval set name"):
+        discover_universes(universes_dir, ontology_dir)
 
 
 def test_missing_evals_file_raises(universes_dir: Path, ontology_dir: Path) -> None:
-    write_toy_plugin(universes_dir, evals="missing.toml")
+    write_toy_plugin(universes_dir, evals={"general": "missing.toml"})
 
     with pytest.raises(UniverseError, match="Missing evals file .*missing.toml"):
         discover_universes(universes_dir, ontology_dir)
 
 
 def test_evals_path_outside_the_folder_raises(universes_dir: Path, ontology_dir: Path) -> None:
-    write_toy_plugin(universes_dir, evals="../outside.toml")
+    write_toy_plugin(universes_dir, evals={"general": "../outside.toml"})
 
     with pytest.raises(UniverseError, match="Evals path .*leaves the plugin folder"):
         discover_universes(universes_dir, ontology_dir)

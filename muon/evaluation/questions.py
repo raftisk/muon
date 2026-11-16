@@ -1,13 +1,16 @@
 """The eval questions of a universe plugin and their loader.
 
-A plugin names its question file in `universe.toml` (field `evals`). The file holds one
-`[[question]]` table per question, in the order of difficulty, easy first.
+A plugin names its eval sets in the `[evals]` table of `universe.toml`: set name to question
+file. A file holds one `[[question]]` table per question, in the order of difficulty, easy
+first. Question ids are unique across the sets of a run.
 """
 
 import hashlib
 import tomllib
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import dataclass
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -45,36 +48,26 @@ class EvalFile(EvalModel):
 
 
 class EvalSet(EvalModel):
-    """The questions of 1 plugin in file order, and the sha256 of the file they came from."""
+    """The questions of 1 named set in file order, and the sha256 of the file they came from."""
 
+    name: str
     questions: tuple[EvalQuestion, ...]
     source_hash: str
 
-    def select(self, ids: Sequence[str]) -> tuple[EvalQuestion, ...]:
-        """Return the questions named in `ids`, in file order.
 
-        Raises `EvalError` for an id that the file does not hold.
-        """
-        known = [question.id for question in self.questions]
-        unknown = sorted(set(ids) - set(known))
-        if unknown:
-            raise EvalError(
-                f"Unknown question ids: {', '.join(unknown)}; known: {', '.join(known)}"
-            )
-        return tuple(question for question in self.questions if question.id in ids)
+@dataclass(frozen=True)
+class SelectedQuestion:
+    """A question of a run with the name of the set it belongs to."""
+
+    set_name: str
+    question: EvalQuestion
 
 
-def load_questions(plugin: UniversePlugin) -> EvalSet:
-    """Read and validate the eval file of `plugin`.
+def load_eval_set(name: str, path: Path) -> EvalSet:
+    """Read and validate the question file `path` as the set `name`.
 
-    Raises `EvalError` when the plugin names no file, the file is unreadable or invalid, or
-    2 questions share an id.
+    Raises `EvalError` when the file is unreadable or invalid, or 2 questions share an id.
     """
-    path = plugin.evals_path
-    if path is None:
-        raise EvalError(
-            f"Universe {plugin.prefix!r} has no eval set (field {EVALS_FIELD!r} of its manifest)"
-        )
     try:
         content = path.read_bytes()
     except OSError as error:
@@ -94,5 +87,53 @@ def load_questions(plugin: UniversePlugin) -> EvalSet:
     if repeated:
         raise EvalError(f"Eval file {path} repeats question ids: {', '.join(repeated)}")
     return EvalSet(
-        questions=tuple(eval_file.question), source_hash=hashlib.sha256(content).hexdigest()
+        name=name,
+        questions=tuple(eval_file.question),
+        source_hash=hashlib.sha256(content).hexdigest(),
     )
+
+
+def load_eval_sets(plugin: UniversePlugin, names: Sequence[str]) -> tuple[EvalSet, ...]:
+    """Load the sets in `names`, or every declared set in manifest order when `names` is empty.
+
+    Raises `EvalError` when the plugin declares no set, a name is not declared, or 2 loaded
+    sets share a question id.
+    """
+    paths = plugin.eval_paths
+    if not paths:
+        raise EvalError(
+            f"Universe {plugin.prefix!r} has no eval set (field {EVALS_FIELD!r} of its manifest)"
+        )
+    unknown = sorted(set(names) - set(paths))
+    if unknown:
+        raise EvalError(f"Unknown eval sets: {', '.join(unknown)}; declared: {', '.join(paths)}")
+    chosen = [name for name in paths if not names or name in names]
+    sets = tuple(load_eval_set(name, paths[name]) for name in chosen)
+    owners: dict[str, str] = {}
+    for eval_set in sets:
+        for question in eval_set.questions:
+            first_set = owners.setdefault(question.id, eval_set.name)
+            if first_set != eval_set.name:
+                raise EvalError(
+                    f"Question id {question.id} is in the sets {first_set!r} and {eval_set.name!r}"
+                )
+    return sets
+
+
+def select_questions(sets: Sequence[EvalSet], ids: Sequence[str]) -> tuple[SelectedQuestion, ...]:
+    """Return the questions named in `ids` in set and file order, or every question when empty.
+
+    Raises `EvalError` for an id that none of the sets holds.
+    """
+    selected = tuple(
+        SelectedQuestion(eval_set.name, question)
+        for eval_set in sets
+        for question in eval_set.questions
+    )
+    known = [item.question.id for item in selected]
+    unknown = sorted(set(ids) - set(known))
+    if unknown:
+        raise EvalError(f"Unknown question ids: {', '.join(unknown)}; known: {', '.join(known)}")
+    if not ids:
+        return selected
+    return tuple(item for item in selected if item.question.id in ids)

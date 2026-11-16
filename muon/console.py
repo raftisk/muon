@@ -18,8 +18,15 @@ from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
 
-from muon.evaluation.questions import EvalQuestion
-from muon.evaluation.run import GOLD_STEP, EvalRun, RunRecord, RunTotals, summarize
+from muon.evaluation.questions import SelectedQuestion
+from muon.evaluation.run import (
+    GOLD_STEP,
+    EvalRun,
+    RunRecord,
+    RunTotals,
+    summarize,
+    summarize_sets,
+)
 
 SPINNER_NAME = "dots"
 REFRESH_PER_SECOND = 10
@@ -163,10 +170,20 @@ def build_results_table(records: Sequence[RunRecord], totals: RunTotals | None) 
     return table
 
 
+def describe_set_totals(name: str, totals: RunTotals) -> str:
+    return (
+        f"{name}: {totals.question_count} questions, precision {totals.mean_precision:.2f}, "
+        f"recall {totals.mean_recall:.2f}, errors {totals.error_count}"
+    )
+
+
 def build_eval_summary(run: EvalRun) -> Group:
     """The results table with totals, then the errors and the reason a run stopped early."""
-    totals = summarize(run)
+    totals = summarize(run.records)
     parts: list[RenderableType] = [build_results_table(run.records, totals)]
+    set_totals = summarize_sets(run)
+    if len(set_totals) > 1:
+        parts.extend(Text(describe_set_totals(name, item)) for name, item in set_totals.items())
     if totals.error_count:
         parts.append(Text(f"errors: {totals.error_count}"))
         parts.extend(
@@ -184,7 +201,7 @@ class EvalDisplay(LiveDisplay):
 
     is_transient = True
 
-    def __init__(self, console: Console, questions: Sequence[EvalQuestion]) -> None:
+    def __init__(self, console: Console, questions: Sequence[SelectedQuestion]) -> None:
         self.questions = tuple(questions)
         self.records: list[RunRecord] = []
         super().__init__(console)
@@ -195,7 +212,9 @@ class EvalDisplay(LiveDisplay):
         question_lines = [line for line in lines if line.name != GOLD_STEP]
         position = len(self.records)
         if question_lines and position < len(self.questions):
-            header = f"{self.questions[position].id} ({position + 1}/{len(self.questions)})"
+            header = (
+                f"{self.questions[position].question.id} ({position + 1}/{len(self.questions)})"
+            )
             parts.append(Text(header, style=HEADER_STYLE))
         parts.append(render_steps(question_lines or lines, self.spinner, time.monotonic()))
         return Group(*parts)

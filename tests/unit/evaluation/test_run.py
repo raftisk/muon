@@ -12,7 +12,7 @@ from muon.agent.routing import AgentRuntime
 from muon.agent.universes import UniverseRegistry, discover_universes
 from muon.config import AgentSettings, Settings
 from muon.evaluation.eval_scores import compare_nodes, score_answer
-from muon.evaluation.questions import EvalError, EvalSet, load_questions
+from muon.evaluation.questions import EvalError, EvalSet, load_eval_sets, select_questions
 from muon.evaluation.run import (
     GOLD_STEP,
     EvalRequest,
@@ -21,6 +21,7 @@ from muon.evaluation.run import (
     RunStatus,
     run_eval,
     summarize,
+    summarize_sets,
     write_run,
 )
 from muon.graph import GraphConnectionError
@@ -30,6 +31,7 @@ from tests.fixtures.toy_plugin import write_toy_plugin
 from tests.unit.agent.test_ask import RecordingTracker
 from tests.unit.chat_fakes import ScriptedChatModel
 from tests.unit.evaluation.fakes import (
+    EVAL_SET_NAME,
     EVALS_FILE_NAME,
     GENERATE_TOKENS,
     RETRIEVE_TOKENS,
@@ -48,13 +50,15 @@ STARTED_AT = datetime(2026, 11, 16, 14, 30, 5, tzinfo=UTC)
 RUN_ID = "20261116-143005"
 SECOND_QUERY = "MATCH (w:ToyWidget:muontoy) RETURN w LIMIT 1"
 GOLD_QUERIES = {"Q01": WIDGET_QUERY, "Q02": SECOND_QUERY, "Q03": WIDGET_QUERY}
+SECOND_SET_NAME = "name-resolution"
+SECOND_SET_FILE_NAME = "second.toml"
 
 
 @dataclass
 class Setup:
     registry: UniverseRegistry
     settings: Settings
-    eval_set: EvalSet
+    eval_sets: tuple[EvalSet, ...]
     client: QueryGraphClient
     runtime: AgentRuntime
     notes_path: Path
@@ -81,11 +85,16 @@ class FakeAsk:
         return outcome
 
 
-def build_setup(tmp_path: Path) -> Setup:
+def build_setup(tmp_path: Path, has_second_set: bool = False) -> Setup:
     ontology_dir = copy_toy_ontology(tmp_path / "ontology")
     universes_dir = tmp_path / "universes"
     universes_dir.mkdir()
-    folder = write_toy_plugin(universes_dir, evals=EVALS_FILE_NAME)
+    evals = {EVAL_SET_NAME: EVALS_FILE_NAME}
+    if has_second_set:
+        evals[SECOND_SET_NAME] = SECOND_SET_FILE_NAME
+    folder = write_toy_plugin(universes_dir, evals=evals)
+    if has_second_set:
+        (folder / SECOND_SET_FILE_NAME).write_text(build_question_toml("N01"), encoding="utf-8")
     text = "".join(
         build_question_toml(question_id, gold_query=query)
         for question_id, query in GOLD_QUERIES.items()
@@ -104,7 +113,7 @@ def build_setup(tmp_path: Path) -> Setup:
     return Setup(
         registry=registry,
         settings=build_toy_settings(tmp_path, ontology_dir),
-        eval_set=load_questions(plugin),
+        eval_sets=load_eval_sets(plugin, []),
         client=client,
         runtime=AgentRuntime(
             client=client, retrieve_model=model, generate_model=model, agent_settings=agent_settings
@@ -116,11 +125,10 @@ def build_setup(tmp_path: Path) -> Setup:
 def build_request(
     setup: Setup, ids: list[str] | None = None, records: list[RunRecord] | None = None
 ) -> EvalRequest:
-    questions = setup.eval_set.questions if ids is None else setup.eval_set.select(ids)
     return EvalRequest(
         prefix=TOY_UNIVERSE,
-        questions=questions,
-        source_hash=setup.eval_set.source_hash,
+        questions=select_questions(setup.eval_sets, ids or []),
+        set_hashes={eval_set.name: eval_set.source_hash for eval_set in setup.eval_sets},
         settings=setup.settings,
         started_at=STARTED_AT,
         on_result=None if records is None else records.append,
@@ -138,6 +146,7 @@ def build_outcomes(**overrides: AskResult | Exception) -> dict[str, AskResult | 
         "Question Q01?": build_good_result(),
         "Question Q02?": build_good_result(),
         "Question Q03?": build_good_result(),
+        "Question N01?": build_good_result(),
     }
     return {**outcomes, **{f"Question {key}?": value for key, value in overrides.items()}}
 
@@ -205,7 +214,7 @@ async def test_a_model_error_is_recorded_and_the_run_goes_on(tmp_path: Path) -> 
     assert failed.error is not None
     assert "rate limited" in failed.error
     assert (failed.result, failed.score, failed.comparison) == (None, None, None)
-    totals = summarize(run)
+    totals = summarize(run.records)
     assert totals.error_count == 1
     assert totals.model_calls == 4
     assert totals.input_tokens == 2 * (RETRIEVE_TOKENS[0] + GENERATE_TOKENS[0])
@@ -260,8 +269,13 @@ async def test_meta_holds_the_run_identity_limits_hashes_and_census(tmp_path: Pa
     )
     assert (meta.retrieve_reasoning, meta.generate_reasoning) == (None, None)
     assert (meta.max_tool_calls, meta.max_cypher_calls, meta.max_check_retries) == (10, 2, 1)
-    assert set(meta.hashes) == {"questions", "retrieve_prompt", "generate_prompt", "notes"}
-    assert meta.hashes["questions"] == setup.eval_set.source_hash
+    assert set(meta.hashes) == {
+        f"questions:{EVAL_SET_NAME}",
+        "retrieve_prompt",
+        "generate_prompt",
+        "notes",
+    }
+    assert meta.hashes[f"questions:{EVAL_SET_NAME}"] == setup.eval_sets[0].source_hash
     assert meta.census.node_counts == {"ToyColor": 2, "ToyGadget": 1, "ToyWidget": 3}
     assert meta.census.relationship_counts == {"HAS_COLOR": 3, "PAIRS_WITH": 4}
 
@@ -276,9 +290,11 @@ async def test_write_run_creates_the_folder_files(tmp_path: Path) -> None:
     answers = sorted(path.name for path in (folder / "answers").iterdir())
     assert answers == ["Q01.json", "Q02.json", "Q03.json"]
     document = json.loads((folder / "run.json").read_text(encoding="utf-8"))
-    assert set(document) == {"meta", "totals", "stop", "questions"}
+    assert set(document) == {"meta", "totals", "set_totals", "stop", "questions"}
     first = document["questions"][0]
     assert first["score"]["precision"] == 1.0
+    assert first["set_name"] == EVAL_SET_NAME
+    assert document["set_totals"][EVAL_SET_NAME]["question_count"] == 3
     assert "comparison" not in first
     assert document["questions"][1]["error"]
     assert document["totals"]["error_count"] == 1
@@ -318,7 +334,7 @@ async def test_review_sheet_has_a_section_per_question(tmp_path: Path) -> None:
     assert "Retrieve: model-x, reasoning provider default" in sheet
     assert "Generate: model-x, reasoning provider default" in sheet
     assert sheet.count("Verdict: [ ] correct  [ ] partial  [ ] wrong") == 3
-    assert "## Q01 (S1)" in sheet
+    assert f"## Q01 ({EVAL_SET_NAME}, S1)" in sheet
     assert "Reference: Answer Q01." in sheet
     assert "Answer: Answer text." in sheet
     assert f"```cypher\n{WIDGET_QUERY}\n```" in sheet
@@ -326,3 +342,24 @@ async def test_review_sheet_has_a_section_per_question(tmp_path: Path) -> None:
     assert "Extra cited nodes: none" in sheet
     assert "Error: " in sheet
     assert "boom" in sheet
+
+
+async def test_two_sets_run_in_one_run_with_a_hash_and_totals_per_set(tmp_path: Path) -> None:
+    setup = build_setup(tmp_path, has_second_set=True)
+
+    run = await run_with(setup, build_outcomes())
+
+    assert [(record.set_name, record.question_id) for record in run.records] == [
+        (EVAL_SET_NAME, "Q01"),
+        (EVAL_SET_NAME, "Q02"),
+        (EVAL_SET_NAME, "Q03"),
+        (SECOND_SET_NAME, "N01"),
+    ]
+    assert {
+        f"questions:{EVAL_SET_NAME}",
+        f"questions:{SECOND_SET_NAME}",
+    } <= set(run.meta.hashes)
+    totals = summarize_sets(run)
+    assert list(totals) == [EVAL_SET_NAME, SECOND_SET_NAME]
+    assert (totals[EVAL_SET_NAME].question_count, totals[SECOND_SET_NAME].question_count) == (3, 1)
+    assert summarize(run.records).question_count == 4

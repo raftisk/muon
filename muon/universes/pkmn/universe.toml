@@ -2,4 +2,6 @@ prefix = "pkmn"
 name = "Pokémon"
 notes = "notes.md"
 attribution = "Text from Bulbapedia (https://bulbapedia.bulbagarden.net), licensed under CC BY-NC-SA 2.5."
-evals = "evals.toml"
+
+[evals]
+general = "evals/general.toml"

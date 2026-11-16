@@ -27,6 +27,7 @@ from tests.unit.retrieval.scope import TOY_COUNTS
 from tests.unit.retrieval.toy_graph import WIDGET_SET, build_toy_answers
 
 EVALS_FILE_NAME = "evals.toml"
+EVAL_SET_NAME = "general"
 WIDGET_QUERY = "MATCH (w:ToyWidget:muontoy) RETURN w"
 WIDGET_LABEL = "ToyWidget"
 RETRIEVE_TOKENS = (100, 20)
@@ -158,15 +159,18 @@ def build_run_meta(run_id: str = "20261116-143005") -> RunMeta:
         max_tool_calls=10,
         max_cypher_calls=2,
         max_check_retries=1,
-        hashes={"questions": "0" * 64},
+        hashes={f"questions:{EVAL_SET_NAME}": "0" * 64},
         census=Census(node_counts={WIDGET_LABEL: 1}, relationship_counts={}),
     )
 
 
-def build_run_record(question: EvalQuestion, error: str | None = None) -> RunRecord:
+def build_run_record(
+    question: EvalQuestion, error: str | None = None, set_name: str = EVAL_SET_NAME
+) -> RunRecord:
     """A record of `question`: an answered one with an empty gold set, or an error record."""
     base = {
         "question_id": question.id,
+        "set_name": set_name,
         "family": question.family,
         "question": question.question,
         "reference": question.reference,
