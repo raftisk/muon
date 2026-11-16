@@ -1,9 +1,10 @@
 """The retrieve step: a `create_agent` loop over `run_cypher` that fills an `EvidenceBundle`.
 
 Map: `retrieve` builds the system prompt from the scope, binds `run_cypher` to a fresh
-`EvidenceLog`, runs the loop under 2 `ToolCallLimitMiddleware` instances (all tools, and
-`run_cypher` alone) and reads the bundle from the log. The final message of the loop is
-not used. `fill_prompt` is shared with the generate step.
+`EvidenceLog`, runs the loop under `StopWhenDoneMiddleware` and 2 `ToolCallLimitMiddleware`
+instances (all tools, and `run_cypher` alone) and reads the bundle from the log. The middleware
+ends the loop before the model turn that could change nothing. The final message of the loop
+is not used. `fill_prompt` is shared with the generate step.
 """
 
 import re
@@ -11,12 +12,14 @@ import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import openai
-from langchain.agents import create_agent
-from langchain.agents.middleware import ToolCallLimitMiddleware
+from langchain.agents import AgentState, create_agent
+from langchain.agents.middleware import AgentMiddleware, ToolCallLimitMiddleware, hook_config
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
+from langgraph.runtime import Runtime
 from pydantic import BaseModel, ConfigDict
 
 from muon.agent.routing import AgentRuntime, UniverseScope
@@ -124,6 +127,21 @@ def count_executed_tool_calls(messages: list[object]) -> int:
     )
 
 
+class StopWhenDoneMiddleware(AgentMiddleware):
+    """Ends the loop before a model turn whose output the step would throw away."""
+
+    def __init__(self, log: EvidenceLog, max_cypher_calls: int) -> None:
+        super().__init__()
+        self.log = log
+        self.max_cypher_calls = max_cypher_calls
+
+    @hook_config(can_jump_to=["end"])
+    def before_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+        if len(self.log.items) >= self.max_cypher_calls:
+            return {"jump_to": "end"}
+        return None
+
+
 async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -> RetrieveResult:
     """Run the tool loop for `question` and return the evidence it collected."""
     settings = runtime.agent_settings
@@ -136,16 +154,18 @@ async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -
             "schema": scope.schema_context.text,
         },
     )
+    middleware: list[AgentMiddleware[Any, Any, Any]] = [
+        StopWhenDoneMiddleware(log, settings.max_cypher_calls),
+        ToolCallLimitMiddleware(run_limit=settings.max_tool_calls, exit_behavior="end"),
+        ToolCallLimitMiddleware(
+            tool_name=TOOL_NAME, run_limit=settings.max_cypher_calls, exit_behavior="continue"
+        ),
+    ]
     agent = create_agent(
         runtime.retrieve_model,
         [build_run_cypher_tool(scope, runtime.client, log)],
         system_prompt=prompt,
-        middleware=[
-            ToolCallLimitMiddleware(run_limit=settings.max_tool_calls, exit_behavior="end"),
-            ToolCallLimitMiddleware(
-                tool_name=TOOL_NAME, run_limit=settings.max_cypher_calls, exit_behavior="continue"
-            ),
-        ],
+        middleware=middleware,
     )
     config = RunnableConfig(recursion_limit=2 * settings.max_tool_calls + RECURSION_MARGIN)
     started_at = time.perf_counter()

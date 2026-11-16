@@ -67,17 +67,63 @@ async def test_two_tool_calls_give_two_evidence_items_in_order(scope: UniverseSc
     assert len(client.reads) == 2
 
 
-async def test_a_third_cypher_call_is_blocked_and_adds_no_evidence(scope: UniverseScope) -> None:
+async def test_the_loop_ends_when_the_cypher_budget_is_spent(scope: UniverseScope) -> None:
     client = StubReadClient([{"name": "W1"}])
-    replies = [build_tool_call_message(WIDGET_QUERY, f"c{number}") for number in (1, 2, 3)]
-    runtime, _ = build_runtime([*replies, build_final_message()], client)
+    runtime, model = build_runtime(
+        [build_tool_call_message(WIDGET_QUERY, "c1"), build_tool_call_message(WIDGET_QUERY, "c2")],
+        client,
+    )
 
     result = await retrieve(scope, QUESTION, runtime)
 
+    assert result.stats.model_calls == 2
+    assert len(model.calls) == 2
     assert len(result.bundle.items) == 2
     assert len(client.reads) == 2
-    assert result.cypher_calls == 2
-    assert result.tool_calls == 2
+
+
+async def test_the_loop_ends_after_a_rejected_last_query(scope: UniverseScope) -> None:
+    runtime, model = build_runtime(
+        [
+            build_tool_call_message(WIDGET_QUERY, "c1"),
+            build_tool_call_message("MATCH (p:Pokemon) RETURN p", "c2"),
+        ],
+        StubReadClient([{"name": "W1"}]),
+    )
+
+    result = await retrieve(scope, QUESTION, runtime)
+
+    assert len(model.calls) == 2
+    assert result.bundle.items[1].status is EvidenceStatus.REJECTED
+
+
+async def test_a_parallel_call_past_the_budget_is_blocked_and_ends_the_loop(
+    scope: UniverseScope,
+) -> None:
+    client = StubReadClient([{"name": "W1"}])
+    parallel = build_tool_call_message(WIDGET_QUERY, "c1")
+    parallel.tool_calls.append({**parallel.tool_calls[0], "id": "c2"})
+    runtime, model = build_runtime([parallel], client, max_cypher_calls=1)
+
+    result = await retrieve(scope, QUESTION, runtime)
+
+    assert len(result.bundle.items) == 1
+    assert len(client.reads) == 1
+    assert len(model.calls) == 1
+
+
+async def test_a_final_text_reply_before_the_budget_is_spent_costs_one_more_call(
+    scope: UniverseScope,
+) -> None:
+    runtime, model = build_runtime(
+        [build_tool_call_message(WIDGET_QUERY, "c1"), build_final_message()],
+        StubReadClient([{"name": "W1"}]),
+    )
+
+    result = await retrieve(scope, QUESTION, runtime)
+
+    assert result.stats.model_calls == 2
+    assert len(model.calls) == 2
 
 
 async def test_a_higher_cypher_limit_allows_four_calls(scope: UniverseScope) -> None:
