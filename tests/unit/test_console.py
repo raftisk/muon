@@ -15,7 +15,7 @@ from muon.console import (
     build_results_table,
     render_steps,
 )
-from muon.evaluation.questions import EvalQuestion
+from muon.evaluation.questions import EvalQuestion, SelectedQuestion
 from muon.evaluation.run import GOLD_STEP, EvalRun, RunRecord
 from tests.unit.evaluation.fakes import build_run_meta, build_run_record
 
@@ -42,6 +42,10 @@ def build_question(question_id: str) -> EvalQuestion:
         reference="Answer.",
         gold_query="MATCH (n) RETURN n",
     )
+
+
+def build_selected(question_id: str) -> SelectedQuestion:
+    return SelectedQuestion("general", build_question(question_id))
 
 
 def build_scored_record(question_id: str, tokens: int) -> RunRecord:
@@ -107,7 +111,7 @@ def test_step_display_writes_nothing_on_a_console_that_is_not_a_terminal() -> No
 
 
 def test_handle_result_adds_a_row_and_clears_the_step_lines() -> None:
-    questions = [build_question("Q01"), build_question("Q02")]
+    questions = [build_selected("Q01"), build_selected("Q02")]
     display = EvalDisplay(build_console(), questions)
     with display.step("reading schema"):
         pass
@@ -121,7 +125,7 @@ def test_handle_result_adds_a_row_and_clears_the_step_lines() -> None:
 
 
 def test_eval_display_shows_the_header_of_the_current_question() -> None:
-    questions = [build_question("Q01"), build_question("Q02")]
+    questions = [build_selected("Q01"), build_selected("Q02")]
     display = EvalDisplay(build_console(), questions)
     display.handle_result(build_scored_record("Q01", 10))
     with display.step("querying graph"):
@@ -133,7 +137,7 @@ def test_eval_display_shows_the_header_of_the_current_question() -> None:
 def test_displays_build_on_a_terminal() -> None:
     console = Console(file=io.StringIO(), width=WIDTH, force_terminal=True)
 
-    with EvalDisplay(console, [build_question("Q01")]) as display, display.step("reading schema"):
+    with EvalDisplay(console, [build_selected("Q01")]) as display, display.step("reading schema"):
         pass
     with StepDisplay(console) as step_display, step_display.step("reading schema"):
         pass
@@ -143,7 +147,7 @@ def test_displays_build_on_a_terminal() -> None:
 
 
 def test_the_gold_step_shows_without_a_header() -> None:
-    display = EvalDisplay(build_console(), [build_question("Q01")])
+    display = EvalDisplay(build_console(), [build_selected("Q01")])
     with display.step(GOLD_STEP):
         pass
 
@@ -196,3 +200,22 @@ def test_eval_summary_holds_totals_errors_and_the_stop_reason() -> None:
     assert "errors: 1" in text
     assert "Q03: rate limited" in text
     assert "stopped: Q02: Neo4j is down" in text
+
+
+def test_eval_summary_adds_a_totals_line_per_set_when_the_run_holds_several() -> None:
+    records = (
+        build_scored_record("Q01", 10),
+        build_run_record(build_question("N01"), None, "name-resolution"),
+    )
+    run = EvalRun(meta=build_run_meta(), records=records, stop=None)
+
+    lines = render_to_text(build_eval_summary(run)).splitlines()
+
+    assert any(line.startswith("general: 1 questions, precision 0.50") for line in lines)
+    assert any(line.startswith("name-resolution: 1 questions") for line in lines)
+
+
+def test_eval_summary_has_no_set_lines_for_a_single_set() -> None:
+    run = EvalRun(meta=build_run_meta(), records=(build_scored_record("Q01", 10),), stop=None)
+
+    assert "general: " not in render_to_text(build_eval_summary(run))

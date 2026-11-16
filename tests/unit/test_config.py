@@ -12,6 +12,7 @@ from muon.config import (
     DEFAULT_UNIVERSES_DIR,
     PROJECT_ROOT,
     AgentSettings,
+    AgentStep,
     EmbeddingSettings,
     LLMSettings,
     Neo4jSettings,
@@ -235,7 +236,7 @@ def build_agent_settings(**overrides: object) -> AgentSettings:
         _env_file=None,
         base_url="https://agent.test/v1",
         api_key=SecretStr("k"),
-        model="m",
+        default_model="m",
         **overrides,
     )
 
@@ -251,7 +252,7 @@ def test_agent_settings_default_limits() -> None:
 def test_agent_env_vars_override_the_limits(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MUON_AGENT_BASE_URL", "https://agent.test/v1")
     monkeypatch.setenv("MUON_AGENT_API_KEY", "k")
-    monkeypatch.setenv("MUON_AGENT_MODEL", "m")
+    monkeypatch.setenv("MUON_AGENT_DEFAULT_MODEL", "m")
     monkeypatch.setenv("MUON_AGENT_MAX_CYPHER_CALLS", "4")
 
     assert AgentSettings(_env_file=None).max_cypher_calls == 4
@@ -278,28 +279,49 @@ def test_settings_build_without_agent_variables(monkeypatch: pytest.MonkeyPatch)
 def test_agent_step_models_fall_back_to_the_model() -> None:
     settings = build_agent_settings()
 
-    assert settings.resolve_retrieve_model() == "m"
-    assert settings.resolve_generate_model() == "m"
+    assert [settings.model_for(step) for step in AgentStep] == ["m", "m", "m"]
 
 
 def test_agent_step_models_override_the_model() -> None:
-    settings = build_agent_settings(retrieve_model="r", generate_model="g")
+    settings = build_agent_settings(resolve_model="s", retrieve_model="r", generate_model="g")
 
-    assert settings.resolve_retrieve_model() == "r"
-    assert settings.resolve_generate_model() == "g"
+    assert [settings.model_for(step) for step in AgentStep] == ["s", "r", "g"]
 
 
-def test_agent_reasoning_levels_default_to_none() -> None:
+def test_agent_step_values_name_the_steps_in_pipeline_order() -> None:
+    assert [step.value for step in AgentStep] == ["resolve", "retrieve", "generate"]
+
+
+def test_one_step_model_leaves_the_others_on_the_model() -> None:
+    settings = build_agent_settings(resolve_model="s")
+
+    assert settings.model_for(AgentStep.RESOLVE) == "s"
+    assert settings.model_for(AgentStep.RETRIEVE) == "m"
+
+
+def test_resolve_settings_read_from_the_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MUON_AGENT_BASE_URL", "https://agent.test/v1")
+    monkeypatch.setenv("MUON_AGENT_API_KEY", "k")
+    monkeypatch.setenv("MUON_AGENT_DEFAULT_MODEL", "m")
+    monkeypatch.setenv("MUON_AGENT_RESOLVE_MODEL", "small")
+    monkeypatch.setenv("MUON_AGENT_RESOLVE_REASONING", "low")
+
+    settings = AgentSettings(_env_file=None)
+
+    assert settings.model_for(AgentStep.RESOLVE) == "small"
+    assert settings.reasoning_for(AgentStep.RESOLVE) == "low"
+
+
+def test_agent_reasoning_levels_default_to_the_none_level() -> None:
     settings = build_agent_settings()
 
-    assert settings.retrieve_reasoning is None
-    assert settings.generate_reasoning is None
+    assert [settings.reasoning_for(step) for step in AgentStep] == ["none", "none", "none"]
 
 
 def test_agent_reasoning_level_reads_from_the_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MUON_AGENT_BASE_URL", "https://agent.test/v1")
     monkeypatch.setenv("MUON_AGENT_API_KEY", "k")
-    monkeypatch.setenv("MUON_AGENT_MODEL", "m")
+    monkeypatch.setenv("MUON_AGENT_DEFAULT_MODEL", "m")
     monkeypatch.setenv("MUON_AGENT_GENERATE_REASONING", "medium")
 
     assert AgentSettings(_env_file=None).generate_reasoning == "medium"

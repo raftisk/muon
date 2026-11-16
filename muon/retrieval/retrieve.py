@@ -1,6 +1,7 @@
 """The retrieve step: a `create_agent` loop over `run_cypher` that fills an `EvidenceBundle`.
 
-Map: `retrieve` builds the system prompt from the scope, binds `run_cypher` to a fresh
+Map: `retrieve` builds the system prompt from the scope and the human message from the resolved
+names and the question, binds `run_cypher` to a fresh
 `EvidenceLog`, runs the loop under `StopWhenDoneMiddleware` and 2 `ToolCallLimitMiddleware`
 instances (all tools, and `run_cypher` alone) and reads the bundle from the log. The middleware
 ends the loop before the model turn that could change nothing. The final message of the loop
@@ -23,13 +24,17 @@ from langgraph.runtime import Runtime
 from pydantic import BaseModel, ConfigDict
 
 from muon.agent.routing import AgentRuntime, UniverseScope
+from muon.config import AgentStep
 from muon.llm.client import ModelCallError
 from muon.retrieval.cypher import TOOL_NAME, EvidenceLog, build_run_cypher_tool
 from muon.retrieval.evidence import Evidence, EvidenceBundle, EvidenceStatus
+from muon.retrieval.resolved_names import ResolvedName, render_resolved_names
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "retrieve.md"
 MARKER_PATTERN = re.compile(r"\{\{(\w+)\}\}")
 RETRIEVE_STEP = "retrieve"
+QUESTION_PREFIX = "Question: "
+BLOCK_SEPARATOR = "\n\n"
 RECURSION_MARGIN = 5
 SUCCESS_STATUS = "success"
 
@@ -156,7 +161,23 @@ class StopWhenDoneMiddleware(AgentMiddleware):
         return None
 
 
-async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -> RetrieveResult:
+def build_question_message(question: str, resolved_names: Sequence[ResolvedName]) -> HumanMessage:
+    """Return the human message: the resolved names block and the question, or the bare question.
+
+    The block goes in the human message so that the system prompt is the same for every question.
+    """
+    block = render_resolved_names(resolved_names)
+    if not block:
+        return HumanMessage(question)
+    return HumanMessage(f"{block}{BLOCK_SEPARATOR}{QUESTION_PREFIX}{question}")
+
+
+async def retrieve(
+    scope: UniverseScope,
+    question: str,
+    runtime: AgentRuntime,
+    resolved_names: Sequence[ResolvedName],
+) -> RetrieveResult:
     """Run the tool loop for `question` and return the evidence it collected."""
     settings = runtime.agent_settings
     log = EvidenceLog()
@@ -184,10 +205,12 @@ async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -
     config = RunnableConfig(recursion_limit=2 * settings.max_tool_calls + RECURSION_MARGIN)
     started_at = time.perf_counter()
     try:
-        output = await agent.ainvoke({"messages": [HumanMessage(question)]}, config)
+        output = await agent.ainvoke(
+            {"messages": [build_question_message(question, resolved_names)]}, config
+        )
     except openai.APIError as error:
         raise ModelCallError(
-            RETRIEVE_STEP, settings.resolve_retrieve_model(), str(error)
+            RETRIEVE_STEP, settings.model_for(AgentStep.RETRIEVE), str(error)
         ) from error
     latency = time.perf_counter() - started_at
     messages = list(output["messages"])

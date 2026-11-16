@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from muon.agent.ask import AskRequest, ask
 from muon.agent.routing import AgentRuntime
 from muon.agent.universes import discover_universes
-from muon.config import AgentSettings, get_settings
+from muon.config import AgentSettings, AgentStep, get_settings
 from muon.generation.answer import Claim
 from muon.graph import Neo4jGraphClient
 from muon.llm import create_chat_model
@@ -41,8 +41,10 @@ async def test_live_ask_cites_the_species_and_its_type(agent_settings: AgentSett
     async with Neo4jGraphClient(settings.neo4j) as client:
         runtime = AgentRuntime(
             client,
-            create_chat_model(agent_settings),
-            create_chat_model(agent_settings),
+            *[
+                create_chat_model(agent_settings, agent_settings.model_for(step))
+                for step in AgentStep
+            ],
             agent_settings,
         )
 

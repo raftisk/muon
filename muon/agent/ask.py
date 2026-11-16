@@ -1,4 +1,4 @@
-"""The ask pipeline: select the universe, build its scope, retrieve, generate and check."""
+"""The ask pipeline: select the universe, scope, resolve names, retrieve, generate and check."""
 
 import time
 
@@ -10,9 +10,12 @@ from muon.config import Settings
 from muon.generation.answer import Answer
 from muon.generation.generate import generate_answer
 from muon.retrieval.evidence import EvidenceBundle
+from muon.retrieval.resolve import resolve_names
+from muon.retrieval.resolved_names import ResolvedName
 from muon.retrieval.retrieve import StepStats, retrieve
 
 SCHEMA_STEP = "reading schema"
+RESOLVE_PROGRESS_STEP = "resolving names"
 QUERY_STEP = "querying graph"
 ANSWER_STEP = "writing answer"
 
@@ -36,10 +39,14 @@ class AskStats(BaseModel):
 
 
 class AskResult(BaseModel):
-    """The answer, the evidence it rests on and the stats of the run."""
+    """The answer, the evidence it rests on, the names resolved from the question and the stats.
+
+    `resolved_names` is recorded for logs and evals. It is not evidence and no claim cites it.
+    """
 
     answer: Answer
     bundle: EvidenceBundle
+    resolved_names: list[ResolvedName]
     stats: AskStats
 
 
@@ -49,23 +56,27 @@ async def ask(
     """Answer `request.question` from the graph of 1 universe.
 
     The universe is chosen before any graph read or model call. Raises `RoutingError` when
-    it cannot be chosen, and `ModelCallError` when the provider fails.
+    it cannot be chosen, `ModelCallError` when the provider fails and `NameIndexError` when
+    the full-text index on names is missing.
     """
     started_at = time.perf_counter()
     plugin = select_universe(registry, request.universe)
     with runtime.progress.step(SCHEMA_STEP):
         scope = await build_scope(runtime.client, plugin, settings)
+    with runtime.progress.step(RESOLVE_PROGRESS_STEP):
+        resolved = await resolve_names(request.question, scope, runtime)
     with runtime.progress.step(QUERY_STEP):
-        retrieved = await retrieve(scope, request.question, runtime)
+        retrieved = await retrieve(scope, request.question, runtime, resolved.names)
     with runtime.progress.step(ANSWER_STEP):
         generated = await generate_answer(request.question, retrieved.bundle, scope, runtime)
     return AskResult(
         answer=generated.answer,
         bundle=retrieved.bundle,
+        resolved_names=resolved.names,
         stats=AskStats(
             tool_calls=retrieved.tool_calls,
             cypher_calls=retrieved.cypher_calls,
-            steps=[retrieved.stats, *generated.stats],
+            steps=[resolved.stats, retrieved.stats, *generated.stats],
             total_latency_seconds=time.perf_counter() - started_at,
         ),
     )

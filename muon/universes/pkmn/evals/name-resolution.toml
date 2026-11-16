@@ -1,0 +1,86 @@
+[[question]]
+id = "N01"
+family = "S5"
+question = "which pokemon are found in mt coronet"
+reference = """29 species, from Abomasnow to Zubat, including Bronzor, Feebas, Nosepass and Snover. \
+The user writes an abbreviation in lower case with no punctuation; the graph names the location \
+Mount Coronet."""
+gold_query = """
+MATCH (s:PokemonSpecies)-[:FOUND_IN]->(l:Location {id: 'mount-coronet'})
+RETURN DISTINCT s, l
+"""
+
+[[question]]
+id = "N02"
+family = "S1"
+question = "What type is Garchom?"
+reference = """Garchomp is a Dragon and Ground type. The name has a typo."""
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'garchomp'})-[:HAS_TYPE]->(t:Type)
+RETURN s, t
+"""
+
+[[question]]
+id = "N03"
+family = "S1"
+question = "What abilities does Mr Mime have?"
+reference = """Mr. Mime has Soundproof, Filter and Technician. The name has no period."""
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'mr-mime'})-[:HAS_ABILITY]->(a:Ability)
+RETURN s, a
+"""
+
+[[question]]
+id = "N04"
+family = "S1"
+question = "What type is Carchacrok?"
+reference = """Carchacrok is the French name of Garchomp, which is a Dragon and Ground type. The \
+graph holds the French name as an alias."""
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'garchomp'})-[:HAS_TYPE]->(t:Type)
+RETURN s, t
+"""
+
+[[question]]
+id = "N05"
+family = "S1"
+question = "What type is Heat Rotom?"
+reference = """Heat Rotom is an Electric and Fire type. The graph names the form Rotom with the \
+form id rotom-heat, and its name is Heat Rotom."""
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'rotom-heat'})-[:HAS_TYPE]->(t:Type)
+RETURN s, t
+"""
+
+[[question]]
+id = "N06"
+family = "S5"
+question = "Which Pokémon are in the Dragon egg group?"
+reference = """87 species are in the Dragon egg group. Dragon is also the name of a type, so the \
+name matches 2 nodes."""
+gold_query = """
+MATCH (s:PokemonSpecies)-[:IN_EGG_GROUP]->(e:EggGroup {id: 'dragon'})
+RETURN DISTINCT s, e
+"""
+
+[[question]]
+id = "N07"
+family = "S5"
+question = "Which Pokémon can be found on Route 1 in Alola?"
+reference = """26 species, among them Bonsly, Ledyba, Metapod and Yungoos. The graph names the \
+location Alola Route 1, with the region first."""
+gold_query = """
+MATCH (s:PokemonSpecies)-[:FOUND_IN]->(l:Location {id: 'alola-route-1'})
+RETURN DISTINCT s, l
+"""
+
+[[question]]
+id = "N08"
+family = "S18"
+question = "What type is Pikablu?"
+reference = """The graph holds no Pokémon named Pikablu. A good answer says so and cites no node."""
+has_empty_gold = true
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'pikablu'})
+RETURN s
+"""

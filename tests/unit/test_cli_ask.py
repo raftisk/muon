@@ -22,6 +22,8 @@ from muon.retrieval.evidence import (
     NodeKey,
     SliceNode,
 )
+from muon.retrieval.resolve import NameIndexError
+from muon.retrieval.resolved_names import NameCandidate, ResolvedName
 from muon.retrieval.retrieve import StepStats
 
 UNIVERSE = "pkmn"
@@ -36,7 +38,7 @@ SECRET = SecretStr("secret")
 
 @pytest.fixture(autouse=True)
 def agent_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in ("BASE_URL", "API_KEY", "MODEL"):
+    for name in ("BASE_URL", "API_KEY", "DEFAULT_MODEL"):
         monkeypatch.setenv(f"MUON_AGENT_{name}", "x")
     monkeypatch.setattr(cli, "AgentSettings", partial(AgentSettings, _env_file=None))
 
@@ -78,6 +80,7 @@ def build_evidence(evidence_id: str, row_count: int = 1) -> Evidence:
 def build_result(
     text: str = "Diglett is Ground type [c1].",
     node_keys: list[NodeKey] | None = None,
+    resolved_names: list[ResolvedName] | None = None,
     **answer_fields: Any,
 ) -> AskResult:
     claim = Claim(
@@ -100,6 +103,7 @@ def build_result(
         bundle=EvidenceBundle(
             universe=UNIVERSE, question=QUESTION, items=(build_evidence("e1", row_count=3),)
         ),
+        resolved_names=resolved_names or [],
         stats=AskStats(
             tool_calls=1,
             cypher_calls=1,
@@ -217,7 +221,7 @@ def test_json_prints_one_document_and_nothing_else(
 
     captured = capsys.readouterr()
     document = json.loads(captured.out)
-    assert set(document) == {"answer", "bundle", "stats"}
+    assert set(document) == {"answer", "bundle", "resolved_names", "stats"}
     assert document["answer"]["universe"] == UNIVERSE
     assert document["bundle"]["items"][0]["query"] == QUERY
     assert captured.err == ""
@@ -301,6 +305,7 @@ def test_unknown_universe_exits_1_before_any_connection(
     [
         GraphConnectionError("Neo4j is down"),
         ModelCallError("retrieve", "m", "rate limited"),
+        NameIndexError("The full-text index 'entity_names' does not exist"),
     ],
 )
 def test_run_failures_exit_1_with_the_error(
@@ -318,8 +323,8 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
 ) -> None:
     created: list[tuple[str, str | None]] = []
 
-    def record_chat_model(settings: AgentSettings, reasoning: str | None = None) -> object:
-        created.append((settings.model, reasoning))
+    def record_chat_model(settings: AgentSettings, model: str, reasoning: str) -> object:
+        created.append((model, reasoning))
         return object()
 
     monkeypatch.setattr(cli, "create_chat_model", record_chat_model)
@@ -327,8 +332,9 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
         _env_file=None,
         base_url="https://a.test/v1",
         api_key=SECRET,
-        model="base",
+        default_model="base",
         generate_model="writer",
+        resolve_reasoning="high",
         retrieve_reasoning="low",
         generate_reasoning="medium",
     )
@@ -341,7 +347,7 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
 
     cli.create_agent_runtime(object(), context)  # type: ignore[arg-type]
 
-    assert created == [("base", "low"), ("writer", "medium")]
+    assert created == [("base", "high"), ("base", "low"), ("writer", "medium")]
 
 
 def test_the_status_line_shows_model_calls_and_token_detail() -> None:
@@ -376,3 +382,16 @@ def test_the_status_line_shows_model_calls_and_token_detail() -> None:
         "ask pkmn: 1 queries, 3 model calls, 16,706 input (12,288 cached) and "
         "489 output (402 reasoning) tokens, 34.1 s"
     )
+
+
+def test_json_holds_the_resolved_names(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    candidate = NameCandidate(key=SPECIES, name="Diglett", score=8.2)
+    names = [ResolvedName(mention="Diglet", label="", candidates=[candidate])]
+
+    run_ask_command(monkeypatch, build_result(resolved_names=names), "--json")
+
+    document = json.loads(capsys.readouterr().out)
+    assert document["resolved_names"][0]["mention"] == "Diglet"
+    assert document["resolved_names"][0]["candidates"][0]["key"]["id"] == SPECIES.id

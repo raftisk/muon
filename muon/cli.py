@@ -3,7 +3,7 @@
 `muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability`,
 `muon ingest bulbapedia species|move|ability`, `muon schema <prefix> [--refresh] [--json]` and
 `muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]` and
-`muon eval PREFIX [--question ID ...] [--output-dir DIR]`."""
+`muon eval PREFIX [--set NAME ...] [--question ID ...] [--output-dir DIR]`."""
 
 import argparse
 import asyncio
@@ -24,9 +24,9 @@ from pydantic import SecretStr, ValidationError
 from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, RoutingError, StepTracker, select_universe
 from muon.agent.universes import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
-from muon.config import AgentSettings, OntologySettings, Settings, get_settings
+from muon.config import AgentSettings, AgentStep, OntologySettings, Settings, get_settings
 from muon.console import STDERR, STDOUT, EvalDisplay, StepDisplay, build_eval_summary
-from muon.evaluation.questions import EvalError, load_questions
+from muon.evaluation.questions import EvalError, load_eval_sets, select_questions
 from muon.evaluation.run import (
     DEFAULT_EVAL_DIR,
     EvalRequest,
@@ -142,6 +142,7 @@ from muon.retrieval.evidence import (
     PathCell,
     RelationshipCell,
 )
+from muon.retrieval.resolve import NameIndexError
 from muon.retrieval.schema import SchemaIntrospectionError
 
 EXIT_SUCCESS = 0
@@ -317,6 +318,14 @@ def build_parser() -> argparse.ArgumentParser:
         EVAL_COMMAND, help="ask the eval questions of a universe and score the answers"
     )
     eval_parser.add_argument("prefix", help="universe prefix, the folder name of the plugin")
+    eval_parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        dest="set_names",
+        metavar="NAME",
+        help="run only this eval set (repeatable; default: every set)",
+    )
     eval_parser.add_argument(
         "--question",
         action="append",
@@ -1006,12 +1015,15 @@ class AgentContext:
 
 def create_agent_runtime(client: GraphClient, context: AgentContext) -> AgentRuntime:
     settings = context.agent_settings
-    retrieve_settings = settings.model_copy(update={"model": settings.resolve_retrieve_model()})
-    generate_settings = settings.model_copy(update={"model": settings.resolve_generate_model()})
+    models = {
+        step: create_chat_model(settings, settings.model_for(step), settings.reasoning_for(step))
+        for step in AgentStep
+    }
     return AgentRuntime(
         client=client,
-        retrieve_model=create_chat_model(retrieve_settings, settings.retrieve_reasoning),
-        generate_model=create_chat_model(generate_settings, settings.generate_reasoning),
+        resolve_model=models[AgentStep.RESOLVE],
+        retrieve_model=models[AgentStep.RETRIEVE],
+        generate_model=models[AgentStep.GENERATE],
         agent_settings=settings,
         progress=context.progress,
     )
@@ -1047,6 +1059,7 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
         SchemaIntrospectionError,
         SchemaCacheError,
         ModelCallError,
+        NameIndexError,
     ) as error:
         STDERR.print(f"{failure_prefix} {error}")
         return EXIT_FAILURE
@@ -1080,16 +1093,18 @@ def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
             settings.universes.universes_dir, settings.ontology.ontology_dir
         )
         plugin = select_universe(registry, arguments.prefix)
-        eval_set = load_questions(plugin)
-        questions = eval_set.select(arguments.question_ids) if arguments.question_ids else None
+        eval_sets = load_eval_sets(plugin, arguments.set_names)
         request = EvalRequest(
             prefix=plugin.prefix,
-            questions=eval_set.questions if questions is None else questions,
-            source_hash=eval_set.source_hash,
+            questions=select_questions(eval_sets, arguments.question_ids),
+            set_hashes={eval_set.name: eval_set.source_hash for eval_set in eval_sets},
             settings=settings,
             started_at=datetime.now(UTC),
         )
-        STDOUT.print(f"{EVAL_COMMAND} {plugin.prefix}: {len(request.questions)} questions")
+        set_names = ", ".join(eval_set.name for eval_set in eval_sets)
+        STDOUT.print(
+            f"{EVAL_COMMAND} {plugin.prefix} ({set_names}): {len(request.questions)} questions"
+        )
         with EvalDisplay(STDOUT, request.questions) as display:
             context = AgentContext(settings, agent_settings, registry, display)
             tracked = replace(request, on_result=display.handle_result)
@@ -1102,6 +1117,7 @@ def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
         SchemaIntrospectionError,
         SchemaCacheError,
         EvalError,
+        NameIndexError,
     ) as error:
         STDERR.print(f"{failure_prefix} {error}")
         return EXIT_FAILURE

@@ -20,6 +20,7 @@ from muon.retrieval.evidence import (
     NodeKey,
     SliceNode,
 )
+from muon.retrieval.resolved_names import ResolvedName
 from muon.retrieval.retrieve import StepStats
 from tests.fixtures.toy_ontology import TOY_UNIVERSE
 from tests.unit.retrieval.fakes import QueryGraphClient
@@ -27,6 +28,7 @@ from tests.unit.retrieval.scope import TOY_COUNTS
 from tests.unit.retrieval.toy_graph import WIDGET_SET, build_toy_answers
 
 EVALS_FILE_NAME = "evals.toml"
+EVAL_SET_NAME = "general"
 WIDGET_QUERY = "MATCH (w:ToyWidget:muontoy) RETURN w"
 WIDGET_LABEL = "ToyWidget"
 RETRIEVE_TOKENS = (100, 20)
@@ -90,6 +92,7 @@ def build_ask_result(
     table_evidence_ids: Sequence[str] = (),
     items: Sequence[Evidence] = (),
     warnings: Sequence[str] = (),
+    resolved_names: Sequence[ResolvedName] = (),
 ) -> AskResult:
     """An answer with the given claims, printed tables, evidence and warnings.
 
@@ -126,6 +129,7 @@ def build_ask_result(
     return AskResult(
         answer=answer,
         bundle=EvidenceBundle(universe=TOY_UNIVERSE, question="Q?", items=tuple(items)),
+        resolved_names=list(resolved_names),
         stats=AskStats(
             tool_calls=1,
             cypher_calls=1,
@@ -151,22 +155,27 @@ def build_run_meta(run_id: str = "20261116-143005") -> RunMeta:
         started_at=datetime(2026, 11, 16, 14, 30, 5, tzinfo=UTC),
         git_commit=None,
         universe=TOY_UNIVERSE,
+        resolve_model="model-x",
         retrieve_model="model-x",
         generate_model="model-x",
-        retrieve_reasoning=None,
-        generate_reasoning=None,
+        resolve_reasoning="none",
+        retrieve_reasoning="none",
+        generate_reasoning="none",
         max_tool_calls=10,
         max_cypher_calls=2,
         max_check_retries=1,
-        hashes={"questions": "0" * 64},
+        hashes={f"questions:{EVAL_SET_NAME}": "0" * 64},
         census=Census(node_counts={WIDGET_LABEL: 1}, relationship_counts={}),
     )
 
 
-def build_run_record(question: EvalQuestion, error: str | None = None) -> RunRecord:
+def build_run_record(
+    question: EvalQuestion, error: str | None = None, set_name: str = EVAL_SET_NAME
+) -> RunRecord:
     """A record of `question`: an answered one with an empty gold set, or an error record."""
     base = {
         "question_id": question.id,
+        "set_name": set_name,
         "family": question.family,
         "question": question.question,
         "reference": question.reference,

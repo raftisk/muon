@@ -26,7 +26,7 @@ from typing import Any, Final, LiteralString
 
 from muon.graph import GraphClient, Statement, WriteSummary
 from muon.ingestion.batch import ClaimDirection, GraphBatch, NodeRecord, NodeRef
-from muon.ingestion.schema import ensure_id_constraints
+from muon.ingestion.schema import ensure_id_constraints, ensure_name_index
 from muon.ontology.materializer import NAME_PROPERTY, LabelMaterializer
 
 ID_PROPERTY = "id"
@@ -222,8 +222,13 @@ class Runner:
         return summarize_run(summaries, constraints_ensured)
 
     async def ensure_constraints(self, class_iris: Iterable[str]) -> int:
-        """Ensure the `id` constraint of each class and return how many classes it covered."""
-        return await ensure_id_constraints(self.client, self.materializer, class_iris)
+        """Ensure the `id` constraint of each class, then the name index.
+
+        Returns how many classes the constraints covered; the index is not counted.
+        """
+        count = await ensure_id_constraints(self.client, self.materializer, class_iris)
+        await ensure_name_index(self.client)
+        return count
 
     async def purge(self, batch_size: int = PURGE_BATCH_SIZE) -> WriteSummary:
         """Delete every node carrying the universe label, with its relationships.

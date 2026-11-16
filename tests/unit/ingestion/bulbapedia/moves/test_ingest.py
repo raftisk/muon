@@ -145,7 +145,9 @@ async def test_constraints_are_ensured_once_before_the_first_batch(parse: ParseR
     first_batch = kinds.index(list)
     assert set(kinds[:first_batch]) == {str}
     assert set(kinds[first_batch:]) == {list}
-    assert len(client.writes) == len(list_move_constraint_classes(run.outputs))
+    constraints = [write for write in client.writes if write.startswith("CREATE CONSTRAINT")]
+    assert len(constraints) == len(list_move_constraint_classes(run.outputs))
+    assert len(client.writes) == len(constraints) + 1
 
 
 def test_constraint_classes_cover_every_scope_and_stub_class(parse: ParseRunner) -> None:

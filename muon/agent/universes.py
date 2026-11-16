@@ -5,12 +5,13 @@ notes file. The engine finds plugins by their manifests and never imports one by
 The T-Box files of a plugin come from `muon.ontology.model.list_ontology_paths`.
 """
 
+import re
 import tomllib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from muon.files import TEXT_ENCODING
 from muon.ontology.model import UNIVERSE_PREFIX_PATTERN, OntologyError, list_ontology_paths
@@ -18,6 +19,7 @@ from muon.ontology.model import UNIVERSE_PREFIX_PATTERN, OntologyError, list_ont
 MANIFEST_FILE_NAME = "universe.toml"
 NOTES_FIELD = "notes"
 EVALS_FIELD = "evals"
+EVAL_SET_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9-]*$")
 IGNORED_FOLDER_NAMES = frozenset({"__pycache__"})
 HIDDEN_FOLDER_PREFIX = "."
 
@@ -29,9 +31,9 @@ class UniverseError(Exception):
 class UniverseManifest(BaseModel):
     """The contents of `universe.toml`.
 
-    `notes` and `evals` are paths relative to the plugin folder; `evals` names the file of
-    eval questions and is optional. `attribution` is the credit line an answer prints when
-    it cites text from the universe's source.
+    `notes` is a path relative to the plugin folder. `evals` is an optional table of eval set
+    name to the path of its question file, relative to the plugin folder. `attribution` is
+    the credit line an answer prints when it cites text from the universe's source.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -40,7 +42,17 @@ class UniverseManifest(BaseModel):
     name: str
     notes: str
     attribution: str | None = None
-    evals: str | None = None
+    evals: dict[str, str] | None = None
+
+    @field_validator("evals")
+    @classmethod
+    def check_eval_set_names(cls, evals: dict[str, str] | None) -> dict[str, str] | None:
+        for name in evals or {}:
+            if not EVAL_SET_NAME_PATTERN.fullmatch(name):
+                raise ValueError(
+                    f"eval set name {name!r} does not match {EVAL_SET_NAME_PATTERN.pattern}"
+                )
+        return evals
 
 
 @dataclass(frozen=True)
@@ -65,9 +77,10 @@ class UniversePlugin:
         return self.folder / self.manifest.notes
 
     @property
-    def evals_path(self) -> Path | None:
-        """The eval question file, or `None` when the plugin has none."""
-        return None if self.manifest.evals is None else self.folder / self.manifest.evals
+    def eval_paths(self) -> dict[str, Path]:
+        """The eval question file of each set in manifest order; empty when the plugin has none."""
+        evals = self.manifest.evals or {}
+        return {name: self.folder / relative_path for name, relative_path in evals.items()}
 
 
 class UniverseRegistry:
@@ -126,8 +139,8 @@ def validate_plugin(folder: Path, manifest: UniverseManifest, ontology_dir: Path
             f"differs from the folder name {folder.name!r}"
         )
     notes_path = check_plugin_file(folder, NOTES_FIELD, manifest.notes)
-    if manifest.evals is not None:
-        check_plugin_file(folder, EVALS_FIELD, manifest.evals)
+    for relative_path in (manifest.evals or {}).values():
+        check_plugin_file(folder, EVALS_FIELD, relative_path)
     try:
         ontology_paths = list_ontology_paths(ontology_dir, manifest.prefix)
     except OntologyError as error:

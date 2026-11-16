@@ -57,10 +57,15 @@ def build_runtime(
 ) -> tuple[AgentRuntime, ScriptedChatModel]:
     model = ScriptedChatModel(drafts=drafts)
     settings = AgentSettings(
-        _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), model="m", **limits
+        _env_file=None,
+        base_url="https://a.test/v1",
+        api_key=SecretStr("k"),
+        default_model="m",
+        **limits,
     )
     runtime = AgentRuntime(
         client=StubReadClient([]),
+        resolve_model=model,
         retrieve_model=model,
         generate_model=model,
         agent_settings=settings,

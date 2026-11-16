@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict
 from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, build_scope, select_universe
 from muon.agent.universes import UniverseRegistry
-from muon.config import PROJECT_ROOT, AgentSettings, ReasoningLevel, Settings
+from muon.config import PROJECT_ROOT, AgentSettings, AgentStep, ReasoningLevel, Settings
 from muon.evaluation.eval_scores import (
     NodeComparison,
     QuestionScore,
@@ -31,11 +31,12 @@ from muon.evaluation.eval_scores import (
     resolve_gold,
     score_answer,
 )
-from muon.evaluation.questions import EvalQuestion
+from muon.evaluation.questions import SelectedQuestion
 from muon.files import write_text_atomically
 from muon.generation.generate import PROMPT_PATH as GENERATE_PROMPT_PATH
 from muon.graph import GraphConnectionError
 from muon.llm.client import ModelCallError
+from muon.retrieval.resolve import PROMPT_PATH as RESOLVE_PROMPT_PATH
 from muon.retrieval.retrieve import PROMPT_PATH as RETRIEVE_PROMPT_PATH
 from muon.retrieval.schema import GraphSchema
 
@@ -48,7 +49,8 @@ JSON_SUFFIX = ".json"
 JSON_INDENT = 2
 MAX_LISTED_NODES = 20
 GIT_COMMAND = ("git", "rev-parse", "HEAD")
-HASH_QUESTIONS = "questions"
+HASH_QUESTIONS_PREFIX = "questions:"
+HASH_RESOLVE_PROMPT = "resolve_prompt"
 HASH_RETRIEVE_PROMPT = "retrieve_prompt"
 HASH_GENERATE_PROMPT = "generate_prompt"
 HASH_NOTES = "notes"
@@ -86,10 +88,12 @@ class RunMeta(RunModel):
     started_at: datetime
     git_commit: str | None
     universe: str
+    resolve_model: str
     retrieve_model: str
     generate_model: str
-    retrieve_reasoning: ReasoningLevel | None
-    generate_reasoning: ReasoningLevel | None
+    resolve_reasoning: ReasoningLevel
+    retrieve_reasoning: ReasoningLevel
+    generate_reasoning: ReasoningLevel
     max_tool_calls: int
     max_cypher_calls: int
     max_check_retries: int
@@ -101,6 +105,7 @@ class RunRecord(RunModel):
     """1 question of a run: its outcome, and for an answered one the nodes and the score."""
 
     question_id: str
+    set_name: str
     family: str
     question: str
     reference: str
@@ -138,6 +143,7 @@ class RunTotals(RunModel):
 
 class QuestionSummary(RunModel):
     question_id: str
+    set_name: str
     family: str
     status: RunStatus
     error: str | None
@@ -149,6 +155,7 @@ class RunFile(RunModel):
 
     meta: RunMeta
     totals: RunTotals
+    set_totals: dict[str, RunTotals]
     stop: str | None
     questions: tuple[QuestionSummary, ...]
 
@@ -157,12 +164,13 @@ class RunFile(RunModel):
 class EvalRequest:
     """The questions to ask, the universe to ask them in and the time the run started.
 
-    `on_result` is called with each record as soon as its question finishes.
+    `set_hashes` holds the sha256 of the question file of each set in the run. `on_result` is
+    called with each record as soon as its question finishes.
     """
 
     prefix: str
-    questions: tuple[EvalQuestion, ...]
-    source_hash: str
+    questions: tuple[SelectedQuestion, ...]
+    set_hashes: dict[str, str]
     settings: Settings
     started_at: datetime
     on_result: Callable[[RunRecord], None] | None = None
@@ -194,14 +202,16 @@ def build_census(schema: GraphSchema) -> Census:
 
 
 async def ask_record(
-    question: EvalQuestion, gold: Sequence[ScoredNode], ask_text: AskText
+    selected: SelectedQuestion, gold: Sequence[ScoredNode], ask_text: AskText
 ) -> RunRecord:
     """Ask 1 question and score its answer. A `ModelCallError` becomes an error record."""
+    question = selected.question
     try:
         result = await ask_text(question.question)
     except ModelCallError as error:
         return RunRecord(
             question_id=question.id,
+            set_name=selected.set_name,
             family=question.family,
             question=question.question,
             reference=question.reference,
@@ -214,6 +224,7 @@ async def ask_record(
     comparison = compare_nodes(result, gold)
     return RunRecord(
         question_id=question.id,
+        set_name=selected.set_name,
         family=question.family,
         question=question.question,
         reference=question.reference,
@@ -240,8 +251,8 @@ async def run_eval(
     scope = await build_scope(runtime.client, plugin, request.settings)
     with runtime.progress.step(GOLD_STEP):
         gold = {
-            question.id: await resolve_gold(question, scope, runtime.client)
-            for question in request.questions
+            selected.question.id: await resolve_gold(selected.question, scope, runtime.client)
+            for selected in request.questions
         }
     agent_settings = runtime.agent_settings
     meta = build_meta(request, agent_settings, scope.schema_context.graph_schema, plugin.notes_path)
@@ -252,11 +263,12 @@ async def run_eval(
 
     records: list[RunRecord] = []
     stop: str | None = None
-    for question in request.questions:
+    for selected in request.questions:
+        question_id = selected.question.id
         try:
-            record = await ask_record(question, gold[question.id], ask_text)
+            record = await ask_record(selected, gold[question_id], ask_text)
         except GraphConnectionError as error:
-            stop = f"{question.id}: {error}"
+            stop = f"{question_id}: {error}"
             break
         records.append(record)
         if request.on_result is not None:
@@ -272,15 +284,21 @@ def build_meta(
         started_at=request.started_at,
         git_commit=read_git_commit(),
         universe=request.prefix,
-        retrieve_model=agent_settings.resolve_retrieve_model(),
-        generate_model=agent_settings.resolve_generate_model(),
-        retrieve_reasoning=agent_settings.retrieve_reasoning,
-        generate_reasoning=agent_settings.generate_reasoning,
+        resolve_model=agent_settings.model_for(AgentStep.RESOLVE),
+        retrieve_model=agent_settings.model_for(AgentStep.RETRIEVE),
+        generate_model=agent_settings.model_for(AgentStep.GENERATE),
+        resolve_reasoning=agent_settings.reasoning_for(AgentStep.RESOLVE),
+        retrieve_reasoning=agent_settings.reasoning_for(AgentStep.RETRIEVE),
+        generate_reasoning=agent_settings.reasoning_for(AgentStep.GENERATE),
         max_tool_calls=agent_settings.max_tool_calls,
         max_cypher_calls=agent_settings.max_cypher_calls,
         max_check_retries=agent_settings.max_check_retries,
         hashes={
-            HASH_QUESTIONS: request.source_hash,
+            **{
+                f"{HASH_QUESTIONS_PREFIX}{name}": value
+                for name, value in request.set_hashes.items()
+            },
+            HASH_RESOLVE_PROMPT: hash_file(RESOLVE_PROMPT_PATH),
             HASH_RETRIEVE_PROMPT: hash_file(RETRIEVE_PROMPT_PATH),
             HASH_GENERATE_PROMPT: hash_file(GENERATE_PROMPT_PATH),
             HASH_NOTES: hash_file(notes_path),
@@ -289,12 +307,12 @@ def build_meta(
     )
 
 
-def summarize(run: EvalRun) -> RunTotals:
-    scores = [record.score for record in run.records if record.score is not None]
+def summarize(records: Sequence[RunRecord]) -> RunTotals:
+    scores = [record.score for record in records if record.score is not None]
     count = len(scores)
     return RunTotals(
-        question_count=len(run.records),
-        error_count=len(run.records) - count,
+        question_count=len(records),
+        error_count=len(records) - count,
         valid_count=sum(1 for score in scores if score.is_citation_valid),
         mean_precision=sum(score.precision for score in scores) / count if count else 0.0,
         mean_recall=sum(score.recall for score in scores) / count if count else 0.0,
@@ -306,6 +324,14 @@ def summarize(run: EvalRun) -> RunTotals:
         reasoning_tokens=sum(score.reasoning_tokens for score in scores),
         model_calls=sum(score.model_calls for score in scores),
     )
+
+
+def summarize_sets(run: EvalRun) -> dict[str, RunTotals]:
+    """The totals of each set that has a record, in order of first appearance."""
+    by_set: dict[str, list[RunRecord]] = {}
+    for record in run.records:
+        by_set.setdefault(record.set_name, []).append(record)
+    return {name: summarize(records) for name, records in by_set.items()}
 
 
 def format_node(node: ScoredNode) -> str:
@@ -323,7 +349,7 @@ def format_node_list(nodes: Sequence[ScoredNode]) -> str:
 def render_record(record: RunRecord) -> str:
     """The review section of 1 question."""
     lines = [
-        f"## {record.question_id} ({record.family})",
+        f"## {record.question_id} ({record.set_name}, {record.family})",
         "",
         f"Question: {record.question}",
         f"Reference: {record.reference}",
@@ -354,8 +380,8 @@ def render_record(record: RunRecord) -> str:
     return "\n".join(lines)
 
 
-def describe_step_model(model: str, reasoning: ReasoningLevel | None) -> str:
-    return f"{model}, reasoning {reasoning or 'provider default'}"
+def describe_step_model(model: str, reasoning: ReasoningLevel) -> str:
+    return f"{model}, reasoning {reasoning}"
 
 
 def render_review(run: EvalRun) -> str:
@@ -365,6 +391,7 @@ def render_review(run: EvalRun) -> str:
         f"# Eval review {meta.run_id}",
         "",
         f"Universe: {meta.universe}, commit: {meta.git_commit or 'unknown'}",
+        f"Resolve: {describe_step_model(meta.resolve_model, meta.resolve_reasoning)}",
         f"Retrieve: {describe_step_model(meta.retrieve_model, meta.retrieve_reasoning)}",
         f"Generate: {describe_step_model(meta.generate_model, meta.generate_reasoning)}",
         "",
@@ -380,11 +407,13 @@ def write_run(run: EvalRun, output_dir: Path) -> Path:
         write_text_atomically(answer_path, record.model_dump_json(indent=JSON_INDENT))
     run_file = RunFile(
         meta=run.meta,
-        totals=summarize(run),
+        totals=summarize(run.records),
+        set_totals=summarize_sets(run),
         stop=run.stop,
         questions=tuple(
             QuestionSummary(
                 question_id=record.question_id,
+                set_name=record.set_name,
                 family=record.family,
                 status=record.status,
                 error=record.error,

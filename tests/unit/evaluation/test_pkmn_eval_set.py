@@ -4,7 +4,7 @@ import pytest
 
 from muon.agent.universes import discover_universes
 from muon.config import DEFAULT_ONTOLOGY_DIR, DEFAULT_UNIVERSES_DIR
-from muon.evaluation.questions import EvalQuestion, load_questions
+from muon.evaluation.questions import EvalQuestion, load_eval_sets
 
 QUESTION_COUNT = 30
 FAMILIES = frozenset({"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S9", "S11", "S18"})
@@ -13,9 +13,11 @@ WRITE_WORD_PATTERN = re.compile(r"\b(SET|CREATE|MERGE|DELETE|REMOVE|DROP|CALL)\b
 LIMIT_PATTERN = re.compile(r"\bLIMIT\b", re.IGNORECASE)
 LIMITED_IDS = frozenset({"Q08"})
 
-QUESTIONS = load_questions(
-    discover_universes(DEFAULT_UNIVERSES_DIR, DEFAULT_ONTOLOGY_DIR).get("pkmn")
-).questions
+PLUGIN = discover_universes(DEFAULT_UNIVERSES_DIR, DEFAULT_ONTOLOGY_DIR).get("pkmn")
+GENERAL_SET, NAME_RESOLUTION_SET = load_eval_sets(PLUGIN, [])
+QUESTIONS = GENERAL_SET.questions
+NAME_RESOLUTION_COUNT = 8
+EMPTY_GOLD_IDS = frozenset({"N08"})
 
 
 def test_the_set_holds_30_questions_in_id_order() -> None:
@@ -43,3 +45,30 @@ class TestEachQuestion:
         has_limit = LIMIT_PATTERN.search(question.gold_query) is not None
 
         assert has_limit == (question.id in LIMITED_IDS)
+
+
+def test_the_plugin_declares_general_then_name_resolution() -> None:
+    assert (GENERAL_SET.name, NAME_RESOLUTION_SET.name) == ("general", "name-resolution")
+
+
+def test_the_name_resolution_set_holds_8_questions_in_id_order() -> None:
+    expected = [f"N{number:02d}" for number in range(1, NAME_RESOLUTION_COUNT + 1)]
+
+    assert [question.id for question in NAME_RESOLUTION_SET.questions] == expected
+
+
+@pytest.mark.parametrize(
+    "question",
+    NAME_RESOLUTION_SET.questions,
+    ids=[question.id for question in NAME_RESOLUTION_SET.questions],
+)
+class TestEachNameResolutionQuestion:
+    def test_it_has_a_family_of_the_v0_set(self, question: EvalQuestion) -> None:
+        assert question.family in FAMILIES
+
+    def test_its_gold_query_only_reads_and_returns_nodes(self, question: EvalQuestion) -> None:
+        assert not WRITE_WORD_PATTERN.search(question.gold_query)
+        assert "RETURN" in question.gold_query
+
+    def test_only_the_false_premise_has_an_empty_gold_set(self, question: EvalQuestion) -> None:
+        assert question.has_empty_gold == (question.id in EMPTY_GOLD_IDS)
