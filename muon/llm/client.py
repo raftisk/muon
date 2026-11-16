@@ -3,7 +3,7 @@
 from langchain_openai import ChatOpenAI
 from openai import AsyncOpenAI
 
-from muon.config import ProviderSettings
+from muon.config import ProviderSettings, ReasoningLevel
 
 
 class ModelCallError(Exception):
@@ -29,12 +29,18 @@ def create_client(settings: ProviderSettings) -> AsyncOpenAI:
     )
 
 
-def create_chat_model(settings: ProviderSettings) -> ChatOpenAI:
-    """Return a LangChain chat model for the endpoint, key, model, timeout and retries."""
+def create_chat_model(
+    settings: ProviderSettings, reasoning: ReasoningLevel | None = None
+) -> ChatOpenAI:
+    """Return a LangChain chat model for the endpoint, key, model, timeout and retries.
+
+    `reasoning` is sent as `reasoning_effort` only when it is set.
+    """
     return ChatOpenAI(
         base_url=settings.base_url,
         api_key=settings.api_key,
         model=settings.model,
         timeout=settings.timeout,
         max_retries=settings.max_retries,
+        reasoning_effort=reasoning,
     )

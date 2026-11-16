@@ -230,7 +230,7 @@ def test_settings_build_with_only_neo4j_variables(monkeypatch: pytest.MonkeyPatc
     assert settings.universes.universes_dir == DEFAULT_UNIVERSES_DIR
 
 
-def build_agent_settings(**overrides: int) -> AgentSettings:
+def build_agent_settings(**overrides: object) -> AgentSettings:
     return AgentSettings(
         _env_file=None,
         base_url="https://agent.test/v1",
@@ -273,3 +273,38 @@ def test_settings_build_without_agent_variables(monkeypatch: pytest.MonkeyPatch)
 
     assert "agent" not in Settings.model_fields
     Settings()
+
+
+def test_agent_step_models_fall_back_to_the_model() -> None:
+    settings = build_agent_settings()
+
+    assert settings.resolve_retrieve_model() == "m"
+    assert settings.resolve_generate_model() == "m"
+
+
+def test_agent_step_models_override_the_model() -> None:
+    settings = build_agent_settings(retrieve_model="r", generate_model="g")
+
+    assert settings.resolve_retrieve_model() == "r"
+    assert settings.resolve_generate_model() == "g"
+
+
+def test_agent_reasoning_levels_default_to_none() -> None:
+    settings = build_agent_settings()
+
+    assert settings.retrieve_reasoning is None
+    assert settings.generate_reasoning is None
+
+
+def test_agent_reasoning_level_reads_from_the_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MUON_AGENT_BASE_URL", "https://agent.test/v1")
+    monkeypatch.setenv("MUON_AGENT_API_KEY", "k")
+    monkeypatch.setenv("MUON_AGENT_MODEL", "m")
+    monkeypatch.setenv("MUON_AGENT_GENERATE_REASONING", "minimal")
+
+    assert AgentSettings(_env_file=None).generate_reasoning == "minimal"
+
+
+def test_agent_settings_reject_an_unknown_reasoning_level() -> None:
+    with pytest.raises(ValidationError, match="retrieve_reasoning"):
+        build_agent_settings(retrieve_reasoning="fast")
