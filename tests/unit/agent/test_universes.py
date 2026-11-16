@@ -92,6 +92,34 @@ def test_notes_path_outside_the_folder_raises(universes_dir: Path, ontology_dir:
         discover_universes(universes_dir, ontology_dir)
 
 
+def test_evals_is_optional_and_resolved_against_the_folder(
+    universes_dir: Path, ontology_dir: Path
+) -> None:
+    add_alt_universe_t_box(ontology_dir)
+    write_toy_plugin(universes_dir)
+    folder = write_toy_plugin(universes_dir, prefix=ALT_UNIVERSE, evals="evals.toml")
+    (folder / "evals.toml").write_text("", encoding="utf-8")
+
+    registry = discover_universes(universes_dir, ontology_dir)
+
+    assert registry.get(TOY_UNIVERSE).evals_path is None
+    assert registry.get(ALT_UNIVERSE).evals_path == folder / "evals.toml"
+
+
+def test_missing_evals_file_raises(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(universes_dir, evals="missing.toml")
+
+    with pytest.raises(UniverseError, match="Missing evals file .*missing.toml"):
+        discover_universes(universes_dir, ontology_dir)
+
+
+def test_evals_path_outside_the_folder_raises(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(universes_dir, evals="../outside.toml")
+
+    with pytest.raises(UniverseError, match="Evals path .*leaves the plugin folder"):
+        discover_universes(universes_dir, ontology_dir)
+
+
 def test_missing_t_box_raises(universes_dir: Path, ontology_dir: Path) -> None:
     (ontology_dir / "universes" / f"{TOY_UNIVERSE}.ttl").unlink()
     write_toy_plugin(universes_dir)

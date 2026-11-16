@@ -2,7 +2,8 @@
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
 `muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability`,
 `muon ingest bulbapedia species|move|ability`, `muon schema <prefix> [--refresh] [--json]` and
-`muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]`."""
+`muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]` and
+`muon eval PREFIX [--question ID ...] [--output-dir DIR]`."""
 
 import argparse
 import asyncio
@@ -14,6 +15,7 @@ import time
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import fields
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
@@ -23,6 +25,17 @@ from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, RoutingError, select_universe
 from muon.agent.universes import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
 from muon.config import AgentSettings, OntologySettings, Settings, get_settings
+from muon.evaluation.questions import EvalError, load_questions
+from muon.evaluation.run import (
+    DEFAULT_EVAL_DIR,
+    EvalRequest,
+    EvalRun,
+    RunRecord,
+    format_row,
+    format_summary,
+    run_eval,
+    write_run,
+)
 from muon.generation.answer import CLAIM_MARKER_PATTERN, Claim
 from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
 from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
@@ -143,6 +156,7 @@ PARSE_COMMAND = "parse"
 INGEST_COMMAND = "ingest"
 SCHEMA_COMMAND = "schema"
 ASK_COMMAND = "ask"
+EVAL_COMMAND = "eval"
 ASK_TARGET = "question"
 BULBAPEDIA_SOURCE = "bulbapedia"
 POKEAPI_SOURCE = "pokeapi"
@@ -300,6 +314,25 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         dest="should_show_cypher",
         help="list the queries that ran, after the answer",
+    )
+    eval_parser = commands.add_parser(
+        EVAL_COMMAND, help="ask the eval questions of a universe and score the answers"
+    )
+    eval_parser.add_argument("prefix", help="universe prefix, the folder name of the plugin")
+    eval_parser.add_argument(
+        "--question",
+        action="append",
+        default=[],
+        dest="question_ids",
+        metavar="ID",
+        help="ask only this question (repeatable)",
+    )
+    eval_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_EVAL_DIR,
+        metavar="DIR",
+        help="folder that receives the run folder (default: data/evals)",
     )
     return parser
 
@@ -1007,6 +1040,64 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def print_eval_row(record: RunRecord) -> None:
+    print(format_row(record), flush=True)
+
+
+async def run_eval_session(
+    settings: Settings,
+    agent_settings: AgentSettings,
+    registry: UniverseRegistry,
+    request: EvalRequest,
+) -> EvalRun:
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        runtime = AgentRuntime(client, create_chat_model(agent_settings), agent_settings)
+        return await run_eval(request, registry, runtime)
+
+
+def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
+    failure_prefix = build_failure_prefix(EVAL_COMMAND, arguments.prefix)
+    try:
+        agent_settings = AgentSettings()
+    except ValidationError as error:
+        print(f"{failure_prefix} {describe_missing_agent_settings(error)}", file=sys.stderr)
+        return EXIT_FAILURE
+    try:
+        registry = discover_universes(
+            settings.universes.universes_dir, settings.ontology.ontology_dir
+        )
+        plugin = select_universe(registry, arguments.prefix)
+        eval_set = load_questions(plugin)
+        questions = eval_set.select(arguments.question_ids) if arguments.question_ids else None
+        request = EvalRequest(
+            prefix=plugin.prefix,
+            questions=eval_set.questions if questions is None else questions,
+            source_hash=eval_set.source_hash,
+            settings=settings,
+            started_at=datetime.now(UTC),
+            on_result=print_eval_row,
+        )
+        print(f"{EVAL_COMMAND} {plugin.prefix}: {len(request.questions)} questions", flush=True)
+        run = asyncio.run(run_eval_session(settings, agent_settings, registry, request))
+    except (
+        UniverseError,
+        RoutingError,
+        OntologyError,
+        GraphError,
+        SchemaIntrospectionError,
+        SchemaCacheError,
+        EvalError,
+    ) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    folder = write_run(run, arguments.output_dir)
+    print(format_summary(run))
+    print(f"run folder: {folder}")
+    has_error = any(record.error is not None for record in run.records)
+    return EXIT_FAILURE if has_error or run.stop is not None else EXIT_SUCCESS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command in `argv` and return the process exit code."""
     parser = build_parser()
@@ -1053,4 +1144,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_schema(settings, arguments)
     if arguments.command == ASK_COMMAND:
         return execute_ask(settings, arguments)
+    if arguments.command == EVAL_COMMAND:
+        return execute_eval(settings, arguments)
     return execute_seed(settings, arguments.prefix)

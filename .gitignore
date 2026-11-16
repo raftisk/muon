@@ -11,3 +11,4 @@ data/bulbapedia/parsed/
 data/bulbapedia/ingested/
 data/pokeapi/csv/
 data/schema/
+data/evals/
