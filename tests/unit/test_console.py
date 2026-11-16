@@ -122,6 +122,18 @@ def test_eval_display_shows_the_header_of_the_current_question() -> None:
     assert "Q02 (2/2)" in render_to_text(display.render())
 
 
+def test_displays_build_on_a_terminal() -> None:
+    console = Console(file=io.StringIO(), width=WIDTH, force_terminal=True)
+
+    with EvalDisplay(console, [build_question("Q01")]) as display, display.step("reading schema"):
+        pass
+    with StepDisplay(console) as step_display, step_display.step("reading schema"):
+        pass
+
+    assert display.live is not None
+    assert "reading schema" in console.file.getvalue()  # type: ignore[attr-defined]
+
+
 def test_the_gold_step_shows_without_a_header() -> None:
     display = EvalDisplay(build_console(), [build_question("Q01")])
     with display.step(GOLD_STEP):

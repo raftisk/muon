@@ -60,7 +60,8 @@ def render_steps(lines: Sequence[StepLine], spinner: Spinner, now: float) -> Tab
 class LiveDisplay:
     """The step lines of 1 run in a `Live` area that runs only on a terminal.
 
-    Subclasses set `is_transient` and may override `render`. Piped output stays unchanged.
+    Subclasses set `is_transient` and may override `render`. `Live` calls `render` when it is
+    built, so a subclass sets the fields `render` reads before `super().__init__`.
     """
 
     is_transient = False
@@ -171,17 +172,14 @@ def build_eval_summary(run: EvalRun) -> Group:
 
 
 class EvalDisplay(LiveDisplay):
-    """The rows finished so far and the steps of the current question of `muon eval`.
-
-    The live area disappears at the end; the caller prints `build_eval_summary` after it.
-    """
+    """The finished rows and the current question of `muon eval`. The area clears at the end."""
 
     is_transient = True
 
     def __init__(self, console: Console, questions: Sequence[EvalQuestion]) -> None:
-        super().__init__(console)
         self.questions = tuple(questions)
         self.records: list[RunRecord] = []
+        super().__init__(console)
 
     def render(self) -> Group:
         lines = self.snapshot()
