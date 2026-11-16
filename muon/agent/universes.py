@@ -16,6 +16,8 @@ from muon.files import TEXT_ENCODING
 from muon.ontology.model import UNIVERSE_PREFIX_PATTERN, OntologyError, list_ontology_paths
 
 MANIFEST_FILE_NAME = "universe.toml"
+NOTES_FIELD = "notes"
+EVALS_FIELD = "evals"
 IGNORED_FOLDER_NAMES = frozenset({"__pycache__"})
 HIDDEN_FOLDER_PREFIX = "."
 
@@ -27,8 +29,9 @@ class UniverseError(Exception):
 class UniverseManifest(BaseModel):
     """The contents of `universe.toml`.
 
-    `notes` is a path relative to the plugin folder. `attribution` is the credit line an
-    answer prints when it cites text from the universe's source.
+    `notes` and `evals` are paths relative to the plugin folder; `evals` names the file of
+    eval questions and is optional. `attribution` is the credit line an answer prints when
+    it cites text from the universe's source.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -37,6 +40,7 @@ class UniverseManifest(BaseModel):
     name: str
     notes: str
     attribution: str | None = None
+    evals: str | None = None
 
 
 @dataclass(frozen=True)
@@ -59,6 +63,11 @@ class UniversePlugin:
     @property
     def notes_path(self) -> Path:
         return self.folder / self.manifest.notes
+
+    @property
+    def evals_path(self) -> Path | None:
+        """The eval question file, or `None` when the plugin has none."""
+        return None if self.manifest.evals is None else self.folder / self.manifest.evals
 
 
 class UniverseRegistry:
@@ -92,6 +101,18 @@ def read_manifest(folder: Path) -> UniverseManifest:
         raise UniverseError(f"Invalid manifest {path}: {error}") from error
 
 
+def check_plugin_file(folder: Path, field: str, relative_path: str) -> Path:
+    """Return the file that manifest `field` names, which must exist inside `folder`."""
+    path = folder / relative_path
+    if not path.resolve().is_relative_to(folder.resolve()):
+        raise UniverseError(
+            f"{field.capitalize()} path {relative_path!r} in {folder} leaves the plugin folder"
+        )
+    if not path.is_file():
+        raise UniverseError(f"Missing {field} file {path} (field {field!r} of {folder})")
+    return path
+
+
 def validate_plugin(folder: Path, manifest: UniverseManifest, ontology_dir: Path) -> UniversePlugin:
     """Check a manifest against its folder and the ontology files, then read its notes."""
     if not UNIVERSE_PREFIX_PATTERN.fullmatch(manifest.prefix):
@@ -104,11 +125,9 @@ def validate_plugin(folder: Path, manifest: UniverseManifest, ontology_dir: Path
             f"Prefix {manifest.prefix!r} in {folder / MANIFEST_FILE_NAME} "
             f"differs from the folder name {folder.name!r}"
         )
-    notes_path = folder / manifest.notes
-    if not notes_path.resolve().is_relative_to(folder.resolve()):
-        raise UniverseError(f"Notes path {manifest.notes!r} in {folder} leaves the plugin folder")
-    if not notes_path.is_file():
-        raise UniverseError(f"Missing notes file {notes_path} (field 'notes' of {folder})")
+    notes_path = check_plugin_file(folder, NOTES_FIELD, manifest.notes)
+    if manifest.evals is not None:
+        check_plugin_file(folder, EVALS_FIELD, manifest.evals)
     try:
         ontology_paths = list_ontology_paths(ontology_dir, manifest.prefix)
     except OntologyError as error:
