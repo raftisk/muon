@@ -1,14 +1,18 @@
-from dataclasses import dataclass
+from contextlib import AbstractContextManager, contextmanager
+from dataclasses import dataclass, field, replace
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import SecretStr
 
-from muon.agent.ask import AskRequest, ask
-from muon.agent.routing import AgentRuntime, RoutingError
+from muon.agent import ask as ask_module
+from muon.agent.ask import ANSWER_STEP, QUERY_STEP, SCHEMA_STEP, AskRequest, ask
+from muon.agent.routing import NO_PROGRESS, AgentRuntime, RoutingError
 from muon.agent.universes import UniverseRegistry, discover_universes
 from muon.config import AgentSettings, Settings
 from muon.generation.answer import AnswerDraft, Claim
+from muon.llm.client import ModelCallError
 from muon.retrieval.context import READ_GRAPH_COUNTS
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.fixtures.toy_plugin import write_toy_plugin
@@ -26,6 +30,24 @@ def build_draft() -> AnswerDraft:
     return AnswerDraft(
         text="W1 exists [c1].", claims=[claim], assumptions=[], table_evidence_ids=[]
     )
+
+
+@dataclass
+class RecordingTracker:
+    """Collects `(name, "start")` and `(name, "end")` pairs in the order they happen."""
+
+    events: list[tuple[str, str]] = field(default_factory=list)
+
+    def step(self, name: str) -> AbstractContextManager[None]:
+        return self.track(name)
+
+    @contextmanager
+    def track(self, name: str) -> Any:
+        self.events.append((name, "start"))
+        try:
+            yield
+        finally:
+            self.events.append((name, "end"))
 
 
 @dataclass
@@ -100,3 +122,44 @@ async def test_an_unknown_universe_raises_before_any_read_or_model_call(tmp_path
 
     assert pipeline.client.list_queries() == []
     assert pipeline.model.calls == []
+
+
+def test_the_runtime_defaults_to_no_progress(tmp_path: Path) -> None:
+    assert build_pipeline(tmp_path).runtime.progress is NO_PROGRESS
+
+
+async def test_ask_records_the_3_steps_in_order(tmp_path: Path) -> None:
+    pipeline = build_pipeline(tmp_path)
+    tracker = RecordingTracker()
+    runtime = replace(pipeline.runtime, progress=tracker)
+
+    await ask(AskRequest(question=QUESTION), pipeline.registry, pipeline.settings, runtime)
+
+    assert tracker.events == [
+        (SCHEMA_STEP, "start"),
+        (SCHEMA_STEP, "end"),
+        (QUERY_STEP, "start"),
+        (QUERY_STEP, "end"),
+        (ANSWER_STEP, "start"),
+        (ANSWER_STEP, "end"),
+    ]
+
+
+async def test_a_retrieve_error_leaves_the_query_step_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pipeline = build_pipeline(tmp_path)
+    tracker = RecordingTracker()
+    runtime = replace(pipeline.runtime, progress=tracker)
+    error = ModelCallError("retrieve", "m", "rate limited")
+
+    async def fail(*args: object, **kwargs: object) -> None:
+        raise error
+
+    monkeypatch.setattr(ask_module, "retrieve", fail)
+
+    with pytest.raises(ModelCallError) as raised:
+        await ask(AskRequest(question=QUESTION), pipeline.registry, pipeline.settings, runtime)
+
+    assert raised.value is error
+    assert tracker.events[-2:] == [(QUERY_STEP, "start"), (QUERY_STEP, "end")]

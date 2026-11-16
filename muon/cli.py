@@ -14,7 +14,7 @@ import sys
 import time
 from collections import Counter
 from collections.abc import Mapping, Sequence
-from dataclasses import fields
+from dataclasses import dataclass, fields, replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -22,17 +22,15 @@ import httpx
 from pydantic import SecretStr, ValidationError
 
 from muon.agent.ask import AskRequest, AskResult, ask
-from muon.agent.routing import AgentRuntime, RoutingError, select_universe
+from muon.agent.routing import AgentRuntime, RoutingError, StepTracker, select_universe
 from muon.agent.universes import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
 from muon.config import AgentSettings, OntologySettings, Settings, get_settings
+from muon.console import STDERR, STDOUT, EvalDisplay, StepDisplay, build_eval_summary
 from muon.evaluation.questions import EvalError, load_questions
 from muon.evaluation.run import (
     DEFAULT_EVAL_DIR,
     EvalRequest,
     EvalRun,
-    RunRecord,
-    format_row,
-    format_summary,
     run_eval,
     write_run,
 )
@@ -992,15 +990,21 @@ def describe_missing_agent_settings(error: ValidationError) -> str:
     return f"missing or invalid settings: {', '.join(names)}"
 
 
-async def run_ask(
-    settings: Settings,
-    agent_settings: AgentSettings,
-    registry: UniverseRegistry,
-    request: AskRequest,
-) -> AskResult:
-    async with Neo4jGraphClient(settings.neo4j) as client:
-        runtime = AgentRuntime(client, create_chat_model(agent_settings), agent_settings)
-        return await ask(request, registry, settings, runtime)
+@dataclass(frozen=True)
+class AgentContext:
+    """What an agent command needs to run: the settings, the plugins and the step display."""
+
+    settings: Settings
+    agent_settings: AgentSettings
+    registry: UniverseRegistry
+    progress: StepTracker
+
+
+async def run_ask(context: AgentContext, request: AskRequest) -> AskResult:
+    async with Neo4jGraphClient(context.settings.neo4j) as client:
+        chat_model = create_chat_model(context.agent_settings)
+        runtime = AgentRuntime(client, chat_model, context.agent_settings, context.progress)
+        return await ask(request, context.registry, context.settings, runtime)
 
 
 def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
@@ -1008,7 +1012,7 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
     try:
         agent_settings = AgentSettings()
     except ValidationError as error:
-        print(f"{failure_prefix} {describe_missing_agent_settings(error)}", file=sys.stderr)
+        STDERR.print(f"{failure_prefix} {describe_missing_agent_settings(error)}")
         return EXIT_FAILURE
     try:
         registry = discover_universes(
@@ -1016,7 +1020,9 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
         )
         plugin = select_universe(registry, arguments.universe)
         request = AskRequest(question=arguments.question, universe=plugin.prefix)
-        result = asyncio.run(run_ask(settings, agent_settings, registry, request))
+        with StepDisplay(STDERR) as display:
+            context = AgentContext(settings, agent_settings, registry, display)
+            result = asyncio.run(run_ask(context, request))
     except (
         UniverseError,
         RoutingError,
@@ -1026,33 +1032,25 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
         SchemaCacheError,
         ModelCallError,
     ) as error:
-        print(f"{failure_prefix} {error}", file=sys.stderr)
+        STDERR.print(f"{failure_prefix} {error}")
         return EXIT_FAILURE
 
     if arguments.is_json:
-        print(result.model_dump_json(indent=ASK_JSON_INDENT))
+        STDOUT.print(result.model_dump_json(indent=ASK_JSON_INDENT))
         return EXIT_SUCCESS
-    print(render_answer(result, plugin.manifest.attribution))
+    STDOUT.print(render_answer(result, plugin.manifest.attribution))
     if arguments.should_show_cypher:
-        print()
-        print(render_queries(result.bundle))
-    print(format_ask_status(result), file=sys.stderr)
+        STDOUT.print()
+        STDOUT.print(render_queries(result.bundle))
+    STDERR.print(format_ask_status(result), style="dim")
     return EXIT_SUCCESS
 
 
-def print_eval_row(record: RunRecord) -> None:
-    print(format_row(record), flush=True)
-
-
-async def run_eval_session(
-    settings: Settings,
-    agent_settings: AgentSettings,
-    registry: UniverseRegistry,
-    request: EvalRequest,
-) -> EvalRun:
-    async with Neo4jGraphClient(settings.neo4j) as client:
-        runtime = AgentRuntime(client, create_chat_model(agent_settings), agent_settings)
-        return await run_eval(request, registry, runtime)
+async def run_eval_session(context: AgentContext, request: EvalRequest) -> EvalRun:
+    async with Neo4jGraphClient(context.settings.neo4j) as client:
+        chat_model = create_chat_model(context.agent_settings)
+        runtime = AgentRuntime(client, chat_model, context.agent_settings, context.progress)
+        return await run_eval(request, context.registry, runtime)
 
 
 def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
@@ -1060,7 +1058,7 @@ def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
     try:
         agent_settings = AgentSettings()
     except ValidationError as error:
-        print(f"{failure_prefix} {describe_missing_agent_settings(error)}", file=sys.stderr)
+        STDERR.print(f"{failure_prefix} {describe_missing_agent_settings(error)}")
         return EXIT_FAILURE
     try:
         registry = discover_universes(
@@ -1075,10 +1073,12 @@ def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
             source_hash=eval_set.source_hash,
             settings=settings,
             started_at=datetime.now(UTC),
-            on_result=print_eval_row,
         )
-        print(f"{EVAL_COMMAND} {plugin.prefix}: {len(request.questions)} questions", flush=True)
-        run = asyncio.run(run_eval_session(settings, agent_settings, registry, request))
+        STDOUT.print(f"{EVAL_COMMAND} {plugin.prefix}: {len(request.questions)} questions")
+        with EvalDisplay(STDOUT, request.questions) as display:
+            context = AgentContext(settings, agent_settings, registry, display)
+            tracked = replace(request, on_result=display.handle_result)
+            run = asyncio.run(run_eval_session(context, tracked))
     except (
         UniverseError,
         RoutingError,
@@ -1088,12 +1088,12 @@ def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
         SchemaCacheError,
         EvalError,
     ) as error:
-        print(f"{failure_prefix} {error}", file=sys.stderr)
+        STDERR.print(f"{failure_prefix} {error}")
         return EXIT_FAILURE
 
     folder = write_run(run, arguments.output_dir)
-    print(format_summary(run))
-    print(f"run folder: {folder}")
+    STDOUT.print(build_eval_summary(run))
+    STDOUT.print(f"run folder: {folder}")
     has_error = any(record.error is not None for record in run.records)
     return EXIT_FAILURE if has_error or run.stop is not None else EXIT_SUCCESS
 

@@ -5,7 +5,9 @@ choice into a `UniverseScope` that the retrieve step binds into its tools, so th
 never passes a universe and cannot leave the one chosen.
 """
 
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
+from typing import Protocol
 
 from langchain_core.language_models import BaseChatModel
 
@@ -36,6 +38,25 @@ class UniverseScope:
     allowed_terms: frozenset[str]
 
 
+class StepTracker(Protocol):
+    """Shows the steps of a run.
+
+    A step is shown from entry until exit. An exception leaving the block marks it failed.
+    """
+
+    def step(self, name: str) -> AbstractContextManager[None]: ...
+
+
+class NullStepTracker:
+    """A tracker that shows nothing."""
+
+    def step(self, name: str) -> AbstractContextManager[None]:
+        return nullcontext()
+
+
+NO_PROGRESS = NullStepTracker()
+
+
 @dataclass(frozen=True)
 class AgentRuntime:
     """The per-run dependencies of the agent steps."""
@@ -43,6 +64,7 @@ class AgentRuntime:
     client: GraphClient
     chat_model: BaseChatModel
     agent_settings: AgentSettings
+    progress: StepTracker = NO_PROGRESS
 
 
 def select_universe(registry: UniverseRegistry, requested: str | None) -> UniversePlugin:

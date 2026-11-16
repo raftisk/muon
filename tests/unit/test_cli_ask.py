@@ -114,13 +114,7 @@ class RecordingAskRun:
         self.outcome = outcome
         self.requests: list[AskRequest] = []
 
-    async def __call__(
-        self,
-        settings: Settings,
-        agent_settings: AgentSettings,
-        registry: object,
-        request: AskRequest,
-    ) -> AskResult:
+    async def __call__(self, context: cli.AgentContext, request: AskRequest) -> AskResult:
         self.requests.append(request)
         if isinstance(self.outcome, Exception):
             raise self.outcome
@@ -143,6 +137,17 @@ def test_ask_parser_accepts_its_options() -> None:
 
     assert (arguments.question, arguments.universe) == (QUESTION, UNIVERSE)
     assert (arguments.is_json, arguments.should_show_cypher) == (True, True)
+
+
+def test_json_stdout_is_the_model_dump_byte_for_byte(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    result = build_result()
+
+    run_ask_command(monkeypatch, result, "--json")
+
+    expected = result.model_dump_json(indent=cli.ASK_JSON_INDENT) + "\n"
+    assert capsys.readouterr().out == expected
 
 
 def test_ask_renders_names_and_footnotes_and_never_ids(

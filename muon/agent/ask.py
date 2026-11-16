@@ -12,6 +12,10 @@ from muon.generation.generate import generate_answer
 from muon.retrieval.evidence import EvidenceBundle
 from muon.retrieval.retrieve import StepStats, retrieve
 
+SCHEMA_STEP = "reading schema"
+QUERY_STEP = "querying graph"
+ANSWER_STEP = "writing answer"
+
 
 class AskRequest(BaseModel):
     """One question, and the universe prefix to ask it in (`None` for the only one)."""
@@ -49,9 +53,12 @@ async def ask(
     """
     started_at = time.perf_counter()
     plugin = select_universe(registry, request.universe)
-    scope = await build_scope(runtime.client, plugin, settings)
-    retrieved = await retrieve(scope, request.question, runtime)
-    generated = await generate_answer(request.question, retrieved.bundle, scope, runtime)
+    with runtime.progress.step(SCHEMA_STEP):
+        scope = await build_scope(runtime.client, plugin, settings)
+    with runtime.progress.step(QUERY_STEP):
+        retrieved = await retrieve(scope, request.question, runtime)
+    with runtime.progress.step(ANSWER_STEP):
+        generated = await generate_answer(request.question, retrieved.bundle, scope, runtime)
     return AskResult(
         answer=generated.answer,
         bundle=retrieved.bundle,

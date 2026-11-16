@@ -3,8 +3,8 @@
 Map: `run_eval` resolves every gold query first, then asks the questions 1 at a time and
 returns an `EvalRun` with 1 `RunRecord` per question. `write_run` writes `run.json` (meta,
 totals and the scores), `answers/<id>.json` (the full record, enough to re-score without a
-model) and `review.md`, the sheet for the review by hand. `format_row` and `format_summary`
-give the lines the command prints. A provider failure on 1 question becomes an error
+model) and `review.md`, the sheet for the review by hand. The command renders the run through
+`muon/console.py`. A provider failure on 1 question becomes an error
 record and the run goes on. A lost graph connection ends the run and keeps the questions
 that finished.
 """
@@ -52,6 +52,9 @@ HASH_QUESTIONS = "questions"
 HASH_RETRIEVE_PROMPT = "retrieve_prompt"
 HASH_GENERATE_PROMPT = "generate_prompt"
 HASH_NOTES = "notes"
+# EvalDisplay in muon/console.py compares step names against this one to keep it out of
+# the per-question list.
+GOLD_STEP = "resolving gold queries"
 VERDICT_LINE = "Verdict: [ ] correct  [ ] partial  [ ] wrong"
 
 type AskFunction = Callable[
@@ -228,10 +231,11 @@ async def run_eval(
     """
     plugin = select_universe(registry, request.prefix)
     scope = await build_scope(runtime.client, plugin, request.settings)
-    gold = {
-        question.id: await resolve_gold(question, scope, runtime.client)
-        for question in request.questions
-    }
+    with runtime.progress.step(GOLD_STEP):
+        gold = {
+            question.id: await resolve_gold(question, scope, runtime.client)
+            for question in request.questions
+        }
     agent_settings = runtime.agent_settings
     meta = build_meta(request, agent_settings, scope.schema_context.graph_schema, plugin.notes_path)
 
@@ -288,35 +292,6 @@ def summarize(run: EvalRun) -> RunTotals:
         latency_seconds=sum(score.latency_seconds for score in scores),
         total_tokens=sum(score.input_tokens + score.output_tokens for score in scores),
     )
-
-
-def format_row(record: RunRecord) -> str:
-    """The line of 1 question: id, family, precision, recall, validity, tools, seconds, tokens."""
-    head = f"{record.question_id:<5} {record.family:<7}"
-    score = record.score
-    if score is None:
-        return f"{head} error: {record.error}"
-    validity = "yes" if score.is_citation_valid else "no"
-    tokens = score.input_tokens + score.output_tokens
-    return (
-        f"{head} P {score.precision:.2f}  R {score.recall:.2f}  valid {validity:<3}  "
-        f"tools {score.tool_calls:>2}  {score.latency_seconds:>6.1f} s  {tokens:>7} tokens"
-    )
-
-
-def format_summary(run: EvalRun) -> str:
-    """The totals line of a run, and the reason it stopped when it did."""
-    totals = summarize(run)
-    answered = totals.question_count - totals.error_count
-    lines = [
-        f"questions {totals.question_count}  errors {totals.error_count}  "
-        f"P {totals.mean_precision:.2f}  R {totals.mean_recall:.2f}  "
-        f"citations valid {totals.valid_count}/{answered}  tools {totals.tool_calls}  "
-        f"{totals.latency_seconds:.1f} s  {totals.total_tokens} tokens"
-    ]
-    if run.stop is not None:
-        lines.append(f"stopped: {run.stop}")
-    return "\n".join(lines)
 
 
 def format_node(node: ScoredNode) -> str:

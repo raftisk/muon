@@ -6,7 +6,6 @@ import pytest
 from pydantic import SecretStr
 
 from muon import cli
-from muon.agent.universes import UniverseRegistry
 from muon.config import (
     AgentSettings,
     Neo4jSettings,
@@ -35,13 +34,7 @@ class RecordingEvalSession:
         self.stop = stop
         self.requests: list[EvalRequest] = []
 
-    async def __call__(
-        self,
-        settings: Settings,
-        agent_settings: AgentSettings,
-        registry: UniverseRegistry,
-        request: EvalRequest,
-    ) -> EvalRun:
+    async def __call__(self, context: cli.AgentContext, request: EvalRequest) -> EvalRun:
         self.requests.append(request)
         records = []
         for question in request.questions:
@@ -122,8 +115,9 @@ def test_a_full_run_prints_rows_and_the_summary_and_writes_the_folder(
     assert [question.id for question in session.requests[0].questions] == list(QUESTION_IDS)
     assert out.splitlines()[0] == f"eval {TOY_UNIVERSE}: 3 questions"
     for question_id in QUESTION_IDS:
-        assert f"{question_id}   S1" in out
-    assert "questions 3  errors 0" in out
+        assert any(question_id in line and "S1" in line for line in out.splitlines())
+    assert any("total" in line for line in out.splitlines())
+    assert session.requests[0].on_result is not None
     folder = tmp_path / "out" / "20261116-143005"
     assert f"run folder: {folder}" in out
     assert json.loads((folder / "run.json").read_text(encoding="utf-8"))["totals"]
@@ -208,8 +202,8 @@ def test_an_error_record_exits_1_after_writing_the_run(
 
     out = capsys.readouterr().out
     assert exit_code == cli.EXIT_FAILURE
-    assert "Q02   S1      error: rate limited" in out
-    assert "errors 1" in out
+    assert "rate limited" in out
+    assert "errors: 1" in out
     assert (tmp_path / "out" / "20261116-143005" / "run.json").is_file()
 
 
