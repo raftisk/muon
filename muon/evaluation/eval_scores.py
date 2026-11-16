@@ -16,7 +16,7 @@ from muon.agent.routing import UniverseScope
 from muon.evaluation.questions import EvalError, EvalQuestion
 from muon.graph import GraphClient
 from muon.retrieval.cypher import CallDescription, run_checked_query
-from muon.retrieval.evidence import EvidenceBundle, EvidenceStatus, NodeKey, SliceNode
+from muon.retrieval.evidence import EvidenceBundle, EvidenceStatus, NodeKey
 
 GOLD_EVIDENCE_ID = "gold"
 
@@ -54,18 +54,14 @@ class QuestionScore(ScoredModel):
     output_tokens: int
 
 
-def order_key(node: ScoredNode | SliceNode) -> tuple[str, str]:
-    return node.key.label, node.key.id
-
-
 def sort_nodes(nodes: Iterable[ScoredNode]) -> tuple[ScoredNode, ...]:
-    return tuple(sorted(nodes, key=order_key))
+    return tuple(sorted(nodes, key=lambda node: (node.key.label, node.key.id)))
 
 
 async def resolve_gold(
     question: EvalQuestion, scope: UniverseScope, client: GraphClient
-) -> tuple[SliceNode, ...]:
-    """Run the gold query of `question` and return the nodes of its result.
+) -> tuple[ScoredNode, ...]:
+    """Run the gold query of `question` and return the nodes of its result, sorted by key.
 
     Raises `EvalError` when the query is rejected or fails, returns no rows, or returns
     rows without a node.
@@ -79,7 +75,9 @@ async def resolve_gold(
         raise EvalError(f"{prefix} returned no rows")
     if not evidence.graph_slice.nodes:
         raise EvalError(f"{prefix} returned rows with no node; return the nodes themselves")
-    return tuple(sorted(evidence.graph_slice.nodes, key=order_key))
+    return sort_nodes(
+        ScoredNode(key=node.key, name=node.name) for node in evidence.graph_slice.nodes
+    )
 
 
 def find_name(key: NodeKey, bundle: EvidenceBundle) -> str | None:
@@ -106,10 +104,10 @@ def collect_cited(result: AskResult) -> dict[NodeKey, ScoredNode]:
     return cited
 
 
-def compare_nodes(result: AskResult, gold: Sequence[SliceNode]) -> NodeComparison:
+def compare_nodes(result: AskResult, gold: Sequence[ScoredNode]) -> NodeComparison:
     """Compare the nodes `result` cites with the gold nodes, by key."""
     cited = collect_cited(result)
-    gold_nodes = {node.key: ScoredNode(key=node.key, name=node.name) for node in gold}
+    gold_nodes = {node.key: node for node in gold}
     return NodeComparison(
         cited=sort_nodes(cited.values()),
         gold=sort_nodes(gold_nodes.values()),

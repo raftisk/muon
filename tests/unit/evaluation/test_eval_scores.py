@@ -5,10 +5,9 @@ from typing import Any
 import pytest
 
 from muon.agent.routing import UniverseScope
-from muon.evaluation.eval_scores import compare_nodes, resolve_gold, score_answer
+from muon.evaluation.eval_scores import ScoredNode, compare_nodes, resolve_gold, score_answer
 from muon.evaluation.questions import EvalError, EvalQuestion
 from muon.graph import GraphQueryError
-from muon.retrieval.evidence import SliceNode
 from tests.unit.evaluation.fakes import (
     GENERATE_TOKENS,
     RETRIEVE_TOKENS,
@@ -25,13 +24,8 @@ from tests.unit.evaluation.fakes import (
 from tests.unit.retrieval.scope import build_toy_scope
 
 
-def build_gold(*widget_ids: str) -> list[SliceNode]:
-    return [
-        SliceNode(
-            key=build_widget_key(widget_id), name=widget_id, labels=(WIDGET_LABEL,), source_url=None
-        )
-        for widget_id in widget_ids
-    ]
+def build_gold(*widget_ids: str) -> list[ScoredNode]:
+    return [ScoredNode(key=build_widget_key(widget_id), name=widget_id) for widget_id in widget_ids]
 
 
 def build_question(gold_query: str = WIDGET_QUERY) -> EvalQuestion:
