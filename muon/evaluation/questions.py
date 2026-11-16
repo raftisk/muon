@@ -32,7 +32,9 @@ class EvalQuestion(EvalModel):
     """One question with its gold query and a reference answer for the reviewer.
 
     `id` names the answer file of a run, so it holds no path character. `gold_query` returns
-    the nodes the answer rests on. `reference` is read by people only, never by code.
+    the nodes the answer rests on, and returns no rows when `has_empty_gold` is set: the
+    question asks about something the graph does not hold. `reference` is read by people
+    only, never by code.
     """
 
     id: str = Field(pattern=QUESTION_ID_PATTERN)
@@ -41,6 +43,7 @@ class EvalQuestion(EvalModel):
     reference: str = Field(min_length=1)
     gold_query: str = Field(min_length=1)
     runbook: str | None = None
+    has_empty_gold: bool = False
 
 
 class EvalFile(EvalModel):

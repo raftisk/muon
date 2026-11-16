@@ -28,8 +28,15 @@ def build_gold(*widget_ids: str) -> list[ScoredNode]:
     return [ScoredNode(key=build_widget_key(widget_id), name=widget_id) for widget_id in widget_ids]
 
 
-def build_question(gold_query: str = WIDGET_QUERY) -> EvalQuestion:
-    return EvalQuestion(id="Q01", family="S1", question="Q?", reference="A.", gold_query=gold_query)
+def build_question(gold_query: str = WIDGET_QUERY, has_empty_gold: bool = False) -> EvalQuestion:
+    return EvalQuestion(
+        id="Q01",
+        family="S1",
+        question="Q?",
+        reference="A.",
+        gold_query=gold_query,
+        has_empty_gold=has_empty_gold,
+    )
 
 
 def test_precision_and_recall_count_shared_nodes() -> None:
@@ -152,6 +159,25 @@ async def test_resolve_gold_rejects_an_empty_result(scope: UniverseScope) -> Non
 
     with pytest.raises(EvalError, match="Gold query of Q01 returned no rows"):
         await resolve_gold(build_question(), scope, client)
+
+
+async def test_resolve_gold_accepts_an_empty_result_when_the_question_expects_it(
+    scope: UniverseScope,
+) -> None:
+    client = build_eval_client(answer_rows([]))
+
+    gold = await resolve_gold(build_question(has_empty_gold=True), scope, client)
+
+    assert gold == ()
+
+
+async def test_resolve_gold_rejects_rows_when_the_question_expects_none(
+    scope: UniverseScope,
+) -> None:
+    client = build_eval_client(answer_rows([{"w": build_widget_node("a")}]))
+
+    with pytest.raises(EvalError, match="Gold query of Q01 returned rows, but .*has_empty_gold"):
+        await resolve_gold(build_question(has_empty_gold=True), scope, client)
 
 
 async def test_resolve_gold_rejects_rows_without_a_node(scope: UniverseScope) -> None:

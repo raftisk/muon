@@ -67,7 +67,8 @@ async def resolve_gold(
     """Run the gold query of `question` and return the nodes of its result, sorted by key.
 
     Raises `EvalError` when the query is rejected or fails, returns no rows, or returns
-    rows without a node.
+    rows without a node. A question with `has_empty_gold` returns `()` for no rows and raises
+    when the query returns any.
     """
     call = CallDescription(
         GOLD_EVIDENCE_ID, question.gold_query, f"gold nodes of {question.id}", is_final=False
@@ -76,8 +77,12 @@ async def resolve_gold(
     prefix = f"Gold query of {question.id}"
     if evidence.status in (EvidenceStatus.REJECTED, EvidenceStatus.FAILED):
         raise EvalError(f"{prefix} is {evidence.status}: {evidence.message}")
+    if evidence.status is EvidenceStatus.EMPTY and question.has_empty_gold:
+        return ()
     if evidence.status is EvidenceStatus.EMPTY:
         raise EvalError(f"{prefix} returned no rows")
+    if question.has_empty_gold:
+        raise EvalError(f"{prefix} returned rows, but the question sets has_empty_gold")
     if not evidence.graph_slice.nodes:
         raise EvalError(f"{prefix} returned rows with no node; return the nodes themselves")
     return sort_nodes(

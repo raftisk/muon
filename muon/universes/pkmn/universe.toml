@@ -5,3 +5,4 @@ attribution = "Text from Bulbapedia (https://bulbapedia.bulbagarden.net), licens
 
 [evals]
 general = "evals/general.toml"
+name-resolution = "evals/name-resolution.toml"

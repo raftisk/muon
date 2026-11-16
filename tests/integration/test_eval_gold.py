@@ -1,4 +1,6 @@
-"""Every gold query of the pkmn eval set runs on the live graph and returns nodes.
+"""Every gold query of the pkmn eval sets runs on the live graph and returns nodes.
+
+A question with `has_empty_gold` returns none.
 
 Needs the Neo4j of `.env` with the pkmn graph. It calls no model.
 """
@@ -21,7 +23,7 @@ QUESTIONS = [question for eval_set in load_eval_sets(PLUGIN, []) for question in
 
 
 @pytest.mark.parametrize("question", QUESTIONS, ids=[question.id for question in QUESTIONS])
-async def test_the_gold_query_returns_nodes(
+async def test_the_gold_query_returns_the_expected_nodes(
     question: EvalQuestion, graph_client: Neo4jGraphClient
 ) -> None:
     try:
@@ -31,4 +33,4 @@ async def test_the_gold_query_returns_nodes(
 
     gold = await resolve_gold(question, scope, graph_client)
 
-    assert gold
+    assert bool(gold) != question.has_empty_gold
