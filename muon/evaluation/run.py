@@ -52,6 +52,9 @@ HASH_QUESTIONS = "questions"
 HASH_RETRIEVE_PROMPT = "retrieve_prompt"
 HASH_GENERATE_PROMPT = "generate_prompt"
 HASH_NOTES = "notes"
+# EvalDisplay in muon/console.py compares step names against this one to keep it out of
+# the per-question list.
+GOLD_STEP = "resolving gold queries"
 VERDICT_LINE = "Verdict: [ ] correct  [ ] partial  [ ] wrong"
 
 type AskFunction = Callable[
@@ -228,10 +231,11 @@ async def run_eval(
     """
     plugin = select_universe(registry, request.prefix)
     scope = await build_scope(runtime.client, plugin, request.settings)
-    gold = {
-        question.id: await resolve_gold(question, scope, runtime.client)
-        for question in request.questions
-    }
+    with runtime.progress.step(GOLD_STEP):
+        gold = {
+            question.id: await resolve_gold(question, scope, runtime.client)
+            for question in request.questions
+        }
     agent_settings = runtime.agent_settings
     meta = build_meta(request, agent_settings, scope.schema_context.graph_schema, plugin.notes_path)
 

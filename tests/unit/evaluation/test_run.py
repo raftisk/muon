@@ -1,7 +1,8 @@
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import SecretStr
@@ -13,6 +14,7 @@ from muon.config import AgentSettings, Settings
 from muon.evaluation.eval_scores import compare_nodes, score_answer
 from muon.evaluation.questions import EvalError, EvalSet, load_questions
 from muon.evaluation.run import (
+    GOLD_STEP,
     EvalRequest,
     EvalRun,
     RunRecord,
@@ -27,6 +29,7 @@ from muon.graph import GraphConnectionError
 from muon.llm.client import ModelCallError
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.fixtures.toy_plugin import write_toy_plugin
+from tests.unit.agent.test_ask import RecordingTracker
 from tests.unit.chat_fakes import ScriptedChatModel
 from tests.unit.evaluation.fakes import (
     EVALS_FILE_NAME,
@@ -167,6 +170,25 @@ async def test_a_gold_failure_stops_before_any_question_is_asked(tmp_path: Path)
         await run_eval(build_request(setup), setup.registry, setup.runtime, fake)
 
     assert fake.asked == []
+
+
+async def test_gold_queries_resolve_inside_their_step_before_the_first_ask(
+    tmp_path: Path,
+) -> None:
+    setup = build_setup(tmp_path)
+    tracker = RecordingTracker()
+
+    class OrderedAsk(FakeAsk):
+        async def __call__(self, *args: Any) -> AskResult:
+            tracker.events.append(("ask", "call"))
+            return await super().__call__(*args)
+
+    fake = OrderedAsk(build_outcomes())
+    runtime = replace(setup.runtime, progress=tracker)
+
+    await run_eval(build_request(setup), setup.registry, runtime, fake)
+
+    assert tracker.events[:3] == [(GOLD_STEP, "start"), (GOLD_STEP, "end"), ("ask", "call")]
 
 
 async def test_a_model_error_is_recorded_and_the_run_goes_on(tmp_path: Path) -> None:
