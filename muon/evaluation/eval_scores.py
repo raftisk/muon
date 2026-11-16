@@ -51,7 +51,10 @@ class QuestionScore(ScoredModel):
     cypher_calls: int
     latency_seconds: float
     input_tokens: int
+    cached_input_tokens: int
     output_tokens: int
+    reasoning_tokens: int
+    model_calls: int
 
 
 def sort_nodes(nodes: Iterable[ScoredNode]) -> tuple[ScoredNode, ...]:
@@ -147,5 +150,8 @@ def score_answer(result: AskResult, comparison: NodeComparison) -> QuestionScore
         cypher_calls=stats.cypher_calls,
         latency_seconds=stats.total_latency_seconds,
         input_tokens=sum(step.input_tokens for step in stats.steps),
+        cached_input_tokens=sum(step.cached_input_tokens for step in stats.steps),
         output_tokens=sum(step.output_tokens for step in stats.steps),
+        reasoning_tokens=sum(step.reasoning_tokens for step in stats.steps),
+        model_calls=sum(step.model_calls for step in stats.steps),
     )

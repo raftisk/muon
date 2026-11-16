@@ -48,7 +48,15 @@ def build_scored_record(question_id: str, tokens: int) -> RunRecord:
     record = build_run_record(build_question(question_id))
     assert record.score is not None
     score = record.score.model_copy(
-        update={"precision": 0.5, "recall": 1.0, "input_tokens": tokens, "output_tokens": 0}
+        update={
+            "precision": 0.5,
+            "recall": 1.0,
+            "input_tokens": tokens,
+            "output_tokens": 0,
+            "cached_input_tokens": 7,
+            "reasoning_tokens": 3,
+            "model_calls": 2,
+        }
     )
     return record.model_copy(update={"score": score})
 
@@ -145,6 +153,16 @@ def test_the_gold_step_shows_without_a_header() -> None:
     assert "Q01 (1/1)" not in text
 
 
+def test_results_table_has_the_count_columns() -> None:
+    text = render_to_text(build_results_table([], None))
+
+    header = next(line for line in text.splitlines() if "family" in line)
+    names = [cell.strip() for cell in header.strip("│").split("│")]
+    assert names == [
+        "id", "family", "P", "R", "valid", "tools", "calls", "s", "in", "cached", "out", "reason"
+    ]  # fmt: skip
+
+
 def test_results_table_shows_scores_and_the_error_cells() -> None:
     records = [build_scored_record("Q01", 1234), build_run_record(build_question("Q02"), "boom")]
 
@@ -154,7 +172,7 @@ def test_results_table_shows_scores_and_the_error_cells() -> None:
     assert "1,234" in text
     error_row = next(line for line in text.splitlines() if "Q02" in line)
     assert "error" in error_row
-    assert "-" in error_row
+    assert error_row.count("-") == 9
 
 
 def test_eval_summary_holds_totals_errors_and_the_stop_reason() -> None:
@@ -172,6 +190,9 @@ def test_eval_summary_holds_totals_errors_and_the_stop_reason() -> None:
     assert "1.00" in total_row
     assert "2/2" in total_row
     assert "1,234" in total_row
+    assert [cell.strip() for cell in total_row.strip("│").split("│")][6:] == [
+        "4", "5.0", "1,234", "14", "0", "6"
+    ]  # fmt: skip
     assert "errors: 1" in text
     assert "Q03: rate limited" in text
     assert "stopped: Q02: Neo4j is down" in text

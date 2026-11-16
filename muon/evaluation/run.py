@@ -129,7 +129,11 @@ class RunTotals(RunModel):
     mean_recall: float
     tool_calls: int
     latency_seconds: float
-    total_tokens: int
+    input_tokens: int
+    cached_input_tokens: int
+    output_tokens: int
+    reasoning_tokens: int
+    model_calls: int
 
 
 class QuestionSummary(RunModel):
@@ -296,7 +300,11 @@ def summarize(run: EvalRun) -> RunTotals:
         mean_recall=sum(score.recall for score in scores) / count if count else 0.0,
         tool_calls=sum(score.tool_calls for score in scores),
         latency_seconds=sum(score.latency_seconds for score in scores),
-        total_tokens=sum(score.input_tokens + score.output_tokens for score in scores),
+        input_tokens=sum(score.input_tokens for score in scores),
+        cached_input_tokens=sum(score.cached_input_tokens for score in scores),
+        output_tokens=sum(score.output_tokens for score in scores),
+        reasoning_tokens=sum(score.reasoning_tokens for score in scores),
+        model_calls=sum(score.model_calls for score in scores),
     )
 
 
@@ -335,8 +343,10 @@ def render_record(record: RunRecord) -> str:
         lines.append(
             f"Metrics: precision {score.precision:.2f}, recall {score.recall:.2f}, "
             f"citations valid {'yes' if score.is_citation_valid else 'no'}, "
-            f"tool calls {score.tool_calls}, {score.latency_seconds:.1f} s, "
-            f"{score.input_tokens + score.output_tokens} tokens"
+            f"tool calls {score.tool_calls}, model calls {score.model_calls}, "
+            f"{score.latency_seconds:.1f} s, {score.input_tokens} input "
+            f"({score.cached_input_tokens} cached) and {score.output_tokens} output "
+            f"({score.reasoning_tokens} reasoning) tokens"
         )
         lines.append(f"Missed gold nodes: {format_node_list(comparison.missed)}")
         lines.append(f"Extra cited nodes: {format_node_list(comparison.extra)}")

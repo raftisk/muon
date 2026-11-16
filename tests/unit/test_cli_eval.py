@@ -75,6 +75,9 @@ def install_settings(
     return loaded
 
 
+RESULTS_TABLE_WIDTH = 120
+
+
 def run_eval_command(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -83,6 +86,7 @@ def run_eval_command(
 ) -> int:
     install_settings(monkeypatch, tmp_path)
     monkeypatch.setattr(cli, "run_eval_session", session)
+    monkeypatch.setattr(cli.STDOUT, "width", RESULTS_TABLE_WIDTH)
     return cli.main(["eval", TOY_UNIVERSE, "--output-dir", str(tmp_path / "out"), *flags])
 
 

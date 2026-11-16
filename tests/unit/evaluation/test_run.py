@@ -31,6 +31,8 @@ from tests.unit.agent.test_ask import RecordingTracker
 from tests.unit.chat_fakes import ScriptedChatModel
 from tests.unit.evaluation.fakes import (
     EVALS_FILE_NAME,
+    GENERATE_TOKENS,
+    RETRIEVE_TOKENS,
     WIDGET_QUERY,
     build_ask_result,
     build_claim,
@@ -203,7 +205,10 @@ async def test_a_model_error_is_recorded_and_the_run_goes_on(tmp_path: Path) -> 
     assert failed.error is not None
     assert "rate limited" in failed.error
     assert (failed.result, failed.score, failed.comparison) == (None, None, None)
-    assert summarize(run).error_count == 1
+    totals = summarize(run)
+    assert totals.error_count == 1
+    assert totals.model_calls == 4
+    assert totals.input_tokens == 2 * (RETRIEVE_TOKENS[0] + GENERATE_TOKENS[0])
 
 
 async def test_a_lost_connection_keeps_the_finished_questions(tmp_path: Path) -> None:
@@ -277,6 +282,15 @@ async def test_write_run_creates_the_folder_files(tmp_path: Path) -> None:
     assert "comparison" not in first
     assert document["questions"][1]["error"]
     assert document["totals"]["error_count"] == 1
+    assert {
+        "input_tokens",
+        "cached_input_tokens",
+        "output_tokens",
+        "reasoning_tokens",
+        "model_calls",
+    } <= set(document["totals"])
+    assert document["meta"]["retrieve_model"] == "model-x"
+    assert document["meta"]["generate_reasoning"] is None
 
 
 async def test_stored_answers_re_score_to_the_stored_scores(tmp_path: Path) -> None:
