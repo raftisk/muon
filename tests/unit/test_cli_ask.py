@@ -22,6 +22,8 @@ from muon.retrieval.evidence import (
     NodeKey,
     SliceNode,
 )
+from muon.retrieval.resolve import NameIndexError
+from muon.retrieval.resolved_names import NameCandidate, ResolvedName
 from muon.retrieval.retrieve import StepStats
 
 UNIVERSE = "pkmn"
@@ -78,6 +80,7 @@ def build_evidence(evidence_id: str, row_count: int = 1) -> Evidence:
 def build_result(
     text: str = "Diglett is Ground type [c1].",
     node_keys: list[NodeKey] | None = None,
+    resolved_names: list[ResolvedName] | None = None,
     **answer_fields: Any,
 ) -> AskResult:
     claim = Claim(
@@ -100,6 +103,7 @@ def build_result(
         bundle=EvidenceBundle(
             universe=UNIVERSE, question=QUESTION, items=(build_evidence("e1", row_count=3),)
         ),
+        resolved_names=resolved_names or [],
         stats=AskStats(
             tool_calls=1,
             cypher_calls=1,
@@ -217,7 +221,7 @@ def test_json_prints_one_document_and_nothing_else(
 
     captured = capsys.readouterr()
     document = json.loads(captured.out)
-    assert set(document) == {"answer", "bundle", "stats"}
+    assert set(document) == {"answer", "bundle", "resolved_names", "stats"}
     assert document["answer"]["universe"] == UNIVERSE
     assert document["bundle"]["items"][0]["query"] == QUERY
     assert captured.err == ""
@@ -301,6 +305,7 @@ def test_unknown_universe_exits_1_before_any_connection(
     [
         GraphConnectionError("Neo4j is down"),
         ModelCallError("retrieve", "m", "rate limited"),
+        NameIndexError("The full-text index 'entity_names' does not exist"),
     ],
 )
 def test_run_failures_exit_1_with_the_error(
@@ -377,3 +382,16 @@ def test_the_status_line_shows_model_calls_and_token_detail() -> None:
         "ask pkmn: 1 queries, 3 model calls, 16,706 input (12,288 cached) and "
         "489 output (402 reasoning) tokens, 34.1 s"
     )
+
+
+def test_json_holds_the_resolved_names(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    candidate = NameCandidate(key=SPECIES, name="Diglett", score=8.2)
+    names = [ResolvedName(mention="Diglet", label="", candidates=[candidate])]
+
+    run_ask_command(monkeypatch, build_result(resolved_names=names), "--json")
+
+    document = json.loads(capsys.readouterr().out)
+    assert document["resolved_names"][0]["mention"] == "Diglet"
+    assert document["resolved_names"][0]["candidates"][0]["key"]["id"] == SPECIES.id

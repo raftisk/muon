@@ -8,11 +8,13 @@ from pydantic import SecretStr
 from muon.agent.routing import AgentRuntime, UniverseScope
 from muon.config import AgentSettings
 from muon.retrieval.cypher import TOOL_NAME
-from muon.retrieval.evidence import Evidence, EvidenceStatus
+from muon.retrieval.evidence import Evidence, EvidenceStatus, NodeKey
+from muon.retrieval.resolved_names import NameCandidate, ResolvedName, render_resolved_names
 from muon.retrieval.retrieve import (
     PROMPT_PATH,
     PromptError,
     TokenUsage,
+    build_question_message,
     fill_prompt,
     is_done,
     read_step_usage,
@@ -63,7 +65,7 @@ async def test_two_tool_calls_give_two_evidence_items_in_order(scope: UniverseSc
         client,
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert [item.id for item in result.bundle.items] == ["e1", "e2"]
     assert result.bundle.universe == scope.universe_label
@@ -79,7 +81,7 @@ async def test_the_loop_ends_when_the_cypher_budget_is_spent(scope: UniverseScop
         client,
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert result.stats.model_calls == 2
     assert len(model.calls) == 2
@@ -96,7 +98,7 @@ async def test_the_loop_ends_after_a_rejected_last_query(scope: UniverseScope) -
         StubReadClient([{"name": "W1"}]),
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert len(model.calls) == 2
     assert result.bundle.items[1].status is EvidenceStatus.REJECTED
@@ -110,7 +112,7 @@ async def test_a_parallel_call_past_the_budget_is_blocked_and_ends_the_loop(
     parallel.tool_calls.append({**parallel.tool_calls[0], "id": "c2"})
     runtime, model = build_runtime([parallel], client, max_cypher_calls=1)
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert len(result.bundle.items) == 1
     assert len(client.reads) == 1
@@ -125,7 +127,7 @@ async def test_a_final_text_reply_before_the_budget_is_spent_costs_one_more_call
         StubReadClient([{"name": "W1"}]),
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert result.stats.model_calls == 2
     assert len(model.calls) == 2
@@ -180,7 +182,7 @@ async def test_a_final_query_with_rows_ends_the_loop_after_one_model_call(
         StubReadClient([{"name": "W1"}]),
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert result.stats.model_calls == 1
     assert len(model.calls) == 1
@@ -195,7 +197,7 @@ async def test_a_final_query_with_no_rows_continues_to_a_second_model_call(
         StubReadClient([]),
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert result.bundle.items[0].status is EvidenceStatus.EMPTY
     assert result.stats.model_calls == 2
@@ -207,7 +209,7 @@ async def test_a_higher_cypher_limit_allows_four_calls(scope: UniverseScope) -> 
     replies = [build_tool_call_message(WIDGET_QUERY, f"c{number}") for number in (1, 2, 3, 4)]
     runtime, _ = build_runtime([*replies, build_final_message()], client, max_cypher_calls=4)
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert len(result.bundle.items) == 4
 
@@ -218,7 +220,7 @@ async def test_tokens_are_summed_over_the_model_calls(scope: UniverseScope) -> N
         StubReadClient([{"name": "W1"}]),
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert result.stats.step == "retrieve"
     assert result.stats.input_tokens == 20
@@ -235,7 +237,7 @@ async def test_reasoning_and_cached_tokens_are_summed_over_the_model_calls(
     )  # type: ignore[arg-type]
     runtime, _ = build_runtime([first, last], StubReadClient([{"name": "W1"}]))
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     stats = result.stats
     assert (stats.input_tokens, stats.output_tokens) == (250, 60)
@@ -248,7 +250,7 @@ async def test_missing_token_details_count_as_zero(scope: UniverseScope) -> None
         StubReadClient([{"name": "W1"}]),
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert (result.stats.reasoning_tokens, result.stats.cached_input_tokens) == (0, 0)
 
@@ -259,7 +261,7 @@ async def test_a_two_turn_loop_makes_two_model_calls(scope: UniverseScope) -> No
         StubReadClient([{"name": "W1"}]),
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert result.stats.model_calls == 2
 
@@ -275,7 +277,7 @@ async def test_the_system_prompt_holds_the_schema_and_the_question_is_the_human_
 ) -> None:
     runtime, model = build_runtime([build_final_message()], StubReadClient([]))
 
-    await retrieve(scope, QUESTION, runtime)
+    await retrieve(scope, QUESTION, runtime, [])
 
     system, human = model.calls[0][0], model.calls[0][1]
     assert scope.universe_label in str(system.content)
@@ -290,7 +292,7 @@ async def test_a_rejected_call_is_kept_as_evidence(scope: UniverseScope) -> None
         StubReadClient([]),
     )
 
-    result = await retrieve(scope, QUESTION, runtime)
+    result = await retrieve(scope, QUESTION, runtime, [])
 
     assert result.bundle.items[0].status is EvidenceStatus.REJECTED
 
@@ -319,3 +321,42 @@ def test_retrieve_prompt_fills_with_every_marker() -> None:
 
     assert "{{" not in text
     assert "SCHEMA" in text
+
+
+def build_resolved(candidates: list[NameCandidate]) -> ResolvedName:
+    return ResolvedName(mention="Widget One", label="ToyWidget", candidates=candidates)
+
+
+def test_the_question_message_is_the_bare_question_without_names() -> None:
+    assert build_question_message(QUESTION, []).content == QUESTION
+
+
+def test_the_question_message_puts_the_block_before_the_question() -> None:
+    candidate = NameCandidate(key=NodeKey(label="ToyWidget", id="w1"), name="W1", score=6.34)
+
+    message = build_question_message(QUESTION, [build_resolved([candidate])])
+
+    assert message.content == (
+        f"{render_resolved_names([build_resolved([candidate])])}\n\nQuestion: {QUESTION}"
+    )
+    assert str(message.content).startswith("Resolved names")
+
+
+def test_a_name_without_a_match_still_gets_a_block() -> None:
+    message = build_question_message(QUESTION, [build_resolved([])])
+
+    assert "no node matched" in str(message.content)
+
+
+async def test_the_system_prompt_is_the_same_with_and_without_names(scope: UniverseScope) -> None:
+    runtime, model = build_runtime(
+        [build_final_message(), build_final_message()], StubReadClient([])
+    )
+    candidate = NameCandidate(key=NodeKey(label="ToyWidget", id="w1"), name="W1", score=6.3)
+
+    await retrieve(scope, QUESTION, runtime, [])
+    await retrieve(scope, QUESTION, runtime, [build_resolved([candidate])])
+
+    assert model.calls[0][0].content == model.calls[1][0].content
+    assert model.calls[0][1].content == QUESTION
+    assert "w1" in str(model.calls[1][1].content)

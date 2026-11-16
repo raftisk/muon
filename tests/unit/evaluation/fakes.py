@@ -20,6 +20,7 @@ from muon.retrieval.evidence import (
     NodeKey,
     SliceNode,
 )
+from muon.retrieval.resolved_names import ResolvedName
 from muon.retrieval.retrieve import StepStats
 from tests.fixtures.toy_ontology import TOY_UNIVERSE
 from tests.unit.retrieval.fakes import QueryGraphClient
@@ -91,6 +92,7 @@ def build_ask_result(
     table_evidence_ids: Sequence[str] = (),
     items: Sequence[Evidence] = (),
     warnings: Sequence[str] = (),
+    resolved_names: Sequence[ResolvedName] = (),
 ) -> AskResult:
     """An answer with the given claims, printed tables, evidence and warnings.
 
@@ -127,6 +129,7 @@ def build_ask_result(
     return AskResult(
         answer=answer,
         bundle=EvidenceBundle(universe=TOY_UNIVERSE, question="Q?", items=tuple(items)),
+        resolved_names=list(resolved_names),
         stats=AskStats(
             tool_calls=1,
             cypher_calls=1,

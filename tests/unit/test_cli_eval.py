@@ -14,6 +14,7 @@ from muon.config import (
     UniverseSettings,
 )
 from muon.evaluation.run import EvalRequest, EvalRun
+from muon.retrieval.resolve import NameIndexError
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.fixtures.toy_plugin import write_toy_plugin
 from tests.unit.evaluation.fakes import (
@@ -257,3 +258,18 @@ def test_a_stopped_run_exits_1_and_says_why(
 
     assert exit_code == cli.EXIT_FAILURE
     assert "stopped: Q03: Neo4j is down" in capsys.readouterr().out
+
+
+def test_a_missing_name_index_exits_1_with_the_script_to_run(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    async def fail(context: cli.AgentContext, request: EvalRequest) -> EvalRun:
+        raise NameIndexError("The full-text index 'entity_names' does not exist")
+
+    install_settings(monkeypatch, tmp_path)
+    monkeypatch.setattr(cli, "run_eval_session", fail)
+
+    exit_code = cli.main(["eval", TOY_UNIVERSE, "--output-dir", str(tmp_path / "out")])
+
+    assert exit_code == cli.EXIT_FAILURE
+    assert "entity_names" in capsys.readouterr().err

@@ -36,6 +36,7 @@ from muon.files import write_text_atomically
 from muon.generation.generate import PROMPT_PATH as GENERATE_PROMPT_PATH
 from muon.graph import GraphConnectionError
 from muon.llm.client import ModelCallError
+from muon.retrieval.resolve import PROMPT_PATH as RESOLVE_PROMPT_PATH
 from muon.retrieval.retrieve import PROMPT_PATH as RETRIEVE_PROMPT_PATH
 from muon.retrieval.schema import GraphSchema
 
@@ -49,6 +50,7 @@ JSON_INDENT = 2
 MAX_LISTED_NODES = 20
 GIT_COMMAND = ("git", "rev-parse", "HEAD")
 HASH_QUESTIONS_PREFIX = "questions:"
+HASH_RESOLVE_PROMPT = "resolve_prompt"
 HASH_RETRIEVE_PROMPT = "retrieve_prompt"
 HASH_GENERATE_PROMPT = "generate_prompt"
 HASH_NOTES = "notes"
@@ -296,6 +298,7 @@ def build_meta(
                 f"{HASH_QUESTIONS_PREFIX}{name}": value
                 for name, value in request.set_hashes.items()
             },
+            HASH_RESOLVE_PROMPT: hash_file(RESOLVE_PROMPT_PATH),
             HASH_RETRIEVE_PROMPT: hash_file(RETRIEVE_PROMPT_PATH),
             HASH_GENERATE_PROMPT: hash_file(GENERATE_PROMPT_PATH),
             HASH_NOTES: hash_file(notes_path),

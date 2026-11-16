@@ -3,8 +3,8 @@
 Map: `resolve_names` runs `find_names` (1 structured model call that returns the names as the
 user wrote them, each with a label guess) and `look_up_names` (1 read query on the
 full-text index for all names). `build_name_query` writes the Lucene query of 1 name,
-`rank_candidates` orders and caps its matches, and `render_resolved_names` writes the block that
-`retrieve` puts before the question.
+and `rank_candidates` orders and caps its matches. `muon.retrieval.resolved_names` holds the result
+types and the block that `retrieve` puts before the question.
 
 Hazard: the query text, the index constants of `muon.graph.indexes` and the index created by
 `muon.ingestion.schema` must stay in sync.
@@ -27,6 +27,7 @@ from muon.graph.indexes import ALIASES_FIELD, NAME_FIELD, NAME_INDEX
 from muon.llm.client import ModelCallError
 from muon.retrieval.cypher import ID_PROPERTY
 from muon.retrieval.evidence import NodeKey
+from muon.retrieval.resolved_names import NameCandidate, ResolvedName
 from muon.retrieval.retrieve import StepStats, fill_prompt, read_step_usage
 from muon.retrieval.schema import find_leaf_label
 
@@ -37,13 +38,9 @@ FUZZY_MIN_LENGTH = 4
 FUZZY_EDITS = 1
 NAME_BOOST = 2
 LUCENE_SPECIAL_CHARACTERS = frozenset('+-&|!(){}[]^"~*?:\\/')
-SCORE_DIGITS = 1
 FETCH_LIMIT = 50  # rows kept per name, by score, before ranking
 MAX_CANDIDATES = 15  # candidates kept per name, after ranking
 INDEX_SCRIPT = "scripts/create_name_index.py"
-BLOCK_HEADER = "Resolved names (full-text match on name and aliases, best first):"
-NO_MATCH_TEXT = "no node matched"
-CANDIDATE_SEPARATOR = "; "
 
 LOOK_UP_NAMES = """
 UNWIND $queries AS query
@@ -79,22 +76,6 @@ class NameMentions(BaseModel):
     names: list[NameMention]
 
 
-class NameCandidate(BaseModel):
-    """A node the index matched to a name. `score` is the raw index score."""
-
-    key: NodeKey
-    name: str
-    score: float
-
-
-class ResolvedName(BaseModel):
-    """A name with its ranked candidates. An empty list means no node matched."""
-
-    mention: str
-    label: str
-    candidates: list[NameCandidate]
-
-
 @dataclass(frozen=True)
 class ResolveResult:
     names: list[ResolvedName]
@@ -128,9 +109,13 @@ def build_name_query(mention: str) -> str:
 def rank_candidates(candidates: Sequence[NameCandidate], label: str) -> list[NameCandidate]:
     """Put the candidates whose leaf label is `label` first, then order by score, and cap.
 
-    The cap is `MAX_CANDIDATES`. No candidate is dropped for its label.
+    A score tie goes to the shorter name, then to the lower id, so the order is stable. The cap
+    is `MAX_CANDIDATES`. No candidate is dropped for its label.
     """
-    ranked = sorted(candidates, key=lambda item: (item.key.label != label, -item.score))
+    ranked = sorted(
+        candidates,
+        key=lambda item: (item.key.label != label, -item.score, len(item.name), item.key.id),
+    )
     return ranked[:MAX_CANDIDATES]
 
 
@@ -255,23 +240,3 @@ async def resolve_names(
     mentions, stats = await find_names(question, scope, runtime)
     names = await look_up_names(mentions, scope, runtime.client)
     return ResolveResult(names=names, stats=stats)
-
-
-def render_candidate(candidate: NameCandidate) -> str:
-    score = f"{candidate.score:.{SCORE_DIGITS}f}"
-    return f"{candidate.name} [{candidate.key.label} {candidate.key.id}, score {score}]"
-
-
-def render_resolved_names(names: Sequence[ResolvedName]) -> str:
-    """Return the block that lists each name with its candidates, or `""` for no names."""
-    if not names:
-        return ""
-    lines = [BLOCK_HEADER]
-    for item in names:
-        guess = f" (guess: {item.label})" if item.label else ""
-        matches = (
-            CANDIDATE_SEPARATOR.join(render_candidate(candidate) for candidate in item.candidates)
-            or NO_MATCH_TEXT
-        )
-        lines.append(f'- "{item.mention}"{guess}: {matches}')
-    return "\n".join(lines)

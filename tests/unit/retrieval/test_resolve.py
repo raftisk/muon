@@ -20,18 +20,16 @@ from muon.retrieval.resolve import (
     MAX_CANDIDATES,
     MIN_NAME_SCORE,
     SHOW_NAME_INDEX,
-    NameCandidate,
     NameIndexError,
     NameMention,
     NameMentions,
-    ResolvedName,
     build_name_query,
     find_names,
     look_up_names,
     rank_candidates,
-    render_resolved_names,
     resolve_names,
 )
+from muon.retrieval.resolved_names import NameCandidate, ResolvedName, render_resolved_names
 from tests.unit.chat_fakes import ScriptedChatModel
 from tests.unit.retrieval.fakes import QueryGraphClient
 from tests.unit.retrieval.scope import build_toy_scope
@@ -129,6 +127,18 @@ def test_ranking_puts_the_guessed_label_first_then_orders_by_score() -> None:
         ("Move", "dragon-claw"),
         ("Type", "dragon"),
     ]
+
+
+def test_a_score_tie_goes_to_the_shorter_name_then_the_lower_id() -> None:
+    long_name = NameCandidate(
+        key=NodeKey(label="Place", id="a"), name="Coronet Highlands", score=8.1
+    )
+    short_name = NameCandidate(key=NodeKey(label="Place", id="z"), name="Mount Coronet", score=8.1)
+    same_length = NameCandidate(key=NodeKey(label="Place", id="b"), name="Mount Coronet", score=8.1)
+
+    ranked = rank_candidates([long_name, short_name, same_length], "Place")
+
+    assert [item.key.id for item in ranked] == ["b", "z", "a"]
 
 
 def test_a_guess_that_matches_nothing_keeps_the_score_order() -> None:

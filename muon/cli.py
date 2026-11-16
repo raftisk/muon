@@ -142,6 +142,7 @@ from muon.retrieval.evidence import (
     PathCell,
     RelationshipCell,
 )
+from muon.retrieval.resolve import NameIndexError
 from muon.retrieval.schema import SchemaIntrospectionError
 
 EXIT_SUCCESS = 0
@@ -1061,6 +1062,7 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
         SchemaIntrospectionError,
         SchemaCacheError,
         ModelCallError,
+        NameIndexError,
     ) as error:
         STDERR.print(f"{failure_prefix} {error}")
         return EXIT_FAILURE
@@ -1118,6 +1120,7 @@ def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
         SchemaIntrospectionError,
         SchemaCacheError,
         EvalError,
+        NameIndexError,
     ) as error:
         STDERR.print(f"{failure_prefix} {error}")
         return EXIT_FAILURE

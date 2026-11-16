@@ -230,6 +230,7 @@ The Neo4j graph follows the ttl through these rules.
 - Node key. `id` is the lowercase hyphenated English name (`shadow-ball`, `diglett-alola`), unique per label. Apostrophes are dropped, not hyphenated (`Farfetch'd` gives `farfetchd`). `name` is not a key, since names repeat across labels ("Psychic" is a Type and a Move).
 - Datatypes. `xsd:string` -> `STRING`, `xsd:integer` -> `INTEGER`, `xsd:decimal` -> `FLOAT`, `xsd:boolean` -> `BOOLEAN`. A repeated string (`aliases`, `conditions`) becomes `LIST<STRING>`.
 - Text. Only `TextChunk` nodes carry an `embedding` (`VECTOR`), which is not declared in the ttl.
+- Indexes. The full-text index `entity_names` covers `name` and `aliases` on the core labels `Entity`, `Work` and `Series`, so 1 index serves every universe and retrieval filters by the universe label. It is not declared in the ttl. `Runner.ensure_constraints` creates it with the `id` constraints, and `scripts/create_name_index.py` creates it on a graph that exists. Neo4j scores a name match above an alias match through a field boost in the query, not in the index. `TextChunk`, `GenerationMechanic` and `Universe` nodes carry none of the 3 labels and stay out.
 
 ```cypher
 (:PokemonSpecies:Species:pkmn {id:"charmander"})-[:EVOLVES_TO]->(:PokemonSpecies:Species:pkmn {id:"charmeleon"})
