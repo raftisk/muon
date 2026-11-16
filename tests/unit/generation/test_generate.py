@@ -59,7 +59,12 @@ def build_runtime(
     settings = AgentSettings(
         _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), model="m", **limits
     )
-    runtime = AgentRuntime(client=StubReadClient([]), chat_model=model, agent_settings=settings)  # type: ignore[arg-type]
+    runtime = AgentRuntime(
+        client=StubReadClient([]),
+        retrieve_model=model,
+        generate_model=model,
+        agent_settings=settings,
+    )  # type: ignore[arg-type]
     return runtime, model
 
 

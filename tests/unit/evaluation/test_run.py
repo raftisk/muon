@@ -104,7 +104,9 @@ def build_setup(tmp_path: Path) -> Setup:
         settings=build_toy_settings(tmp_path, ontology_dir),
         eval_set=load_questions(plugin),
         client=client,
-        runtime=AgentRuntime(client=client, chat_model=model, agent_settings=agent_settings),
+        runtime=AgentRuntime(
+            client=client, retrieve_model=model, generate_model=model, agent_settings=agent_settings
+        ),
         notes_path=plugin.notes_path,
     )
 
@@ -246,7 +248,12 @@ async def test_meta_holds_the_run_identity_limits_hashes_and_census(tmp_path: Pa
 
     meta = run.meta
     assert meta.run_id == RUN_ID
-    assert (meta.universe, meta.model) == (TOY_UNIVERSE, "model-x")
+    assert (meta.universe, meta.retrieve_model, meta.generate_model) == (
+        TOY_UNIVERSE,
+        "model-x",
+        "model-x",
+    )
+    assert (meta.retrieve_reasoning, meta.generate_reasoning) == (None, None)
     assert (meta.max_tool_calls, meta.max_cypher_calls, meta.max_check_retries) == (10, 2, 1)
     assert set(meta.hashes) == {"questions", "retrieve_prompt", "generate_prompt", "notes"}
     assert meta.hashes["questions"] == setup.eval_set.source_hash
@@ -294,6 +301,8 @@ async def test_review_sheet_has_a_section_per_question(tmp_path: Path) -> None:
 
     sheet = (write_run(run, tmp_path / "out") / "review.md").read_text(encoding="utf-8")
 
+    assert "Retrieve: model-x, reasoning provider default" in sheet
+    assert "Generate: model-x, reasoning provider default" in sheet
     assert sheet.count("Verdict: [ ] correct  [ ] partial  [ ] wrong") == 3
     assert "## Q01 (S1)" in sheet
     assert "Reference: Answer Q01." in sheet

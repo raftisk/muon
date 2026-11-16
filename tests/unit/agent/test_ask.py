@@ -78,7 +78,9 @@ def build_pipeline(tmp_path: Path) -> Pipeline:
     return Pipeline(
         client=client,
         model=model,
-        runtime=AgentRuntime(client=client, chat_model=model, agent_settings=agent_settings),
+        runtime=AgentRuntime(
+            client=client, retrieve_model=model, generate_model=model, agent_settings=agent_settings
+        ),
         registry=discover_universes(universes_dir, ontology_dir),
         settings=build_toy_settings(tmp_path, ontology_dir),
     )
@@ -95,6 +97,22 @@ async def test_the_only_universe_answers_and_everything_carries_it(tmp_path: Pat
     assert result.bundle.universe == TOY_UNIVERSE
     assert {item.universe for item in result.bundle.items} == {TOY_UNIVERSE}
     assert result.answer.warnings == []
+
+
+async def test_each_step_calls_only_its_own_model(tmp_path: Path) -> None:
+    pipeline = build_pipeline(tmp_path)
+    retrieve_model = ScriptedChatModel(
+        replies=[build_tool_call_message(WIDGET_QUERY, "c1"), build_final_message()]
+    )
+    generate_model = ScriptedChatModel(drafts=[build_draft()])
+    runtime = replace(
+        pipeline.runtime, retrieve_model=retrieve_model, generate_model=generate_model
+    )
+
+    await ask(AskRequest(question=QUESTION), pipeline.registry, pipeline.settings, runtime)
+
+    assert len(retrieve_model.calls) == 2
+    assert len(generate_model.calls) == 1
 
 
 async def test_stats_hold_the_retrieve_and_generate_steps(tmp_path: Path) -> None:

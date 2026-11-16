@@ -7,6 +7,8 @@ from pydantic import SecretStr
 
 from muon import cli
 from muon.agent.ask import AskRequest, AskResult, AskStats
+from muon.agent.routing import NO_PROGRESS
+from muon.agent.universes import UniverseRegistry
 from muon.config import AgentSettings, Neo4jSettings, Settings
 from muon.generation.answer import Answer, Claim
 from muon.graph import GraphConnectionError
@@ -299,3 +301,34 @@ def test_run_failures_exit_1_with_the_error(
     captured = capsys.readouterr()
     assert str(error) in captured.err
     assert captured.out == ""
+
+
+def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created: list[tuple[str, str | None]] = []
+
+    def record_chat_model(settings: AgentSettings, reasoning: str | None = None) -> object:
+        created.append((settings.model, reasoning))
+        return object()
+
+    monkeypatch.setattr(cli, "create_chat_model", record_chat_model)
+    agent_settings = AgentSettings(
+        _env_file=None,
+        base_url="https://a.test/v1",
+        api_key=SECRET,
+        model="base",
+        generate_model="writer",
+        retrieve_reasoning="low",
+        generate_reasoning="minimal",
+    )
+    context = cli.AgentContext(
+        settings=Settings.model_construct(),
+        agent_settings=agent_settings,
+        registry=UniverseRegistry({}),
+        progress=NO_PROGRESS,
+    )
+
+    cli.create_agent_runtime(object(), context)  # type: ignore[arg-type]
+
+    assert created == [("base", "low"), ("writer", "minimal")]

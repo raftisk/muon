@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict
 from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, build_scope, select_universe
 from muon.agent.universes import UniverseRegistry
-from muon.config import PROJECT_ROOT, AgentSettings, Settings
+from muon.config import PROJECT_ROOT, AgentSettings, ReasoningLevel, Settings
 from muon.evaluation.eval_scores import (
     NodeComparison,
     QuestionScore,
@@ -86,7 +86,10 @@ class RunMeta(RunModel):
     started_at: datetime
     git_commit: str | None
     universe: str
-    model: str
+    retrieve_model: str
+    generate_model: str
+    retrieve_reasoning: ReasoningLevel | None
+    generate_reasoning: ReasoningLevel | None
     max_tool_calls: int
     max_cypher_calls: int
     max_check_retries: int
@@ -265,7 +268,10 @@ def build_meta(
         started_at=request.started_at,
         git_commit=read_git_commit(),
         universe=request.prefix,
-        model=agent_settings.model,
+        retrieve_model=agent_settings.resolve_retrieve_model(),
+        generate_model=agent_settings.resolve_generate_model(),
+        retrieve_reasoning=agent_settings.retrieve_reasoning,
+        generate_reasoning=agent_settings.generate_reasoning,
         max_tool_calls=agent_settings.max_tool_calls,
         max_cypher_calls=agent_settings.max_cypher_calls,
         max_check_retries=agent_settings.max_check_retries,
@@ -338,13 +344,19 @@ def render_record(record: RunRecord) -> str:
     return "\n".join(lines)
 
 
+def describe_step_model(model: str, reasoning: ReasoningLevel | None) -> str:
+    return f"{model}, reasoning {reasoning or 'provider default'}"
+
+
 def render_review(run: EvalRun) -> str:
     """The sheet for the review by hand: 1 section per question. Code never reads it back."""
     meta = run.meta
     header = [
         f"# Eval review {meta.run_id}",
         "",
-        f"Universe: {meta.universe}, model: {meta.model}, commit: {meta.git_commit or 'unknown'}",
+        f"Universe: {meta.universe}, commit: {meta.git_commit or 'unknown'}",
+        f"Retrieve: {describe_step_model(meta.retrieve_model, meta.retrieve_reasoning)}",
+        f"Generate: {describe_step_model(meta.generate_model, meta.generate_reasoning)}",
         "",
     ]
     return "\n".join([*header, *(render_record(record) for record in run.records)])

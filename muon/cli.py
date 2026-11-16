@@ -35,7 +35,7 @@ from muon.evaluation.run import (
     write_run,
 )
 from muon.generation.answer import CLAIM_MARKER_PATTERN, Claim
-from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
+from muon.graph import GraphClient, GraphError, Neo4jGraphClient, WriteSummary
 from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
 from muon.ingestion.bulbapedia.abilities.crosscheck import CrossCheckError
 from muon.ingestion.bulbapedia.abilities.ingest import (
@@ -1000,10 +1000,22 @@ class AgentContext:
     progress: StepTracker
 
 
+def create_agent_runtime(client: GraphClient, context: AgentContext) -> AgentRuntime:
+    settings = context.agent_settings
+    retrieve_settings = settings.model_copy(update={"model": settings.resolve_retrieve_model()})
+    generate_settings = settings.model_copy(update={"model": settings.resolve_generate_model()})
+    return AgentRuntime(
+        client=client,
+        retrieve_model=create_chat_model(retrieve_settings, settings.retrieve_reasoning),
+        generate_model=create_chat_model(generate_settings, settings.generate_reasoning),
+        agent_settings=settings,
+        progress=context.progress,
+    )
+
+
 async def run_ask(context: AgentContext, request: AskRequest) -> AskResult:
     async with Neo4jGraphClient(context.settings.neo4j) as client:
-        chat_model = create_chat_model(context.agent_settings)
-        runtime = AgentRuntime(client, chat_model, context.agent_settings, context.progress)
+        runtime = create_agent_runtime(client, context)
         return await ask(request, context.registry, context.settings, runtime)
 
 
@@ -1048,8 +1060,7 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
 
 async def run_eval_session(context: AgentContext, request: EvalRequest) -> EvalRun:
     async with Neo4jGraphClient(context.settings.neo4j) as client:
-        chat_model = create_chat_model(context.agent_settings)
-        runtime = AgentRuntime(client, chat_model, context.agent_settings, context.progress)
+        runtime = create_agent_runtime(client, context)
         return await run_eval(request, context.registry, runtime)
 
 

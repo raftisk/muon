@@ -29,7 +29,9 @@ def build_runtime(
     settings = AgentSettings(
         _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), model="m", **limits
     )
-    return AgentRuntime(client=client, chat_model=model, agent_settings=settings), model  # type: ignore[arg-type]
+    return AgentRuntime(
+        client=client, retrieve_model=model, generate_model=model, agent_settings=settings
+    ), model  # type: ignore[arg-type]
 
 
 async def test_two_tool_calls_give_two_evidence_items_in_order(scope: UniverseScope) -> None:

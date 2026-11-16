@@ -104,7 +104,7 @@ async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -
         },
     )
     agent = create_agent(
-        runtime.chat_model,
+        runtime.retrieve_model,
         [build_run_cypher_tool(scope, runtime.client, log)],
         system_prompt=prompt,
         middleware=[
@@ -119,7 +119,9 @@ async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -
     try:
         output = await agent.ainvoke({"messages": [HumanMessage(question)]}, config)
     except openai.APIError as error:
-        raise ModelCallError(RETRIEVE_STEP, settings.model, str(error)) from error
+        raise ModelCallError(
+            RETRIEVE_STEP, settings.resolve_retrieve_model(), str(error)
+        ) from error
     latency = time.perf_counter() - started_at
     messages = list(output["messages"])
     input_tokens, output_tokens = sum_token_usage(messages)

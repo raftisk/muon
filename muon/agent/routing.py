@@ -62,7 +62,8 @@ class AgentRuntime:
     """The per-run dependencies of the agent steps."""
 
     client: GraphClient
-    chat_model: BaseChatModel
+    retrieve_model: BaseChatModel
+    generate_model: BaseChatModel
     agent_settings: AgentSettings
     progress: StepTracker = NO_PROGRESS
 

@@ -55,8 +55,8 @@ def read_usage(raw: Any) -> tuple[int, int]:
 async def call_generator(
     messages: list[BaseMessage], step: str, runtime: AgentRuntime
 ) -> tuple[AnswerDraft, StepStats]:
-    model_name = runtime.agent_settings.model
-    structured = runtime.chat_model.with_structured_output(
+    model_name = runtime.agent_settings.resolve_generate_model()
+    structured = runtime.generate_model.with_structured_output(
         AnswerDraft, method="json_schema", strict=True, include_raw=True
     )
     started_at = time.perf_counter()
