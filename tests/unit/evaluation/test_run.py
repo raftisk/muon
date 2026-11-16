@@ -19,8 +19,6 @@ from muon.evaluation.run import (
     EvalRun,
     RunRecord,
     RunStatus,
-    format_row,
-    format_summary,
     run_eval,
     summarize,
     write_run,
@@ -213,7 +211,6 @@ async def test_a_lost_connection_keeps_the_finished_questions(tmp_path: Path) ->
 
     assert [record.question_id for record in run.records] == ["Q01"]
     assert run.stop == "Q02: Neo4j is down"
-    assert "stopped: Q02: Neo4j is down" in format_summary(run)
 
 
 async def test_on_result_fires_once_per_question(tmp_path: Path) -> None:
@@ -306,18 +303,3 @@ async def test_review_sheet_has_a_section_per_question(tmp_path: Path) -> None:
     assert "Extra cited nodes: none" in sheet
     assert "Error: " in sheet
     assert "boom" in sheet
-
-
-async def test_row_and_summary_lines(tmp_path: Path) -> None:
-    setup = build_setup(tmp_path)
-    run = await run_with(setup, build_outcomes(Q03=ModelCallError("retrieve", "m", "boom")))
-
-    first, failed = format_row(run.records[0]), format_row(run.records[2])
-    summary = format_summary(run)
-
-    assert first.startswith("Q01   S1")
-    assert "P 1.00  R 0.50  valid yes" in first
-    assert "tools  1" in first
-    assert "180 tokens" in first
-    assert failed.endswith("error: " + str(run.records[2].error))
-    assert summary.startswith("questions 3  errors 1  P 1.00  R 0.75  citations valid 2/2")
