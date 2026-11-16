@@ -99,6 +99,15 @@ def test_content_of_rejected_and_failed_items_shows_the_message() -> None:
         )
 
 
+def test_content_is_the_same_for_a_final_and_a_non_final_item() -> None:
+    rows = ({"s": NodeCell(key=SPECIES_KEY), "speed": 200},)
+
+    final = build_evidence(rows, is_final=True)
+    other = build_evidence(rows, is_final=False)
+
+    assert render_evidence_content(final) == render_evidence_content(other)
+
+
 def test_content_of_an_empty_item_has_no_columns_line() -> None:
     evidence = build_evidence((), status=EvidenceStatus.EMPTY)
 

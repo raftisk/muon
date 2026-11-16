@@ -31,6 +31,8 @@ from tests.unit.agent.test_ask import RecordingTracker
 from tests.unit.chat_fakes import ScriptedChatModel
 from tests.unit.evaluation.fakes import (
     EVALS_FILE_NAME,
+    GENERATE_TOKENS,
+    RETRIEVE_TOKENS,
     WIDGET_QUERY,
     build_ask_result,
     build_claim,
@@ -104,7 +106,9 @@ def build_setup(tmp_path: Path) -> Setup:
         settings=build_toy_settings(tmp_path, ontology_dir),
         eval_set=load_questions(plugin),
         client=client,
-        runtime=AgentRuntime(client=client, chat_model=model, agent_settings=agent_settings),
+        runtime=AgentRuntime(
+            client=client, retrieve_model=model, generate_model=model, agent_settings=agent_settings
+        ),
         notes_path=plugin.notes_path,
     )
 
@@ -201,7 +205,10 @@ async def test_a_model_error_is_recorded_and_the_run_goes_on(tmp_path: Path) -> 
     assert failed.error is not None
     assert "rate limited" in failed.error
     assert (failed.result, failed.score, failed.comparison) == (None, None, None)
-    assert summarize(run).error_count == 1
+    totals = summarize(run)
+    assert totals.error_count == 1
+    assert totals.model_calls == 4
+    assert totals.input_tokens == 2 * (RETRIEVE_TOKENS[0] + GENERATE_TOKENS[0])
 
 
 async def test_a_lost_connection_keeps_the_finished_questions(tmp_path: Path) -> None:
@@ -246,7 +253,12 @@ async def test_meta_holds_the_run_identity_limits_hashes_and_census(tmp_path: Pa
 
     meta = run.meta
     assert meta.run_id == RUN_ID
-    assert (meta.universe, meta.model) == (TOY_UNIVERSE, "model-x")
+    assert (meta.universe, meta.retrieve_model, meta.generate_model) == (
+        TOY_UNIVERSE,
+        "model-x",
+        "model-x",
+    )
+    assert (meta.retrieve_reasoning, meta.generate_reasoning) == (None, None)
     assert (meta.max_tool_calls, meta.max_cypher_calls, meta.max_check_retries) == (10, 2, 1)
     assert set(meta.hashes) == {"questions", "retrieve_prompt", "generate_prompt", "notes"}
     assert meta.hashes["questions"] == setup.eval_set.source_hash
@@ -270,6 +282,15 @@ async def test_write_run_creates_the_folder_files(tmp_path: Path) -> None:
     assert "comparison" not in first
     assert document["questions"][1]["error"]
     assert document["totals"]["error_count"] == 1
+    assert {
+        "input_tokens",
+        "cached_input_tokens",
+        "output_tokens",
+        "reasoning_tokens",
+        "model_calls",
+    } <= set(document["totals"])
+    assert document["meta"]["retrieve_model"] == "model-x"
+    assert document["meta"]["generate_reasoning"] is None
 
 
 async def test_stored_answers_re_score_to_the_stored_scores(tmp_path: Path) -> None:
@@ -294,6 +315,8 @@ async def test_review_sheet_has_a_section_per_question(tmp_path: Path) -> None:
 
     sheet = (write_run(run, tmp_path / "out") / "review.md").read_text(encoding="utf-8")
 
+    assert "Retrieve: model-x, reasoning provider default" in sheet
+    assert "Generate: model-x, reasoning provider default" in sheet
     assert sheet.count("Verdict: [ ] correct  [ ] partial  [ ] wrong") == 3
     assert "## Q01 (S1)" in sheet
     assert "Reference: Answer Q01." in sheet

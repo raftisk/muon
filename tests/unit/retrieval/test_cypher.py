@@ -64,6 +64,7 @@ async def call_tool(
     client: StubReadClient,
     log: EvidenceLog,
     query: str = "MATCH (n) RETURN n",
+    is_final: bool = False,
 ) -> tuple[str, Evidence]:
     tool = build_run_cypher_tool(scope, client, log)  # type: ignore[arg-type]
     message = await tool.ainvoke(
@@ -71,7 +72,7 @@ async def call_tool(
             "type": "tool_call",
             "name": "run_cypher",
             "id": "c1",
-            "args": {"query": query, "purpose": "p"},
+            "args": {"query": query, "purpose": "p", "is_final": is_final},
         }
     )
     return str(message.content), message.artifact
@@ -226,6 +227,37 @@ async def test_graph_query_error_gives_a_failed_item_with_the_database_message(
 
     assert evidence.status is EvidenceStatus.FAILED
     assert "Invalid input 'X'" in content
+
+
+async def test_is_final_lands_on_an_ok_item(scope: UniverseScope) -> None:
+    _, evidence = await call_tool(scope, StubReadClient([{"i": 1}]), EvidenceLog(), is_final=True)
+
+    assert evidence.status is EvidenceStatus.OK
+    assert evidence.is_final is True
+
+
+async def test_is_final_lands_on_a_rejected_item(scope: UniverseScope) -> None:
+    _, evidence = await call_tool(
+        scope, StubReadClient([]), EvidenceLog(), "MATCH (p:Pokemon) RETURN p", is_final=True
+    )
+
+    assert evidence.status is EvidenceStatus.REJECTED
+    assert evidence.is_final is True
+
+
+async def test_is_final_lands_on_a_failed_item(scope: UniverseScope) -> None:
+    client = StubReadClient([], error=GraphQueryError("Neo4j rejected read on database"))
+
+    _, evidence = await call_tool(scope, client, EvidenceLog(), is_final=True)
+
+    assert evidence.status is EvidenceStatus.FAILED
+    assert evidence.is_final is True
+
+
+async def test_is_final_defaults_to_false(scope: UniverseScope) -> None:
+    _, evidence = await call_tool(scope, StubReadClient([{"i": 1}]), EvidenceLog())
+
+    assert evidence.is_final is False
 
 
 async def test_ids_follow_call_order_including_rejected_calls(scope: UniverseScope) -> None:

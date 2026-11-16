@@ -121,15 +121,14 @@ def build_results_table(records: Sequence[RunRecord], totals: RunTotals | None) 
     table = Table(box=ROUNDED)
     table.add_column("id")
     table.add_column("family")
-    for name in ("P", "R", "valid", "tools", "s", "tokens"):
+    for name in ("P", "R", "valid", "tools", "calls", "s", "in", "cached", "out", "reason"):
         table.add_column(name, justify="right")
     for record in records:
         score = record.score
         if score is None:
-            missing = [MISSING_CELL] * 5
+            missing = [MISSING_CELL] * 9
             table.add_row(record.question_id, record.family, *missing[:2], ERROR_CELL, *missing[2:])
             continue
-        tokens = score.input_tokens + score.output_tokens
         table.add_row(
             record.question_id,
             record.family,
@@ -137,8 +136,12 @@ def build_results_table(records: Sequence[RunRecord], totals: RunTotals | None) 
             f"{score.recall:.2f}",
             "yes" if score.is_citation_valid else "no",
             str(score.tool_calls),
+            str(score.model_calls),
             f"{score.latency_seconds:.1f}",
-            f"{tokens:,}",
+            f"{score.input_tokens:,}",
+            f"{score.cached_input_tokens:,}",
+            f"{score.output_tokens:,}",
+            f"{score.reasoning_tokens:,}",
         )
     if totals is not None:
         answered = totals.question_count - totals.error_count
@@ -150,8 +153,12 @@ def build_results_table(records: Sequence[RunRecord], totals: RunTotals | None) 
             f"{totals.mean_recall:.2f}",
             f"{totals.valid_count}/{answered}",
             str(totals.tool_calls),
+            str(totals.model_calls),
             f"{totals.latency_seconds:.1f}",
-            f"{totals.total_tokens:,}",
+            f"{totals.input_tokens:,}",
+            f"{totals.cached_input_tokens:,}",
+            f"{totals.output_tokens:,}",
+            f"{totals.reasoning_tokens:,}",
         )
     return table
 

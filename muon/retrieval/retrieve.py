@@ -1,28 +1,31 @@
 """The retrieve step: a `create_agent` loop over `run_cypher` that fills an `EvidenceBundle`.
 
 Map: `retrieve` builds the system prompt from the scope, binds `run_cypher` to a fresh
-`EvidenceLog`, runs the loop under 2 `ToolCallLimitMiddleware` instances (all tools, and
-`run_cypher` alone) and reads the bundle from the log. The final message of the loop is
-not used. `fill_prompt` is shared with the generate step.
+`EvidenceLog`, runs the loop under `StopWhenDoneMiddleware` and 2 `ToolCallLimitMiddleware`
+instances (all tools, and `run_cypher` alone) and reads the bundle from the log. The middleware
+ends the loop before the model turn that could change nothing. The final message of the loop
+is not used. `fill_prompt` is shared with the generate step.
 """
 
 import re
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import openai
-from langchain.agents import create_agent
-from langchain.agents.middleware import ToolCallLimitMiddleware
+from langchain.agents import AgentState, create_agent
+from langchain.agents.middleware import AgentMiddleware, ToolCallLimitMiddleware, hook_config
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
+from langgraph.runtime import Runtime
 from pydantic import BaseModel, ConfigDict
 
 from muon.agent.routing import AgentRuntime, UniverseScope
 from muon.llm.client import ModelCallError
 from muon.retrieval.cypher import TOOL_NAME, EvidenceLog, build_run_cypher_tool
-from muon.retrieval.evidence import EvidenceBundle
+from muon.retrieval.evidence import Evidence, EvidenceBundle, EvidenceStatus
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "retrieve.md"
 MARKER_PATTERN = re.compile(r"\{\{(\w+)\}\}")
@@ -36,14 +39,30 @@ class PromptError(Exception):
 
 
 class StepStats(BaseModel):
-    """Tokens and wall time of 1 model step."""
+    """Tokens, model calls and wall time of 1 model step.
+
+    `reasoning_tokens` is a part of `output_tokens` and `cached_input_tokens` is a part
+    of `input_tokens`.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     step: str
     input_tokens: int
     output_tokens: int
+    reasoning_tokens: int
+    cached_input_tokens: int
+    model_calls: int
     latency_seconds: float
+
+
+@dataclass(frozen=True)
+class TokenUsage:
+    input_tokens: int
+    output_tokens: int
+    reasoning_tokens: int
+    cached_input_tokens: int
+    model_calls: int
 
 
 @dataclass(frozen=True)
@@ -72,14 +91,31 @@ def fill_prompt(path: Path, values: Mapping[str, str]) -> str:
     return MARKER_PATTERN.sub(lambda match: values[match.group(1)], text)
 
 
-def sum_token_usage(messages: list[object]) -> tuple[int, int]:
-    """Return the input and output tokens that the AI messages report."""
-    input_tokens = output_tokens = 0
+def read_step_usage(messages: Sequence[object]) -> TokenUsage:
+    """Sum the model calls and the tokens that the AI messages report.
+
+    Every AI message counts as 1 model call. Token details a provider does not report count
+    as 0.
+    """
+    input_tokens = output_tokens = reasoning_tokens = cached_input_tokens = model_calls = 0
     for message in messages:
-        if isinstance(message, AIMessage) and message.usage_metadata:
-            input_tokens += message.usage_metadata["input_tokens"]
-            output_tokens += message.usage_metadata["output_tokens"]
-    return input_tokens, output_tokens
+        if not isinstance(message, AIMessage):
+            continue
+        model_calls += 1
+        usage = message.usage_metadata
+        if not usage:
+            continue
+        input_tokens += usage["input_tokens"]
+        output_tokens += usage["output_tokens"]
+        reasoning_tokens += (usage.get("output_token_details") or {}).get("reasoning", 0)
+        cached_input_tokens += (usage.get("input_token_details") or {}).get("cache_read", 0)
+    return TokenUsage(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        reasoning_tokens=reasoning_tokens,
+        cached_input_tokens=cached_input_tokens,
+        model_calls=model_calls,
+    )
 
 
 def count_executed_tool_calls(messages: list[object]) -> int:
@@ -89,6 +125,35 @@ def count_executed_tool_calls(messages: list[object]) -> int:
         for message in messages
         if isinstance(message, ToolMessage) and message.status == SUCCESS_STATUS
     )
+
+
+def is_done(items: Sequence[Evidence], max_cypher_calls: int) -> bool:
+    """Whether another model turn can add nothing.
+
+    That holds when the `run_cypher` budget is spent, or when the latest item is a final
+    query that returned rows. `items` is in call order.
+    """
+    if len(items) >= max_cypher_calls:
+        return True
+    if not items:
+        return False
+    latest = items[-1]
+    return latest.is_final and latest.status is EvidenceStatus.OK and latest.row_count > 0
+
+
+class StopWhenDoneMiddleware(AgentMiddleware):
+    """Ends the loop before a model turn whose output the step would throw away."""
+
+    def __init__(self, log: EvidenceLog, max_cypher_calls: int) -> None:
+        super().__init__()
+        self.log = log
+        self.max_cypher_calls = max_cypher_calls
+
+    @hook_config(can_jump_to=["end"])
+    def before_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+        if is_done(self.log.items, self.max_cypher_calls):
+            return {"jump_to": "end"}
+        return None
 
 
 async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -> RetrieveResult:
@@ -103,34 +168,41 @@ async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -
             "schema": scope.schema_context.text,
         },
     )
+    middleware: list[AgentMiddleware[Any, Any, Any]] = [
+        StopWhenDoneMiddleware(log, settings.max_cypher_calls),
+        ToolCallLimitMiddleware(run_limit=settings.max_tool_calls, exit_behavior="end"),
+        ToolCallLimitMiddleware(
+            tool_name=TOOL_NAME, run_limit=settings.max_cypher_calls, exit_behavior="continue"
+        ),
+    ]
     agent = create_agent(
-        runtime.chat_model,
+        runtime.retrieve_model,
         [build_run_cypher_tool(scope, runtime.client, log)],
         system_prompt=prompt,
-        middleware=[
-            ToolCallLimitMiddleware(run_limit=settings.max_tool_calls, exit_behavior="end"),
-            ToolCallLimitMiddleware(
-                tool_name=TOOL_NAME, run_limit=settings.max_cypher_calls, exit_behavior="continue"
-            ),
-        ],
+        middleware=middleware,
     )
     config = RunnableConfig(recursion_limit=2 * settings.max_tool_calls + RECURSION_MARGIN)
     started_at = time.perf_counter()
     try:
         output = await agent.ainvoke({"messages": [HumanMessage(question)]}, config)
     except openai.APIError as error:
-        raise ModelCallError(RETRIEVE_STEP, settings.model, str(error)) from error
+        raise ModelCallError(
+            RETRIEVE_STEP, settings.resolve_retrieve_model(), str(error)
+        ) from error
     latency = time.perf_counter() - started_at
     messages = list(output["messages"])
-    input_tokens, output_tokens = sum_token_usage(messages)
+    usage = read_step_usage(messages)
     return RetrieveResult(
         bundle=EvidenceBundle(universe=scope.universe_label, question=question, items=log.items),
         tool_calls=count_executed_tool_calls(messages),
         cypher_calls=len(log.items),
         stats=StepStats(
             step=RETRIEVE_STEP,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+            reasoning_tokens=usage.reasoning_tokens,
+            cached_input_tokens=usage.cached_input_tokens,
+            model_calls=usage.model_calls,
             latency_seconds=latency,
         ),
     )

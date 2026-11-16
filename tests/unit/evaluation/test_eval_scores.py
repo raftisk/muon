@@ -99,6 +99,7 @@ def test_counters_and_tokens_copy_the_stats() -> None:
     assert score.latency_seconds == TOTAL_LATENCY_SECONDS
     assert score.input_tokens == RETRIEVE_TOKENS[0] + GENERATE_TOKENS[0]
     assert score.output_tokens == RETRIEVE_TOKENS[1] + GENERATE_TOKENS[1]
+    assert (score.reasoning_tokens, score.cached_input_tokens, score.model_calls) == (0, 0, 2)
 
 
 def test_nothing_cited_against_an_empty_gold_set_scores_1_and_1() -> None:

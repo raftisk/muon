@@ -59,7 +59,12 @@ def build_runtime(
     settings = AgentSettings(
         _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), model="m", **limits
     )
-    runtime = AgentRuntime(client=StubReadClient([]), chat_model=model, agent_settings=settings)  # type: ignore[arg-type]
+    runtime = AgentRuntime(
+        client=StubReadClient([]),
+        retrieve_model=model,
+        generate_model=model,
+        agent_settings=settings,
+    )  # type: ignore[arg-type]
     return runtime, model
 
 
@@ -99,6 +104,7 @@ async def test_a_bad_first_draft_and_a_clean_second_give_no_warning(scope: Unive
 
     assert result.answer.warnings == []
     assert [stats.step for stats in result.stats] == ["generate", "generate_retry_1"]
+    assert [stats.model_calls for stats in result.stats] == [1, 1]
     assert "c1 cites e9, which does not exist" in human_text(model, 1)
     assert "citation issues" not in human_text(model, 0)
 

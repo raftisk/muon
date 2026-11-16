@@ -39,7 +39,12 @@ async def test_live_ask_cites_the_species_and_its_type(agent_settings: AgentSett
     settings = get_settings()
     registry = discover_universes(settings.universes.universes_dir, settings.ontology.ontology_dir)
     async with Neo4jGraphClient(settings.neo4j) as client:
-        runtime = AgentRuntime(client, create_chat_model(agent_settings), agent_settings)
+        runtime = AgentRuntime(
+            client,
+            create_chat_model(agent_settings),
+            create_chat_model(agent_settings),
+            agent_settings,
+        )
 
         result = await ask(AskRequest(question=QUESTION), registry, settings, runtime)
 

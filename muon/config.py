@@ -6,6 +6,7 @@ exported variable always overrides the file. Each layer owns one settings group.
 
 import functools
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -27,6 +28,9 @@ DEFAULT_MAX_RETRIES = 2
 DEFAULT_MAX_TOOL_CALLS = 10
 DEFAULT_MAX_CYPHER_CALLS = 2
 DEFAULT_MAX_CHECK_RETRIES = 1
+
+# The values mirror `openai.types.shared.ReasoningEffort`.
+ReasoningLevel = Literal["none", "low", "medium", "high", "xhigh", "max"]
 
 
 class Neo4jSettings(BaseSettings):
@@ -95,6 +99,10 @@ class AgentSettings(ProviderSettings):
     `max_tool_calls` caps all tool calls of 1 question, `max_cypher_calls` caps the
     `run_cypher` calls, and `max_check_retries` is the number of generator reruns after
     a failed citation check (0 disables the rerun).
+
+    `retrieve_model` and `generate_model` override `model` for their step, and an unset
+    one falls back to `model`. A `None` reasoning level sends no `reasoning_effort`, so
+    the provider default applies.
     """
 
     model_config = SettingsConfigDict(env_prefix="MUON_AGENT_", env_file=ENV_FILE, extra="ignore")
@@ -102,6 +110,16 @@ class AgentSettings(ProviderSettings):
     max_tool_calls: int = Field(default=DEFAULT_MAX_TOOL_CALLS, gt=0)
     max_cypher_calls: int = Field(default=DEFAULT_MAX_CYPHER_CALLS, gt=0)
     max_check_retries: int = Field(default=DEFAULT_MAX_CHECK_RETRIES, ge=0)
+    retrieve_model: str | None = None
+    generate_model: str | None = None
+    retrieve_reasoning: ReasoningLevel | None = None
+    generate_reasoning: ReasoningLevel | None = None
+
+    def resolve_retrieve_model(self) -> str:
+        return self.retrieve_model or self.model
+
+    def resolve_generate_model(self) -> str:
+        return self.generate_model or self.model
 
 
 class Settings(BaseModel):

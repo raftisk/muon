@@ -173,6 +173,18 @@ def test_chat_model_takes_the_settings_values() -> None:
     assert chat_model.openai_api_key.get_secret_value() == CHAT_KEY
 
 
+def test_chat_model_sends_no_reasoning_effort_by_default() -> None:
+    chat_model = create_chat_model(build_llm_settings())
+
+    assert chat_model.reasoning_effort is None
+
+
+def test_chat_model_sends_the_reasoning_level() -> None:
+    chat_model = create_chat_model(build_llm_settings(), "medium")
+
+    assert chat_model.reasoning_effort == "medium"
+
+
 def test_chat_model_keeps_the_key_secret_in_repr() -> None:
     chat_model = create_chat_model(build_llm_settings())
 

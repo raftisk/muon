@@ -7,6 +7,8 @@ from pydantic import SecretStr
 
 from muon import cli
 from muon.agent.ask import AskRequest, AskResult, AskStats
+from muon.agent.routing import NO_PROGRESS
+from muon.agent.universes import UniverseRegistry
 from muon.config import AgentSettings, Neo4jSettings, Settings
 from muon.generation.answer import Answer, Claim
 from muon.graph import GraphConnectionError
@@ -101,7 +103,17 @@ def build_result(
         stats=AskStats(
             tool_calls=1,
             cypher_calls=1,
-            steps=[StepStats(step="retrieve", input_tokens=7, output_tokens=3, latency_seconds=1)],
+            steps=[
+                StepStats(
+                    step="retrieve",
+                    input_tokens=7,
+                    output_tokens=3,
+                    reasoning_tokens=0,
+                    cached_input_tokens=0,
+                    model_calls=2,
+                    latency_seconds=1,
+                )
+            ],
             total_latency_seconds=2.0,
         ),
     )
@@ -299,3 +311,68 @@ def test_run_failures_exit_1_with_the_error(
     captured = capsys.readouterr()
     assert str(error) in captured.err
     assert captured.out == ""
+
+
+def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created: list[tuple[str, str | None]] = []
+
+    def record_chat_model(settings: AgentSettings, reasoning: str | None = None) -> object:
+        created.append((settings.model, reasoning))
+        return object()
+
+    monkeypatch.setattr(cli, "create_chat_model", record_chat_model)
+    agent_settings = AgentSettings(
+        _env_file=None,
+        base_url="https://a.test/v1",
+        api_key=SECRET,
+        model="base",
+        generate_model="writer",
+        retrieve_reasoning="low",
+        generate_reasoning="medium",
+    )
+    context = cli.AgentContext(
+        settings=Settings.model_construct(),
+        agent_settings=agent_settings,
+        registry=UniverseRegistry({}),
+        progress=NO_PROGRESS,
+    )
+
+    cli.create_agent_runtime(object(), context)  # type: ignore[arg-type]
+
+    assert created == [("base", "low"), ("writer", "medium")]
+
+
+def test_the_status_line_shows_model_calls_and_token_detail() -> None:
+    steps = [
+        StepStats(
+            step="retrieve",
+            input_tokens=14_000,
+            output_tokens=400,
+            reasoning_tokens=300,
+            cached_input_tokens=12_000,
+            model_calls=2,
+            latency_seconds=1,
+        ),
+        StepStats(
+            step="generate",
+            input_tokens=2_706,
+            output_tokens=89,
+            reasoning_tokens=102,
+            cached_input_tokens=288,
+            model_calls=1,
+            latency_seconds=1,
+        ),
+    ]
+    base = build_result()
+    result = base.model_copy(
+        update={
+            "stats": base.stats.model_copy(update={"steps": steps, "total_latency_seconds": 34.1})
+        }
+    )
+
+    assert cli.format_ask_status(result) == (
+        "ask pkmn: 1 queries, 3 model calls, 16,706 input (12,288 cached) and "
+        "489 output (402 reasoning) tokens, 34.1 s"
+    )
