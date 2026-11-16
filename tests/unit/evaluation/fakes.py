@@ -1,9 +1,13 @@
 """Builders for the eval tests: question files, ask results and a graph client for gold reads."""
 
 from collections.abc import Callable, Mapping, Sequence
+from datetime import UTC, datetime
 from typing import Any
 
 from muon.agent.ask import AskResult, AskStats
+from muon.evaluation.eval_scores import compare_nodes, score_answer
+from muon.evaluation.questions import EvalQuestion
+from muon.evaluation.run import Census, RunMeta, RunRecord, RunStatus
 from muon.generation.answer import Answer, Claim
 from muon.graph import GraphNode
 from muon.retrieval.context import READ_GRAPH_COUNTS
@@ -133,3 +137,42 @@ def build_eval_client(
     answers[READ_GRAPH_COUNTS] = lambda parameters: [TOY_COUNTS]
     answers.update(gold_rows)
     return QueryGraphClient(answers)
+
+
+def build_run_meta(run_id: str = "20261116-143005") -> RunMeta:
+    return RunMeta(
+        run_id=run_id,
+        started_at=datetime(2026, 11, 16, 14, 30, 5, tzinfo=UTC),
+        git_commit=None,
+        universe=TOY_UNIVERSE,
+        model="model-x",
+        max_tool_calls=10,
+        max_cypher_calls=2,
+        max_check_retries=1,
+        hashes={"questions": "0" * 64},
+        census=Census(node_counts={WIDGET_LABEL: 1}, relationship_counts={}),
+    )
+
+
+def build_run_record(question: EvalQuestion, error: str | None = None) -> RunRecord:
+    """A record of `question`: an answered one with an empty gold set, or an error record."""
+    base = {
+        "question_id": question.id,
+        "family": question.family,
+        "question": question.question,
+        "reference": question.reference,
+    }
+    if error is not None:
+        return RunRecord(
+            **base, status=RunStatus.ERROR, error=error, result=None, comparison=None, score=None
+        )
+    result = build_ask_result()
+    comparison = compare_nodes(result, [])
+    return RunRecord(
+        **base,
+        status=RunStatus.OK,
+        error=None,
+        result=result,
+        comparison=comparison,
+        score=score_answer(result, comparison),
+    )
