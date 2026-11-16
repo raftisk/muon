@@ -1,0 +1,191 @@
+# Eval questions for `muon eval pkmn`, from easy to hard.
+#
+# A gold query returns the nodes the answer rests on: the anchor nodes and the answer
+# nodes, never join nodes. Each one comes from the runbook entry named in `runbook`.
+
+[[question]]
+id = "Q01"
+family = "S1"
+question = "What type is Diglett?"
+reference = "Diglett is a Ground type."
+runbook = "R05"
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'diglett'})-[:HAS_TYPE]->(t:Type)
+RETURN s, t
+"""
+
+[[question]]
+id = "Q02"
+family = "S1"
+question = "What are the power, accuracy and type of Earthquake?"
+reference = "Earthquake has power 100 and accuracy 100, and it is a Ground-type Physical move."
+runbook = "R16"
+gold_query = """
+MATCH (m:Move {id: 'earthquake'})-[:HAS_TYPE]->(t:Type)
+RETURN m, t
+"""
+
+[[question]]
+id = "Q03"
+family = "S1"
+question = "What are Diglett's base stats?"
+reference = "Diglett has base HP 10, Attack 55, Defense 25, Sp. Atk 35, Sp. Def 45 and Speed 95."
+runbook = "R05"
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'diglett'})
+RETURN s
+"""
+
+[[question]]
+id = "Q04"
+family = "S1"
+question = "What abilities does Greninja have, and what do they do?"
+reference = """Greninja has Torrent, which strengthens Water moves by 1.5 times at 1/3 max HP or \
+less, and the hidden ability Protean, which changes the bearer's type to match each move it uses."""
+runbook = "R32"
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'greninja'})-[:HAS_ABILITY]->(a:Ability)
+RETURN s, a
+"""
+
+[[question]]
+id = "Q05"
+family = "S2"
+question = "Which Pokémon have the ability Levitate?"
+reference = """43 species have Levitate, from Azelf, Baltoy and Bronzong on. None of them has it as \
+a hidden ability."""
+runbook = "R13"
+gold_query = """
+MATCH (s:PokemonSpecies)-[:HAS_ABILITY]->(a:Ability {id: 'levitate'})
+RETURN DISTINCT s, a
+"""
+
+[[question]]
+id = "Q06"
+family = "S2"
+question = "Which sound moves have a power of 90 or more?"
+reference = """6 sound moves: Boomburst 140, Clanging Scales 110, Bug Buzz 90, Hyper Voice 90, \
+Sparkling Aria 90 and Uproar 90."""
+runbook = "R18"
+gold_query = """
+MATCH (m:Move)-[:HAS_FLAG]->(f:MoveFlag {id: 'sound'})
+WHERE m.power >= 90
+RETURN m, f
+"""
+
+[[question]]
+id = "Q07"
+family = "S2"
+question = "Which Pokémon are both Water and Ground type?"
+reference = """10 species: Wooper, Quagsire, Marshtomp, Mega Swampert, Swampert, Barboach, \
+Whiscash, Gastrodon, Palpitoad and Seismitoad."""
+runbook = "R11"
+gold_query = """
+MATCH (s:PokemonSpecies)-[:HAS_TYPE]->(water:Type {id: 'water'}),
+  (s)-[:HAS_TYPE]->(ground:Type {id: 'ground'})
+RETURN s, water, ground
+"""
+
+[[question]]
+id = "Q08"
+family = "S3"
+question = "What are the 10 fastest Pokémon?"
+reference = """Regieleki 200, Deoxys (Speed Forme) 180, Ninjask 160, Mega Zeraora 153, Mega Absol Z \
+151, Mega Garchomp Z 151, Mega Lucario Z 151, Pheromosa 151, Calyrex (Shadow Rider) 150 and Deoxys \
+150. Forms count as species."""
+runbook = "R14"
+gold_query = """
+MATCH (s:PokemonSpecies)
+RETURN s
+ORDER BY s.baseSpeed DESC, s.name
+LIMIT 10
+"""
+
+[[question]]
+id = "Q09"
+family = "S3"
+question = "How many moves were introduced in Generation IX?"
+reference = "70 moves were introduced in Generation IX."
+runbook = "R22"
+gold_query = """
+MATCH (g:Generation {id: 'generation-ix'})
+RETURN g
+"""
+
+[[question]]
+id = "Q10"
+family = "S3"
+question = "Which moves hit more than once, and which one hits the most times?"
+reference = """32 moves hit more than once. Population Bomb hits up to 10 times and Beat Up up to \
+6. The others hit 2 to 5 times, such as Arm Thrust, Barrage, Bone Rush and Bullet Seed."""
+runbook = "R20"
+gold_query = """
+MATCH (m:Move)
+WHERE m.minHits IS NOT NULL
+RETURN m
+"""
+
+[[question]]
+id = "Q11"
+family = "S2"
+question = "Which Legendary Pokémon were introduced in Generation IV?"
+reference = """9 species: Uxie, Mesprit, Azelf, Dialga, Palkia, Heatran, Regigigas, Giratina and \
+Cresselia."""
+runbook = "R15"
+gold_query = """
+MATCH (s:PokemonSpecies {isLegendary: true})-[:INTRODUCED_IN]->(g:Generation {id: 'generation-iv'})
+RETURN s, g
+"""
+
+[[question]]
+id = "Q12"
+family = "S5"
+question = "Which TMs can Garchomp learn in Scarlet and Violet?"
+reference = """Garchomp learns 56 TMs in Scarlet and Violet, from TM1 Take Down, TM6 Scary Face and \
+TM7 Protect to TM226."""
+runbook = "R10"
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'garchomp'})-[:HAS_LEARNSET_ENTRY]->(e:LearnsetEntry {method: 'machine'}),
+  (e)-[:IN_VERSION_GROUP]->(:VersionGroup {id: 'scarlet-violet'}),
+  (e)-[:VIA_MACHINE]->(x:Machine)
+RETURN DISTINCT s, x
+"""
+
+[[question]]
+id = "Q13"
+family = "S5"
+question = "What does Pikachu learn by leveling up in Scarlet and Violet?"
+reference = """20 moves. Charm, Growl, Nasty Plot, Nuzzle, Play Nice, Quick Attack, Sweet Kiss and \
+Tail Whip at level 1, up to Thunderbolt at level 36, Light Screen at 40 and Thunder at 44."""
+runbook = "R09"
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'pikachu'})-[:HAS_LEARNSET_ENTRY]->(e:LearnsetEntry {method: 'level'}),
+  (e)-[:IN_VERSION_GROUP]->(:VersionGroup {id: 'scarlet-violet'}),
+  (e)-[:TEACHES_MOVE]->(m:Move)
+RETURN DISTINCT s, m
+"""
+
+[[question]]
+id = "Q14"
+family = "S5"
+question = "Where can I find Diglett in HeartGold?"
+reference = """5 locations: Diglett's Cave, Johto Route 48 and Johto Safari Zone, Pal Park (a \
+migration, with no method) and Vermilion City (with Rock Smash)."""
+runbook = "R33"
+gold_query = """
+MATCH (s:PokemonSpecies {id: 'diglett'})-[:HAS_ENCOUNTER]->(e:Encounter)-[:IN_VERSION]->(v:Version {id: 'heartgold'}),
+  (e)-[:AT_LOCATION]->(l:Location)
+RETURN DISTINCT s, v, l
+"""
+
+[[question]]
+id = "Q15"
+family = "S5"
+question = "Which Pokémon can be found in Mt. Coronet?"
+reference = """29 species, from Abomasnow to Zubat, including Bronzor, Feebas, Nosepass and Snover. \
+The graph names the location Mount Coronet."""
+runbook = "R34"
+gold_query = """
+MATCH (s:PokemonSpecies)-[:FOUND_IN]->(l:Location {id: 'mount-coronet'})
+RETURN DISTINCT s, l
+"""
