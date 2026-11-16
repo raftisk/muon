@@ -2,14 +2,27 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from langchain_core.messages import AIMessage
 from pydantic import SecretStr
 
 from muon.agent.routing import AgentRuntime, UniverseScope
 from muon.config import AgentSettings
 from muon.retrieval.cypher import TOOL_NAME
 from muon.retrieval.evidence import EvidenceStatus
-from muon.retrieval.retrieve import PROMPT_PATH, PromptError, fill_prompt, retrieve
-from tests.unit.chat_fakes import ScriptedChatModel, build_final_message, build_tool_call_message
+from muon.retrieval.retrieve import (
+    PROMPT_PATH,
+    PromptError,
+    TokenUsage,
+    fill_prompt,
+    read_step_usage,
+    retrieve,
+)
+from tests.unit.chat_fakes import (
+    ScriptedChatModel,
+    build_final_message,
+    build_tool_call_message,
+    build_usage,
+)
 from tests.unit.retrieval.scope import build_toy_scope
 from tests.unit.retrieval.test_cypher import StubReadClient
 
@@ -88,6 +101,51 @@ async def test_tokens_are_summed_over_the_model_calls(scope: UniverseScope) -> N
     assert result.stats.step == "retrieve"
     assert result.stats.input_tokens == 20
     assert result.stats.output_tokens == 10
+
+
+async def test_reasoning_and_cached_tokens_are_summed_over_the_model_calls(
+    scope: UniverseScope,
+) -> None:
+    first = build_tool_call_message(WIDGET_QUERY, "c1")
+    first.usage_metadata = build_usage(100, 40, reasoning=30, cache_read=64)  # type: ignore[assignment]
+    last = AIMessage(
+        content="done", usage_metadata=build_usage(150, 20, reasoning=10, cache_read=96)
+    )  # type: ignore[arg-type]
+    runtime, _ = build_runtime([first, last], StubReadClient([{"name": "W1"}]))
+
+    result = await retrieve(scope, QUESTION, runtime)
+
+    stats = result.stats
+    assert (stats.input_tokens, stats.output_tokens) == (250, 60)
+    assert (stats.reasoning_tokens, stats.cached_input_tokens) == (40, 160)
+
+
+async def test_missing_token_details_count_as_zero(scope: UniverseScope) -> None:
+    runtime, _ = build_runtime(
+        [build_tool_call_message(WIDGET_QUERY, "c1"), build_final_message()],
+        StubReadClient([{"name": "W1"}]),
+    )
+
+    result = await retrieve(scope, QUESTION, runtime)
+
+    assert (result.stats.reasoning_tokens, result.stats.cached_input_tokens) == (0, 0)
+
+
+async def test_a_two_turn_loop_makes_two_model_calls(scope: UniverseScope) -> None:
+    runtime, _ = build_runtime(
+        [build_tool_call_message(WIDGET_QUERY, "c1"), build_final_message()],
+        StubReadClient([{"name": "W1"}]),
+    )
+
+    result = await retrieve(scope, QUESTION, runtime)
+
+    assert result.stats.model_calls == 2
+
+
+def test_read_step_usage_skips_messages_that_are_not_ai_messages() -> None:
+    usage = read_step_usage(["text", AIMessage(content="x")])
+
+    assert usage == TokenUsage(0, 0, 0, 0, 1)
 
 
 async def test_the_system_prompt_holds_the_schema_and_the_question_is_the_human_message(

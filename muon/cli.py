@@ -974,11 +974,15 @@ def render_queries(bundle: EvidenceBundle) -> str:
 
 def format_ask_status(result: AskResult) -> str:
     stats = result.stats
+    model_calls = sum(step.model_calls for step in stats.steps)
     input_tokens = sum(step.input_tokens for step in stats.steps)
+    cached_tokens = sum(step.cached_input_tokens for step in stats.steps)
     output_tokens = sum(step.output_tokens for step in stats.steps)
+    reasoning_tokens = sum(step.reasoning_tokens for step in stats.steps)
     return (
         f"{ASK_COMMAND} {result.answer.universe}: {stats.cypher_calls} queries, "
-        f"{input_tokens} input and {output_tokens} output tokens, "
+        f"{model_calls} model calls, {input_tokens:,} input ({cached_tokens:,} cached) and "
+        f"{output_tokens:,} output ({reasoning_tokens:,} reasoning) tokens, "
         f"{stats.total_latency_seconds:.1f} s"
     )
 

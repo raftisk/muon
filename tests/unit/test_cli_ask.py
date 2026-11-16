@@ -103,7 +103,17 @@ def build_result(
         stats=AskStats(
             tool_calls=1,
             cypher_calls=1,
-            steps=[StepStats(step="retrieve", input_tokens=7, output_tokens=3, latency_seconds=1)],
+            steps=[
+                StepStats(
+                    step="retrieve",
+                    input_tokens=7,
+                    output_tokens=3,
+                    reasoning_tokens=0,
+                    cached_input_tokens=0,
+                    model_calls=2,
+                    latency_seconds=1,
+                )
+            ],
             total_latency_seconds=2.0,
         ),
     )
@@ -332,3 +342,37 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
     cli.create_agent_runtime(object(), context)  # type: ignore[arg-type]
 
     assert created == [("base", "low"), ("writer", "minimal")]
+
+
+def test_the_status_line_shows_model_calls_and_token_detail() -> None:
+    steps = [
+        StepStats(
+            step="retrieve",
+            input_tokens=14_000,
+            output_tokens=400,
+            reasoning_tokens=300,
+            cached_input_tokens=12_000,
+            model_calls=2,
+            latency_seconds=1,
+        ),
+        StepStats(
+            step="generate",
+            input_tokens=2_706,
+            output_tokens=89,
+            reasoning_tokens=102,
+            cached_input_tokens=288,
+            model_calls=1,
+            latency_seconds=1,
+        ),
+    ]
+    base = build_result()
+    result = base.model_copy(
+        update={
+            "stats": base.stats.model_copy(update={"steps": steps, "total_latency_seconds": 34.1})
+        }
+    )
+
+    assert cli.format_ask_status(result) == (
+        "ask pkmn: 1 queries, 3 model calls, 16,706 input (12,288 cached) and "
+        "489 output (402 reasoning) tokens, 34.1 s"
+    )

@@ -8,7 +8,7 @@ not used. `fill_prompt` is shared with the generate step.
 
 import re
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -36,14 +36,30 @@ class PromptError(Exception):
 
 
 class StepStats(BaseModel):
-    """Tokens and wall time of 1 model step."""
+    """Tokens, model calls and wall time of 1 model step.
+
+    `reasoning_tokens` is a part of `output_tokens` and `cached_input_tokens` is a part
+    of `input_tokens`.
+    """
 
     model_config = ConfigDict(frozen=True)
 
     step: str
     input_tokens: int
     output_tokens: int
+    reasoning_tokens: int
+    cached_input_tokens: int
+    model_calls: int
     latency_seconds: float
+
+
+@dataclass(frozen=True)
+class TokenUsage:
+    input_tokens: int
+    output_tokens: int
+    reasoning_tokens: int
+    cached_input_tokens: int
+    model_calls: int
 
 
 @dataclass(frozen=True)
@@ -72,14 +88,31 @@ def fill_prompt(path: Path, values: Mapping[str, str]) -> str:
     return MARKER_PATTERN.sub(lambda match: values[match.group(1)], text)
 
 
-def sum_token_usage(messages: list[object]) -> tuple[int, int]:
-    """Return the input and output tokens that the AI messages report."""
-    input_tokens = output_tokens = 0
+def read_step_usage(messages: Sequence[object]) -> TokenUsage:
+    """Sum the model calls and the tokens that the AI messages report.
+
+    Every AI message counts as 1 model call. Token details a provider does not report count
+    as 0.
+    """
+    input_tokens = output_tokens = reasoning_tokens = cached_input_tokens = model_calls = 0
     for message in messages:
-        if isinstance(message, AIMessage) and message.usage_metadata:
-            input_tokens += message.usage_metadata["input_tokens"]
-            output_tokens += message.usage_metadata["output_tokens"]
-    return input_tokens, output_tokens
+        if not isinstance(message, AIMessage):
+            continue
+        model_calls += 1
+        usage = message.usage_metadata
+        if not usage:
+            continue
+        input_tokens += usage["input_tokens"]
+        output_tokens += usage["output_tokens"]
+        reasoning_tokens += (usage.get("output_token_details") or {}).get("reasoning", 0)
+        cached_input_tokens += (usage.get("input_token_details") or {}).get("cache_read", 0)
+    return TokenUsage(
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        reasoning_tokens=reasoning_tokens,
+        cached_input_tokens=cached_input_tokens,
+        model_calls=model_calls,
+    )
 
 
 def count_executed_tool_calls(messages: list[object]) -> int:
@@ -124,15 +157,18 @@ async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -
         ) from error
     latency = time.perf_counter() - started_at
     messages = list(output["messages"])
-    input_tokens, output_tokens = sum_token_usage(messages)
+    usage = read_step_usage(messages)
     return RetrieveResult(
         bundle=EvidenceBundle(universe=scope.universe_label, question=question, items=log.items),
         tool_calls=count_executed_tool_calls(messages),
         cypher_calls=len(log.items),
         stats=StepStats(
             step=RETRIEVE_STEP,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+            reasoning_tokens=usage.reasoning_tokens,
+            cached_input_tokens=usage.cached_input_tokens,
+            model_calls=usage.model_calls,
             latency_seconds=latency,
         ),
     )

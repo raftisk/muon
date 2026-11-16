@@ -108,12 +108,18 @@ def build_ask_result(
             step="retrieve",
             input_tokens=RETRIEVE_TOKENS[0],
             output_tokens=RETRIEVE_TOKENS[1],
+            reasoning_tokens=0,
+            cached_input_tokens=0,
+            model_calls=1,
             latency_seconds=1.0,
         ),
         StepStats(
             step="generate",
             input_tokens=GENERATE_TOKENS[0],
             output_tokens=GENERATE_TOKENS[1],
+            reasoning_tokens=0,
+            cached_input_tokens=0,
+            model_calls=1,
             latency_seconds=1.0,
         ),
     ]

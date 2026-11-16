@@ -13,6 +13,19 @@ from pydantic import BaseModel, PrivateAttr
 DEFAULT_USAGE = {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15}
 
 
+def build_usage(
+    input_tokens: int, output_tokens: int, reasoning: int = 0, cache_read: int = 0
+) -> dict[str, Any]:
+    """A `usage_metadata` dict with reasoning and cache-read token details."""
+    return {
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "total_tokens": input_tokens + output_tokens,
+        "input_token_details": {"cache_read": cache_read},
+        "output_token_details": {"reasoning": reasoning},
+    }
+
+
 def build_tool_call_message(query: str, call_id: str, purpose: str = "test") -> AIMessage:
     """An AI message that calls `run_cypher` once."""
     return AIMessage(

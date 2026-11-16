@@ -12,14 +12,14 @@ from pathlib import Path
 from typing import Any, cast
 
 import openai
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from muon.agent.routing import AgentRuntime, UniverseScope
 from muon.generation.answer import Answer, AnswerDraft
 from muon.generation.check import CitationIssue, check_citations
 from muon.llm.client import ModelCallError
 from muon.retrieval.evidence import EvidenceBundle, render_evidence_content
-from muon.retrieval.retrieve import StepStats, fill_prompt
+from muon.retrieval.retrieve import StepStats, fill_prompt, read_step_usage
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "generate.md"
 GENERATE_STEP = "generate"
@@ -47,11 +47,6 @@ def build_human_message(
     return HumanMessage(BLOCK_SEPARATOR.join(blocks))
 
 
-def read_usage(raw: Any) -> tuple[int, int]:
-    usage = raw.usage_metadata if isinstance(raw, AIMessage) else None
-    return (usage["input_tokens"], usage["output_tokens"]) if usage else (0, 0)
-
-
 async def call_generator(
     messages: list[BaseMessage], step: str, runtime: AgentRuntime
 ) -> tuple[AnswerDraft, StepStats]:
@@ -71,9 +66,15 @@ async def call_generator(
         raise ModelCallError(
             GENERATE_STEP, model_name, f"the reply is not a valid draft: {output['parsing_error']}"
         )
-    input_tokens, output_tokens = read_usage(output["raw"])
+    usage = read_step_usage([output["raw"]])
     stats = StepStats(
-        step=step, input_tokens=input_tokens, output_tokens=output_tokens, latency_seconds=latency
+        step=step,
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+        reasoning_tokens=usage.reasoning_tokens,
+        cached_input_tokens=usage.cached_input_tokens,
+        model_calls=usage.model_calls,
+        latency_seconds=latency,
     )
     return AnswerDraft.model_validate(parsed, from_attributes=True), stats
 
