@@ -30,7 +30,7 @@ DEFAULT_MAX_CYPHER_CALLS = 2
 DEFAULT_MAX_CHECK_RETRIES = 1
 
 # The values mirror `openai.types.shared.ReasoningEffort`.
-ReasoningLevel = Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"]
+ReasoningLevel = Literal["none", "low", "medium", "high", "xhigh", "max"]
 
 
 class Neo4jSettings(BaseSettings):

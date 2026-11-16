@@ -300,9 +300,9 @@ def test_agent_reasoning_level_reads_from_the_env(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setenv("MUON_AGENT_BASE_URL", "https://agent.test/v1")
     monkeypatch.setenv("MUON_AGENT_API_KEY", "k")
     monkeypatch.setenv("MUON_AGENT_MODEL", "m")
-    monkeypatch.setenv("MUON_AGENT_GENERATE_REASONING", "minimal")
+    monkeypatch.setenv("MUON_AGENT_GENERATE_REASONING", "medium")
 
-    assert AgentSettings(_env_file=None).generate_reasoning == "minimal"
+    assert AgentSettings(_env_file=None).generate_reasoning == "medium"
 
 
 def test_agent_settings_reject_an_unknown_reasoning_level() -> None:
