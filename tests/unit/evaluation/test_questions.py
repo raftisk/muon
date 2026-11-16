@@ -6,22 +6,7 @@ from muon.agent.universes import UniversePlugin, discover_universes
 from muon.evaluation.questions import EvalError, load_questions
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.fixtures.toy_plugin import write_toy_plugin
-
-EVALS_FILE_NAME = "evals.toml"
-QUERY = "MATCH (w:ToyWidget) RETURN w"
-
-
-def build_question_toml(question_id: str, **fields: str) -> str:
-    values = {
-        "id": question_id,
-        "family": "S1",
-        "question": f"Question {question_id}?",
-        "reference": f"Answer {question_id}.",
-        "gold_query": QUERY,
-        **fields,
-    }
-    lines = ["[[question]]", *(f'{name} = """{value}"""' for name, value in values.items())]
-    return "\n".join(lines) + "\n"
+from tests.unit.evaluation.fakes import EVALS_FILE_NAME, WIDGET_QUERY, build_question_toml
 
 
 def build_plugin(tmp_path: Path, eval_text: str | None) -> UniversePlugin:
@@ -44,7 +29,7 @@ def test_questions_load_in_file_order(tmp_path: Path) -> None:
     assert [question.id for question in eval_set.questions] == ["Q02", "Q01"]
     assert eval_set.questions[1].runbook == "R05"
     assert eval_set.questions[0].runbook is None
-    assert eval_set.questions[0].gold_query.strip() == QUERY
+    assert eval_set.questions[0].gold_query.strip() == WIDGET_QUERY
 
 
 def test_the_hash_follows_the_file_bytes(tmp_path: Path) -> None:
