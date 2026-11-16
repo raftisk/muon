@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict
 from muon.agent.routing import AgentRuntime, UniverseScope
 from muon.llm.client import ModelCallError
 from muon.retrieval.cypher import TOOL_NAME, EvidenceLog, build_run_cypher_tool
-from muon.retrieval.evidence import EvidenceBundle
+from muon.retrieval.evidence import Evidence, EvidenceBundle, EvidenceStatus
 
 PROMPT_PATH = Path(__file__).parent / "prompts" / "retrieve.md"
 MARKER_PATTERN = re.compile(r"\{\{(\w+)\}\}")
@@ -127,6 +127,20 @@ def count_executed_tool_calls(messages: list[object]) -> int:
     )
 
 
+def is_done(items: Sequence[Evidence], max_cypher_calls: int) -> bool:
+    """Whether another model turn can add nothing.
+
+    That holds when the `run_cypher` budget is spent, or when the latest item is a final
+    query that returned rows. `items` is in call order.
+    """
+    if len(items) >= max_cypher_calls:
+        return True
+    if not items:
+        return False
+    latest = items[-1]
+    return latest.is_final and latest.status is EvidenceStatus.OK and latest.row_count > 0
+
+
 class StopWhenDoneMiddleware(AgentMiddleware):
     """Ends the loop before a model turn whose output the step would throw away."""
 
@@ -137,7 +151,7 @@ class StopWhenDoneMiddleware(AgentMiddleware):
 
     @hook_config(can_jump_to=["end"])
     def before_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
-        if len(self.log.items) >= self.max_cypher_calls:
+        if is_done(self.log.items, self.max_cypher_calls):
             return {"jump_to": "end"}
         return None
 

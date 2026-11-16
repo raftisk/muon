@@ -8,12 +8,13 @@ from pydantic import SecretStr
 from muon.agent.routing import AgentRuntime, UniverseScope
 from muon.config import AgentSettings
 from muon.retrieval.cypher import TOOL_NAME
-from muon.retrieval.evidence import EvidenceStatus
+from muon.retrieval.evidence import Evidence, EvidenceStatus
 from muon.retrieval.retrieve import (
     PROMPT_PATH,
     PromptError,
     TokenUsage,
     fill_prompt,
+    is_done,
     read_step_usage,
     retrieve,
 )
@@ -122,6 +123,77 @@ async def test_a_final_text_reply_before_the_budget_is_spent_costs_one_more_call
 
     result = await retrieve(scope, QUESTION, runtime)
 
+    assert result.stats.model_calls == 2
+    assert len(model.calls) == 2
+
+
+def build_item(
+    number: int, status: EvidenceStatus = EvidenceStatus.OK, is_final: bool = False
+) -> Evidence:
+    return Evidence(
+        id=f"e{number}",
+        universe="toy",
+        tool=TOOL_NAME,
+        query="q",
+        purpose="p",
+        status=status,
+        row_count=1 if status is EvidenceStatus.OK else 0,
+        is_final=is_final,
+    )
+
+
+@pytest.mark.parametrize("status", list(EvidenceStatus))
+def test_a_final_item_ends_the_loop_only_when_it_has_rows(status: EvidenceStatus) -> None:
+    items = [build_item(1, status, is_final=True)]
+
+    assert is_done(items, max_cypher_calls=2) is (status is EvidenceStatus.OK)
+
+
+def test_a_non_final_item_with_rows_and_budget_left_continues() -> None:
+    assert is_done([build_item(1)], max_cypher_calls=2) is False
+
+
+def test_only_the_latest_item_decides_the_final_rule() -> None:
+    items = [build_item(1, is_final=True), build_item(2)]
+
+    assert is_done(items, max_cypher_calls=3) is False
+
+
+@pytest.mark.parametrize("status", list(EvidenceStatus))
+def test_a_spent_budget_ends_the_loop_for_every_status(status: EvidenceStatus) -> None:
+    assert is_done([build_item(1), build_item(2, status)], max_cypher_calls=2) is True
+
+
+def test_no_items_never_end_the_loop() -> None:
+    assert is_done([], max_cypher_calls=2) is False
+
+
+async def test_a_final_query_with_rows_ends_the_loop_after_one_model_call(
+    scope: UniverseScope,
+) -> None:
+    runtime, model = build_runtime(
+        [build_tool_call_message(WIDGET_QUERY, "c1", is_final=True)],
+        StubReadClient([{"name": "W1"}]),
+    )
+
+    result = await retrieve(scope, QUESTION, runtime)
+
+    assert result.stats.model_calls == 1
+    assert len(model.calls) == 1
+    assert result.bundle.items[0].is_final is True
+
+
+async def test_a_final_query_with_no_rows_continues_to_a_second_model_call(
+    scope: UniverseScope,
+) -> None:
+    runtime, model = build_runtime(
+        [build_tool_call_message(WIDGET_QUERY, "c1", is_final=True), build_final_message()],
+        StubReadClient([]),
+    )
+
+    result = await retrieve(scope, QUESTION, runtime)
+
+    assert result.bundle.items[0].status is EvidenceStatus.EMPTY
     assert result.stats.model_calls == 2
     assert len(model.calls) == 2
 

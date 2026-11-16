@@ -109,6 +109,7 @@ class Evidence(EvidenceModel):
     rows: tuple[dict[str, Cell], ...] = ()
     row_count: int = 0
     is_truncated: bool = False
+    is_final: bool = False
     graph_slice: GraphSlice = Field(default_factory=GraphSlice)
 
 

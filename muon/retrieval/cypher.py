@@ -287,6 +287,7 @@ class CallDescription:
     evidence_id: str
     query: str
     purpose: str
+    is_final: bool
 
 
 def build_unanswered_evidence(
@@ -300,6 +301,7 @@ def build_unanswered_evidence(
         purpose=call.purpose,
         status=status,
         message=message,
+        is_final=call.is_final,
     )
 
 
@@ -332,6 +334,7 @@ def build_evidence(
         rows=cell_rows,
         row_count=len(cell_rows),
         is_truncated=is_truncated,
+        is_final=call.is_final,
         graph_slice=builder.build_slice(),
     )
 
@@ -368,14 +371,16 @@ def build_run_cypher_tool(scope: UniverseScope, client: GraphClient, log: Eviden
     """
 
     @tool(TOOL_NAME, response_format="content_and_artifact")
-    async def run_cypher(query: str, purpose: str) -> tuple[str, Evidence]:
+    async def run_cypher(query: str, purpose: str, is_final: bool = False) -> tuple[str, Evidence]:
         """Run 1 read-only Cypher query on the graph and return its rows.
 
         Args:
             query: The Cypher query, with literal values written into the text.
             purpose: One line on what the query fetches.
+            is_final: true when you expect the rows of this query to answer the question in
+                full. If it returns rows, retrieval ends and you get no further turn.
         """
-        call = CallDescription(log.next_id(), query, purpose)
+        call = CallDescription(log.next_id(), query, purpose, is_final)
         evidence = await run_checked_query(call, scope, client)
         log.add(evidence)
         return render_evidence_content(evidence), evidence

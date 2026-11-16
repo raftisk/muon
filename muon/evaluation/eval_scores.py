@@ -69,7 +69,9 @@ async def resolve_gold(
     Raises `EvalError` when the query is rejected or fails, returns no rows, or returns
     rows without a node.
     """
-    call = CallDescription(GOLD_EVIDENCE_ID, question.gold_query, f"gold nodes of {question.id}")
+    call = CallDescription(
+        GOLD_EVIDENCE_ID, question.gold_query, f"gold nodes of {question.id}", is_final=False
+    )
     evidence = await run_checked_query(call, scope, client)
     prefix = f"Gold query of {question.id}"
     if evidence.status in (EvidenceStatus.REJECTED, EvidenceStatus.FAILED):

@@ -26,14 +26,19 @@ def build_usage(
     }
 
 
-def build_tool_call_message(query: str, call_id: str, purpose: str = "test") -> AIMessage:
-    """An AI message that calls `run_cypher` once."""
+def build_tool_call_message(
+    query: str, call_id: str, purpose: str = "test", is_final: bool | None = None
+) -> AIMessage:
+    """An AI message that calls `run_cypher` once; `is_final` is sent only when it is set."""
+    args: dict[str, Any] = {"query": query, "purpose": purpose}
+    if is_final is not None:
+        args["is_final"] = is_final
     return AIMessage(
         content="",
         tool_calls=[
             {
                 "name": "run_cypher",
-                "args": {"query": query, "purpose": purpose},
+                "args": args,
                 "id": call_id,
                 "type": "tool_call",
             }
