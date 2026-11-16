@@ -62,6 +62,7 @@ class AgentRuntime:
     """The per-run dependencies of the agent steps."""
 
     client: GraphClient
+    resolve_model: BaseChatModel
     retrieve_model: BaseChatModel
     generate_model: BaseChatModel
     agent_settings: AgentSettings

@@ -329,6 +329,7 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
         api_key=SECRET,
         model="base",
         generate_model="writer",
+        resolve_reasoning="high",
         retrieve_reasoning="low",
         generate_reasoning="medium",
     )
@@ -341,7 +342,7 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
 
     cli.create_agent_runtime(object(), context)  # type: ignore[arg-type]
 
-    assert created == [("base", "low"), ("writer", "medium")]
+    assert created == [("base", "high"), ("base", "low"), ("writer", "medium")]
 
 
 def test_the_status_line_shows_model_calls_and_token_detail() -> None:

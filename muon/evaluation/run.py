@@ -22,7 +22,7 @@ from pydantic import BaseModel, ConfigDict
 from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, build_scope, select_universe
 from muon.agent.universes import UniverseRegistry
-from muon.config import PROJECT_ROOT, AgentSettings, ReasoningLevel, Settings
+from muon.config import PROJECT_ROOT, AgentSettings, AgentStep, ReasoningLevel, Settings
 from muon.evaluation.eval_scores import (
     NodeComparison,
     QuestionScore,
@@ -86,8 +86,10 @@ class RunMeta(RunModel):
     started_at: datetime
     git_commit: str | None
     universe: str
+    resolve_model: str
     retrieve_model: str
     generate_model: str
+    resolve_reasoning: ReasoningLevel | None
     retrieve_reasoning: ReasoningLevel | None
     generate_reasoning: ReasoningLevel | None
     max_tool_calls: int
@@ -280,10 +282,12 @@ def build_meta(
         started_at=request.started_at,
         git_commit=read_git_commit(),
         universe=request.prefix,
-        retrieve_model=agent_settings.resolve_retrieve_model(),
-        generate_model=agent_settings.resolve_generate_model(),
-        retrieve_reasoning=agent_settings.retrieve_reasoning,
-        generate_reasoning=agent_settings.generate_reasoning,
+        resolve_model=agent_settings.model_for(AgentStep.RESOLVE),
+        retrieve_model=agent_settings.model_for(AgentStep.RETRIEVE),
+        generate_model=agent_settings.model_for(AgentStep.GENERATE),
+        resolve_reasoning=agent_settings.reasoning_for(AgentStep.RESOLVE),
+        retrieve_reasoning=agent_settings.reasoning_for(AgentStep.RETRIEVE),
+        generate_reasoning=agent_settings.reasoning_for(AgentStep.GENERATE),
         max_tool_calls=agent_settings.max_tool_calls,
         max_cypher_calls=agent_settings.max_cypher_calls,
         max_check_retries=agent_settings.max_check_retries,
@@ -384,6 +388,7 @@ def render_review(run: EvalRun) -> str:
         f"# Eval review {meta.run_id}",
         "",
         f"Universe: {meta.universe}, commit: {meta.git_commit or 'unknown'}",
+        f"Resolve: {describe_step_model(meta.resolve_model, meta.resolve_reasoning)}",
         f"Retrieve: {describe_step_model(meta.retrieve_model, meta.retrieve_reasoning)}",
         f"Generate: {describe_step_model(meta.generate_model, meta.generate_reasoning)}",
         "",

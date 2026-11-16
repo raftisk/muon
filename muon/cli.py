@@ -24,7 +24,7 @@ from pydantic import SecretStr, ValidationError
 from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, RoutingError, StepTracker, select_universe
 from muon.agent.universes import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
-from muon.config import AgentSettings, OntologySettings, Settings, get_settings
+from muon.config import AgentSettings, AgentStep, OntologySettings, Settings, get_settings
 from muon.console import STDERR, STDOUT, EvalDisplay, StepDisplay, build_eval_summary
 from muon.evaluation.questions import EvalError, load_eval_sets, select_questions
 from muon.evaluation.run import (
@@ -1014,12 +1014,18 @@ class AgentContext:
 
 def create_agent_runtime(client: GraphClient, context: AgentContext) -> AgentRuntime:
     settings = context.agent_settings
-    retrieve_settings = settings.model_copy(update={"model": settings.resolve_retrieve_model()})
-    generate_settings = settings.model_copy(update={"model": settings.resolve_generate_model()})
+    models = {
+        step: create_chat_model(
+            settings.model_copy(update={"model": settings.model_for(step)}),
+            settings.reasoning_for(step),
+        )
+        for step in AgentStep
+    }
     return AgentRuntime(
         client=client,
-        retrieve_model=create_chat_model(retrieve_settings, settings.retrieve_reasoning),
-        generate_model=create_chat_model(generate_settings, settings.generate_reasoning),
+        resolve_model=models[AgentStep.RESOLVE],
+        retrieve_model=models[AgentStep.RETRIEVE],
+        generate_model=models[AgentStep.GENERATE],
         agent_settings=settings,
         progress=context.progress,
     )

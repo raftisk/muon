@@ -5,6 +5,7 @@ exported variable always overrides the file. Each layer owns one settings group.
 """
 
 import functools
+from enum import StrEnum
 from pathlib import Path
 from typing import Literal
 
@@ -93,6 +94,14 @@ class EmbeddingSettings(ProviderSettings):
     dimensions: int | None = Field(default=None, gt=0)
 
 
+class AgentStep(StrEnum):
+    """The model steps of `ask()`, in pipeline order."""
+
+    RESOLVE = "resolve"
+    RETRIEVE = "retrieve"
+    GENERATE = "generate"
+
+
 class AgentSettings(ProviderSettings):
     """Agent provider and loop limits, read from `MUON_AGENT_*` variables.
 
@@ -100,9 +109,10 @@ class AgentSettings(ProviderSettings):
     `run_cypher` calls, and `max_check_retries` is the number of generator reruns after
     a failed citation check (0 disables the rerun).
 
-    `retrieve_model` and `generate_model` override `model` for their step, and an unset
-    one falls back to `model`. A `None` reasoning level sends no `reasoning_effort`, so
-    the provider default applies.
+    The 3 steps are `AgentStep.RESOLVE`, `RETRIEVE` and `GENERATE`. `resolve_model`,
+    `retrieve_model` and `generate_model` override `model` for their step, and an unset one
+    falls back to `model`. A `None` reasoning level sends no `reasoning_effort`, so the
+    provider default applies. Read them through `model_for` and `reasoning_for`.
     """
 
     model_config = SettingsConfigDict(env_prefix="MUON_AGENT_", env_file=ENV_FILE, extra="ignore")
@@ -110,16 +120,31 @@ class AgentSettings(ProviderSettings):
     max_tool_calls: int = Field(default=DEFAULT_MAX_TOOL_CALLS, gt=0)
     max_cypher_calls: int = Field(default=DEFAULT_MAX_CYPHER_CALLS, gt=0)
     max_check_retries: int = Field(default=DEFAULT_MAX_CHECK_RETRIES, ge=0)
+    resolve_model: str | None = None
     retrieve_model: str | None = None
     generate_model: str | None = None
+    resolve_reasoning: ReasoningLevel | None = None
     retrieve_reasoning: ReasoningLevel | None = None
     generate_reasoning: ReasoningLevel | None = None
 
-    def resolve_retrieve_model(self) -> str:
-        return self.retrieve_model or self.model
+    def model_for(self, step: AgentStep) -> str:
+        """Return the model of `step`, or `model` when the step sets none."""
+        match step:
+            case AgentStep.RESOLVE:
+                return self.resolve_model or self.model
+            case AgentStep.RETRIEVE:
+                return self.retrieve_model or self.model
+            case AgentStep.GENERATE:
+                return self.generate_model or self.model
 
-    def resolve_generate_model(self) -> str:
-        return self.generate_model or self.model
+    def reasoning_for(self, step: AgentStep) -> ReasoningLevel | None:
+        match step:
+            case AgentStep.RESOLVE:
+                return self.resolve_reasoning
+            case AgentStep.RETRIEVE:
+                return self.retrieve_reasoning
+            case AgentStep.GENERATE:
+                return self.generate_reasoning
 
 
 class Settings(BaseModel):

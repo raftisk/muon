@@ -79,7 +79,11 @@ def build_pipeline(tmp_path: Path) -> Pipeline:
         client=client,
         model=model,
         runtime=AgentRuntime(
-            client=client, retrieve_model=model, generate_model=model, agent_settings=agent_settings
+            client=client,
+            resolve_model=model,
+            retrieve_model=model,
+            generate_model=model,
+            agent_settings=agent_settings,
         ),
         registry=discover_universes(universes_dir, ontology_dir),
         settings=build_toy_settings(tmp_path, ontology_dir),

@@ -44,7 +44,11 @@ def build_runtime(
         _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), model="m", **limits
     )
     return AgentRuntime(
-        client=client, retrieve_model=model, generate_model=model, agent_settings=settings
+        client=client,
+        resolve_model=model,
+        retrieve_model=model,
+        generate_model=model,
+        agent_settings=settings,
     ), model  # type: ignore[arg-type]
 
 

@@ -61,6 +61,7 @@ def build_runtime(
     )
     runtime = AgentRuntime(
         client=StubReadClient([]),
+        resolve_model=model,
         retrieve_model=model,
         generate_model=model,
         agent_settings=settings,

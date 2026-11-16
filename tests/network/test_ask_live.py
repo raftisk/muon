@@ -43,6 +43,7 @@ async def test_live_ask_cites_the_species_and_its_type(agent_settings: AgentSett
             client,
             create_chat_model(agent_settings),
             create_chat_model(agent_settings),
+            create_chat_model(agent_settings),
             agent_settings,
         )
 

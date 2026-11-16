@@ -23,6 +23,7 @@ from langgraph.runtime import Runtime
 from pydantic import BaseModel, ConfigDict
 
 from muon.agent.routing import AgentRuntime, UniverseScope
+from muon.config import AgentStep
 from muon.llm.client import ModelCallError
 from muon.retrieval.cypher import TOOL_NAME, EvidenceLog, build_run_cypher_tool
 from muon.retrieval.evidence import Evidence, EvidenceBundle, EvidenceStatus
@@ -187,7 +188,7 @@ async def retrieve(scope: UniverseScope, question: str, runtime: AgentRuntime) -
         output = await agent.ainvoke({"messages": [HumanMessage(question)]}, config)
     except openai.APIError as error:
         raise ModelCallError(
-            RETRIEVE_STEP, settings.resolve_retrieve_model(), str(error)
+            RETRIEVE_STEP, settings.model_for(AgentStep.RETRIEVE), str(error)
         ) from error
     latency = time.perf_counter() - started_at
     messages = list(output["messages"])

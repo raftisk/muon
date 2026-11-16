@@ -15,6 +15,7 @@ import openai
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from muon.agent.routing import AgentRuntime, UniverseScope
+from muon.config import AgentStep
 from muon.generation.answer import Answer, AnswerDraft
 from muon.generation.check import CitationIssue, check_citations
 from muon.llm.client import ModelCallError
@@ -50,7 +51,7 @@ def build_human_message(
 async def call_generator(
     messages: list[BaseMessage], step: str, runtime: AgentRuntime
 ) -> tuple[AnswerDraft, StepStats]:
-    model_name = runtime.agent_settings.resolve_generate_model()
+    model_name = runtime.agent_settings.model_for(AgentStep.GENERATE)
     structured = runtime.generate_model.with_structured_output(
         AnswerDraft, method="json_schema", strict=True, include_raw=True
     )
