@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Self
 
+from rich.box import ROUNDED
 from rich.console import Console, Group, RenderableType
 from rich.live import Live
 from rich.spinner import Spinner
@@ -117,7 +118,7 @@ class StepDisplay(LiveDisplay):
 
 def build_results_table(records: Sequence[RunRecord], totals: RunTotals | None) -> Table:
     """One row per record, and a total row when `totals` is given."""
-    table = Table(box=None, pad_edge=False)
+    table = Table(box=ROUNDED)
     table.add_column("id")
     table.add_column("family")
     for name in ("P", "R", "valid", "tools", "s", "tokens"):
