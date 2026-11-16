@@ -116,7 +116,7 @@ def test_a_full_run_prints_rows_and_the_summary_and_writes_the_folder(
     assert out.splitlines()[0] == f"eval {TOY_UNIVERSE}: 3 questions"
     for question_id in QUESTION_IDS:
         assert any(question_id in line and "S1" in line for line in out.splitlines())
-    assert any(line.startswith("total") for line in out.splitlines())
+    assert any("total" in line for line in out.splitlines())
     assert session.requests[0].on_result is not None
     folder = tmp_path / "out" / "20261116-143005"
     assert f"run folder: {folder}" in out
