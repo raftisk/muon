@@ -159,7 +159,7 @@ async def test_sync_write_ensures_constraints_first(
 
     report = await Runner(client, materializer).write(toy_batch, WriteMode.SYNC)
 
-    assert [type(call) for call in client.calls] == [str, str, list]
+    assert [type(call) for call in client.calls] == [str, str, str, list]
     assert len(client.batches[0]) == SYNC_STATEMENT_COUNT
     assert report.constraints_ensured == 2
     assert report.nodes_created == TOY_SUMMARY.nodes_created * SYNC_STATEMENT_COUNT

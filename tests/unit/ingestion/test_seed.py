@@ -212,7 +212,7 @@ async def test_seed_universe_writes_constraints_then_batch(tmp_path: Path) -> No
 
     report = await seed_universe(client, ontology_dir, TOY_UNIVERSE)
 
-    assert len(client.writes) == 2
+    assert len(client.writes) == 3
     assert [statement.query for statement in client.batches[0]] == [
         PRUNE_NODES,
         PRUNE_EDGES,

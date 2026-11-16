@@ -1,7 +1,12 @@
 import pytest
 from rdflib import Graph
 
-from muon.ingestion.schema import build_id_constraint, ensure_id_constraints
+from muon.ingestion.schema import (
+    build_id_constraint,
+    build_name_index_statement,
+    ensure_id_constraints,
+    ensure_name_index,
+)
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyError, build_ontology_model
 from tests.unit.ingestion.recording_client import RecordingGraphClient
@@ -53,3 +58,18 @@ async def test_ensure_id_constraints_writes_one_per_class(
         "id_unique_Type",
     ]
     assert client.batches == []
+
+
+def test_name_index_statement() -> None:
+    assert build_name_index_statement() == (
+        "CREATE FULLTEXT INDEX `entity_names` IF NOT EXISTS "
+        "FOR (n:`Entity`|`Work`|`Series`) ON EACH [n.`name`, n.`aliases`]"
+    )
+
+
+async def test_ensure_name_index_sends_one_write() -> None:
+    client = RecordingGraphClient()
+
+    await ensure_name_index(client)
+
+    assert client.writes == [build_name_index_statement()]
