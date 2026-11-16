@@ -53,7 +53,7 @@ class RecordingEvalSession:
 
 @pytest.fixture(autouse=True)
 def agent_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in ("BASE_URL", "API_KEY", "MODEL"):
+    for name in ("BASE_URL", "API_KEY", "DEFAULT_MODEL"):
         monkeypatch.setenv(f"MUON_AGENT_{name}", "x")
     monkeypatch.setattr(cli, "AgentSettings", partial(AgentSettings, _env_file=None))
 

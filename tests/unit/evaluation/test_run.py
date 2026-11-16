@@ -106,7 +106,10 @@ def build_setup(tmp_path: Path, has_second_set: bool = False) -> Setup:
         {WIDGET_QUERY: lambda parameters: rows, SECOND_QUERY: lambda parameters: rows[:1]}
     )
     agent_settings = AgentSettings(
-        _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), model="model-x"
+        _env_file=None,
+        base_url="https://a.test/v1",
+        api_key=SecretStr("k"),
+        default_model="model-x",
     )
     plugin = registry.get(TOY_UNIVERSE)
     model = ScriptedChatModel(replies=[], drafts=[])
@@ -273,9 +276,9 @@ async def test_meta_holds_the_run_identity_limits_hashes_and_census(tmp_path: Pa
     )
     assert meta.resolve_model == "model-x"
     assert (meta.resolve_reasoning, meta.retrieve_reasoning, meta.generate_reasoning) == (
-        None,
-        None,
-        None,
+        "none",
+        "none",
+        "none",
     )
     assert (meta.max_tool_calls, meta.max_cypher_calls, meta.max_check_retries) == (10, 2, 1)
     assert set(meta.hashes) == {
@@ -316,7 +319,7 @@ async def test_write_run_creates_the_folder_files(tmp_path: Path) -> None:
         "model_calls",
     } <= set(document["totals"])
     assert document["meta"]["retrieve_model"] == "model-x"
-    assert document["meta"]["generate_reasoning"] is None
+    assert document["meta"]["generate_reasoning"] == "none"
 
 
 async def test_stored_answers_re_score_to_the_stored_scores(tmp_path: Path) -> None:
@@ -341,9 +344,9 @@ async def test_review_sheet_has_a_section_per_question(tmp_path: Path) -> None:
 
     sheet = (write_run(run, tmp_path / "out") / "review.md").read_text(encoding="utf-8")
 
-    assert "Resolve: model-x, reasoning provider default" in sheet
-    assert "Retrieve: model-x, reasoning provider default" in sheet
-    assert "Generate: model-x, reasoning provider default" in sheet
+    assert "Resolve: model-x, reasoning none" in sheet
+    assert "Retrieve: model-x, reasoning none" in sheet
+    assert "Generate: model-x, reasoning none" in sheet
     assert sheet.count("Verdict: [ ] correct  [ ] partial  [ ] wrong") == 3
     assert f"## Q01 ({EVAL_SET_NAME}, S1)" in sheet
     assert "Reference: Answer Q01." in sheet

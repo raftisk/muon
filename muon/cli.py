@@ -1016,10 +1016,7 @@ class AgentContext:
 def create_agent_runtime(client: GraphClient, context: AgentContext) -> AgentRuntime:
     settings = context.agent_settings
     models = {
-        step: create_chat_model(
-            settings.model_copy(update={"model": settings.model_for(step)}),
-            settings.reasoning_for(step),
-        )
+        step: create_chat_model(settings, settings.model_for(step), settings.reasoning_for(step))
         for step in AgentStep
     }
     return AgentRuntime(

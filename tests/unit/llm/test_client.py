@@ -163,7 +163,7 @@ async def test_embeddings_call_returns_indexed_vectors() -> None:
 def test_chat_model_takes_the_settings_values() -> None:
     settings = build_llm_settings(max_retries=3)
 
-    chat_model = create_chat_model(settings)
+    chat_model = create_chat_model(settings, settings.model)
 
     assert chat_model.model_name == CHAT_MODEL
     assert chat_model.openai_api_base == CHAT_URL
@@ -173,19 +173,19 @@ def test_chat_model_takes_the_settings_values() -> None:
     assert chat_model.openai_api_key.get_secret_value() == CHAT_KEY
 
 
-def test_chat_model_sends_no_reasoning_effort_by_default() -> None:
-    chat_model = create_chat_model(build_llm_settings())
+def test_chat_model_sends_the_none_reasoning_level_by_default() -> None:
+    chat_model = create_chat_model(build_llm_settings(), CHAT_MODEL)
 
-    assert chat_model.reasoning_effort is None
+    assert chat_model.reasoning_effort == "none"
 
 
 def test_chat_model_sends_the_reasoning_level() -> None:
-    chat_model = create_chat_model(build_llm_settings(), "medium")
+    chat_model = create_chat_model(build_llm_settings(), CHAT_MODEL, "medium")
 
     assert chat_model.reasoning_effort == "medium"
 
 
 def test_chat_model_keeps_the_key_secret_in_repr() -> None:
-    chat_model = create_chat_model(build_llm_settings())
+    chat_model = create_chat_model(build_llm_settings(), CHAT_MODEL)
 
     assert CHAT_KEY not in repr(chat_model)

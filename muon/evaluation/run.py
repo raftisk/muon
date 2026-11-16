@@ -91,9 +91,9 @@ class RunMeta(RunModel):
     resolve_model: str
     retrieve_model: str
     generate_model: str
-    resolve_reasoning: ReasoningLevel | None
-    retrieve_reasoning: ReasoningLevel | None
-    generate_reasoning: ReasoningLevel | None
+    resolve_reasoning: ReasoningLevel
+    retrieve_reasoning: ReasoningLevel
+    generate_reasoning: ReasoningLevel
     max_tool_calls: int
     max_cypher_calls: int
     max_check_retries: int
@@ -380,8 +380,8 @@ def render_record(record: RunRecord) -> str:
     return "\n".join(lines)
 
 
-def describe_step_model(model: str, reasoning: ReasoningLevel | None) -> str:
-    return f"{model}, reasoning {reasoning or 'provider default'}"
+def describe_step_model(model: str, reasoning: ReasoningLevel) -> str:
+    return f"{model}, reasoning {reasoning}"
 
 
 def render_review(run: EvalRun) -> str:

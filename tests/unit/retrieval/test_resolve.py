@@ -58,7 +58,7 @@ def build_client(rows: list[dict[str, Any]]) -> QueryGraphClient:
 
 def build_runtime(model: BaseChatModel, client: QueryGraphClient | None = None) -> AgentRuntime:
     settings = AgentSettings(
-        _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), model="m"
+        _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), default_model="m"
     )
     return AgentRuntime(
         client=client or build_client([]),  # type: ignore[arg-type]

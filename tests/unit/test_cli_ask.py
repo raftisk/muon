@@ -38,7 +38,7 @@ SECRET = SecretStr("secret")
 
 @pytest.fixture(autouse=True)
 def agent_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in ("BASE_URL", "API_KEY", "MODEL"):
+    for name in ("BASE_URL", "API_KEY", "DEFAULT_MODEL"):
         monkeypatch.setenv(f"MUON_AGENT_{name}", "x")
     monkeypatch.setattr(cli, "AgentSettings", partial(AgentSettings, _env_file=None))
 
@@ -323,8 +323,8 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
 ) -> None:
     created: list[tuple[str, str | None]] = []
 
-    def record_chat_model(settings: AgentSettings, reasoning: str | None = None) -> object:
-        created.append((settings.model, reasoning))
+    def record_chat_model(settings: AgentSettings, model: str, reasoning: str) -> object:
+        created.append((model, reasoning))
         return object()
 
     monkeypatch.setattr(cli, "create_chat_model", record_chat_model)
@@ -332,7 +332,7 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
         _env_file=None,
         base_url="https://a.test/v1",
         api_key=SECRET,
-        model="base",
+        default_model="base",
         generate_model="writer",
         resolve_reasoning="high",
         retrieve_reasoning="low",

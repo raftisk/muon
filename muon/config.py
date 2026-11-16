@@ -32,6 +32,7 @@ DEFAULT_MAX_CHECK_RETRIES = 1
 
 # The values mirror `openai.types.shared.ReasoningEffort`.
 ReasoningLevel = Literal["none", "low", "medium", "high", "xhigh", "max"]
+DEFAULT_REASONING: ReasoningLevel = "none"
 
 
 class Neo4jSettings(BaseSettings):
@@ -65,11 +66,10 @@ class UniverseSettings(BaseSettings):
 
 
 class ProviderSettings(BaseSettings):
-    """Where requests to 1 OpenAI-compatible endpoint go: URL, key and model."""
+    """Where requests to 1 OpenAI-compatible endpoint go: URL and key. Subclasses add the model."""
 
     base_url: str
     api_key: SecretStr
-    model: str
     timeout: float = DEFAULT_REQUEST_TIMEOUT_SECONDS  # seconds
     max_retries: int = DEFAULT_MAX_RETRIES
 
@@ -78,6 +78,8 @@ class LLMSettings(ProviderSettings):
     """Chat provider, read from `MUON_LLM_*` variables."""
 
     model_config = SettingsConfigDict(env_prefix="MUON_LLM_", env_file=ENV_FILE, extra="ignore")
+
+    model: str
 
 
 class EmbeddingSettings(ProviderSettings):
@@ -91,6 +93,7 @@ class EmbeddingSettings(ProviderSettings):
         env_prefix="MUON_EMBEDDING_", env_file=ENV_FILE, extra="ignore"
     )
 
+    model: str
     dimensions: int | None = Field(default=None, gt=0)
 
 
@@ -110,9 +113,9 @@ class AgentSettings(ProviderSettings):
     a failed citation check (0 disables the rerun).
 
     The 3 steps are `AgentStep.RESOLVE`, `RETRIEVE` and `GENERATE`. `resolve_model`,
-    `retrieve_model` and `generate_model` override `model` for their step, and an unset one
-    falls back to `model`. A `None` reasoning level sends no `reasoning_effort`, so the
-    provider default applies. Read them through `model_for` and `reasoning_for`.
+    `retrieve_model` and `generate_model` override `default_model` for their step, and an
+    unset one falls back to `default_model`. Each reasoning level defaults to `"none"`, so
+    the provider default never applies. Read them through `model_for` and `reasoning_for`.
     """
 
     model_config = SettingsConfigDict(env_prefix="MUON_AGENT_", env_file=ENV_FILE, extra="ignore")
@@ -120,24 +123,25 @@ class AgentSettings(ProviderSettings):
     max_tool_calls: int = Field(default=DEFAULT_MAX_TOOL_CALLS, gt=0)
     max_cypher_calls: int = Field(default=DEFAULT_MAX_CYPHER_CALLS, gt=0)
     max_check_retries: int = Field(default=DEFAULT_MAX_CHECK_RETRIES, ge=0)
+    default_model: str
     resolve_model: str | None = None
     retrieve_model: str | None = None
     generate_model: str | None = None
-    resolve_reasoning: ReasoningLevel | None = None
-    retrieve_reasoning: ReasoningLevel | None = None
-    generate_reasoning: ReasoningLevel | None = None
+    resolve_reasoning: ReasoningLevel = DEFAULT_REASONING
+    retrieve_reasoning: ReasoningLevel = DEFAULT_REASONING
+    generate_reasoning: ReasoningLevel = DEFAULT_REASONING
 
     def model_for(self, step: AgentStep) -> str:
-        """Return the model of `step`, or `model` when the step sets none."""
+        """Return the model of `step`, or `default_model` when the step sets none."""
         match step:
             case AgentStep.RESOLVE:
-                return self.resolve_model or self.model
+                return self.resolve_model or self.default_model
             case AgentStep.RETRIEVE:
-                return self.retrieve_model or self.model
+                return self.retrieve_model or self.default_model
             case AgentStep.GENERATE:
-                return self.generate_model or self.model
+                return self.generate_model or self.default_model
 
-    def reasoning_for(self, step: AgentStep) -> ReasoningLevel | None:
+    def reasoning_for(self, step: AgentStep) -> ReasoningLevel:
         match step:
             case AgentStep.RESOLVE:
                 return self.resolve_reasoning

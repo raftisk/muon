@@ -82,7 +82,7 @@ def build_pipeline(tmp_path: Path) -> Pipeline:
         drafts=[NameMentions(names=[]), build_draft()],
     )
     agent_settings = AgentSettings(
-        _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), model="m"
+        _env_file=None, base_url="https://a.test/v1", api_key=SecretStr("k"), default_model="m"
     )
     return Pipeline(
         client=client,
