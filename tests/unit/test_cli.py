@@ -81,6 +81,7 @@ from muon.retrieval.schema import (
     SchemaIntrospectionError,
 )
 from muon.validation import Violation
+from muon.validation.report import EdgeTypingFinding, LabelSetFinding, SweepReport
 
 PREFIX = "muontoy"
 SECRET = "secret-check"
@@ -1748,3 +1749,64 @@ def test_ingest_with_a_rejected_batch_exits_1_and_lists_its_violations(
         "rejected: Pikachu (Pokémon) (species): S1 Widget pikachu pokedexNumber: "
         "A widget needs a number"
     ) in capsys.readouterr().out
+
+
+def arrange_validate(monkeypatch: pytest.MonkeyPatch, outcome: SweepReport | Exception) -> None:
+    async def run(settings: Settings, prefix: str) -> SweepReport:
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr(cli, "run_validate", run)
+    monkeypatch.setattr(
+        cli, "write_sweep_report", lambda report, prefix: Path(f"{prefix}-sweep-report.json")
+    )
+
+
+@pytest.mark.usefixtures("settings")
+def test_validate_exits_0_for_a_clean_sweep(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_validate(monkeypatch, SweepReport(stubs={"Widget": ("a",)}))
+
+    exit_code = cli.main(["validate", PREFIX])
+
+    output = capsys.readouterr().out
+    assert exit_code == cli.EXIT_SUCCESS
+    assert f"validate {PREFIX}: clean" in output
+    assert "stubs: 1 in 1 classes" in output
+    assert f"report: {PREFIX}-sweep-report.json" in output
+
+
+@pytest.mark.usefixtures("settings")
+def test_validate_exits_1_and_lists_findings_for_a_failing_sweep(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    report = SweepReport(
+        label_sets=(LabelSetFinding(labels=("A", "B"), count=2, sample_ids=("x", "y")),),
+        edge_typing=(
+            EdgeTypingFinding(relationship_type="HAS_A", end="end", count=1, sample_ids=("z",)),
+        ),
+    )
+    arrange_validate(monkeypatch, report)
+
+    exit_code = cli.main(["validate", PREFIX])
+
+    output = capsys.readouterr().out
+    assert exit_code == cli.EXIT_FAILURE
+    assert f"validate {PREFIX}: failing" in output
+    assert "L1: A+B: 2 nodes, e.g. x, y" in output
+    assert "T1: HAS_A end: 1 relationships, e.g. z" in output
+
+
+@pytest.mark.usefixtures("settings")
+def test_validate_failure_prints_the_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    error = GraphConnectionError(CONNECTION_MESSAGE)
+    arrange_validate(monkeypatch, error)
+
+    exit_code = cli.main(["validate", PREFIX])
+
+    assert exit_code == cli.EXIT_FAILURE
+    assert f"validate {PREFIX} failed: {error}" in capsys.readouterr().err

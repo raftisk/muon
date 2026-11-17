@@ -119,7 +119,7 @@ from muon.ingestion.pokeapi.snapshot import (
     fetch_snapshot,
 )
 from muon.ingestion.runner import Runner, RunReport
-from muon.ingestion.seed import ABoxError, seed_universe
+from muon.ingestion.seed import ABoxError, read_abox, seed_universe
 from muon.llm.client import ModelCallError, create_chat_model
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyError, extract_local_name, load_ontology_model
@@ -145,12 +145,15 @@ from muon.retrieval.evidence import (
 )
 from muon.retrieval.resolve import NameIndexError
 from muon.retrieval.schema import SchemaIntrospectionError
+from muon.validation.report import SweepReport
+from muon.validation.sweep import run_sweep, write_sweep_report
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 PROGRAM_NAME = "muon"
 SEED_COMMAND = "seed"
 PURGE_COMMAND = "purge"
+VALIDATE_COMMAND = "validate"
 FETCH_COMMAND = "fetch"
 PARSE_COMMAND = "parse"
 INGEST_COMMAND = "ingest"
@@ -218,6 +221,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="delete every node of a universe after a Neo4j password prompt",
     )
     purge.add_argument("prefix", help="universe prefix, the stem of universes/<prefix>.ttl")
+    validate = commands.add_parser(
+        VALIDATE_COMMAND,
+        help="check the graph of a universe for faults that span batches and report them",
+    )
+    validate.add_argument("prefix", help="universe prefix, the stem of universes/<prefix>.ttl")
     fetch = commands.add_parser(
         FETCH_COMMAND, help="download pinned source pages into data/<source>/ for ingestion"
     )
@@ -826,6 +834,51 @@ def execute_seed(settings: Settings, prefix: str) -> int:
     return EXIT_SUCCESS
 
 
+async def run_validate(settings: Settings, prefix: str) -> SweepReport:
+    ontology_dir = settings.ontology.ontology_dir
+    model = load_ontology_model(ontology_dir, prefix)
+    abox = read_abox(model, ontology_dir)
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        return await run_sweep(client, LabelMaterializer(model), model, abox)
+
+
+def format_sweep_report(prefix: str, report: SweepReport, report_path: Path) -> str:
+    """The count of each check, one line per label set and edge typing finding, the file."""
+    status = "failing" if report.is_failing else "clean"
+    lines = [
+        f"{VALIDATE_COMMAND} {prefix}: {status}",
+        f"label sets: {len(report.label_sets)} findings",
+        f"edge typing: {len(report.edge_typing)} findings",
+        f"stubs: {sum(len(ids) for ids in report.stubs.values())} in {len(report.stubs)} classes",
+        f"orphan stubs: {len(report.orphan_stubs)}",
+        f"missing A-Box nodes: {len(report.missing_abox)}",
+    ]
+    lines.extend(
+        f"L1: {'+'.join(finding.labels) or 'no ontology label'}: {finding.count} nodes, "
+        f"e.g. {', '.join(finding.sample_ids)}"
+        for finding in report.label_sets
+    )
+    lines.extend(
+        f"T1: {finding.relationship_type} {finding.end}: {finding.count} relationships, "
+        f"e.g. {', '.join(finding.sample_ids)}"
+        for finding in report.edge_typing
+    )
+    lines.append(f"report: {report_path}")
+    return "\n".join(lines)
+
+
+def execute_validate(settings: Settings, prefix: str) -> int:
+    try:
+        report = asyncio.run(run_validate(settings, prefix))
+    except (OntologyError, ABoxError, GraphError) as error:
+        print(f"{build_failure_prefix(VALIDATE_COMMAND, prefix)} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    report_path = write_sweep_report(report, prefix)
+    print(format_sweep_report(prefix, report, report_path))
+    return EXIT_FAILURE if report.is_failing else EXIT_SUCCESS
+
+
 def execute_purge(settings: Settings, prefix: str) -> int:
     failure_prefix = build_failure_prefix(PURGE_COMMAND, prefix)
     try:
@@ -1206,6 +1259,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
     if arguments.command == PURGE_COMMAND:
         return execute_purge(settings, arguments.prefix)
+    if arguments.command == VALIDATE_COMMAND:
+        return execute_validate(settings, arguments.prefix)
     if arguments.command == SCHEMA_COMMAND:
         return execute_schema(settings, arguments)
     if arguments.command == ASK_COMMAND:

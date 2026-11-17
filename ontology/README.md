@@ -182,7 +182,7 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 
 ## Shapes
 
-`shapes/pkmn.shacl.ttl` holds the constraints a pkmn node or edge must meet. The Validator loads it with `pyshacl` and checks the post-state of every write transaction, using the T-Box as the ontology graph. Its sections follow `universes/pkmn.ttl`. A shape's `sh:name` is its rule id and `sh:message` names the values involved.
+`shapes/pkmn.shacl.ttl` holds the constraints a pkmn node or edge must meet. The Validator loads it with `pyshacl` and checks every batch before its write, using the T-Box as the ontology graph. Its sections follow `universes/pkmn.ttl`. A shape's `sh:name` is its rule id and `sh:message` names the values involved.
 
 | Section | Rules |
 | --- | --- |
@@ -199,14 +199,36 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 
 Every shape carries `pkmn-shape:scope`, the classes it checks, or `pkmn-shape:Always` for the shapes that run on every touched node (L2). `validate(batch, scope)` runs a shape when its scope class is in the requested scope or a subclass of it. A node outside the scope may be a stub with only `id`, `name` and labels, and the Always shapes still apply to it. `scope=None` runs every shape and is the final sweep after all ingestion passes.
 
-The shapes check a projection of the Neo4j transaction, not the Neo4j data directly:
+The shapes check a projection of the batch, not the Neo4j data:
 
 - The node key `id` becomes `pkmn:id` and `name` becomes `rdfs:label`. Neither is declared in the ttl.
 - Each label becomes an `rdf:type`, and the T-Box subclass closure resolves `sh:class`.
-- `HAS_TYPE {slot:1}` becomes `pkmn:primaryType` and `{slot:2}` becomes `pkmn:secondaryType`.
+- An edge property that the `[[projection]]` table of `universe.toml` maps replaces the edge's property: `HAS_TYPE {slot:1}` becomes `pkmn:primaryType` and `{slot:2}` becomes `pkmn:secondaryType`, with no reified node. The table has `property`, `edge_property` and `values`, and the manifest also holds `namespace` and `shapes_namespace`.
 - An edge with properties (`REQUIRES {role}`, `YIELDS_EV {amount}`) becomes a reified edge node with `rdf:subject`, `rdf:predicate`, `rdf:object` and the edge properties.
 
 The label hierarchy check (L1), `id` uniqueness and edge typing (T1) are not SHACL. The Validator runs them in code. T1 reads `rdfs:domain` and `rdfs:range` from the T-Box. As a SPARQL shape on `mo:Entity` and `mo:Meta` it would cost 2 queries per node, about 93% of the validation time. Every `sh:in` list repeats values from a ttl definition, and `tests/unit/shapes/test_vocabularies.py` checks that they agree.
+
+### Gate order
+
+`Validator.validate(batch)` runs 6 steps. Step 1 ends the run when it finds a violation, because the later steps cannot read an IRI the T-Box does not declare. The others all run.
+
+1. `IRI`: every scope class, node class, node property, edge property and claim IRI is declared in the T-Box.
+2. `ID`: no 2 nodes of the batch share an `id` when one class is an ancestor of the other.
+3. `T1`: every edge end has a class, or an ancestor, in the property's `rdfs:domain` and `rdfs:range`.
+4. `ABOX`: a stub of an A-Box class matches an A-Box individual.
+5. `REF`: with `GraphBatch.can_create_stubs` false, every stub is a node in the graph. The Bulbapedia producers set it true, so their batches skip this read.
+6. Shapes: the projection of the batch against the shapes selected for the batch scope.
+
+A rejected batch is skipped whole and listed in `rejected_batches` of the ingest report.
+
+### Sweep
+
+`muon validate PREFIX` runs read-only checks on the graph that no single batch can see, and writes `data/validation/<prefix>-sweep-report.json`. It exits 1 on a finding in the first 3 checks.
+
+- L1: a node whose ontology labels match no class.
+- T1: relationships whose start or end carries none of the labels the T-Box allows.
+- A-Box: individuals missing from the graph.
+- Stubs and orphan stubs (stubs with no relationship) are reported and do not fail the sweep.
 
 ## LPG realization
 
