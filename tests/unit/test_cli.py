@@ -1774,7 +1774,7 @@ def test_validate_exits_0_for_a_clean_sweep(
     output = capsys.readouterr().out
     assert exit_code == cli.EXIT_SUCCESS
     assert f"validate {PREFIX}: clean" in output
-    assert "stubs: 1 in 1 classes" in output
+    assert "Widget 1" in output
     assert f"report: {PREFIX}-sweep-report.json" in output
 
 
@@ -1795,8 +1795,8 @@ def test_validate_exits_1_and_lists_findings_for_a_failing_sweep(
     output = capsys.readouterr().out
     assert exit_code == cli.EXIT_FAILURE
     assert f"validate {PREFIX}: failing" in output
-    assert "L1: A+B: 2 nodes, e.g. x, y" in output
-    assert "T1: HAS_A end: 1 relationships, e.g. z" in output
+    assert "A+B: 2 nodes (x, y)" in output
+    assert "HAS_A end: 1 relationships (z)" in output
 
 
 @pytest.mark.usefixtures("settings")

@@ -24,7 +24,14 @@ from pydantic import SecretStr, ValidationError
 from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, RoutingError, StepTracker, select_universe
 from muon.config import AgentSettings, AgentStep, OntologySettings, Settings, get_settings
-from muon.console import STDERR, STDOUT, EvalDisplay, StepDisplay, build_eval_summary
+from muon.console import (
+    STDERR,
+    STDOUT,
+    EvalDisplay,
+    StepDisplay,
+    build_eval_summary,
+    format_validator_report,
+)
 from muon.evaluation.questions import EvalError, load_eval_sets, select_questions
 from muon.evaluation.run import (
     DEFAULT_EVAL_DIR,
@@ -842,31 +849,6 @@ async def run_validate(settings: Settings, prefix: str) -> SweepReport:
         return await run_sweep(client, LabelMaterializer(model), model, abox)
 
 
-def format_sweep_report(prefix: str, report: SweepReport, report_path: Path) -> str:
-    """The count of each check, one line per label set and edge typing finding, the file."""
-    status = "failing" if report.is_failing else "clean"
-    lines = [
-        f"{VALIDATE_COMMAND} {prefix}: {status}",
-        f"label sets: {len(report.label_sets)} findings",
-        f"edge typing: {len(report.edge_typing)} findings",
-        f"stubs: {sum(len(ids) for ids in report.stubs.values())} in {len(report.stubs)} classes",
-        f"orphan stubs: {len(report.orphan_stubs)}",
-        f"missing A-Box nodes: {len(report.missing_abox)}",
-    ]
-    lines.extend(
-        f"L1: {'+'.join(finding.labels) or 'no ontology label'}: {finding.count} nodes, "
-        f"e.g. {', '.join(finding.sample_ids)}"
-        for finding in report.label_sets
-    )
-    lines.extend(
-        f"T1: {finding.relationship_type} {finding.end}: {finding.count} relationships, "
-        f"e.g. {', '.join(finding.sample_ids)}"
-        for finding in report.edge_typing
-    )
-    lines.append(f"report: {report_path}")
-    return "\n".join(lines)
-
-
 def execute_validate(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_validate(settings, prefix))
@@ -875,7 +857,9 @@ def execute_validate(settings: Settings, prefix: str) -> int:
         return EXIT_FAILURE
 
     report_path = write_sweep_report(report, prefix)
-    print(format_sweep_report(prefix, report, report_path))
+    status = "failing" if report.is_failing else "clean"
+    title = f"{VALIDATE_COMMAND} {prefix}: {status}"
+    STDOUT.print(format_validator_report(title, report, report_path))
     return EXIT_FAILURE if report.is_failing else EXIT_SUCCESS
 
 
