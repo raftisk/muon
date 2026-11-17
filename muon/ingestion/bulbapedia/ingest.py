@@ -2,10 +2,13 @@
 graph pass by pass.
 
 Map:
-- `prepare_runner` checks that the graph holds the A-Box (`check_seed`) and ensures the
-  `id` constraints of every class the run's batches name, once.
-- `write_passes` writes the passes in order through `write_pass`: `Runner.write` in upsert
-  mode, 1 transaction per batch, with the claim prune of each batch inside its transaction.
+- `prepare_target` checks that the graph holds the A-Box (`check_seed`), ensures the
+  `id` constraints of every class the run's batches name, once, and builds the Validator.
+- `write_passes` writes the passes in order through `write_pass`: the Validator checks each
+  batch, then `Runner.write` in upsert mode, 1 transaction per batch, with the claim prune
+  of each batch inside its transaction.
+- A batch the Validator rejects is not written. The report records its violations and the
+  pass continues with the next batch.
 - The first batch that raises a `GraphError` or a `ValueError` stops the run: no later batch
   of any pass is written, and the report holds the batches written so far. Every batch is
   idempotent, so a re-run converges.
@@ -22,6 +25,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import Protocol
 
 from muon.files import write_text_atomically
 from muon.graph import GraphClient, GraphError
@@ -33,6 +37,8 @@ from muon.ingestion.runner import Runner, RunReport, UniverseCensus, WriteMode
 from muon.ingestion.seed import find_missing_nodes, read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import extract_local_name, load_ontology_model
+from muon.plugins import discover_universes
+from muon.validation import ValidationReport, Violation, build_validator
 
 INGEST_OUTPUT_ROOT = DEFAULT_ROOT / "ingested"
 PROGRESS_EVERY = 100
@@ -76,6 +82,7 @@ class PassProgress:
 @dataclass(frozen=True)
 class IngestRequest:
     ontology_dir: Path
+    universes_dir: Path
     titles: tuple[str, ...]
     on_progress: Callable[[PassProgress], None]
 
@@ -86,6 +93,7 @@ class PassTotals(ReportModel):
     ingest_pass: str
     batches_written: int
     counters: Mapping[str, int]
+    batches_rejected: int = 0
 
 
 class PageChange(ReportModel):
@@ -94,6 +102,14 @@ class PageChange(ReportModel):
     page_title: str
     ingest_pass: str
     counters: Mapping[str, int]
+
+
+class BatchRejection(ReportModel):
+    """A batch the Validator rejected, with every violation it found."""
+
+    page_title: str
+    ingest_pass: str
+    violations: tuple[Violation, ...]
 
 
 class PageFailure(ReportModel):
@@ -120,12 +136,25 @@ class IngestReport(ReportModel):
     failed_pages: tuple[PageFailure, ...]
     stop: IngestStop | None
     census: CensusReport | None
+    rejected_batches: tuple[BatchRejection, ...] = ()
 
 
 class StubIngestReport(IngestReport):
     """`stub_ids` maps a class label to the ids of its nodes with only `id` and `name`."""
 
     stub_ids: Mapping[str, tuple[str, ...]] | None
+
+
+class BatchValidator(Protocol):
+    async def validate(self, batch: GraphBatch) -> ValidationReport: ...
+
+
+@dataclass(frozen=True)
+class IngestTarget:
+    """Where a run writes: the Runner, behind the Validator that gates every batch."""
+
+    runner: Runner
+    validator: BatchValidator
 
 
 @dataclass(frozen=True)
@@ -141,6 +170,7 @@ class PassResult:
     totals: PassTotals
     changes: tuple[PageChange, ...]
     stop: IngestStop | None
+    rejections: tuple[BatchRejection, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -173,19 +203,22 @@ def list_batch_classes(batches: Iterable[GraphBatch]) -> frozenset[str]:
     return frozenset(classes)
 
 
-async def prepare_runner(
-    client: GraphClient, ontology_dir: Path, constraint_classes: frozenset[str]
-) -> Runner:
-    """Check the seed, then ensure the `id` constraints of `constraint_classes` once.
+async def prepare_target(
+    client: GraphClient, request: IngestRequest, constraint_classes: frozenset[str]
+) -> IngestTarget:
+    """Check the seed, ensure the `id` constraints of `constraint_classes` once and build the
+    Validator.
 
     Raises `MissingSeedError` before any write when the A-Box is not in the graph.
     """
+    ontology_dir = request.ontology_dir
     model = load_ontology_model(ontology_dir, UNIVERSE)
     materializer = LabelMaterializer(model)
     await check_seed(client, materializer, read_abox(model, ontology_dir))
     runner = Runner(client, materializer)
     await runner.ensure_constraints(constraint_classes)
-    return runner
+    plugin = discover_universes(request.universes_dir, ontology_dir).get(UNIVERSE)
+    return IngestTarget(runner=runner, validator=build_validator(client, ontology_dir, plugin))
 
 
 def is_change(report: RunReport) -> bool:
@@ -193,48 +226,73 @@ def is_change(report: RunReport) -> bool:
     return any(counters[name] for name in CHANGE_COUNTERS)
 
 
-def build_totals(ingest_pass: StrEnum, written: int, counters: Mapping[str, int]) -> PassTotals:
-    return PassTotals(ingest_pass=ingest_pass, batches_written=written, counters=dict(counters))
+def build_totals(
+    ingest_pass: StrEnum, written: int, rejected: int, counters: Mapping[str, int]
+) -> PassTotals:
+    return PassTotals(
+        ingest_pass=ingest_pass,
+        batches_written=written,
+        counters=dict(counters),
+        batches_rejected=rejected,
+    )
 
 
 async def write_pass(
-    runner: Runner,
+    target: IngestTarget,
     items: Sequence[PassItem],
     ingest_pass: StrEnum,
     on_progress: Callable[[PassProgress], None],
 ) -> PassResult:
-    """Write the batches of 1 pass, in order, and stop at a failure.
+    """Validate and write the batches of 1 pass, in order, and stop at a failure.
 
-    Progress goes to `on_progress` every `PROGRESS_EVERY` batches and after the last one.
+    A rejected batch is recorded and skipped. Progress goes to `on_progress` every
+    `PROGRESS_EVERY` batches, written or rejected, and after the last one.
     """
     started = time.monotonic()
     counters: Counter[str] = Counter()
     changes: list[PageChange] = []
+    rejections: list[BatchRejection] = []
     written = 0
-    for item in items:
+    for position, item in enumerate(items, start=1):
         try:
-            report = await runner.write(
-                item.batch, WriteMode.UPSERT, should_ensure_constraints=False
+            validation = await target.validator.validate(item.batch)
+            report = (
+                await target.runner.write(
+                    item.batch, WriteMode.UPSERT, should_ensure_constraints=False
+                )
+                if validation.is_valid
+                else None
             )
         except (GraphError, ValueError) as error:
             stop = IngestStop(page_title=item.page_title, ingest_pass=ingest_pass, error=str(error))
-            return PassResult(build_totals(ingest_pass, written, counters), tuple(changes), stop)
-        written += 1
-        counters.update(asdict(report))
-        if is_change(report):
-            changes.append(
-                PageChange(
-                    page_title=item.page_title, ingest_pass=ingest_pass, counters=asdict(report)
+            totals = build_totals(ingest_pass, written, len(rejections), counters)
+            return PassResult(totals, tuple(changes), stop, tuple(rejections))
+        if report is None:
+            rejections.append(
+                BatchRejection(
+                    page_title=item.page_title,
+                    ingest_pass=ingest_pass,
+                    violations=validation.violations,
                 )
             )
-        if written % PROGRESS_EVERY == 0 or written == len(items):
+        else:
+            written += 1
+            counters.update(asdict(report))
+            if is_change(report):
+                changes.append(
+                    PageChange(
+                        page_title=item.page_title, ingest_pass=ingest_pass, counters=asdict(report)
+                    )
+                )
+        if position % PROGRESS_EVERY == 0 or position == len(items):
             elapsed = time.monotonic() - started
-            on_progress(PassProgress(ingest_pass, written, len(items), elapsed))
-    return PassResult(build_totals(ingest_pass, written, counters), tuple(changes), None)
+            on_progress(PassProgress(ingest_pass, position, len(items), elapsed))
+    totals = build_totals(ingest_pass, written, len(rejections), counters)
+    return PassResult(totals, tuple(changes), None, tuple(rejections))
 
 
 async def write_passes(
-    runner: Runner,
+    target: IngestTarget,
     passes: Sequence[tuple[StrEnum, Sequence[PassItem]]],
     on_progress: Callable[[PassProgress], None],
 ) -> PassRun:
@@ -243,7 +301,7 @@ async def write_passes(
     seconds: dict[str, float] = {}
     for ingest_pass, items in passes:
         started = time.monotonic()
-        result = await write_pass(runner, items, ingest_pass, on_progress)
+        result = await write_pass(target, items, ingest_pass, on_progress)
         seconds[ingest_pass] = time.monotonic() - started
         results.append(result)
         if result.stop is not None:
@@ -281,6 +339,9 @@ def build_ingest_report(
         failed_pages=list_failed_pages(pages),
         stop=pass_run.stop,
         census=build_census_report(census),
+        rejected_batches=tuple(
+            rejection for result in pass_run.results for rejection in result.rejections
+        ),
     )
 
 

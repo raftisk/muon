@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from muon.config import DEFAULT_UNIVERSES_DIR
 from muon.graph import GraphQueryError, Statement
 from muon.ingestion.bulbapedia import ingest
 from muon.ingestion.bulbapedia.batching import MACHINE, MOVE, PKMN, TEXT_CHUNK
@@ -91,7 +92,12 @@ def parse(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ParseRunner:
 
 def build_request(*titles: str) -> tuple[IngestRequest, list[PassProgress]]:
     progress: list[PassProgress] = []
-    request = IngestRequest(ontology_dir=ONTOLOGY_DIR, titles=titles, on_progress=progress.append)
+    request = IngestRequest(
+        ontology_dir=ONTOLOGY_DIR,
+        universes_dir=DEFAULT_UNIVERSES_DIR,
+        titles=titles,
+        on_progress=progress.append,
+    )
     return request, progress
 
 

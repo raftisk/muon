@@ -31,6 +31,7 @@ from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
 from muon.ingestion.bulbapedia.ingest import (
+    BatchRejection,
     CensusReport,
     IngestReport,
     IngestRequest,
@@ -79,6 +80,7 @@ from muon.retrieval.schema import (
     NodeLabelSchema,
     SchemaIntrospectionError,
 )
+from muon.validation import Violation
 
 PREFIX = "muontoy"
 SECRET = "secret-check"
@@ -1085,6 +1087,25 @@ def build_ingest_run(
     return IngestRun(report=report, elapsed_seconds=dict.fromkeys(IngestPass, 1.5))
 
 
+def build_rejected_ingest_run() -> IngestRun:
+    run = build_ingest_run()
+    rejection = BatchRejection(
+        page_title="Pikachu (Pokémon)",
+        ingest_pass="species",
+        violations=(
+            Violation(
+                rule_id="S1",
+                node=NodeRef(class_iri="https://example.org/ns#Widget", id="pikachu"),
+                property_name="pokedexNumber",
+                value="0",
+                message="A widget needs a number",
+            ),
+        ),
+    )
+    report = run.report.model_copy(update={"rejected_batches": (rejection,)})
+    return IngestRun(report=report, elapsed_seconds=run.elapsed_seconds)
+
+
 class RecordingIngest:
     """Stands in for `cli.run_ingest` and `cli.write_ingest_report`, and records both."""
 
@@ -1712,3 +1733,18 @@ def test_schema_status_line_names_how_the_schema_was_obtained(
     context = build_schema_context(cache_status)
 
     assert cli.format_schema_status(SCHEMA_PREFIX, context, 0.04) == expected
+
+
+@pytest.mark.usefixtures("settings")
+def test_ingest_with_a_rejected_batch_exits_1_and_lists_its_violations(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_ingest(monkeypatch, build_rejected_ingest_run())
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    assert exit_code == 1
+    assert (
+        "rejected: Pikachu (Pokémon) (species): S1 Widget pikachu pokedexNumber: "
+        "A widget needs a number"
+    ) in capsys.readouterr().out

@@ -63,6 +63,7 @@ from muon.ingestion.bulbapedia.fetch import (
     import_pages,
 )
 from muon.ingestion.bulbapedia.ingest import (
+    BatchRejection,
     IngestReport,
     IngestRequest,
     MissingSeedError,
@@ -121,7 +122,7 @@ from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, seed_universe
 from muon.llm.client import ModelCallError, create_chat_model
 from muon.ontology.materializer import LabelMaterializer
-from muon.ontology.model import OntologyError, load_ontology_model
+from muon.ontology.model import OntologyError, extract_local_name, load_ontology_model
 from muon.plugins import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
 from muon.retrieval.context import (
     JSON_INDENT as SCHEMA_JSON_INDENT,
@@ -651,10 +652,34 @@ def print_progress(progress: PassProgress) -> None:
 
 async def run_ingest(settings: Settings, run: ParseRun, titles: tuple[str, ...]) -> IngestRun:
     request = IngestRequest(
-        ontology_dir=settings.ontology.ontology_dir, titles=titles, on_progress=print_progress
+        ontology_dir=settings.ontology.ontology_dir,
+        universes_dir=settings.universes.universes_dir,
+        titles=titles,
+        on_progress=print_progress,
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_species(client, run, request)
+
+
+def is_clean_ingest(pages_failed: int, report: IngestReport) -> bool:
+    """A run is clean when no page failed to parse, no batch was rejected and nothing stopped it."""
+    return not pages_failed and not report.rejected_batches and report.stop is None
+
+
+def format_rejection(rejection: BatchRejection) -> list[str]:
+    """One line per violation of a rejected batch."""
+    lines = []
+    for violation in rejection.violations:
+        subject = ""
+        if violation.node is not None:
+            class_name = extract_local_name(violation.node.class_iri)
+            subject = f" {class_name} {violation.node.id}"
+        property_name = f" {violation.property_name}" if violation.property_name else ""
+        lines.append(
+            f"rejected: {rejection.page_title} ({rejection.ingest_pass}): "
+            f"{violation.rule_id}{subject}{property_name}: {violation.message}"
+        )
+    return lines
 
 
 def format_ingest_report(
@@ -668,11 +693,15 @@ def format_ingest_report(
         name = totals.ingest_pass
         seconds = elapsed_seconds[totals.ingest_pass]
         lines.append(f"{name}: {totals.batches_written} batches in {seconds:.1f} s")
+        if totals.batches_rejected:
+            lines.append(f"{name}: {totals.batches_rejected} batches rejected")
         lines.extend(
             f"{name} {counter.replace('_', ' ')}: {count}"
             for counter, count in totals.counters.items()
         )
     lines.extend(f"failed: {page.page_title}: {page.reason}" for page in report.failed_pages)
+    for rejection in report.rejected_batches:
+        lines.extend(format_rejection(rejection))
     if report.stop is not None:
         stop = report.stop
         lines.append(f"stopped: {stop.page_title} ({stop.ingest_pass}): {stop.error}")
@@ -701,14 +730,14 @@ def execute_ingest(settings: Settings, request: ParseRequest) -> int:
 
     try:
         ingest_run = asyncio.run(run_ingest(settings, run, request.titles))
-    except (MissingSeedError, GraphError, OntologyError, ABoxError) as error:
+    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
     write_ingest_report(ingest_run.report)
     print(format_parse_report(run.report, parse_seconds))
     print(format_ingest_report(PARSE_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
-    is_clean = not run.report.pages_failed and ingest_run.report.stop is None
+    is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
@@ -716,7 +745,10 @@ async def run_move_ingest(
     settings: Settings, run: MoveParseRun, titles: tuple[str, ...]
 ) -> MoveIngestRun:
     request = IngestRequest(
-        ontology_dir=settings.ontology.ontology_dir, titles=titles, on_progress=print_progress
+        ontology_dir=settings.ontology.ontology_dir,
+        universes_dir=settings.universes.universes_dir,
+        titles=titles,
+        on_progress=print_progress,
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_moves(client, run, request)
@@ -734,14 +766,14 @@ def execute_move_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
 
     try:
         ingest_run = asyncio.run(run_move_ingest(settings, run, titles))
-    except (MissingSeedError, GraphError, OntologyError, ABoxError) as error:
+    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
     write_move_ingest_report(ingest_run.report)
     print(format_move_parse_report(run.report, parse_seconds))
     print(format_ingest_report(MOVE_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
-    is_clean = not run.report.pages_failed and ingest_run.report.stop is None
+    is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
@@ -749,7 +781,10 @@ async def run_ability_ingest(
     settings: Settings, run: AbilityParseRun, titles: tuple[str, ...]
 ) -> AbilityIngestRun:
     request = IngestRequest(
-        ontology_dir=settings.ontology.ontology_dir, titles=titles, on_progress=print_progress
+        ontology_dir=settings.ontology.ontology_dir,
+        universes_dir=settings.universes.universes_dir,
+        titles=titles,
+        on_progress=print_progress,
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_abilities(client, run, request)
@@ -769,14 +804,14 @@ def execute_ability_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
 
     try:
         ingest_run = asyncio.run(run_ability_ingest(settings, run, titles))
-    except (MissingSeedError, GraphError, OntologyError, ABoxError) as error:
+    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
     write_ability_ingest_report(ingest_run.report)
     print(format_ability_parse_report(run.report, parse_seconds))
     print(format_ingest_report(ABILITY_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
-    is_clean = not run.report.pages_failed and ingest_run.report.stop is None
+    is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
