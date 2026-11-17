@@ -11,11 +11,11 @@ from typing import Protocol
 
 from langchain_core.language_models import BaseChatModel
 
-from muon.agent.universes import UniversePlugin, UniverseRegistry
 from muon.config import AgentSettings, Settings
 from muon.graph import GraphClient
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import load_ontology_model
+from muon.plugins import UniversePlugin, UniverseRegistry
 from muon.retrieval.context import SchemaContext, SchemaRequest, load_schema_context
 
 

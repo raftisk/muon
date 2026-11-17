@@ -26,7 +26,7 @@ from muon.ingestion.bulbapedia.ingest import (
     StubIngestReport,
     build_ingest_report,
     list_batch_classes,
-    prepare_runner,
+    prepare_target,
     write_passes,
     write_report_file,
 )
@@ -72,9 +72,7 @@ async def ingest_abilities(
     `GraphError` from the seed check, the constraint step, the census or the stub list is
     not caught.
     """
-    runner = await prepare_runner(
-        client, request.ontology_dir, list_ability_constraint_classes(run.outputs)
-    )
+    target = await prepare_target(client, request, list_ability_constraint_classes(run.outputs))
     passes = [
         (
             ingest_pass,
@@ -85,10 +83,10 @@ async def ingest_abilities(
         )
         for ingest_pass in AbilityPass
     ]
-    pass_run = await write_passes(runner, passes, request.on_progress)
+    pass_run = await write_passes(target, passes, request.on_progress)
     is_stopped = pass_run.stop is not None
-    census = None if is_stopped else await runner.count_universe()
-    stub_ids = None if is_stopped else await runner.list_stub_ids(STUB_CLASSES)
+    census = None if is_stopped else await target.runner.count_universe()
+    stub_ids = None if is_stopped else await target.runner.list_stub_ids(STUB_CLASSES)
     report = build_ingest_report(request, pass_run, run.report.pages, census)
     return AbilityIngestRun(
         report=StubIngestReport(**dict(report), stub_ids=stub_ids),

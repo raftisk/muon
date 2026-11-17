@@ -4,8 +4,8 @@ import pytest
 from pydantic import SecretStr
 
 from muon.agent.routing import RoutingError, build_scope, select_universe
-from muon.agent.universes import UniverseRegistry, discover_universes
 from muon.config import Neo4jSettings, OntologySettings, Settings, UniverseSettings
+from muon.plugins import UniverseRegistry, discover_universes
 from muon.retrieval.context import READ_GRAPH_COUNTS
 from tests.fixtures.toy_ontology import (
     ALT_UNIVERSE,

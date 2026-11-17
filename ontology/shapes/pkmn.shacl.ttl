@@ -58,53 +58,9 @@ pkmn-shape:L2_NodeKey a sh:NodeShape ;
         sh:pattern "^[a-z0-9]+(-[a-z0-9]+)*(:[a-z0-9]+(-[a-z0-9]+)*)*$"
     ] .
 
-# Edge typing. Both shapes read rdfs:range and rdfs:domain from the T-Box, so
-# they cannot drift from the ttl. A property with no declared range or domain
-# is not checked. A union in owl:unionOf accepts any of its members.
-pkmn-shape:T1_EdgeRange a sh:NodeShape ;
-    sh:name "T1" ;
-    sh:message "Edge target is not an instance of the ttl rdfs:range of the property."@en ;
-    sh:severity sh:Violation ;
-    pkmn-shape:scope pkmn-shape:Always ;
-    sh:targetClass mo:Entity , mo:Meta ;
-    sh:sparql [
-        a sh:SPARQLConstraint ;
-        sh:message "Edge {?path} from {$this} to {?value} does not match the rdfs:range in the ttl."@en ;
-        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
-        sh:select """
-            SELECT $this ?path ?value WHERE {
-                $this ?path ?value .
-                ?path rdfs:range ?range .
-                FILTER isIRI(?value)
-                FILTER NOT EXISTS {
-                    ?range (owl:unionOf/rdf:rest*/rdf:first)? ?allowed .
-                    ?value rdf:type/rdfs:subClassOf* ?allowed .
-                }
-            }
-        """
-    ] .
-
-pkmn-shape:T1_EdgeDomain a sh:NodeShape ;
-    sh:name "T1" ;
-    sh:message "Edge source is not an instance of the ttl rdfs:domain of the property."@en ;
-    sh:severity sh:Violation ;
-    pkmn-shape:scope pkmn-shape:Always ;
-    sh:targetClass mo:Entity , mo:Meta ;
-    sh:sparql [
-        a sh:SPARQLConstraint ;
-        sh:message "Edge {?path} from {$this} to {?value} does not match the rdfs:domain in the ttl."@en ;
-        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
-        sh:select """
-            SELECT $this ?path ?value WHERE {
-                $this ?path ?value .
-                ?path rdfs:domain ?domain .
-                FILTER NOT EXISTS {
-                    ?domain (owl:unionOf/rdf:rest*/rdf:first)? ?allowed .
-                    $this rdf:type/rdfs:subClassOf* ?allowed .
-                }
-            }
-        """
-    ] .
+# Edge typing (T1) is not a shape. The Validator checks it in code against the
+# rdfs:domain and rdfs:range of the T-Box, because a SPARQL constraint on
+# mo:Entity and mo:Meta costs 2 queries per node.
 
 #################################################################
 #  Species

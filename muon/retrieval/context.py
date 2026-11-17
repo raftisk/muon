@@ -16,10 +16,10 @@ from typing import Any, LiteralString
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from muon.agent.universes import UniversePlugin
 from muon.files import write_text_atomically
 from muon.graph import GraphClient
 from muon.ontology.materializer import LabelMaterializer
+from muon.plugins import UniversePlugin
 from muon.retrieval.schema import (
     SCHEMA_FORMAT_VERSION,
     GraphSchema,

@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from muon.config import DEFAULT_UNIVERSES_DIR
 from muon.graph import GraphQueryError, Statement
 from muon.ingestion.bulbapedia.abilities.ingest import (
     ABILITY_INGEST_REPORT_FILE_NAME,
@@ -46,7 +47,12 @@ def run(tmp_path: Path) -> AbilityParseRun:
 
 
 async def run_ingest(client: RecordingGraphClient, run: AbilityParseRun) -> AbilityIngestRun:
-    request = IngestRequest(ontology_dir=ONTOLOGY_DIR, titles=(), on_progress=lambda _: None)
+    request = IngestRequest(
+        ontology_dir=ONTOLOGY_DIR,
+        universes_dir=DEFAULT_UNIVERSES_DIR,
+        titles=(),
+        on_progress=lambda _: None,
+    )
     return await ingest_abilities(client, run, request)
 
 

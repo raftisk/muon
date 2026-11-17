@@ -14,8 +14,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from muon.agent.universes import EVALS_FIELD, UniversePlugin
 from muon.files import TEXT_ENCODING
+from muon.plugins import EVALS_FIELD, UniversePlugin
 
 QUESTION_ID_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_-]*$"
 

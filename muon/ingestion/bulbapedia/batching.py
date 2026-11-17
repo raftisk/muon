@@ -274,6 +274,7 @@ def assemble_batch(
             )
         ),
         claims=tuple(claims_by_key[key] for key in sorted(claims_by_key)),
+        can_create_stubs=True,
     )
 
 

@@ -2,13 +2,15 @@
 
 Map: `STDOUT` and `STDERR` are the 2 consoles every command prints through. `StepDisplay`
 and `EvalDisplay` show the steps live on a terminal and implement `StepTracker` of
-`muon.agent.routing`. `build_results_table` and `build_eval_summary` render a run.
+`muon.agent.routing`. `build_results_table` and `build_eval_summary` render a run, and
+`format_validator_report` renders the summary of `muon validate`.
 """
 
 import time
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Self
 
 from rich.box import ROUNDED
@@ -27,6 +29,8 @@ from muon.evaluation.run import (
     summarize,
     summarize_sets,
 )
+from muon.ontology.model import extract_local_name
+from muon.validation.report import SweepReport
 
 SPINNER_NAME = "dots"
 REFRESH_PER_SECOND = 10
@@ -36,6 +40,8 @@ MISSING_CELL = "-"
 ERROR_CELL = "error"
 TOTAL_LABEL = "total"
 HEADER_STYLE = "bold"
+
+DETAIL_LINES_SHOWN = 5
 
 STDOUT = Console(soft_wrap=True, markup=False, highlight=False, emoji=False)
 STDERR = Console(soft_wrap=True, markup=False, highlight=False, emoji=False, stderr=True)
@@ -222,3 +228,51 @@ class EvalDisplay(LiveDisplay):
     def handle_result(self, record: RunRecord) -> None:
         self.records.append(record)
         self.clear()
+
+
+def format_validator_report(title: str, report: SweepReport, report_path: Path) -> Table:
+    """One row per sweep check with its count and details; `report_path` is the caption.
+
+    The label set and edge typing counts are findings. The other counts are nodes.
+    """
+    table = Table(title=title, caption=f"report: {report_path}", box=ROUNDED)
+    table.add_column("check")
+    table.add_column("count", justify="right")
+    table.add_column("details")
+    label_set_lines = [
+        f"{'+'.join(finding.labels) or 'no ontology label'}: {finding.count} nodes "
+        f"({', '.join(finding.sample_ids)})"
+        for finding in report.label_sets
+    ]
+    edge_typing_lines = [
+        f"{finding.relationship_type} {finding.end}: {finding.count} relationships "
+        f"({', '.join(finding.sample_ids)})"
+        for finding in report.edge_typing
+    ]
+    stub_lines = [f"{label} {len(ids)}" for label, ids in report.stubs.items()]
+    orphan_lines = [
+        f"{extract_local_name(node.class_iri)} {node.id}" for node in report.orphan_stubs
+    ]
+    missing_lines = [
+        f"{extract_local_name(node.class_iri)} {node.id}" for node in report.missing_abox
+    ]
+    stub_total = sum(len(ids) for ids in report.stubs.values())
+    rows = (
+        ("label sets (L1)", len(report.label_sets), label_set_lines),
+        ("edge typing (T1)", len(report.edge_typing), edge_typing_lines),
+        ("missing A-Box nodes", len(report.missing_abox), missing_lines),
+        ("stubs", stub_total, stub_lines),
+        ("orphan stubs", len(report.orphan_stubs), orphan_lines),
+    )
+    for name, count, lines in rows:
+        table.add_row(name, str(count), limit_lines(lines))
+    return table
+
+
+def limit_lines(lines: Sequence[str]) -> str:
+    """Join the first `DETAIL_LINES_SHOWN` lines and count the rest."""
+    shown = list(lines[:DETAIL_LINES_SHOWN])
+    hidden = len(lines) - len(shown)
+    if hidden > 0:
+        shown.append(f"and {hidden} more")
+    return "\n".join(shown)

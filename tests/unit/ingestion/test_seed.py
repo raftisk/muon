@@ -9,7 +9,7 @@ from muon.ingestion.seed import (
     FIND_MISSING_NODES,
     ABoxError,
     build_abox_batch,
-    find_missing_seed_nodes,
+    find_missing_nodes,
     read_abox,
     seed_universe,
 )
@@ -240,7 +240,7 @@ async def test_presence_rows_carry_label_universe_and_id_of_every_node(
     batch = read_abox(toy_model, toy_ontology_dir)
     client = RecordingGraphClient()
 
-    await find_missing_seed_nodes(client, LabelMaterializer(toy_model), batch)
+    await find_missing_nodes(client, LabelMaterializer(toy_model), batch.nodes)
 
     ((query, parameters),) = client.reads
     assert query is FIND_MISSING_NODES
@@ -270,7 +270,7 @@ async def test_missing_nodes_come_back_sorted(
         ]
     )
 
-    missing = await find_missing_seed_nodes(client, LabelMaterializer(toy_model), batch)
+    missing = await find_missing_nodes(client, LabelMaterializer(toy_model), batch.nodes)
 
     assert missing == [
         NodeRef(class_iri=TOY + "ToyColor", id="blue"),
@@ -284,8 +284,8 @@ async def test_no_missing_records_give_an_empty_list(
 ) -> None:
     batch = read_abox(toy_model, toy_ontology_dir)
 
-    missing = await find_missing_seed_nodes(
-        RecordingGraphClient(), LabelMaterializer(toy_model), batch
+    missing = await find_missing_nodes(
+        RecordingGraphClient(), LabelMaterializer(toy_model), batch.nodes
     )
 
     assert missing == []

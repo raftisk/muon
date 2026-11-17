@@ -2,9 +2,9 @@ import re
 
 import pytest
 
-from muon.agent.universes import discover_universes
 from muon.config import DEFAULT_ONTOLOGY_DIR, DEFAULT_UNIVERSES_DIR
 from muon.evaluation.questions import EvalQuestion, load_eval_sets
+from muon.plugins import discover_universes
 
 QUESTION_COUNT = 30
 FAMILIES = frozenset({"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S9", "S11", "S18"})

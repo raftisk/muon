@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict
 
 from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, build_scope, select_universe
-from muon.agent.universes import UniverseRegistry
 from muon.config import PROJECT_ROOT, AgentSettings, AgentStep, ReasoningLevel, Settings
 from muon.evaluation.eval_scores import (
     NodeComparison,
@@ -36,6 +35,7 @@ from muon.files import write_text_atomically
 from muon.generation.generate import PROMPT_PATH as GENERATE_PROMPT_PATH
 from muon.graph import GraphConnectionError
 from muon.llm.client import ModelCallError
+from muon.plugins import UniverseRegistry
 from muon.retrieval.resolve import PROMPT_PATH as RESOLVE_PROMPT_PATH
 from muon.retrieval.retrieve import PROMPT_PATH as RETRIEVE_PROMPT_PATH
 from muon.retrieval.schema import GraphSchema

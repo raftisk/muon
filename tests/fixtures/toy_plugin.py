@@ -3,11 +3,13 @@
 import json
 from pathlib import Path
 
-from muon.agent.universes import MANIFEST_FILE_NAME
+from muon.plugins import MANIFEST_FILE_NAME
 from tests.fixtures.toy_ontology import TOY_UNIVERSE
 
 TOY_NAME = "Toy universe"
 TOY_NOTES_FILE = "notes.md"
+TOY_NAMESPACE = f"https://muon.dev/ns/{TOY_UNIVERSE}#"
+TOY_SHAPES_NAMESPACE = f"https://muon.dev/ns/{TOY_UNIVERSE}-shapes#"
 TOY_NOTES_TEXT = "### Widgets\n\nA widget is a gadget with a serial number.\n"
 
 
@@ -24,7 +26,14 @@ def write_toy_plugin(
     """
     folder = universes_dir / (folder_name or prefix)
     folder.mkdir(parents=True)
-    manifest = {"prefix": prefix, "name": TOY_NAME, "notes": TOY_NOTES_FILE, **manifest_overrides}
+    manifest = {
+        "prefix": prefix,
+        "name": TOY_NAME,
+        "notes": TOY_NOTES_FILE,
+        "namespace": TOY_NAMESPACE,
+        "shapes_namespace": TOY_SHAPES_NAMESPACE,
+        **manifest_overrides,
+    }
     lines = [
         f"{key} = {json.dumps(value)}" for key, value in manifest.items() if isinstance(value, str)
     ]

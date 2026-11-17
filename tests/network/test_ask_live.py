@@ -8,11 +8,11 @@ from pydantic import ValidationError
 
 from muon.agent.ask import AskRequest, ask
 from muon.agent.routing import AgentRuntime
-from muon.agent.universes import discover_universes
 from muon.config import AgentSettings, AgentStep, get_settings
 from muon.generation.answer import Claim
 from muon.graph import Neo4jGraphClient
 from muon.llm import create_chat_model
+from muon.plugins import discover_universes
 from muon.retrieval.evidence import EvidenceStatus, NodeKey
 
 pytestmark = pytest.mark.network

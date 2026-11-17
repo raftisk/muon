@@ -9,7 +9,6 @@ from pydantic import SecretStr
 
 from muon.agent.ask import AskRequest, AskResult
 from muon.agent.routing import AgentRuntime
-from muon.agent.universes import UniverseRegistry, discover_universes
 from muon.config import AgentSettings, Settings
 from muon.evaluation.eval_scores import compare_nodes, score_answer
 from muon.evaluation.questions import EvalError, EvalSet, load_eval_sets, select_questions
@@ -26,6 +25,7 @@ from muon.evaluation.run import (
 )
 from muon.graph import GraphConnectionError
 from muon.llm.client import ModelCallError
+from muon.plugins import UniverseRegistry, discover_universes
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.fixtures.toy_plugin import write_toy_plugin
 from tests.unit.agent.test_ask import RecordingTracker

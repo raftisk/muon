@@ -11,7 +11,6 @@ import httpx
 import pytest
 
 from muon import cli
-from muon.agent.universes import UniversePlugin
 from muon.config import Neo4jSettings, OntologySettings, Settings
 from muon.graph import GraphConnectionError, WriteSummary
 from muon.ingestion.batch import NodeRef
@@ -32,6 +31,7 @@ from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
 from muon.ingestion.bulbapedia.ingest import (
+    BatchRejection,
     CensusReport,
     IngestReport,
     IngestRequest,
@@ -73,12 +73,15 @@ from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotFetchReport
 from muon.ingestion.runner import RunReport
 from muon.ingestion.seed import ABoxError
 from muon.ontology.model import OntologyError
+from muon.plugins import UniversePlugin
 from muon.retrieval.context import CacheStatus, SchemaCacheError, SchemaContext
 from muon.retrieval.schema import (
     GraphSchema,
     NodeLabelSchema,
     SchemaIntrospectionError,
 )
+from muon.validation import Violation
+from muon.validation.report import EdgeTypingFinding, LabelSetFinding, SweepReport
 
 PREFIX = "muontoy"
 SECRET = "secret-check"
@@ -1085,6 +1088,25 @@ def build_ingest_run(
     return IngestRun(report=report, elapsed_seconds=dict.fromkeys(IngestPass, 1.5))
 
 
+def build_rejected_ingest_run() -> IngestRun:
+    run = build_ingest_run()
+    rejection = BatchRejection(
+        page_title="Pikachu (Pokémon)",
+        ingest_pass="species",
+        violations=(
+            Violation(
+                rule_id="S1",
+                node=NodeRef(class_iri="https://example.org/ns#Widget", id="pikachu"),
+                property_name="pokedexNumber",
+                value="0",
+                message="A widget needs a number",
+            ),
+        ),
+    )
+    report = run.report.model_copy(update={"rejected_batches": (rejection,)})
+    return IngestRun(report=report, elapsed_seconds=run.elapsed_seconds)
+
+
 class RecordingIngest:
     """Stands in for `cli.run_ingest` and `cli.write_ingest_report`, and records both."""
 
@@ -1712,3 +1734,79 @@ def test_schema_status_line_names_how_the_schema_was_obtained(
     context = build_schema_context(cache_status)
 
     assert cli.format_schema_status(SCHEMA_PREFIX, context, 0.04) == expected
+
+
+@pytest.mark.usefixtures("settings")
+def test_ingest_with_a_rejected_batch_exits_1_and_lists_its_violations(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_ingest(monkeypatch, build_rejected_ingest_run())
+
+    exit_code = cli.main(INGEST_ARGV)
+
+    assert exit_code == 1
+    assert (
+        "rejected: Pikachu (Pokémon) (species): S1 Widget pikachu pokedexNumber: "
+        "A widget needs a number"
+    ) in capsys.readouterr().out
+
+
+def arrange_validate(monkeypatch: pytest.MonkeyPatch, outcome: SweepReport | Exception) -> None:
+    async def run(settings: Settings, prefix: str) -> SweepReport:
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr(cli, "run_validate", run)
+    monkeypatch.setattr(
+        cli, "write_sweep_report", lambda report, prefix: Path(f"{prefix}-sweep-report.json")
+    )
+
+
+@pytest.mark.usefixtures("settings")
+def test_validate_exits_0_for_a_clean_sweep(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arrange_validate(monkeypatch, SweepReport(stubs={"Widget": ("a",)}))
+
+    exit_code = cli.main(["validate", PREFIX])
+
+    output = capsys.readouterr().out
+    assert exit_code == cli.EXIT_SUCCESS
+    assert f"validate {PREFIX}: clean" in output
+    assert "Widget 1" in output
+    assert f"report: {PREFIX}-sweep-report.json" in output
+
+
+@pytest.mark.usefixtures("settings")
+def test_validate_exits_1_and_lists_findings_for_a_failing_sweep(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    report = SweepReport(
+        label_sets=(LabelSetFinding(labels=("A", "B"), count=2, sample_ids=("x", "y")),),
+        edge_typing=(
+            EdgeTypingFinding(relationship_type="HAS_A", end="end", count=1, sample_ids=("z",)),
+        ),
+    )
+    arrange_validate(monkeypatch, report)
+
+    exit_code = cli.main(["validate", PREFIX])
+
+    output = capsys.readouterr().out
+    assert exit_code == cli.EXIT_FAILURE
+    assert f"validate {PREFIX}: failing" in output
+    assert "A+B: 2 nodes (x, y)" in output
+    assert "HAS_A end: 1 relationships (z)" in output
+
+
+@pytest.mark.usefixtures("settings")
+def test_validate_failure_prints_the_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    error = GraphConnectionError(CONNECTION_MESSAGE)
+    arrange_validate(monkeypatch, error)
+
+    exit_code = cli.main(["validate", PREFIX])
+
+    assert exit_code == cli.EXIT_FAILURE
+    assert f"validate {PREFIX} failed: {error}" in capsys.readouterr().err

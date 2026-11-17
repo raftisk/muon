@@ -22,10 +22,26 @@ EVALS_FIELD = "evals"
 EVAL_SET_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9-]*$")
 IGNORED_FOLDER_NAMES = frozenset({"__pycache__"})
 HIDDEN_FOLDER_PREFIX = "."
+NAMESPACE_TERMINATORS = ("#", "/")
 
 
 class UniverseError(Exception):
     """A plugin folder or manifest that is missing, malformed or inconsistent."""
+
+
+class ProjectionEntry(BaseModel):
+    """One `[[projection]]` table of `universe.toml`.
+
+    An edge of `property` that carries `edge_property` is projected as the sub-property that
+    `values` names for the edge property's value. `values` maps the value as a string to a
+    property local name, resolved against the universe namespace.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    property: str
+    edge_property: str
+    values: dict[str, str]
 
 
 class UniverseManifest(BaseModel):
@@ -34,6 +50,9 @@ class UniverseManifest(BaseModel):
     `notes` is a path relative to the plugin folder. `evals` is an optional table of eval set
     name to the path of its question file, relative to the plugin folder. `attribution` is
     the credit line an answer prints when it cites text from the universe's source.
+    `namespace` and `shapes_namespace` are the IRI prefixes of the universe T-Box and its
+    shapes; both end with `#` or `/`. `projection` maps edge properties to sub-properties
+    for the Validator.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -41,8 +60,18 @@ class UniverseManifest(BaseModel):
     prefix: str
     name: str
     notes: str
+    namespace: str
+    shapes_namespace: str
     attribution: str | None = None
     evals: dict[str, str] | None = None
+    projection: tuple[ProjectionEntry, ...] = ()
+
+    @field_validator("namespace", "shapes_namespace")
+    @classmethod
+    def check_namespace_terminator(cls, namespace: str) -> str:
+        if not namespace.endswith(NAMESPACE_TERMINATORS):
+            raise ValueError(f"namespace {namespace!r} must end with '#' or '/'")
+        return namespace
 
     @field_validator("evals")
     @classmethod

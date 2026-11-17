@@ -2,7 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from muon.agent.universes import (
+from muon.config import DEFAULT_ONTOLOGY_DIR, DEFAULT_UNIVERSES_DIR
+from muon.plugins import (
     MANIFEST_FILE_NAME,
     UniverseError,
     UniverseRegistry,
@@ -187,3 +188,32 @@ def test_attribution_is_optional_and_read(universes_dir: Path, ontology_dir: Pat
 
     assert registry.get(TOY_UNIVERSE).manifest.attribution is None
     assert registry.get(ALT_UNIVERSE).manifest.attribution == "Credit line"
+
+
+@pytest.mark.parametrize("field", ["namespace", "shapes_namespace"])
+def test_namespace_without_a_terminator_raises(
+    universes_dir: Path, ontology_dir: Path, field: str
+) -> None:
+    write_toy_plugin(universes_dir, **{field: "https://muon.dev/ns/muontoy"})
+
+    with pytest.raises(UniverseError, match="must end with"):
+        discover_universes(universes_dir, ontology_dir)
+
+
+def test_projection_defaults_to_empty(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(universes_dir)
+
+    registry = discover_universes(universes_dir, ontology_dir)
+
+    assert registry.get(TOY_UNIVERSE).manifest.projection == ()
+
+
+def test_pkmn_plugin_loads_its_namespaces_and_projection() -> None:
+    manifest = discover_universes(DEFAULT_UNIVERSES_DIR, DEFAULT_ONTOLOGY_DIR).get("pkmn").manifest
+
+    assert manifest.namespace == "https://muon.dev/ns/pkmn#"
+    assert manifest.shapes_namespace == "https://muon.dev/ns/pkmn-shapes#"
+    assert len(manifest.projection) == 1
+    entry = manifest.projection[0]
+    assert (entry.property, entry.edge_property) == ("hasType", "slot")
+    assert entry.values == {"1": "primaryType", "2": "secondaryType"}

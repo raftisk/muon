@@ -2,7 +2,7 @@
 
 `seed_universe` reads the T-Box and `individuals/<prefix>.ttl`, then writes the
 batch in sync mode, so the graph mirrors the file after every run.
-`find_missing_seed_nodes` tells a later run which A-Box nodes the graph lacks, with
+`find_missing_nodes` tells a later run which of a set of nodes the graph lacks, with
 1 read and no write.
 
 `read_abox` maps the A-Box with no knowledge of the universe:
@@ -85,10 +85,10 @@ async def seed_universe(client: GraphClient, ontology_dir: Path, universe: str) 
     return await Runner(client, LabelMaterializer(model)).write(batch, WriteMode.SYNC)
 
 
-async def find_missing_seed_nodes(
-    client: GraphClient, materializer: LabelMaterializer, abox: GraphBatch
+async def find_missing_nodes(
+    client: GraphClient, materializer: LabelMaterializer, nodes: Iterable[NodeRecord]
 ) -> list[NodeRef]:
-    """Return the A-Box nodes with no node in the graph, sorted by class IRI and `id`.
+    """Return the `nodes` with no node in the graph, sorted by class IRI and `id`.
 
     A node counts as present when one carries its asserted class label, the universe
     label and its `id`. Properties and edges are not compared.
@@ -99,7 +99,7 @@ async def find_missing_seed_nodes(
             "class_iri": node.class_iri,
             "id": node.id,
         }
-        for node in abox.nodes
+        for node in nodes
     ]
     records = await client.execute_read(
         FIND_MISSING_NODES, {"universe": materializer.universe_label, "nodes": rows}
