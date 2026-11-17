@@ -5,9 +5,9 @@ from typing import Any
 import pytest
 
 import muon.retrieval.context as context_module
-from muon.agent.universes import UniversePlugin, discover_universes
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import load_ontology_model
+from muon.plugins import UniversePlugin, discover_universes
 from muon.retrieval.context import (
     READ_GRAPH_COUNTS,
     CacheStatus,

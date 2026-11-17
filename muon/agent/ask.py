@@ -5,10 +5,10 @@ import time
 from pydantic import BaseModel, ConfigDict
 
 from muon.agent.routing import AgentRuntime, build_scope, select_universe
-from muon.agent.universes import UniverseRegistry
 from muon.config import Settings
 from muon.generation.answer import Answer
 from muon.generation.generate import generate_answer
+from muon.plugins import UniverseRegistry
 from muon.retrieval.evidence import EvidenceBundle
 from muon.retrieval.resolve import resolve_names
 from muon.retrieval.resolved_names import ResolvedName

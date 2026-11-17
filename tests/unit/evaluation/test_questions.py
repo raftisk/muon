@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from muon.agent.universes import UniversePlugin, discover_universes
 from muon.evaluation.questions import (
     EvalError,
     EvalSet,
@@ -11,6 +10,7 @@ from muon.evaluation.questions import (
     load_eval_sets,
     select_questions,
 )
+from muon.plugins import UniversePlugin, discover_universes
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.fixtures.toy_plugin import write_toy_plugin
 from tests.unit.evaluation.fakes import EVAL_SET_NAME, WIDGET_QUERY, build_question_toml

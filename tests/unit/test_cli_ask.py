@@ -8,11 +8,11 @@ from pydantic import SecretStr
 from muon import cli
 from muon.agent.ask import AskRequest, AskResult, AskStats
 from muon.agent.routing import NO_PROGRESS
-from muon.agent.universes import UniverseRegistry
 from muon.config import AgentSettings, Neo4jSettings, Settings
 from muon.generation.answer import Answer, Claim
 from muon.graph import GraphConnectionError
 from muon.llm.client import ModelCallError
+from muon.plugins import UniverseRegistry
 from muon.retrieval.evidence import (
     Evidence,
     EvidenceBundle,

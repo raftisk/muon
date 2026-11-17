@@ -23,7 +23,6 @@ from pydantic import SecretStr, ValidationError
 
 from muon.agent.ask import AskRequest, AskResult, ask
 from muon.agent.routing import AgentRuntime, RoutingError, StepTracker, select_universe
-from muon.agent.universes import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
 from muon.config import AgentSettings, AgentStep, OntologySettings, Settings, get_settings
 from muon.console import STDERR, STDOUT, EvalDisplay, StepDisplay, build_eval_summary
 from muon.evaluation.questions import EvalError, load_eval_sets, select_questions
@@ -123,6 +122,7 @@ from muon.ingestion.seed import ABoxError, seed_universe
 from muon.llm.client import ModelCallError, create_chat_model
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyError, load_ontology_model
+from muon.plugins import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
 from muon.retrieval.context import (
     JSON_INDENT as SCHEMA_JSON_INDENT,
 )

@@ -1,4 +1,4 @@
-"""The agent, retrieval, generation and evaluation layers name no universe and never write."""
+"""The agent, retrieval, generation, evaluation and validation layers name no universe."""
 
 import re
 from pathlib import Path
@@ -12,7 +12,8 @@ from muon.ontology.model import extract_local_name
 UNIVERSE_PREFIX = "pkmn"
 UNIVERSE_NAMESPACE = f"https://muon.dev/ns/{UNIVERSE_PREFIX}#"
 UNIVERSE_TBOX = PROJECT_ROOT / "ontology" / "universes" / f"{UNIVERSE_PREFIX}.ttl"
-UNIVERSE_FREE_PACKAGES = ("agent", "retrieval", "generation", "evaluation")
+UNIVERSE_FREE_PACKAGES = ("agent", "retrieval", "generation", "evaluation", "validation")
+UNIVERSE_FREE_MODULES = ("plugins.py",)
 SOURCE_PATTERNS = ("*.py", "prompts/*.md")
 READ_ONLY_PACKAGES = ("retrieval", "generation", "evaluation")
 WRITE_METHOD_PATTERN = re.compile(r"\bexecute_write(_batch)?\b")
@@ -37,19 +38,20 @@ def find_violations(source_path: Path, patterns: dict[str, re.Pattern[str]]) -> 
     return violations
 
 
-def list_source_paths(packages: tuple[str, ...]) -> list[Path]:
-    return [
+def list_source_paths(packages: tuple[str, ...], modules: tuple[str, ...] = ()) -> list[Path]:
+    package_paths = [
         path
         for package in packages
         for pattern in SOURCE_PATTERNS
         for path in sorted((PROJECT_ROOT / "muon" / package).rglob(pattern))
     ]
+    return [*package_paths, *(PROJECT_ROOT / "muon" / module for module in modules)]
 
 
 def test_engine_packages_name_no_universe_or_universe_class() -> None:
     names = [UNIVERSE_PREFIX, *list_universe_class_names()]
     patterns = {name: re.compile(rf"\b{re.escape(name)}\b") for name in names}
-    source_paths = list_source_paths(UNIVERSE_FREE_PACKAGES)
+    source_paths = list_source_paths(UNIVERSE_FREE_PACKAGES, UNIVERSE_FREE_MODULES)
 
     violations = [
         violation for path in source_paths for violation in find_violations(path, patterns)

@@ -11,7 +11,6 @@ import httpx
 import pytest
 
 from muon import cli
-from muon.agent.universes import UniversePlugin
 from muon.config import Neo4jSettings, OntologySettings, Settings
 from muon.graph import GraphConnectionError, WriteSummary
 from muon.ingestion.batch import NodeRef
@@ -73,6 +72,7 @@ from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotFetchReport
 from muon.ingestion.runner import RunReport
 from muon.ingestion.seed import ABoxError
 from muon.ontology.model import OntologyError
+from muon.plugins import UniversePlugin
 from muon.retrieval.context import CacheStatus, SchemaCacheError, SchemaContext
 from muon.retrieval.schema import (
     GraphSchema,

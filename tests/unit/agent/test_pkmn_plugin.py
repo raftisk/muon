@@ -1,7 +1,7 @@
 import re
 
-from muon.agent.universes import discover_universes
 from muon.config import DEFAULT_ONTOLOGY_DIR, DEFAULT_UNIVERSES_DIR
+from muon.plugins import discover_universes
 
 EXPECTED_HEADINGS = [
     "Node keys",

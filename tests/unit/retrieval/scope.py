@@ -5,8 +5,8 @@ from pathlib import Path
 from pydantic import SecretStr
 
 from muon.agent.routing import UniverseScope, build_scope
-from muon.agent.universes import discover_universes
 from muon.config import Neo4jSettings, OntologySettings, Settings, UniverseSettings
+from muon.plugins import discover_universes
 from muon.retrieval.context import READ_GRAPH_COUNTS
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 from tests.fixtures.toy_plugin import write_toy_plugin

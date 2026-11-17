@@ -16,11 +16,11 @@ from muon.agent.ask import (
     ask,
 )
 from muon.agent.routing import NO_PROGRESS, AgentRuntime, RoutingError
-from muon.agent.universes import UniverseRegistry, discover_universes
 from muon.config import AgentSettings, Settings
 from muon.generation.answer import AnswerDraft, Claim
 from muon.graph import GraphNode
 from muon.llm.client import ModelCallError
+from muon.plugins import UniverseRegistry, discover_universes
 from muon.retrieval.context import READ_GRAPH_COUNTS
 from muon.retrieval.resolve import LOOK_UP_NAMES, NameMention, NameMentions
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology

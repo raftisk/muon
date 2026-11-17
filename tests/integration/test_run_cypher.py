@@ -10,9 +10,9 @@ from typing import LiteralString
 import pytest
 
 from muon.agent.routing import UniverseScope, build_scope
-from muon.agent.universes import discover_universes
 from muon.graph import Neo4jGraphClient
 from muon.ingestion.runner import Runner
+from muon.plugins import discover_universes
 from muon.retrieval.cypher import EvidenceLog, build_run_cypher_tool
 from muon.retrieval.evidence import Evidence, EvidenceStatus
 from tests.fixtures.toy_ontology import ALT_UNIVERSE, TOY_UNIVERSE, copy_toy_ontology
