@@ -4,10 +4,15 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import pytest
+from rdflib import Graph
 
+from muon.config import DEFAULT_UNIVERSES_DIR
 from muon.ingestion.batch import EdgeRecord, GraphBatch, NodeRecord, NodeRef, PropertyValue
 from muon.ingestion.seed import read_abox
-from muon.ontology.model import OntologyModel, load_ontology_model
+from muon.ontology.model import OntologyModel, load_ontology_model, load_tbox
+from muon.plugins import discover_universes
+from muon.validation.projection import ProjectionRules, build_projection_rules
+from muon.validation.shapes import load_shapes
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
 UNIVERSE = "pkmn"
@@ -56,3 +61,19 @@ def pkmn_model() -> OntologyModel:
 @pytest.fixture(scope="session")
 def pkmn_abox(pkmn_model: OntologyModel) -> GraphBatch:
     return read_abox(pkmn_model, ONTOLOGY_DIR)
+
+
+@pytest.fixture(scope="session")
+def pkmn_tbox() -> Graph:
+    return load_tbox(ONTOLOGY_DIR, UNIVERSE)
+
+
+@pytest.fixture(scope="session")
+def pkmn_shapes() -> Graph:
+    return load_shapes(ONTOLOGY_DIR, UNIVERSE)
+
+
+@pytest.fixture(scope="session")
+def pkmn_rules() -> ProjectionRules:
+    plugin = discover_universes(DEFAULT_UNIVERSES_DIR, ONTOLOGY_DIR).get(UNIVERSE)
+    return build_projection_rules(plugin.manifest)
