@@ -7,7 +7,7 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 | `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 20 object properties, 6 datatype properties |
 | `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.6.0. Imports the core. 37 classes, 47 object properties, 67 datatype properties |
 | `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 244 enumerable individuals in 19 classes |
-| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 23 rules, listed in [Shapes](#shapes) |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 22 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -186,7 +186,7 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 
 | Section | Rules |
 | --- | --- |
-| Node keys and edge typing | L2 node key pattern, T1 edge range and domain read from the T-Box |
+| Node keys | L2 node key pattern |
 | Species | S1 dex number, S2 types, S3 female rate and growth rate, S4 EV amount |
 | Natures | N1 nature stat edges |
 | Moves and types | M1 one type and one damage class, M2 move values (required `pp`, `priority`, `target` and `introducedIn`, value ranges, hit and turn counts in pairs, hit counts with the `multihit` flag), K1 one effectiveness per type pair |
@@ -197,7 +197,7 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 | Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role |
 | Encounters and locations | C1 encounter links, kind, level order and chance, C3 encounter method |
 
-Every shape carries `pkmn-shape:scope`, the classes it checks, or `pkmn-shape:Always` for the shapes that run on every touched node (L2 and T1). `validate(batch, scope)` runs a shape when its scope class is in the requested scope or a subclass of it. A node outside the scope may be a stub with only `id`, `name` and labels, and the Always shapes still apply to it. `scope=None` runs every shape and is the final sweep after all ingestion passes.
+Every shape carries `pkmn-shape:scope`, the classes it checks, or `pkmn-shape:Always` for the shapes that run on every touched node (L2). `validate(batch, scope)` runs a shape when its scope class is in the requested scope or a subclass of it. A node outside the scope may be a stub with only `id`, `name` and labels, and the Always shapes still apply to it. `scope=None` runs every shape and is the final sweep after all ingestion passes.
 
 The shapes check a projection of the Neo4j transaction, not the Neo4j data directly:
 
@@ -206,7 +206,7 @@ The shapes check a projection of the Neo4j transaction, not the Neo4j data direc
 - `HAS_TYPE {slot:1}` becomes `pkmn:primaryType` and `{slot:2}` becomes `pkmn:secondaryType`.
 - An edge with properties (`REQUIRES {role}`, `YIELDS_EV {amount}`) becomes a reified edge node with `rdf:subject`, `rdf:predicate`, `rdf:object` and the edge properties.
 
-The label hierarchy check (L1) and `id` uniqueness are not SHACL. The Validator runs them in code. Every `sh:in` list repeats values from a ttl definition, and `tests/unit/shapes/test_vocabularies.py` checks that they agree.
+The label hierarchy check (L1), `id` uniqueness and edge typing (T1) are not SHACL. The Validator runs them in code. T1 reads `rdfs:domain` and `rdfs:range` from the T-Box. As a SPARQL shape on `mo:Entity` and `mo:Meta` it would cost 2 queries per node, about 93% of the validation time. Every `sh:in` list repeats values from a ttl definition, and `tests/unit/shapes/test_vocabularies.py` checks that they agree.
 
 ## LPG realization
 
