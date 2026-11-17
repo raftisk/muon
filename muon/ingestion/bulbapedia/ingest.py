@@ -30,7 +30,7 @@ from muon.ingestion.bulbapedia.batching import UNIVERSE
 from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT
 from muon.ingestion.bulbapedia.runs import PageResult, PageStatus, ReportModel, dump_json
 from muon.ingestion.runner import Runner, RunReport, UniverseCensus, WriteMode
-from muon.ingestion.seed import find_missing_seed_nodes, read_abox
+from muon.ingestion.seed import find_missing_nodes, read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import extract_local_name, load_ontology_model
 
@@ -159,7 +159,7 @@ async def check_seed(
     client: GraphClient, materializer: LabelMaterializer, abox: GraphBatch
 ) -> None:
     """Raise `MissingSeedError` unless every A-Box node is in the graph."""
-    missing = await find_missing_seed_nodes(client, materializer, abox)
+    missing = await find_missing_nodes(client, materializer, abox.nodes)
     if missing:
         raise MissingSeedError(missing)
 

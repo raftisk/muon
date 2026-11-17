@@ -125,6 +125,10 @@ class GraphBatch(BaseModel):
     delete what the batch no longer lists. A claim anchors at a node record of the
     batch, and its identity is its `sort_key`. The batch checks claim keys, not
     their order; a claim that owns its other end names a class in `scope`.
+
+    `can_create_stubs` says whether a write may create the stubs of the batch. A producer
+    that reads a structured source sets it to `True`. With the default `False`, every stub
+    must already exist in the graph, which the Validator checks before the write.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -134,6 +138,7 @@ class GraphBatch(BaseModel):
     nodes: tuple[NodeRecord, ...]
     edges: tuple[EdgeRecord, ...]
     claims: tuple[EdgeClaim, ...] = ()
+    can_create_stubs: bool = False
 
     @property
     def owner_nodes(self) -> tuple[NodeRecord, ...]:

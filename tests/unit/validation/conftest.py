@@ -13,6 +13,8 @@ from muon.ontology.model import OntologyModel, load_ontology_model, load_tbox
 from muon.plugins import discover_universes
 from muon.validation.projection import ProjectionRules, build_projection_rules
 from muon.validation.shapes import load_shapes
+from muon.validation.validator import ValidatorInputs, build_validator
+from tests.unit.ingestion.recording_client import RecordingGraphClient
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[3] / "ontology"
 UNIVERSE = "pkmn"
@@ -77,3 +79,9 @@ def pkmn_shapes() -> Graph:
 def pkmn_rules() -> ProjectionRules:
     plugin = discover_universes(DEFAULT_UNIVERSES_DIR, ONTOLOGY_DIR).get(UNIVERSE)
     return build_projection_rules(plugin.manifest)
+
+
+@pytest.fixture(scope="session")
+def pkmn_validator_inputs() -> ValidatorInputs:
+    plugin = discover_universes(DEFAULT_UNIVERSES_DIR, ONTOLOGY_DIR).get(UNIVERSE)
+    return build_validator(RecordingGraphClient(), ONTOLOGY_DIR, plugin).inputs
