@@ -49,8 +49,10 @@ Restores a little HP for the {{p|Pikachu}} that holds it, which is long enough t
 ==Trivia==
 * A fact about the berry.
 """
-SLUDGE_WIKITEXT = ORAN_WIKITEXT.replace("Oran Berry", "Black Sludge").replace(
-    "[[Berry]]", "[[held item]]"
+SLUDGE_WIKITEXT = (
+    ORAN_WIKITEXT.replace("Oran Berry", "Black Sludge")
+    .replace("[[Berry]]", "[[held item]]")
+    .replace("{{ItemInfobox/FlavorRow|IV/VIII|10|10|0|10|10|20}}\n", "")
 )
 BAD_GEN_WIKITEXT = ORAN_WIKITEXT.replace("|gen=III", "|gen=ZZ")
 BOX = "{{ItemInfobox/head\n|name=X\n|gen=III\n}}\n{{ItemInfobox/BagRowBottom|IX|Items}}\n"
@@ -132,7 +134,7 @@ def test_the_report_counts_classes_values_and_chunks(tmp_path: Path) -> None:
 
     assert report.items_per_class == {"Berry": 1, "HeldItem": 1}
     assert report.items_per_category == {"Berries": 2}
-    assert report.flavor_edges == 8
+    assert report.flavor_edges == 4
     assert report.absent_fling_power == 0
     assert report.chunks_per_aspect == {"effect": 2, "flavor": 2, "trivia": 2}
     # No species page is pinned, so the {{p|Pikachu}} mention resolves to nothing.

@@ -1,7 +1,7 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
 `muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability|item`,
-`muon ingest bulbapedia species|move|ability`, `muon schema <prefix> [--refresh] [--json]` and
+`muon ingest bulbapedia species|move|ability|item`, `muon schema <prefix> [--refresh] [--json]` and
 `muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]` and
 `muon eval PREFIX [--set NAME ...] [--question ID ...] [--output-dir DIR]`."""
 
@@ -76,6 +76,11 @@ from muon.ingestion.bulbapedia.ingest import (
     MissingSeedError,
     PassProgress,
     StubIngestReport,
+)
+from muon.ingestion.bulbapedia.items.ingest import (
+    ItemIngestRun,
+    ingest_items,
+    write_item_ingest_report,
 )
 from muon.ingestion.bulbapedia.items.run import PAGE_TYPE as ITEM_PAGE_TYPE
 from muon.ingestion.bulbapedia.items.run import (
@@ -305,7 +310,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to ingest")
     ingest.add_argument(
         "page_type",
-        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE),
+        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE, ITEM_PAGE_TYPE),
         help="the set of pages to ingest",
     )
     ingest.add_argument(
@@ -910,6 +915,42 @@ def execute_ability_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
+async def run_item_ingest(
+    settings: Settings, run: ItemParseRun, titles: tuple[str, ...]
+) -> ItemIngestRun:
+    request = IngestRequest(
+        ontology_dir=settings.ontology.ontology_dir,
+        universes_dir=settings.universes.universes_dir,
+        titles=titles,
+        on_progress=print_progress,
+    )
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        return await ingest_items(client, run, request)
+
+
+def execute_item_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {ITEM_PAGE_TYPE}")
+    started = time.monotonic()
+    try:
+        run = run_item_parse(ItemParseRequest(titles=titles))
+    except ITEM_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+    parse_seconds = time.monotonic() - started
+
+    try:
+        ingest_run = asyncio.run(run_item_ingest(settings, run, titles))
+    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    write_item_ingest_report(ingest_run.report)
+    print(format_item_parse_report(run.report, parse_seconds))
+    print(format_ingest_report(ITEM_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
+    return EXIT_SUCCESS if is_clean else EXIT_FAILURE
+
+
 def execute_seed(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_seed(settings, prefix))
@@ -1322,6 +1363,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_move_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND and arguments.page_type == ABILITY_PAGE_TYPE:
         return execute_ability_ingest(settings, tuple(arguments.titles))
+    if arguments.command == INGEST_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
+        return execute_item_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND:
         return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
     if arguments.command == PURGE_COMMAND:

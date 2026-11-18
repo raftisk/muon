@@ -42,6 +42,7 @@ from muon.ingestion.bulbapedia.ingest import (
     PassTotals,
     StubIngestReport,
 )
+from muon.ingestion.bulbapedia.items.ingest import ItemIngestRun, ItemPass
 from muon.ingestion.bulbapedia.items.run import (
     ItemParseReport,
     ItemParseRequest,
@@ -1309,7 +1310,7 @@ def test_ingest_stops_on_invalid_settings_before_the_parse(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["ingest", "bulbapedia", "item"], "'item'"),
+        (["ingest", "bulbapedia", "location"], "'location'"),
         (["ingest", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -1599,6 +1600,67 @@ def test_ability_ingest_parses_ingests_and_prints_the_stubs(
         "chunk: 314 batches in 1.0 s",
         "nodes Ability: 314",
         "stubs Ability: 0",
+    ]
+
+
+def build_item_ingest_run() -> ItemIngestRun:
+    report = StubIngestReport(
+        titles=(),
+        is_full_run=True,
+        passes=tuple(
+            PassTotals(ingest_pass=ingest_pass, batches_written=1436, counters={})
+            for ingest_pass in ItemPass
+        ),
+        changed_pages=(),
+        failed_pages=(),
+        stop=None,
+        census=CensusReport(labels={"Item": 1436}, relationship_types={}),
+        stub_ids={"Item": ()},
+    )
+    return ItemIngestRun(report=report, elapsed_seconds=dict.fromkeys(ItemPass, 1.0))
+
+
+class RecordingItemIngest:
+    """Stands in for `cli.run_item_ingest` and `cli.write_item_ingest_report`."""
+
+    def __init__(self, outcome: ItemIngestRun) -> None:
+        self.outcome = outcome
+        self.titles: list[tuple[str, ...]] = []
+        self.reports: list[StubIngestReport] = []
+
+    async def run(
+        self, settings: Settings, run: ItemParseRun, titles: tuple[str, ...]
+    ) -> ItemIngestRun:
+        self.titles.append(titles)
+        return self.outcome
+
+    def write_report(self, report: StubIngestReport) -> Path:
+        self.reports.append(report)
+        return Path("item-ingest-report.json")
+
+
+@pytest.mark.usefixtures("settings")
+def test_item_ingest_parses_ingests_and_prints_the_stubs(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parse = RecordingItemParse(build_item_report())
+    ingest = RecordingItemIngest(build_item_ingest_run())
+    monkeypatch.setattr(cli, "run_item_parse", parse)
+    monkeypatch.setattr(cli, "run_item_ingest", ingest.run)
+    monkeypatch.setattr(cli, "write_item_ingest_report", ingest.write_report)
+
+    exit_code = cli.main(["ingest", "bulbapedia", "item", "--title", "Black Sludge"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert parse.requests == [ItemParseRequest(titles=("Black Sludge",))]
+    assert ingest.titles == [("Black Sludge",)]
+    assert len(ingest.reports) == 1
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[lines.index("ingest bulbapedia item: done") + 1 :] == [
+        "item: 1436 batches in 1.0 s",
+        "chunk: 1436 batches in 1.0 s",
+        "nodes Item: 1436",
+        "stubs Item: 0",
     ]
 
 
