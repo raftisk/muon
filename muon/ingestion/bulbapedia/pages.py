@@ -76,6 +76,12 @@ class Manifest(BaseModel):
         return frozenset(pin.page_id for pins in self.page_types.values() for pin in pins)
 
 
+def build_permalink(title: str, revision_id: int) -> str:
+    """Return the URL of 1 revision of the page `title`, the `sourceUrl` of chunks cut from it."""
+    url_title = quote(title.replace(TITLE_SPACE, URL_TITLE_SPACE), safe=PERMALINK_SAFE_CHARACTERS)
+    return PERMALINK_TEMPLATE.format(title=url_title, revision_id=revision_id)
+
+
 class Page(BaseModel):
     """1 page file: the pinned revision of a page, its page type and its wikitext."""
 
@@ -92,10 +98,7 @@ class Page(BaseModel):
     @property
     def permalink(self) -> str:
         """The URL of this revision, the `sourceUrl` of chunks cut from it."""
-        url_title = quote(
-            self.title.replace(TITLE_SPACE, URL_TITLE_SPACE), safe=PERMALINK_SAFE_CHARACTERS
-        )
-        return PERMALINK_TEMPLATE.format(title=url_title, revision_id=self.revision_id)
+        return build_permalink(self.title, self.revision_id)
 
     @property
     def pin(self) -> PagePin:
