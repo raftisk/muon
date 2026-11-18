@@ -42,7 +42,13 @@ from muon.ingestion.bulbapedia.ingest import (
     PassTotals,
     StubIngestReport,
 )
-from muon.ingestion.bulbapedia.moves.batches import MachineFieldError
+from muon.ingestion.bulbapedia.items.run import (
+    ItemParseReport,
+    ItemParseRequest,
+    ItemParseRun,
+)
+from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
+from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
     MovePass,
@@ -1040,7 +1046,7 @@ def test_parse_reports_run_errors_with_exit_1(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["parse", "bulbapedia", "item"], "'item'"),
+        (["parse", "bulbapedia", "location"], "'location'"),
         (["parse", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -1810,3 +1816,88 @@ def test_validate_failure_prints_the_error(
 
     assert exit_code == cli.EXIT_FAILURE
     assert f"validate {PREFIX} failed: {error}" in capsys.readouterr().err
+
+
+def build_item_report(pages_failed: int = 0) -> ItemParseReport:
+    return ItemParseReport(
+        pages=(),
+        pages_parsed=1436,
+        pages_skipped=767,
+        pages_failed=pages_failed,
+        skipped_per_reason={
+            "no_item_infobox": 182,
+            "no_main_series_bag_row": 247,
+            "machine_page": 338,
+        },
+        items_per_class={"Berry": 96, "HeldItem": 310, "Item": 1030},
+        items_per_category={},
+        notes=(),
+        absent_fling_power=867,
+        flavor_edges=181,
+        batch_counts=BatchCounts(owner_nodes={"Item": 1030}, stubs={}, edges={}, claims={}),
+        chunk_counts=BatchCounts(owner_nodes={"TextChunk": 8249}, stubs={}, edges={}, claims={}),
+        chunks_per_aspect={"effect": 3930, "flavor": 3707, "trivia": 612},
+        mentions=4429,
+        dropped_templates=(),
+        removed_tables_total=0,
+        math_formulas_total=0,
+        unknown_codes=(),
+        missing_stub_sources=("move",),
+        unowned_stub_ids=("moon-stone",),
+    )
+
+
+class RecordingItemParse:
+    """Stands in for `cli.run_item_parse` and records the requests it ran."""
+
+    def __init__(self, outcome: ItemParseReport | Exception) -> None:
+        self.outcome = outcome
+        self.requests: list[ItemParseRequest] = []
+
+    def __call__(self, request: ItemParseRequest) -> ItemParseRun:
+        self.requests.append(request)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return ItemParseRun(outputs=(), report=self.outcome)
+
+
+def test_parse_item_reaches_the_item_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    parse = RecordingItemParse(build_item_report())
+    monkeypatch.setattr(cli, "run_item_parse", parse)
+
+    exit_code = cli.main(["parse", "bulbapedia", "item", "--title", "Black Sludge"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert parse.requests == [ItemParseRequest(titles=("Black Sludge",))]
+    output = capsys.readouterr().out
+    assert "pages parsed: 1436" in output
+    assert "skipped machine_page: 338" in output
+    assert "chunks: 8249" in output
+    assert "stub source missing: move" in output
+    assert "unowned item stubs: 1" in output
+    assert "unowned: moon-stone" in output
+
+
+def test_parse_item_exits_1_when_a_page_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "run_item_parse", RecordingItemParse(build_item_report(1)))
+
+    assert cli.main(["parse", "bulbapedia", "item"]) == cli.EXIT_FAILURE
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        GameCodeError("SV names 'Scarlet-Violet', which is no A-Box VersionGroup"),
+        ItemParseRunError("Titles that are not pinned item pages: ['X']"),
+    ],
+)
+def test_parse_item_failure_prints_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
+) -> None:
+    monkeypatch.setattr(cli, "run_item_parse", RecordingItemParse(error))
+
+    assert cli.main(["parse", "bulbapedia", "item"]) == cli.EXIT_FAILURE
+
+    assert f"parse bulbapedia item failed: {error}" in capsys.readouterr().err

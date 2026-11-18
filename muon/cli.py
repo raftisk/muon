@@ -1,6 +1,6 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
-`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability`,
+`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability|item`,
 `muon ingest bulbapedia species|move|ability`, `muon schema <prefix> [--refresh] [--json]` and
 `muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]` and
 `muon eval PREFIX [--set NAME ...] [--question ID ...] [--output-dir DIR]`."""
@@ -77,6 +77,16 @@ from muon.ingestion.bulbapedia.ingest import (
     PassProgress,
     StubIngestReport,
 )
+from muon.ingestion.bulbapedia.items.run import PAGE_TYPE as ITEM_PAGE_TYPE
+from muon.ingestion.bulbapedia.items.run import (
+    ItemParseReport,
+    ItemParseRequest,
+    ItemParseRun,
+    ItemRunInputs,
+    parse_item_pages,
+)
+from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
+from muon.ingestion.bulbapedia.items.run import write_outputs as write_item_outputs
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
@@ -205,6 +215,14 @@ MOVE_PARSE_ERRORS = (
     ABoxError,
 )
 
+ITEM_PARSE_ERRORS = (
+    ItemParseRunError,
+    GameCodeError,
+    PageStoreError,
+    OntologyError,
+    ABoxError,
+)
+
 ABILITY_PARSE_ERRORS = (
     AbilityParseRunError,
     SupCodeError,
@@ -269,7 +287,7 @@ def build_parser() -> argparse.ArgumentParser:
     parse.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to parse")
     parse.add_argument(
         "page_type",
-        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE),
+        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE, ITEM_PAGE_TYPE),
         help="the set of pages to parse",
     )
     parse.add_argument(
@@ -659,6 +677,60 @@ def execute_ability_parse(titles: tuple[str, ...]) -> int:
         return EXIT_FAILURE
 
     print(format_ability_parse_report(run.report, time.monotonic() - started))
+    return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
+
+
+def run_item_parse(request: ItemParseRequest) -> ItemParseRun:
+    """Parse the pinned item pages and write the outputs. No Neo4j or LLM setting is read."""
+    inputs = ItemRunInputs(request, PageStore(), OntologySettings().ontology_dir)
+    run = parse_item_pages(inputs)
+    write_item_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
+    return run
+
+
+def format_item_parse_report(report: ItemParseReport, elapsed_seconds: float) -> str:
+    """The page counts, skip reasons, classes, batch counts, notes and unowned stubs."""
+    counts = report.batch_counts
+    lines = [
+        f"{PARSE_COMMAND} {BULBAPEDIA_SOURCE} {ITEM_PAGE_TYPE}: done",
+        f"pages parsed: {report.pages_parsed}",
+        f"pages skipped: {report.pages_skipped}",
+        f"pages failed: {report.pages_failed}",
+    ]
+    lines.extend(
+        f"skipped {reason}: {count}" for reason, count in report.skipped_per_reason.items()
+    )
+    lines.extend(
+        f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
+    )
+    lines.append(f"chunks: {sum(report.chunks_per_aspect.values())}")
+    lines.append(f"stubs: {sum(counts.stubs.values()) + sum(report.chunk_counts.stubs.values())}")
+    lines.append(f"edges: {sum(counts.edges.values()) + sum(report.chunk_counts.edges.values())}")
+    note_counts = Counter(note.kind.value for note in report.notes)
+    lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
+    lines.append(f"unknown game codes: {len(report.unknown_codes)}")
+    lines.extend(f"stub source missing: {page_type}" for page_type in report.missing_stub_sources)
+    lines.append(f"unowned item stubs: {len(report.unowned_stub_ids)}")
+    lines.extend(f"unowned: {stub_id}" for stub_id in report.unowned_stub_ids)
+    lines.extend(
+        f"failed: {page.title}: {page.reason}"
+        for page in report.pages
+        if page.status is PageStatus.FAILED
+    )
+    lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
+    return "\n".join(lines)
+
+
+def execute_item_parse(titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(PARSE_COMMAND, f"{BULBAPEDIA_SOURCE} {ITEM_PAGE_TYPE}")
+    started = time.monotonic()
+    try:
+        run = run_item_parse(ItemParseRequest(titles=titles))
+    except ITEM_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_item_parse_report(run.report, time.monotonic() - started))
     return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
 
 
@@ -1234,6 +1306,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_move_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND and arguments.page_type == ABILITY_PAGE_TYPE:
         return execute_ability_parse(tuple(arguments.titles))
+    if arguments.command == PARSE_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
+        return execute_item_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND:
         return execute_parse(ParseRequest(titles=tuple(arguments.titles)))
 
