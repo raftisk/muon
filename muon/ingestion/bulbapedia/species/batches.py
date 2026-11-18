@@ -49,9 +49,11 @@ from muon.ingestion.bulbapedia.batching import (
     GENERATION,
     GENERATION_LABEL,
     HAS_TYPE,
+    HELD_ITEM,
     IN,
     IN_VERSION_GROUP,
     INTRODUCED_IN,
+    ITEM,
     LOCATION,
     MACHINE,
     MENTIONED_IN,
@@ -114,8 +116,6 @@ FORM_CHANGE = PKMN + "FormChange"
 EVOLUTION = PKMN + "Evolution"
 EGG_GROUP = PKMN + "EggGroup"
 STAT = PKMN + "Stat"
-HELD_ITEM = PKMN + "HeldItem"
-ITEM = PKMN + "Item"
 VERSION = PKMN + "Version"
 ENCOUNTER = PKMN + "Encounter"
 

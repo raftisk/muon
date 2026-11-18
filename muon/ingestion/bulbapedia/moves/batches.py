@@ -63,7 +63,7 @@ from muon.ingestion.bulbapedia.batching import (
     to_roman,
 )
 from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact
-from muon.ingestion.bulbapedia.moves.chunks import GAME_CODES
+from muon.ingestion.bulbapedia.descriptions import GAME_CODES
 from muon.ingestion.bulbapedia.moves.page import (
     DAMAGE_CLASS_KEY,
     GENERATION_KEY,
