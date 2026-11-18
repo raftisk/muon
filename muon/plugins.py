@@ -20,6 +20,7 @@ MANIFEST_FILE_NAME = "universe.toml"
 NOTES_FIELD = "notes"
 EVALS_FIELD = "evals"
 EVAL_SET_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9-]*$")
+KEY_CLASS_NAME_PATTERN = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 IGNORED_FOLDER_NAMES = frozenset({"__pycache__"})
 HIDDEN_FOLDER_PREFIX = "."
 NAMESPACE_TERMINATORS = ("#", "/")
@@ -52,7 +53,8 @@ class UniverseManifest(BaseModel):
     the credit line an answer prints when it cites text from the universe's source.
     `namespace` and `shapes_namespace` are the IRI prefixes of the universe T-Box and its
     shapes; both end with `#` or `/`. `projection` maps edge properties to sub-properties
-    for the Validator.
+    for the Validator. `key_classes` lists the local names of the classes whose label keys
+    a node by `id` for the whole class family below them.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -65,6 +67,7 @@ class UniverseManifest(BaseModel):
     attribution: str | None = None
     evals: dict[str, str] | None = None
     projection: tuple[ProjectionEntry, ...] = ()
+    key_classes: tuple[str, ...] = ()
 
     @field_validator("namespace", "shapes_namespace")
     @classmethod
@@ -72,6 +75,19 @@ class UniverseManifest(BaseModel):
         if not namespace.endswith(NAMESPACE_TERMINATORS):
             raise ValueError(f"namespace {namespace!r} must end with '#' or '/'")
         return namespace
+
+    @field_validator("key_classes")
+    @classmethod
+    def check_key_classes(cls, key_classes: tuple[str, ...]) -> tuple[str, ...]:
+        for name in key_classes:
+            if not KEY_CLASS_NAME_PATTERN.fullmatch(name):
+                raise ValueError(
+                    f"key class {name!r} does not match {KEY_CLASS_NAME_PATTERN.pattern}"
+                )
+        repeated = sorted({name for name in key_classes if key_classes.count(name) > 1})
+        if repeated:
+            raise ValueError(f"key classes repeat: {', '.join(repeated)}")
+        return key_classes
 
     @field_validator("evals")
     @classmethod

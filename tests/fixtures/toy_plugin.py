@@ -17,11 +17,12 @@ def write_toy_plugin(
     universes_dir: Path,
     prefix: str = TOY_UNIVERSE,
     folder_name: str | None = None,
-    **manifest_overrides: str | dict[str, str],
+    **manifest_overrides: str | list[str] | dict[str, str],
 ) -> Path:
     """Write a plugin folder with a manifest and a notes file; return the folder.
 
-    A dict override is written as a TOML table after the top-level keys.
+    A list override is written as a TOML array and a dict override as a TOML table after the
+    top-level keys.
     The folder is named `folder_name`, or `prefix` when it is `None`.
     """
     folder = universes_dir / (folder_name or prefix)
@@ -35,7 +36,9 @@ def write_toy_plugin(
         **manifest_overrides,
     }
     lines = [
-        f"{key} = {json.dumps(value)}" for key, value in manifest.items() if isinstance(value, str)
+        f"{key} = {json.dumps(value)}"
+        for key, value in manifest.items()
+        if isinstance(value, str | list)
     ]
     for key, table in manifest.items():
         if isinstance(table, dict):

@@ -80,7 +80,7 @@ def test_normalize_property_type(raw_type: str, expected: str) -> None:
 def test_list_descendant_labels(toy_materializer: LabelMaterializer) -> None:
     ancestors = toy_materializer.map_ancestor_labels()
 
-    assert list_descendant_labels("ToyGadget", ancestors) == ["ToyWidget"]
+    assert list_descendant_labels("ToyGadget", ancestors) == ["ToyGizmo", "ToyWidget"]
     assert list_descendant_labels("ToyWidget", ancestors) == []
 
 
