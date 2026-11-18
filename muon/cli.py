@@ -128,7 +128,7 @@ from muon.ingestion.pokeapi.snapshot import (
 from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, read_abox, seed_universe
 from muon.llm.client import ModelCallError, create_chat_model
-from muon.ontology.materializer import LabelMaterializer
+from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
 from muon.ontology.model import OntologyError, extract_local_name, load_ontology_model
 from muon.plugins import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
 from muon.retrieval.context import (
@@ -382,9 +382,17 @@ def format_report(universe: str, report: RunReport) -> str:
     return "\n".join(lines)
 
 
+def load_plugin(settings: Settings, prefix: str) -> UniversePlugin:
+    registry = discover_universes(settings.universes.universes_dir, settings.ontology.ontology_dir)
+    return registry.get(prefix)
+
+
 async def run_seed(settings: Settings, prefix: str) -> RunReport:
+    plugin = load_plugin(settings, prefix)
     async with Neo4jGraphClient(settings.neo4j) as client:
-        return await seed_universe(client, settings.ontology.ontology_dir, prefix)
+        return await seed_universe(
+            client, settings.ontology.ontology_dir, prefix, plugin.manifest.key_classes
+        )
 
 
 def format_purge_report(prefix: str, summary: WriteSummary) -> str:
@@ -833,7 +841,7 @@ def execute_ability_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
 def execute_seed(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_seed(settings, prefix))
-    except (OntologyError, ABoxError, GraphError) as error:
+    except (OntologyError, ABoxError, GraphError, UniverseError) as error:
         print(f"{build_failure_prefix(SEED_COMMAND, prefix)} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
@@ -845,14 +853,15 @@ async def run_validate(settings: Settings, prefix: str) -> SweepReport:
     ontology_dir = settings.ontology.ontology_dir
     model = load_ontology_model(ontology_dir, prefix)
     abox = read_abox(model, ontology_dir)
+    materializer = build_plugin_materializer(model, load_plugin(settings, prefix).manifest)
     async with Neo4jGraphClient(settings.neo4j) as client:
-        return await run_sweep(client, LabelMaterializer(model), model, abox)
+        return await run_sweep(client, materializer, model, abox)
 
 
 def execute_validate(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_validate(settings, prefix))
-    except (OntologyError, ABoxError, GraphError) as error:
+    except (OntologyError, ABoxError, GraphError, UniverseError) as error:
         print(f"{build_failure_prefix(VALIDATE_COMMAND, prefix)} {error}", file=sys.stderr)
         return EXIT_FAILURE
 

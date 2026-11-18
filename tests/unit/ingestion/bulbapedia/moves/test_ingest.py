@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from muon.config import DEFAULT_UNIVERSES_DIR
+from muon.config import DEFAULT_ONTOLOGY_DIR, DEFAULT_UNIVERSES_DIR
 from muon.graph import GraphQueryError, Statement
 from muon.ingestion.bulbapedia import ingest
 from muon.ingestion.bulbapedia.batching import MACHINE, MOVE, PKMN, TEXT_CHUNK
@@ -36,6 +36,10 @@ from muon.ingestion.runner import (
     PRUNE_CLAIMED_IN,
     PRUNE_CLAIMED_OUT,
 )
+from muon.ingestion.schema import list_constraint_labels
+from muon.ontology.materializer import build_plugin_materializer
+from muon.ontology.model import load_ontology_model
+from muon.plugins import discover_universes
 from tests.unit.ingestion.bulbapedia.moves.test_pokeapi import TABLES, write_snapshot
 from tests.unit.ingestion.bulbapedia.moves.test_run import (
     BROKEN,
@@ -152,7 +156,12 @@ async def test_constraints_are_ensured_once_before_the_first_batch(parse: ParseR
     assert set(kinds[:first_batch]) == {str}
     assert set(kinds[first_batch:]) == {list}
     constraints = [write for write in client.writes if write.startswith("CREATE CONSTRAINT")]
-    assert len(constraints) == len(list_move_constraint_classes(run.outputs))
+    materializer = build_plugin_materializer(
+        load_ontology_model(DEFAULT_ONTOLOGY_DIR, "pkmn"),
+        discover_universes(DEFAULT_UNIVERSES_DIR, DEFAULT_ONTOLOGY_DIR).get("pkmn").manifest,
+    )
+    labels = list_constraint_labels(materializer, list_move_constraint_classes(run.outputs))
+    assert len(constraints) == len(labels)
     assert len(client.writes) == len(constraints) + 1
 
 

@@ -21,7 +21,7 @@ CREATE_NODE = f"CREATE (:{GADGET_LABELS}:{TOY_UNIVERSE} {{id: $id, name: $id}})"
 
 
 async def seed_toy_universe(graph_client: Neo4jGraphClient, ontology_dir: Path) -> None:
-    await seed_universe(graph_client, ontology_dir, TOY_UNIVERSE)
+    await seed_universe(graph_client, ontology_dir, TOY_UNIVERSE, ())
 
 
 async def sweep(toy_runner: Runner, ontology_dir: Path):

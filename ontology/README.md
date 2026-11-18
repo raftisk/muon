@@ -213,7 +213,7 @@ The label hierarchy check (L1), `id` uniqueness and edge typing (T1) are not SHA
 `Validator.validate(batch)` runs 6 steps. Step 1 ends the run when it finds a violation, because the later steps cannot read an IRI the T-Box does not declare. The others all run.
 
 1. `IRI`: every scope class, node class, node property, edge property and claim IRI is declared in the T-Box.
-2. `ID`: no 2 nodes of the batch share an `id` when one class is an ancestor of the other.
+2. `ID`: no 2 nodes of the batch share an `id` when they share a key class label or one class is an ancestor of the other.
 3. `T1`: every edge end has a class, or an ancestor, in the property's `rdfs:domain` and `rdfs:range`.
 4. `ABOX`: a stub of an A-Box class matches an A-Box individual.
 5. `REF`: with `GraphBatch.can_create_stubs` false, every stub is a node in the graph. The Bulbapedia producers set it true, so their batches skip this read.
@@ -249,7 +249,8 @@ The Neo4j graph follows the ttl through these rules.
 - Shortcuts. `EVOLVES_TO`, `CAN_LEARN` and `FOUND_IN` are derived from reified nodes and exist next to them.
 - Edge properties exist in Neo4j only: `isHidden` on `HAS_ABILITY`, `amount` on `YIELDS_EV` and `role` on `REQUIRES` (use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor, fusesWith).
 - Individuals from `individuals/` become nodes with their class labels, the universe label and `name`.
-- Node key. `id` is the lowercase hyphenated English name (`shadow-ball`, `diglett-alola`), unique per label. Apostrophes are dropped, not hyphenated (`Farfetch'd` gives `farfetchd`). `name` is not a key, since names repeat across labels ("Psychic" is a Type and a Move).
+- Node key. `id` is the lowercase hyphenated English name (`shadow-ball`, `diglett-alola`), unique per label, and unique per class family for a key class. Apostrophes are dropped, not hyphenated (`Farfetch'd` gives `farfetchd`). `name` is not a key, since names repeat across labels ("Psychic" is a Type and a Move).
+- Key classes. `key_classes` in `universe.toml` lists the class local names that key a family (`Item` and `Location` for pkmn). The Runner, the seed lookup and the Validator find a node by `id` on the label of its nearest key class, so an owner finds a stub that a page wrote with a sibling class (`HeldItem` becomes `Berry`). The schema applier ensures the `id` constraint on each class label and on each key label (`id_unique_Item`). A key class must not have a key class ancestor.
 - Datatypes. `xsd:string` -> `STRING`, `xsd:integer` -> `INTEGER`, `xsd:decimal` -> `FLOAT`, `xsd:boolean` -> `BOOLEAN`. A repeated string (`aliases`, `conditions`) becomes `LIST<STRING>`.
 - Text. Only `TextChunk` nodes carry an `embedding` (`VECTOR`), which is not declared in the ttl.
 - Indexes. The full-text index `entity_names` covers `name` and `aliases` on the core labels `Entity`, `Work` and `Series`, so 1 index serves every universe and retrieval filters by the universe label. It is not declared in the ttl. `Runner.ensure_constraints` creates it with the `id` constraints, and `scripts/create_name_index.py` creates it on a graph that exists. Neo4j scores a name match above an alias match through a field boost in the query, not in the index. `TextChunk`, `GenerationMechanic` and `Universe` nodes carry none of the 3 labels and stay out.

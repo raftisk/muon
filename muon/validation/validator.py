@@ -8,7 +8,7 @@ from rdflib import Graph
 from muon.graph import GraphClient
 from muon.ingestion.batch import GraphBatch
 from muon.ingestion.seed import read_abox
-from muon.ontology.materializer import LabelMaterializer
+from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
 from muon.ontology.model import OntologyModel, build_ontology_model, load_tbox
 from muon.plugins import UniversePlugin
 from muon.validation.checks import check_abox_stubs, check_edge_typing, check_ids, check_iris
@@ -51,7 +51,7 @@ class Validator:
             return ValidationReport(violations=iri_violations)
 
         violations: list[Violation] = [
-            *check_ids(batch, inputs.model),
+            *check_ids(batch, inputs.model, inputs.materializer),
             *check_edge_typing(batch, inputs.model),
             *check_abox_stubs(batch, inputs.abox),
             *await find_unresolved_stubs(self.client, inputs.materializer, batch),
@@ -75,7 +75,7 @@ def build_validator(client: GraphClient, ontology_dir: Path, plugin: UniversePlu
     model = build_ontology_model(tbox, universe)
     inputs = ValidatorInputs(
         model=model,
-        materializer=LabelMaterializer(model),
+        materializer=build_plugin_materializer(model, plugin.manifest),
         tbox=tbox,
         shapes=load_shapes(ontology_dir, universe),
         abox=read_abox(model, ontology_dir),

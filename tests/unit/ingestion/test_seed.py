@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from rdflib import Graph
 
-from muon.ingestion.batch import GraphBatch, NodeRef, PropertyValue
+from muon.ingestion.batch import GraphBatch, NodeRecord, NodeRef, PropertyValue
 from muon.ingestion.runner import MERGE_EDGES_SYNC, MERGE_NODES_SYNC, PRUNE_EDGES, PRUNE_NODES
 from muon.ingestion.seed import (
     FIND_MISSING_NODES,
@@ -210,7 +210,7 @@ async def test_seed_universe_writes_constraints_then_batch(tmp_path: Path) -> No
     ontology_dir = copy_toy_ontology(tmp_path)
     client = RecordingGraphClient()
 
-    report = await seed_universe(client, ontology_dir, TOY_UNIVERSE)
+    report = await seed_universe(client, ontology_dir, TOY_UNIVERSE, ())
 
     assert len(client.writes) == 3
     assert [statement.query for statement in client.batches[0]] == [
@@ -229,7 +229,7 @@ async def test_seed_universe_with_invalid_abox_writes_nothing(tmp_path: Path) ->
     client = RecordingGraphClient()
 
     with pytest.raises(ABoxError, match="the predicate is not declared"):
-        await seed_universe(client, ontology_dir, TOY_UNIVERSE)
+        await seed_universe(client, ontology_dir, TOY_UNIVERSE, ())
 
     assert client.calls == []
 
@@ -294,3 +294,18 @@ async def test_no_missing_records_give_an_empty_list(
 def test_presence_statement_matches_on_label_universe_and_id() -> None:
     assert "$([row.label, $universe])" in FIND_MISSING_NODES
     assert "{id: row.id}" in FIND_MISSING_NODES
+
+
+async def test_presence_rows_use_the_key_label(
+    toy_model: OntologyModel, toy_ontology_dir: Path
+) -> None:
+    widget = NodeRecord(class_iri=TOY + "ToyWidget", id="w1", name="W1")
+    client = RecordingGraphClient()
+
+    await find_missing_nodes(client, LabelMaterializer(toy_model, ["ToyGadget"]), [widget])
+
+    ((_, parameters),) = client.reads
+    assert parameters is not None
+    assert parameters["nodes"] == [
+        {"label": "ToyGadget", "class_iri": TOY + "ToyWidget", "id": "w1"}
+    ]
