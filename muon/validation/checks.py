@@ -5,6 +5,7 @@ from collections import defaultdict
 from rdflib.namespace import RDFS
 
 from muon.ingestion.batch import GraphBatch, NodeRecord, NodeRef
+from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, extract_local_name
 from muon.validation.report import (
     RULE_ABOX,
@@ -97,8 +98,10 @@ def find_node_iri_violations(node: NodeRecord, model: OntologyModel) -> list[Vio
     return violations
 
 
-def check_ids(batch: GraphBatch, model: OntologyModel) -> tuple[Violation, ...]:
-    """Flag 2 node records that share an `id` when one class is an ancestor of the other.
+def check_ids(
+    batch: GraphBatch, model: OntologyModel, materializer: LabelMaterializer
+) -> tuple[Violation, ...]:
+    """Flag 2 node records that share an `id` and a key label, or form an ancestor pair.
 
     Such records would be 1 Neo4j node with 2 identities. Unrelated classes may share an
     `id`: names repeat across labels by design.
@@ -111,17 +114,27 @@ def check_ids(batch: GraphBatch, model: OntologyModel) -> tuple[Violation, ...]:
     for node_id, refs in refs_by_id.items():
         for position, first in enumerate(refs):
             for second in refs[position + 1 :]:
-                if is_ancestor_pair(first.class_iri, second.class_iri, model):
+                key_label = materializer.map_key_label(first.class_iri)
+                if is_same_identity(first, second, model, materializer):
                     violations.append(
                         Violation(
                             rule_id=RULE_ID,
                             node=first,
                             value=node_id,
                             message=f"Nodes {first.class_iri} and {second.class_iri} share the "
-                            f"id {node_id!r} and one class is an ancestor of the other",
+                            f"id {node_id!r} and the key label {key_label!r}, or one class is "
+                            f"an ancestor of the other",
                         )
                     )
     return tuple(violations)
+
+
+def is_same_identity(
+    first: NodeRef, second: NodeRef, model: OntologyModel, materializer: LabelMaterializer
+) -> bool:
+    if materializer.map_key_label(first.class_iri) == materializer.map_key_label(second.class_iri):
+        return True
+    return is_ancestor_pair(first.class_iri, second.class_iri, model)
 
 
 def is_ancestor_pair(first_class: str, second_class: str, model: OntologyModel) -> bool:

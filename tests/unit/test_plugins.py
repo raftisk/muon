@@ -217,3 +217,42 @@ def test_pkmn_plugin_loads_its_namespaces_and_projection() -> None:
     entry = manifest.projection[0]
     assert (entry.property, entry.edge_property) == ("hasType", "slot")
     assert entry.values == {"1": "primaryType", "2": "secondaryType"}
+
+
+def test_key_classes_default_to_empty(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(universes_dir)
+
+    registry = discover_universes(universes_dir, ontology_dir)
+
+    assert registry.get(TOY_UNIVERSE).manifest.key_classes == ()
+
+
+def test_key_classes_are_read(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(universes_dir, key_classes=["ToyGadget"])
+
+    registry = discover_universes(universes_dir, ontology_dir)
+
+    assert registry.get(TOY_UNIVERSE).manifest.key_classes == ("ToyGadget",)
+
+
+@pytest.mark.parametrize("name", ["toyGadget", "Toy Gadget", "Toy-Gadget", ""])
+def test_key_class_that_fails_the_pattern_raises(
+    universes_dir: Path, ontology_dir: Path, name: str
+) -> None:
+    write_toy_plugin(universes_dir, key_classes=[name])
+
+    with pytest.raises(UniverseError, match="does not match"):
+        discover_universes(universes_dir, ontology_dir)
+
+
+def test_repeated_key_class_raises(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(universes_dir, key_classes=["ToyGadget", "ToyGadget"])
+
+    with pytest.raises(UniverseError, match="repeat: ToyGadget"):
+        discover_universes(universes_dir, ontology_dir)
+
+
+def test_pkmn_plugin_names_its_key_classes() -> None:
+    manifest = discover_universes(DEFAULT_UNIVERSES_DIR, DEFAULT_ONTOLOGY_DIR).get("pkmn").manifest
+
+    assert manifest.key_classes == ("Item", "Location")

@@ -4,10 +4,10 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 
 | File | Namespace | Content |
 | --- | --- | --- |
-| `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 20 object properties, 6 datatype properties |
-| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.6.0. Imports the core. 37 classes, 47 object properties, 67 datatype properties |
-| `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 244 enumerable individuals in 19 classes |
-| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 22 rules, listed in [Shapes](#shapes) |
+| `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 21 object properties, 6 datatype properties |
+| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.7.0. Imports the core. 39 classes, 51 object properties, 69 datatype properties |
+| `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 249 enumerable individuals in 20 classes |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 27 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -100,8 +100,8 @@ The pkmn ontology models species and game mechanics. It holds no individual Poke
 | --- | --- |
 | `mo:Species` | `PokemonSpecies` (forms are `PokemonSpecies` nodes too) |
 | `mo:Power` | `Move` |
-| `mo:Concept` | `Type`, `Stat`, `BattleStat`, `Nature`, `EggGroup`, `Ability`, `MoveDamageClass`, `MoveFlag` |
-| `mo:Concept` (reified) | `MoveEffect`, `AbilityEffect`, `ItemEffect`, `LearnsetEntry`, `Evolution`, `FormChange`, `Encounter` |
+| `mo:Concept` | `Type`, `Stat`, `BattleStat`, `Nature`, `Flavor`, `EggGroup`, `Ability`, `MoveDamageClass`, `MoveFlag` |
+| `mo:Concept` (reified) | `MoveEffect`, `AbilityEffect`, `ItemEffect`, `LearnsetEntry`, `Evolution`, `FormChange`, `Encounter`, `ItemFind` |
 | `mo:Concept` | `BattleCondition` > `StatusCondition`, `VolatileCondition`, `FieldCondition` > `Weather`, `Terrain`, `EntryHazard`, `FieldEffect` |
 | `mo:Object` | `Item` > `Berry`, `Machine`, `HeldItem` |
 | `mo:Group` | `SpeciesGroup` > `LegendaryGroup`, `StarterTrio` |
@@ -112,7 +112,7 @@ The pkmn ontology models species and game mechanics. It holds no individual Poke
 
 ### Individuals
 
-`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 15 EggGroups, 25 Natures, 8 StatusConditions, 28 VolatileConditions, 9 Weathers, 4 Terrains, 5 EntryHazards, 10 FieldEffects, 20 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics, 24 VersionGroups, 40 Versions and the `pkmn:pokemon` Universe, 244 individuals in all. `introducedIn` sits on Types, Natures, Terrains, Regions, GenerationMechanics, EggGroups, EntryHazards, StatusConditions and Weathers (100 edges). The A-Box also holds reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 10 weather and terrain type edges, 64 `partOf` edges and 27 condition edges. A condition enters the A-Box when at least 2 distinct entities (moves, abilities, items, types, terrains) inflict, cure, block, ignore or react to it, or when PokeAPI lists it as a move ailment (Nightmare, Embargo, Landed); the others stay in text. A condition carries `aliases` for the move-derived name (Taunted: Taunt). A condition that lasts a fixed number of turns carries `minTurns` and `maxTurns` (Sleep 2 to 4, Bound 4 to 5, the 5 regular weathers and 4 terrains 5); 31 conditions do. A condition without them lasts until something removes it. Every other instance is created by ingestion.
+`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 15 EggGroups, 25 Natures, 5 Flavors, 8 StatusConditions, 28 VolatileConditions, 9 Weathers, 4 Terrains, 5 EntryHazards, 10 FieldEffects, 20 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics, 24 VersionGroups, 40 Versions and the `pkmn:pokemon` Universe, 249 individuals in all. `introducedIn` sits on Types, Natures, Flavors, Terrains, Regions, GenerationMechanics, EggGroups, EntryHazards, StatusConditions and Weathers (105 edges). The A-Box also holds reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 40 nature flavor edges, 10 weather and terrain type edges, 64 `partOf` edges and 27 condition edges. A condition enters the A-Box when at least 2 distinct entities (moves, abilities, items, types, terrains) inflict, cure, block, ignore or react to it, or when PokeAPI lists it as a move ailment (Nightmare, Embargo, Landed); the others stay in text. A condition carries `aliases` for the move-derived name (Taunted: Taunt). A condition that lasts a fixed number of turns carries `minTurns` and `maxTurns` (Sleep 2 to 4, Bound 4 to 5, the 5 regular weathers and 4 terrains 5); 31 conditions do. A condition without them lasts until something removes it. Every other instance is created by ingestion.
 
 ### Species, types and natures
 
@@ -170,7 +170,9 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 
 ### Items
 
-- `Item` properties: `category`, `price`, `isConsumable`, `effectText`. `Berry` adds `flavour`.
+- `Item` properties: `category`, `buyPrice`, `sellPrice`, `flingPower`, `isConsumable`, `effectText`. The prices are the Scarlet/Violet shop prices. `Berry` links to a `Flavor` with `hasFlavor`, written `HAS_FLAVOR` with the edge property `potency`, an integer above 0. A flavor the berry lacks has no edge.
+- `Flavor` has 5 individuals (Spicy, Dry, Sweet, Bitter, Sour). A nature likes the flavor of the stat it boosts (`likesFlavor`) and dislikes the flavor of the stat it reduces (`dislikesFlavor`). The 5 neutral natures have neither.
+- `ItemFind` reifies 1 find of an item at a location in a version, linked with `hasFind`, `atLocation` and `inVersion`, and carries an optional `isHidden` and a `method`.
 - Items with a battle effect use the effect model. Items that only gate something (evolution stones, Mega Stones) are reached through `requires`.
 
 ### Generations, versions and encounters
@@ -188,14 +190,14 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 | --- | --- |
 | Node keys | L2 node key pattern |
 | Species | S1 dex number, S2 types, S3 female rate and growth rate, S4 EV amount |
-| Natures | N1 nature stat edges |
+| Natures | N1 nature stat edges, N2 liked and disliked flavor |
 | Moves and types | M1 one type and one damage class, M2 move values (required `pp`, `priority`, `target` and `introducedIn`, value ranges, hit and turn counts in pairs, hit counts with the `multihit` flag), K1 one effectiveness per type pair |
 | Battle conditions | B1 `minTurns` and `maxTurns` together, at least 1, in order |
-| Items | C2 machine links, kind (TM, HM, TR) and number |
+| Items | I1 item values (at most 1 `category`, prices at or above 0, `flingPower` above 0, 1 `introducedIn` except for machines), I2 `HAS_FLAVOR` potency, C2 machine links, kind (TM, HM, TR) and number |
 | Meta and text | G1 version part of a version group, G2 version group part of a generation, X1 text chunk completeness, X2 `fromWork` by aspect |
 | Moves: flags, effects, learnset | C2 learnset entry, E1 effect values and booleans (`isOverworld`, `isProtectable`), X3 `effectText` owner |
 | Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role |
-| Encounters and locations | C1 encounter links, kind, level order and chance, C3 encounter method |
+| Encounters and locations | C1 encounter links, kind, level order and chance, C3 encounter method, C4 item find links, C5 `ADJACENT_TO` direction |
 
 Every shape carries `pkmn-shape:scope`, the classes it checks, or `pkmn-shape:Always` for the shapes that run on every touched node (L2). `validate(batch, scope)` runs a shape when its scope class is in the requested scope or a subclass of it. A node outside the scope may be a stub with only `id`, `name` and labels, and the Always shapes still apply to it. `scope=None` runs every shape and is the final sweep after all ingestion passes.
 
@@ -213,7 +215,7 @@ The label hierarchy check (L1), `id` uniqueness and edge typing (T1) are not SHA
 `Validator.validate(batch)` runs 6 steps. Step 1 ends the run when it finds a violation, because the later steps cannot read an IRI the T-Box does not declare. The others all run.
 
 1. `IRI`: every scope class, node class, node property, edge property and claim IRI is declared in the T-Box.
-2. `ID`: no 2 nodes of the batch share an `id` when one class is an ancestor of the other.
+2. `ID`: no 2 nodes of the batch share an `id` when they share a key class label or one class is an ancestor of the other.
 3. `T1`: every edge end has a class, or an ancestor, in the property's `rdfs:domain` and `rdfs:range`.
 4. `ABOX`: a stub of an A-Box class matches an A-Box individual.
 5. `REF`: with `GraphBatch.can_create_stubs` false, every stub is a node in the graph. The Bulbapedia producers set it true, so their batches skip this read.
@@ -247,9 +249,11 @@ The Neo4j graph follows the ttl through these rules.
 - Sub-properties. Only the most specific property becomes a relationship. An effect node may write the general `AFFECTS_STAT`, because its magnitude lives on the node.
 - Exception: `pkmn:primaryType` and `pkmn:secondaryType` both become `HAS_TYPE`, with the edge property `slot` 1 or 2. A move has 1 `HAS_TYPE` and no `slot`.
 - Shortcuts. `EVOLVES_TO`, `CAN_LEARN` and `FOUND_IN` are derived from reified nodes and exist next to them.
-- Edge properties exist in Neo4j only: `isHidden` on `HAS_ABILITY`, `amount` on `YIELDS_EV` and `role` on `REQUIRES` (use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor, fusesWith).
+- `mo:adjacentTo` is written `ADJACENT_TO`. It is not symmetric: each location writes its own edges, and the edge carries `direction`, the direction in which the target lies (north, south, east or west).
+- Edge properties exist in Neo4j only: `isHidden` on `HAS_ABILITY`, `amount` on `YIELDS_EV`, `potency` on `HAS_FLAVOR`, `direction` on `ADJACENT_TO` and `role` on `REQUIRES` (use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor, fusesWith).
 - Individuals from `individuals/` become nodes with their class labels, the universe label and `name`.
-- Node key. `id` is the lowercase hyphenated English name (`shadow-ball`, `diglett-alola`), unique per label. Apostrophes are dropped, not hyphenated (`Farfetch'd` gives `farfetchd`). `name` is not a key, since names repeat across labels ("Psychic" is a Type and a Move).
+- Node key. `id` is the lowercase hyphenated English name (`shadow-ball`, `diglett-alola`), unique per label, and unique per class family for a key class. Apostrophes are dropped, not hyphenated (`Farfetch'd` gives `farfetchd`). `name` is not a key, since names repeat across labels ("Psychic" is a Type and a Move).
+- Key classes. `key_classes` in `universe.toml` lists the class local names that key a family (`Item` and `Location` for pkmn). The Runner, the seed lookup and the Validator find a node by `id` on the label of its nearest key class, so an owner finds a stub that a page wrote with a sibling class (`HeldItem` becomes `Berry`). The schema applier ensures the `id` constraint on each class label and on each key label (`id_unique_Item`). A key class must not have a key class ancestor.
 - Datatypes. `xsd:string` -> `STRING`, `xsd:integer` -> `INTEGER`, `xsd:decimal` -> `FLOAT`, `xsd:boolean` -> `BOOLEAN`. A repeated string (`aliases`, `conditions`) becomes `LIST<STRING>`.
 - Text. Only `TextChunk` nodes carry an `embedding` (`VECTOR`), which is not declared in the ttl.
 - Indexes. The full-text index `entity_names` covers `name` and `aliases` on the core labels `Entity`, `Work` and `Series`, so 1 index serves every universe and retrieval filters by the universe label. It is not declared in the ttl. `Runner.ensure_constraints` creates it with the `id` constraints, and `scripts/create_name_index.py` creates it on a graph that exists. Neo4j scores a name match above an alias match through a field boost in the query, not in the index. `TextChunk`, `GenerationMechanic` and `Universe` nodes carry none of the 3 labels and stay out.

@@ -1,7 +1,7 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
-`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability`,
-`muon ingest bulbapedia species|move|ability`, `muon schema <prefix> [--refresh] [--json]` and
+`muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability|item`,
+`muon ingest bulbapedia species|move|ability|item`, `muon schema <prefix> [--refresh] [--json]` and
 `muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]` and
 `muon eval PREFIX [--set NAME ...] [--question ID ...] [--output-dir DIR]`."""
 
@@ -77,6 +77,21 @@ from muon.ingestion.bulbapedia.ingest import (
     PassProgress,
     StubIngestReport,
 )
+from muon.ingestion.bulbapedia.items.ingest import (
+    ItemIngestRun,
+    ingest_items,
+    write_item_ingest_report,
+)
+from muon.ingestion.bulbapedia.items.run import PAGE_TYPE as ITEM_PAGE_TYPE
+from muon.ingestion.bulbapedia.items.run import (
+    ItemParseReport,
+    ItemParseRequest,
+    ItemParseRun,
+    ItemRunInputs,
+    parse_item_pages,
+)
+from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
+from muon.ingestion.bulbapedia.items.run import write_outputs as write_item_outputs
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
@@ -128,7 +143,7 @@ from muon.ingestion.pokeapi.snapshot import (
 from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, read_abox, seed_universe
 from muon.llm.client import ModelCallError, create_chat_model
-from muon.ontology.materializer import LabelMaterializer
+from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
 from muon.ontology.model import OntologyError, extract_local_name, load_ontology_model
 from muon.plugins import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
 from muon.retrieval.context import (
@@ -205,6 +220,14 @@ MOVE_PARSE_ERRORS = (
     ABoxError,
 )
 
+ITEM_PARSE_ERRORS = (
+    ItemParseRunError,
+    GameCodeError,
+    PageStoreError,
+    OntologyError,
+    ABoxError,
+)
+
 ABILITY_PARSE_ERRORS = (
     AbilityParseRunError,
     SupCodeError,
@@ -269,7 +292,7 @@ def build_parser() -> argparse.ArgumentParser:
     parse.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to parse")
     parse.add_argument(
         "page_type",
-        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE),
+        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE, ITEM_PAGE_TYPE),
         help="the set of pages to parse",
     )
     parse.add_argument(
@@ -287,7 +310,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to ingest")
     ingest.add_argument(
         "page_type",
-        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE),
+        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE, ITEM_PAGE_TYPE),
         help="the set of pages to ingest",
     )
     ingest.add_argument(
@@ -382,9 +405,17 @@ def format_report(universe: str, report: RunReport) -> str:
     return "\n".join(lines)
 
 
+def load_plugin(settings: Settings, prefix: str) -> UniversePlugin:
+    registry = discover_universes(settings.universes.universes_dir, settings.ontology.ontology_dir)
+    return registry.get(prefix)
+
+
 async def run_seed(settings: Settings, prefix: str) -> RunReport:
+    plugin = load_plugin(settings, prefix)
     async with Neo4jGraphClient(settings.neo4j) as client:
-        return await seed_universe(client, settings.ontology.ontology_dir, prefix)
+        return await seed_universe(
+            client, settings.ontology.ontology_dir, prefix, plugin.manifest.key_classes
+        )
 
 
 def format_purge_report(prefix: str, summary: WriteSummary) -> str:
@@ -654,6 +685,60 @@ def execute_ability_parse(titles: tuple[str, ...]) -> int:
     return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
 
 
+def run_item_parse(request: ItemParseRequest) -> ItemParseRun:
+    """Parse the pinned item pages and write the outputs. No Neo4j or LLM setting is read."""
+    inputs = ItemRunInputs(request, PageStore(), OntologySettings().ontology_dir)
+    run = parse_item_pages(inputs)
+    write_item_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
+    return run
+
+
+def format_item_parse_report(report: ItemParseReport, elapsed_seconds: float) -> str:
+    """The page counts, skip reasons, classes, batch counts, notes and unowned stubs."""
+    counts = report.batch_counts
+    lines = [
+        f"{PARSE_COMMAND} {BULBAPEDIA_SOURCE} {ITEM_PAGE_TYPE}: done",
+        f"pages parsed: {report.pages_parsed}",
+        f"pages skipped: {report.pages_skipped}",
+        f"pages failed: {report.pages_failed}",
+    ]
+    lines.extend(
+        f"skipped {reason}: {count}" for reason, count in report.skipped_per_reason.items()
+    )
+    lines.extend(
+        f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
+    )
+    lines.append(f"chunks: {sum(report.chunks_per_aspect.values())}")
+    lines.append(f"stubs: {sum(counts.stubs.values()) + sum(report.chunk_counts.stubs.values())}")
+    lines.append(f"edges: {sum(counts.edges.values()) + sum(report.chunk_counts.edges.values())}")
+    note_counts = Counter(note.kind.value for note in report.notes)
+    lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
+    lines.append(f"unknown game codes: {len(report.unknown_codes)}")
+    lines.extend(f"stub source missing: {page_type}" for page_type in report.missing_stub_sources)
+    lines.append(f"unowned item stubs: {len(report.unowned_stub_ids)}")
+    lines.extend(f"unowned: {stub_id}" for stub_id in report.unowned_stub_ids)
+    lines.extend(
+        f"failed: {page.title}: {page.reason}"
+        for page in report.pages
+        if page.status is PageStatus.FAILED
+    )
+    lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
+    return "\n".join(lines)
+
+
+def execute_item_parse(titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(PARSE_COMMAND, f"{BULBAPEDIA_SOURCE} {ITEM_PAGE_TYPE}")
+    started = time.monotonic()
+    try:
+        run = run_item_parse(ItemParseRequest(titles=titles))
+    except ITEM_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_item_parse_report(run.report, time.monotonic() - started))
+    return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
+
+
 def format_progress(progress: PassProgress) -> str:
     return (
         f"{progress.ingest_pass.value}: {progress.done}/{progress.total} batches, "
@@ -830,10 +915,46 @@ def execute_ability_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
+async def run_item_ingest(
+    settings: Settings, run: ItemParseRun, titles: tuple[str, ...]
+) -> ItemIngestRun:
+    request = IngestRequest(
+        ontology_dir=settings.ontology.ontology_dir,
+        universes_dir=settings.universes.universes_dir,
+        titles=titles,
+        on_progress=print_progress,
+    )
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        return await ingest_items(client, run, request)
+
+
+def execute_item_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {ITEM_PAGE_TYPE}")
+    started = time.monotonic()
+    try:
+        run = run_item_parse(ItemParseRequest(titles=titles))
+    except ITEM_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+    parse_seconds = time.monotonic() - started
+
+    try:
+        ingest_run = asyncio.run(run_item_ingest(settings, run, titles))
+    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    write_item_ingest_report(ingest_run.report)
+    print(format_item_parse_report(run.report, parse_seconds))
+    print(format_ingest_report(ITEM_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
+    return EXIT_SUCCESS if is_clean else EXIT_FAILURE
+
+
 def execute_seed(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_seed(settings, prefix))
-    except (OntologyError, ABoxError, GraphError) as error:
+    except (OntologyError, ABoxError, GraphError, UniverseError) as error:
         print(f"{build_failure_prefix(SEED_COMMAND, prefix)} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
@@ -845,14 +966,15 @@ async def run_validate(settings: Settings, prefix: str) -> SweepReport:
     ontology_dir = settings.ontology.ontology_dir
     model = load_ontology_model(ontology_dir, prefix)
     abox = read_abox(model, ontology_dir)
+    materializer = build_plugin_materializer(model, load_plugin(settings, prefix).manifest)
     async with Neo4jGraphClient(settings.neo4j) as client:
-        return await run_sweep(client, LabelMaterializer(model), model, abox)
+        return await run_sweep(client, materializer, model, abox)
 
 
 def execute_validate(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_validate(settings, prefix))
-    except (OntologyError, ABoxError, GraphError) as error:
+    except (OntologyError, ABoxError, GraphError, UniverseError) as error:
         print(f"{build_failure_prefix(VALIDATE_COMMAND, prefix)} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
@@ -1225,6 +1347,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_move_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND and arguments.page_type == ABILITY_PAGE_TYPE:
         return execute_ability_parse(tuple(arguments.titles))
+    if arguments.command == PARSE_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
+        return execute_item_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND:
         return execute_parse(ParseRequest(titles=tuple(arguments.titles)))
 
@@ -1239,6 +1363,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_move_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND and arguments.page_type == ABILITY_PAGE_TYPE:
         return execute_ability_ingest(settings, tuple(arguments.titles))
+    if arguments.command == INGEST_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
+        return execute_item_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND:
         return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
     if arguments.command == PURGE_COMMAND:

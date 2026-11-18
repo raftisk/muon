@@ -4,6 +4,7 @@ notes = "notes.md"
 namespace = "https://muon.dev/ns/pkmn#"
 shapes_namespace = "https://muon.dev/ns/pkmn-shapes#"
 attribution = "Text from Bulbapedia (https://bulbapedia.bulbagarden.net), licensed under CC BY-NC-SA 2.5."
+key_classes = ["Item", "Location"]
 
 [evals]
 general = "evals/general.toml"

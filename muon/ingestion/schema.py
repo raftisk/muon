@@ -1,6 +1,6 @@
 """Schema applier: uniqueness constraints on the node key and the name index.
 
-Map: `ensure_id_constraints` creates one `id` constraint per class, and
+Map: `ensure_id_constraints` creates one `id` constraint per class label and per key label, and
 `ensure_name_index` creates the full-text index that retrieval uses to resolve names.
 
 Neo4j accepts no label parameter in schema statements, so this module is the only
@@ -25,15 +25,25 @@ def build_constraint_name(label: str) -> str:
     return f"{CONSTRAINT_NAME_PREFIX}{label}"
 
 
-def build_id_constraint(materializer: LabelMaterializer, class_iri: str) -> LiteralString:
-    """Return the statement that makes `id` unique for the label of `class_iri`."""
-    if class_iri not in materializer.model.classes:
-        raise OntologyError(f"Cannot constrain {class_iri}: it is not a named class")
-    label = materializer.map_class_label(class_iri)
+def list_constraint_labels(
+    materializer: LabelMaterializer, class_iris: Iterable[str]
+) -> tuple[str, ...]:
+    """Return the sorted labels that need an `id` constraint: each class and its key label."""
+    labels: set[str] = set()
+    for class_iri in set(class_iris):
+        if class_iri not in materializer.model.classes:
+            raise OntologyError(f"Cannot constrain {class_iri}: it is not a named class")
+        labels.add(materializer.map_class_label(class_iri))
+        labels.add(materializer.map_key_label(class_iri))
+    return tuple(sorted(labels))
+
+
+def build_id_constraint(label: str) -> LiteralString:
+    """Return the statement that makes `id` unique for `label`."""
     if not CONSTRAINT_LABEL_PATTERN.fullmatch(label):
         raise OntologyError(
-            f"Cannot constrain {class_iri}: label {label!r} does not match "
-            f"{CONSTRAINT_LABEL_PATTERN.pattern}"
+            f"Cannot constrain label {label!r}, "
+            f"which does not match {CONSTRAINT_LABEL_PATTERN.pattern}"
         )
     name = build_constraint_name(label)
     # Safe as query text: `label` and `name` passed the pattern check above.
@@ -46,13 +56,11 @@ def build_id_constraint(materializer: LabelMaterializer, class_iri: str) -> Lite
 async def ensure_id_constraints(
     client: GraphClient, materializer: LabelMaterializer, class_iris: Iterable[str]
 ) -> int:
-    """Create the missing constraints, 1 transaction each, and return how many were ensured."""
-    statements = sorted(
-        (build_id_constraint(materializer, class_iri) for class_iri in set(class_iris)),
-    )
-    for statement in statements:
-        await client.execute_write(statement)
-    return len(statements)
+    """Create the missing constraints, 1 transaction each; return how many labels were ensured."""
+    labels = list_constraint_labels(materializer, class_iris)
+    for label in labels:
+        await client.execute_write(build_id_constraint(label))
+    return len(labels)
 
 
 def build_name_index_statement() -> LiteralString:

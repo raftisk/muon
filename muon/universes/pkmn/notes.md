@@ -47,10 +47,9 @@ An `Encounter` is reached from a species through `HAS_ENCOUNTER`. It gives the g
 
 ### Text
 
-A `TextChunk` is a passage of prose with `text`, `aspect` (`biology`, `origin`, `pokedex`, `trivia`, `effect` or `flavor`), `section` (the heading path, for example `Biology > Forms`) and `sourceUrl`. Each chunk belongs to 1 species, move or ability through `DESCRIBES`. Other entities named in a chunk point at it through `MENTIONED_IN`. `FROM_WORK` points at the `Version` or `VersionGroup` the passage is about. There is no vector or full-text index yet, so text is found by starting from an entity.
+A `TextChunk` is a passage of prose with `text`, `aspect` (`biology`, `origin`, `pokedex`, `trivia`, `effect` or `flavor`), `section` (the heading path, for example `Biology > Forms`) and `sourceUrl`. Each chunk belongs to 1 species, move, ability or item through `DESCRIBES`. Other entities named in a chunk point at it through `MENTIONED_IN`. `FROM_WORK` points at the `Version` or `VersionGroup` the passage is about. There is no vector or full-text index yet, so text is found by starting from an entity.
 
 ### Gaps
 
 - Moves and abilities carry their effect as `effectText` and as chunks with the aspect `effect`. There is no `MoveEffect`, `AbilityEffect` or `ItemEffect` node.
-- Item pages are not ingested.
-- The graph is not validated against the SHACL shapes.
+- Item pages are ingested for the core series games. An item has `category`, the Scarlet/Violet `buyPrice` and `sellPrice` when a shop trades it, `flingPower` when it can be thrown and, for a berry, `HAS_FLAVOR` with a `potency`. Items have no `isConsumable` and no `effectText`.

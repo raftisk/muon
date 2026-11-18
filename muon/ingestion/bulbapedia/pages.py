@@ -76,6 +76,12 @@ class Manifest(BaseModel):
         return frozenset(pin.page_id for pins in self.page_types.values() for pin in pins)
 
 
+def build_permalink(title: str, revision_id: int) -> str:
+    """Return the URL of 1 revision of the page `title`, the `sourceUrl` of chunks cut from it."""
+    url_title = quote(title.replace(TITLE_SPACE, URL_TITLE_SPACE), safe=PERMALINK_SAFE_CHARACTERS)
+    return PERMALINK_TEMPLATE.format(title=url_title, revision_id=revision_id)
+
+
 class Page(BaseModel):
     """1 page file: the pinned revision of a page, its page type and its wikitext."""
 
@@ -92,10 +98,7 @@ class Page(BaseModel):
     @property
     def permalink(self) -> str:
         """The URL of this revision, the `sourceUrl` of chunks cut from it."""
-        url_title = quote(
-            self.title.replace(TITLE_SPACE, URL_TITLE_SPACE), safe=PERMALINK_SAFE_CHARACTERS
-        )
-        return PERMALINK_TEMPLATE.format(title=url_title, revision_id=self.revision_id)
+        return build_permalink(self.title, self.revision_id)
 
     @property
     def pin(self) -> PagePin:
@@ -163,7 +166,11 @@ class PageStore:
             raise PageStoreError(f"Cannot read page file {path}: {error}") from error
 
     def read_page(self, page_type: str, pin: PagePin) -> Page:
-        """Return the page file of `pin`, checked against the pin and `page_type`."""
+        """Return the page file of `pin`, checked against the pin.
+
+        `page_type` only names the fetch command in the error of a missing file: 1 page can be
+        pinned under 2 page types and then has 1 file.
+        """
         path = self.build_page_path(pin.page_id)
         if not path.exists():
             hint = FETCH_HINT.format(page_type=page_type)
@@ -174,11 +181,6 @@ class PageStore:
         mismatch = describe_mismatch(page, pin)
         if mismatch is not None:
             raise PageStoreError(f"Page file for {pin.title!r} differs from its pin: {mismatch}")
-        if page.page_type != page_type:
-            raise PageStoreError(
-                f"Page file for {pin.title!r} has page type {page.page_type!r}, "
-                f"expected {page_type!r}"
-            )
         return page
 
     def is_current(self, pin: PagePin) -> bool:

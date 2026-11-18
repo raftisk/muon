@@ -1,4 +1,5 @@
 from muon.ingestion.batch import ClaimDirection, EdgeClaim, GraphBatch
+from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel
 from muon.validation.checks import check_abox_stubs, check_edge_typing, check_ids, check_iris
 from muon.validation.report import RULE_ABOX, RULE_EDGE_TYPING, RULE_ID, RULE_IRI
@@ -17,6 +18,7 @@ TYPE = PKMN + "Type"
 ABILITY = PKMN + "Ability"
 ITEM = PKMN + "Item"
 BERRY = PKMN + "Berry"
+HELD_ITEM = PKMN + "HeldItem"
 REGION = MO + "Region"
 HAS_TYPE = PKMN + "hasType"
 HAS_ABILITY = PKMN + "hasAbility"
@@ -110,13 +112,35 @@ def test_datatype_iri_used_as_an_edge_fails(pkmn_model: OntologyModel) -> None:
 def test_ancestor_and_descendant_sharing_an_id_fail(pkmn_model: OntologyModel) -> None:
     batch = build_test_batch([ITEM], [build_node(ITEM, "oran"), build_node(BERRY, "oran")])
 
-    assert rule_ids(check_ids(batch, pkmn_model)) == {RULE_ID}
+    assert rule_ids(check_ids(batch, pkmn_model, LabelMaterializer(pkmn_model))) == {RULE_ID}
+
+
+def test_siblings_sharing_an_id_and_a_key_label_fail(pkmn_model: OntologyModel) -> None:
+    materializer = LabelMaterializer(pkmn_model, ["Item"])
+    batch = build_test_batch(
+        [BERRY, HELD_ITEM], [build_node(BERRY, "oran"), build_node(HELD_ITEM, "oran")]
+    )
+
+    violations = check_ids(batch, pkmn_model, materializer)
+
+    assert rule_ids(violations) == {RULE_ID}
+    assert BERRY in violations[0].message
+    assert HELD_ITEM in violations[0].message
+    assert "'Item'" in violations[0].message
+
+
+def test_siblings_sharing_an_id_without_key_classes_pass(pkmn_model: OntologyModel) -> None:
+    batch = build_test_batch(
+        [BERRY, HELD_ITEM], [build_node(BERRY, "oran"), build_node(HELD_ITEM, "oran")]
+    )
+
+    assert check_ids(batch, pkmn_model, LabelMaterializer(pkmn_model)) == ()
 
 
 def test_unrelated_classes_sharing_an_id_pass(pkmn_model: OntologyModel) -> None:
     batch = build_test_batch([MOVE], [build_node(MOVE, "psychic"), build_node(TYPE, "psychic")])
 
-    assert check_ids(batch, pkmn_model) == ()
+    assert check_ids(batch, pkmn_model, LabelMaterializer(pkmn_model, ["Item"])) == ()
 
 
 def test_edge_to_a_range_class_passes(pkmn_model: OntologyModel) -> None:

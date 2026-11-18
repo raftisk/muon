@@ -11,7 +11,7 @@ every object property value an edge. It collects every problem into one
 `ABoxError`, so nothing reaches the graph from a file it cannot map in full.
 """
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import LiteralString
@@ -74,15 +74,19 @@ class Individual:
     name: str
 
 
-async def seed_universe(client: GraphClient, ontology_dir: Path, universe: str) -> RunReport:
+async def seed_universe(
+    client: GraphClient, ontology_dir: Path, universe: str, key_classes: Collection[str]
+) -> RunReport:
     """Load the A-Box of `universe` and write it in sync mode.
+
+    `key_classes` are the key class names of the universe manifest.
 
     Both ttl reads finish before the first database call, so an invalid file
     leaves the graph untouched.
     """
     model = load_ontology_model(ontology_dir, universe)
     batch = read_abox(model, ontology_dir)
-    return await Runner(client, LabelMaterializer(model)).write(batch, WriteMode.SYNC)
+    return await Runner(client, LabelMaterializer(model, key_classes)).write(batch, WriteMode.SYNC)
 
 
 async def find_missing_nodes(
@@ -90,12 +94,12 @@ async def find_missing_nodes(
 ) -> list[NodeRef]:
     """Return the `nodes` with no node in the graph, sorted by class IRI and `id`.
 
-    A node counts as present when one carries its asserted class label, the universe
+    A node counts as present when one carries its key class label, the universe
     label and its `id`. Properties and edges are not compared.
     """
     rows = [
         {
-            "label": materializer.map_class_label(node.class_iri),
+            "label": materializer.map_key_label(node.class_iri),
             "class_iri": node.class_iri,
             "id": node.id,
         }

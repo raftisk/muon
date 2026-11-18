@@ -1,11 +1,11 @@
 from rdflib import Graph, URIRef
 from rdflib.namespace import RDFS, SH, SKOS
 
-from tests.unit.shapes.vocabulary import PKMN
+from tests.unit.shapes.vocabulary import MO, PKMN
 
-# `role` is an edge property with no declaration of its own; the ttl lists its values in the
-# comment of the `requires` property it qualifies.
-DOCUMENTING_PROPERTY = {PKMN.role: PKMN.requires}
+# `role` and `direction` are edge properties with no declaration of their own; the ttl lists
+# their values in the comment of the property they qualify.
+DOCUMENTING_PROPERTY = {PKMN.role: PKMN.requires, PKMN.direction: MO.adjacentTo}
 
 
 def read_documentation(tbox: Graph, property_iri: URIRef) -> str:

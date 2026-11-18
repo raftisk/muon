@@ -18,9 +18,9 @@ from tests.unit.ontology.conftest import REAL_ONTOLOGY_DIR
 MO = "https://muon.dev/ns/core#"
 PKMN = "https://muon.dev/ns/pkmn#"
 EX = "https://example.org/fixture#"
-TOTAL_CLASSES = 71
-TOTAL_OBJECT_PROPERTIES = 67
-TOTAL_DATATYPE_PROPERTIES = 73
+TOTAL_CLASSES = 73
+TOTAL_OBJECT_PROPERTIES = 72
+TOTAL_DATATYPE_PROPERTIES = 75
 TBOX_PREFIXES = """\
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .

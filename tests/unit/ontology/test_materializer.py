@@ -1,11 +1,13 @@
 import pytest
 from rdflib.namespace import RDFS
 
-from muon.ontology.materializer import LabelMaterializer
-from muon.ontology.model import OntologyModel
+from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
+from muon.ontology.model import OntologyError, OntologyModel, load_ontology_model
+from muon.plugins import UniverseManifest
+from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 
 PKMN = "https://muon.dev/ns/pkmn#"
-TOTAL_CLASSES = 71
+TOTAL_CLASSES = 73
 
 
 @pytest.fixture(scope="module")
@@ -65,3 +67,66 @@ def test_ancestor_labels(materializer: LabelMaterializer) -> None:
     assert ancestor_labels["HeldItem"] == {"Item", "Object", "Entity"}
     assert ancestor_labels["Generation"] == {"Series", "Source", "Meta"}
     assert all("pkmn" not in labels for labels in ancestor_labels.values())
+
+
+TOY = "https://muon.dev/ns/muontoy#"
+
+
+@pytest.fixture(scope="module")
+def toy_model(tmp_path_factory: pytest.TempPathFactory) -> OntologyModel:
+    ontology_dir = copy_toy_ontology(tmp_path_factory.mktemp("ontology"))
+    return load_ontology_model(ontology_dir, TOY_UNIVERSE)
+
+
+@pytest.mark.parametrize(
+    ("local_name", "key_label"),
+    [
+        ("ToyGadget", "ToyGadget"),
+        ("ToyWidget", "ToyGadget"),
+        ("ToyGizmo", "ToyGadget"),
+        ("ToyColor", "ToyColor"),
+    ],
+)
+def test_key_label_of_a_family(toy_model: OntologyModel, local_name: str, key_label: str) -> None:
+    materializer = LabelMaterializer(toy_model, ["ToyGadget"])
+
+    assert materializer.map_key_label(TOY + local_name) == key_label
+
+
+def test_key_label_of_a_family_sibling_matches(toy_model: OntologyModel) -> None:
+    materializer = LabelMaterializer(toy_model, ["ToyGadget"])
+
+    assert materializer.map_key_label(TOY + "ToyWidget") == materializer.map_key_label(
+        TOY + "ToyGizmo"
+    )
+
+
+def test_key_label_without_key_classes_is_the_class_label(toy_model: OntologyModel) -> None:
+    materializer = LabelMaterializer(toy_model)
+
+    assert materializer.map_key_label(TOY + "ToyWidget") == "ToyWidget"
+
+
+def test_unknown_key_class_names_the_class(toy_model: OntologyModel) -> None:
+    with pytest.raises(OntologyError, match="'ToyNothing'"):
+        LabelMaterializer(toy_model, ["ToyNothing"])
+
+
+def test_nested_key_classes_name_both(toy_model: OntologyModel) -> None:
+    with pytest.raises(OntologyError, match="'ToyWidget'.*'ToyGadget'"):
+        LabelMaterializer(toy_model, ["ToyGadget", "ToyWidget"])
+
+
+def test_plugin_materializer_uses_the_manifest_key_classes(toy_model: OntologyModel) -> None:
+    manifest = UniverseManifest(
+        prefix="muontoy",
+        name="Toy",
+        notes="notes.md",
+        namespace="https://muon.dev/ns/muontoy#",
+        shapes_namespace="https://muon.dev/ns/muontoy-shapes#",
+        key_classes=("ToyGadget",),
+    )
+
+    materializer = build_plugin_materializer(toy_model, manifest)
+
+    assert materializer.map_key_label(TOY + "ToyGizmo") == "ToyGadget"

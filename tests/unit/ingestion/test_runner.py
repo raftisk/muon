@@ -565,3 +565,54 @@ async def test_stub_ids_are_read_per_label_in_order(materializer: LabelMateriali
 def test_stub_statement_takes_the_labels_and_keys_as_parameters() -> None:
     assert "$($label):$($universe)" in runner.LIST_STUB_IDS
     assert "$stub_keys" in runner.LIST_STUB_IDS
+
+
+@pytest.fixture(scope="module")
+def key_materializer(toy_ontology_dir: Path) -> LabelMaterializer:
+    return LabelMaterializer(load_ontology_model(toy_ontology_dir, TOY_UNIVERSE), ["ToyGadget"])
+
+
+def test_node_row_merges_on_the_key_label_and_sets_the_class_labels(
+    key_materializer: LabelMaterializer,
+) -> None:
+    widget = NodeRecord(class_iri=TOY_WIDGET, id="w1", name="W1")
+
+    (row,) = build_node_rows([widget], key_materializer)
+
+    assert row["key_labels"] == ["ToyGadget", TOY_UNIVERSE]
+    assert row["labels"] == ["ToyWidget", "Entity", "Object", "ToyGadget", TOY_UNIVERSE]
+
+
+def test_edge_row_ends_use_the_key_label(key_materializer: LabelMaterializer) -> None:
+    rows = build_edge_rows(build_claim_batch(), key_materializer)
+
+    pairs_with_widget = next(row for row in rows if row["end_id"] == "w1")
+    assert pairs_with_widget["start_label"] == "ToyGadget"
+    assert pairs_with_widget["end_label"] == "ToyGadget"
+
+
+def test_stub_row_merges_on_the_key_label(key_materializer: LabelMaterializer) -> None:
+    batch = build_claim_batch(scope=frozenset({TOY_COLOR}))
+    statements = build_statements(batch, WriteMode.UPSERT, key_materializer)
+    stub_statement = next(item for item in statements if item.query is runner.MERGE_STUBS)
+
+    widget_rows = [row for row in stub_statement.parameters["stubs"] if row["id"] == "w1"]
+
+    assert widget_rows[0]["key_labels"] == ["ToyGadget", TOY_UNIVERSE]
+
+
+def test_claim_row_anchor_and_kept_use_the_key_label_but_other_label_stays(
+    key_materializer: LabelMaterializer,
+) -> None:
+    claim = EdgeClaim(
+        anchor=ALPHA,
+        property_iri=TOY_PAIRS_WITH,
+        direction=ClaimDirection.OUT,
+        other_class_iri=TOY_WIDGET,
+    )
+
+    rows = build_claim_rows(build_claim_batch(claim), key_materializer, ClaimDirection.OUT)
+
+    assert rows[0]["anchor_label"] == "ToyGadget"
+    assert rows[0]["other_label"] == "ToyWidget"
+    assert rows[0]["kept"] == [{"label": "ToyGadget", "id": "w1"}]

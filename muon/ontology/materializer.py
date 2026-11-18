@@ -5,11 +5,12 @@ relationship type or a node property name.
 """
 
 import re
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 
 from rdflib.namespace import RDFS
 
-from muon.ontology.model import OntologyModel, extract_local_name
+from muon.ontology.model import OntologyError, OntologyModel, extract_local_name
+from muon.plugins import UniverseManifest
 
 NAME_PROPERTY = "name"
 LABEL_PROPERTY_IRI = str(RDFS.label)
@@ -26,10 +27,32 @@ class LabelMaterializer:
     """Neo4j names for the terms of one ontology model.
 
     Every class in the subclass closure becomes a label, plus the universe label.
+    `key_classes` are local names of classes that key a class family: a node is found by
+    `id` on the label of its nearest key class, see `map_key_label`. A key class must not
+    have a key class ancestor.
     """
 
-    def __init__(self, model: OntologyModel) -> None:
+    def __init__(self, model: OntologyModel, key_classes: Collection[str] = ()) -> None:
         self.model = model
+        self.key_class_iris = self.resolve_key_classes(key_classes)
+
+    def resolve_key_classes(self, key_classes: Collection[str]) -> frozenset[str]:
+        iris_by_name = {extract_local_name(iri): iri for iri in self.model.classes}
+        resolved: set[str] = set()
+        for name in sorted(key_classes):
+            if name not in iris_by_name:
+                raise OntologyError(
+                    f"Key class {name!r} is not a class of the {self.model.universe} model"
+                )
+            resolved.add(iris_by_name[name])
+        for iri in sorted(resolved):
+            nested = sorted(self.model.ancestors[iri] & resolved)
+            if nested:
+                raise OntologyError(
+                    f"Key class {extract_local_name(iri)!r} has the key class "
+                    f"{extract_local_name(nested[0])!r} as an ancestor"
+                )
+        return frozenset(resolved)
 
     @property
     def universe_label(self) -> str:
@@ -37,6 +60,21 @@ class LabelMaterializer:
 
     def map_class_label(self, class_iri: str) -> str:
         return extract_local_name(class_iri)
+
+    def map_key_label(self, class_iri: str) -> str:
+        """Return the label of the nearest key class of `class_iri`, itself included.
+
+        A class with no key class in its ancestry is its own key class.
+        """
+        if class_iri in self.key_class_iris:
+            return self.map_class_label(class_iri)
+        key_ancestors = self.model.ancestors[class_iri] & self.key_class_iris
+        if not key_ancestors:
+            return self.map_class_label(class_iri)
+        nearest = max(
+            key_ancestors, key=lambda ancestor: (len(self.model.ancestors[ancestor]), ancestor)
+        )
+        return self.map_class_label(nearest)
 
     def map_class_labels(self, class_iri: str) -> tuple[str, ...]:
         """Return the class label first, its ancestor labels sorted, the universe label last."""
@@ -68,3 +106,10 @@ class LabelMaterializer:
         if property_iri == LABEL_PROPERTY_IRI:
             return NAME_PROPERTY
         return extract_local_name(property_iri)
+
+
+def build_plugin_materializer(
+    model: OntologyModel, manifest: UniverseManifest
+) -> LabelMaterializer:
+    """Return the materializer of a universe, with the key classes of its manifest."""
+    return LabelMaterializer(model, manifest.key_classes)

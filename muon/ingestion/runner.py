@@ -3,9 +3,9 @@
 Compiles a `GraphBatch` into fixed Cypher statements and writes them in one
 transaction. Labels and relationship types travel as parameters through dynamic
 labels (`$(...)`), with names from the label materializer. A node merges on its
-class label, the universe label and `id`; an edge merges on (start, type, end) and
-carries its properties. A stub merges on the same key as a node and is set on
-create only, so it never changes a node that exists. It also purges a universe in
+key class label, the universe label and `id`, then takes its class labels; an edge
+merges on (start, type, end) and carries its properties. A stub merges on the same key as a
+node and is set on create only, so it never changes a node that exists. It also purges a universe in
 transactions of at most `PURGE_BATCH_SIZE` nodes, counts what the universe holds and
 lists the nodes of a class that are still stubs, those whose keys are `id` and `name` only.
 
@@ -355,13 +355,13 @@ def build_claim_rows(
         kept_ends = other_ends.get((claim.property_iri, claim.anchor), [])
         rows.append(
             {
-                "anchor_label": materializer.map_class_label(claim.anchor.class_iri),
+                "anchor_label": materializer.map_key_label(claim.anchor.class_iri),
                 "anchor_id": claim.anchor.id,
                 "type": materializer.map_relationship_type(claim.property_iri),
                 "other_label": other_label,
                 "owns_other_end": claim.owns_other_end,
                 "kept": [
-                    {"label": materializer.map_class_label(end.class_iri), "id": end.id}
+                    {"label": materializer.map_key_label(end.class_iri), "id": end.id}
                     for end in kept_ends
                     if other_label is None
                     or other_label in materializer.map_class_labels(end.class_iri)
@@ -390,7 +390,7 @@ def build_node_rows(
     return [
         {
             "key_labels": [
-                materializer.map_class_label(node.class_iri),
+                materializer.map_key_label(node.class_iri),
                 materializer.universe_label,
             ],
             "labels": list(materializer.map_class_labels(node.class_iri)),
@@ -414,9 +414,9 @@ def build_edge_rows(batch: GraphBatch, materializer: LabelMaterializer) -> list[
     return [
         {
             "type": materializer.map_relationship_type(edge.property_iri),
-            "start_label": materializer.map_class_label(edge.start.class_iri),
+            "start_label": materializer.map_key_label(edge.start.class_iri),
             "start_id": edge.start.id,
-            "end_label": materializer.map_class_label(edge.end.class_iri),
+            "end_label": materializer.map_key_label(edge.end.class_iri),
             "end_id": edge.end.id,
             "properties": {
                 name: list(value) if isinstance(value, tuple) else value

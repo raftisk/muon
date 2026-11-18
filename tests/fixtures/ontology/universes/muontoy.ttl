@@ -19,6 +19,11 @@ muontoy:ToyWidget a owl:Class ;
     rdfs:label "Toy widget"@en ;
     skos:definition "A kind of toy gadget."@en .
 
+muontoy:ToyGizmo a owl:Class ;
+    rdfs:subClassOf muontoy:ToyGadget ;
+    rdfs:label "Toy gizmo"@en ;
+    skos:definition "Another kind of toy gadget."@en .
+
 muontoy:ToyColor a owl:Class ;
     rdfs:subClassOf mo:Concept ;
     rdfs:label "Toy color"@en ;

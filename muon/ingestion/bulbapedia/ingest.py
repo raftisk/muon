@@ -35,7 +35,7 @@ from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT
 from muon.ingestion.bulbapedia.runs import PageResult, PageStatus, ReportModel, dump_json
 from muon.ingestion.runner import Runner, RunReport, UniverseCensus, WriteMode
 from muon.ingestion.seed import find_missing_nodes, read_abox
-from muon.ontology.materializer import LabelMaterializer
+from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
 from muon.ontology.model import extract_local_name, load_ontology_model
 from muon.plugins import discover_universes
 from muon.validation import ValidationReport, Violation, build_validator
@@ -213,11 +213,11 @@ async def prepare_target(
     """
     ontology_dir = request.ontology_dir
     model = load_ontology_model(ontology_dir, UNIVERSE)
-    materializer = LabelMaterializer(model)
+    plugin = discover_universes(request.universes_dir, ontology_dir).get(UNIVERSE)
+    materializer = build_plugin_materializer(model, plugin.manifest)
     await check_seed(client, materializer, read_abox(model, ontology_dir))
     runner = Runner(client, materializer)
     await runner.ensure_constraints(constraint_classes)
-    plugin = discover_universes(request.universes_dir, ontology_dir).get(UNIVERSE)
     return IngestTarget(runner=runner, validator=build_validator(client, ontology_dir, plugin))
 
 
