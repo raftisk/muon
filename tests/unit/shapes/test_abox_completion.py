@@ -129,7 +129,8 @@ def test_introduced_in_is_single_valued_for_new_classes(abox_graph):
 
 def test_introduced_in_total(abox_graph):
     assert len(INTRODUCED_IN_BY_CLASS) == 37
-    assert len(list(abox_graph.subject_objects(PKMN.introducedIn))) == 100
+    flavors = 5
+    assert len(list(abox_graph.subject_objects(PKMN.introducedIn))) == 100 + flavors
 
 
 def test_condition_edges_match_table(abox_graph):

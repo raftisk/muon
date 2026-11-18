@@ -204,6 +204,34 @@ pkmn-shape:N1_NatureStats a sh:NodeShape ;
         """
     ] .
 
+# A nature likes the flavor of the stat it boosts and dislikes the flavor of the stat it
+# reduces, so a nature has both flavor edges or neither, to 2 different flavors.
+pkmn-shape:N2_NatureFlavors a sh:NodeShape ;
+    sh:name "N2" ;
+    sh:message "A nature has a likesFlavor and a dislikesFlavor to 2 different flavors, or neither."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Nature ;
+    sh:targetClass pkmn:Nature ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Nature {$this} must like and dislike 2 different flavors, or have no flavor edges."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                {
+                    $this pkmn:likesFlavor ?liked .
+                    FILTER NOT EXISTS { $this pkmn:dislikesFlavor ?anyDisliked }
+                } UNION {
+                    $this pkmn:dislikesFlavor ?disliked .
+                    FILTER NOT EXISTS { $this pkmn:likesFlavor ?anyLiked }
+                } UNION {
+                    $this pkmn:likesFlavor ?sameFlavor .
+                    $this pkmn:dislikesFlavor ?sameFlavor .
+                }
+            }
+        """
+    ] .
+
 #################################################################
 #  Moves and types
 #################################################################
@@ -464,6 +492,82 @@ pkmn-shape:B1_ConditionDurations a sh:NodeShape ;
 #################################################################
 #  Items
 #################################################################
+
+# Machines are items too, and a move batch selects this shape through them. Their
+# generation comes from the version group, so a Machine passes without introducedIn.
+pkmn-shape:I1_ItemValues a sh:NodeShape ;
+    sh:name "I1" ;
+    sh:message "An item has at most 1 category, buyPrice, sellPrice and flingPower, and exactly 1 introducedIn Generation."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Item ;
+    sh:targetClass pkmn:Item ;
+    sh:property [
+        sh:path pkmn:category ;
+        sh:name "I1" ;
+        sh:message "An item has at most 1 category."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1
+    ] ;
+    sh:property [
+        sh:path pkmn:buyPrice ;
+        sh:name "I1" ;
+        sh:message "buyPrice is at most 1 integer of at least 0."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0
+    ] ;
+    sh:property [
+        sh:path pkmn:sellPrice ;
+        sh:name "I1" ;
+        sh:message "sellPrice is at most 1 integer of at least 0."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0
+    ] ;
+    sh:property [
+        sh:path pkmn:flingPower ;
+        sh:name "I1" ;
+        sh:message "flingPower is at most 1 integer above 0."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minExclusive 0
+    ] ;
+    sh:or (
+        [ sh:class pkmn:Machine ]
+        [
+            sh:property [
+                sh:path pkmn:introducedIn ;
+                sh:minCount 1 ;
+                sh:maxCount 1 ;
+                sh:class pkmn:Generation
+            ]
+        ]
+    ) .
+
+# The potency is a Neo4j edge property, so it arrives on a reified edge node.
+pkmn-shape:I2_FlavorPotency a sh:NodeShape ;
+    sh:name "I2" ;
+    sh:message "A HAS_FLAVOR edge needs exactly 1 potency, an integer above 0."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Berry ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select "SELECT ?this WHERE { ?this rdf:predicate pkmn:hasFlavor }"
+    ] ;
+    sh:property [
+        sh:path pkmn:potency ;
+        sh:name "I2" ;
+        sh:message "A HAS_FLAVOR edge needs exactly 1 potency, an integer above 0."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minExclusive 0
+    ] .
 
 pkmn-shape:C2_MachineLinks a sh:NodeShape ;
     sh:name "C2" ;
@@ -905,4 +1009,59 @@ pkmn-shape:C3_EncounterMethod a sh:NodeShape ;
             "dexnav" "roaming" "max-raid" "dynamax-adventure" "tera-raid"
             "static" "gift" "snag"
         )
+    ] .
+
+# An item find is a reified fact like an encounter, found at 1 location in 1 version.
+pkmn-shape:C4_ItemFindLinks a sh:NodeShape ;
+    sh:name "C4" ;
+    sh:message "An item find has 1 atLocation, 1 inVersion and at most 1 isHidden."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:ItemFind ;
+    sh:targetClass pkmn:ItemFind ;
+    sh:property [
+        sh:path pkmn:atLocation ;
+        sh:name "C4" ;
+        sh:message "An item find needs exactly 1 atLocation, a Location."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class mo:Location
+    ] ;
+    sh:property [
+        sh:path pkmn:inVersion ;
+        sh:name "C4" ;
+        sh:message "An item find needs exactly 1 inVersion, a Version."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Version
+    ] ;
+    sh:property [
+        sh:path pkmn:isHidden ;
+        sh:name "C4" ;
+        sh:message "isHidden is at most 1 boolean."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:boolean
+    ] .
+
+# The direction is a Neo4j edge property, so it arrives on a reified edge node.
+pkmn-shape:C5_AdjacencyDirection a sh:NodeShape ;
+    sh:name "C5" ;
+    sh:message "An ADJACENT_TO edge needs exactly 1 direction: north, south, east or west."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope mo:Location ;
+    sh:target [
+        a sh:SPARQLTarget ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select "SELECT ?this WHERE { ?this rdf:predicate mo:adjacentTo }"
+    ] ;
+    sh:property [
+        sh:path pkmn:direction ;
+        sh:name "C5" ;
+        sh:message "An ADJACENT_TO edge needs exactly 1 direction: north, south, east or west."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "north" "south" "east" "west" )
     ] .

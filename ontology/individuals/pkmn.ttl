@@ -109,31 +109,38 @@ pkmn:eggGroupWater2    a pkmn:EggGroup ; rdfs:label "Water 2"@en ; pkmn:introduc
 pkmn:eggGroupWater3    a pkmn:EggGroup ; rdfs:label "Water 3"@en ; pkmn:introducedIn pkmn:gen2 .
 pkmn:eggGroupAmorphous a pkmn:EggGroup ; rdfs:label "Amorphous"@en ; pkmn:introducedIn pkmn:gen2 .
 
+## Flavors ##
+pkmn:spicy  a pkmn:Flavor ; rdfs:label "Spicy"@en ; pkmn:introducedIn pkmn:gen3 .
+pkmn:dry    a pkmn:Flavor ; rdfs:label "Dry"@en ; pkmn:introducedIn pkmn:gen3 .
+pkmn:sweet  a pkmn:Flavor ; rdfs:label "Sweet"@en ; pkmn:introducedIn pkmn:gen3 .
+pkmn:bitter a pkmn:Flavor ; rdfs:label "Bitter"@en ; pkmn:introducedIn pkmn:gen3 .
+pkmn:sour   a pkmn:Flavor ; rdfs:label "Sour"@en ; pkmn:introducedIn pkmn:gen3 .
+
 ## Natures ##
 pkmn:hardy   a pkmn:Nature ; rdfs:label "Hardy"@en ; pkmn:introducedIn pkmn:gen3 .
-pkmn:lonely  a pkmn:Nature ; rdfs:label "Lonely"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:defense ; pkmn:introducedIn pkmn:gen3 .
-pkmn:brave   a pkmn:Nature ; rdfs:label "Brave"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:speed ; pkmn:introducedIn pkmn:gen3 .
-pkmn:adamant a pkmn:Nature ; rdfs:label "Adamant"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:specialAttack ; pkmn:introducedIn pkmn:gen3 .
-pkmn:naughty a pkmn:Nature ; rdfs:label "Naughty"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:specialDefense ; pkmn:introducedIn pkmn:gen3 .
-pkmn:bold    a pkmn:Nature ; rdfs:label "Bold"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:attack ; pkmn:introducedIn pkmn:gen3 .
+pkmn:lonely  a pkmn:Nature ; rdfs:label "Lonely"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:defense ; pkmn:likesFlavor pkmn:spicy ; pkmn:dislikesFlavor pkmn:sour ; pkmn:introducedIn pkmn:gen3 .
+pkmn:brave   a pkmn:Nature ; rdfs:label "Brave"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:speed ; pkmn:likesFlavor pkmn:spicy ; pkmn:dislikesFlavor pkmn:sweet ; pkmn:introducedIn pkmn:gen3 .
+pkmn:adamant a pkmn:Nature ; rdfs:label "Adamant"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:specialAttack ; pkmn:likesFlavor pkmn:spicy ; pkmn:dislikesFlavor pkmn:dry ; pkmn:introducedIn pkmn:gen3 .
+pkmn:naughty a pkmn:Nature ; rdfs:label "Naughty"@en ; pkmn:boostsStat pkmn:attack ; pkmn:reducesStat pkmn:specialDefense ; pkmn:likesFlavor pkmn:spicy ; pkmn:dislikesFlavor pkmn:bitter ; pkmn:introducedIn pkmn:gen3 .
+pkmn:bold    a pkmn:Nature ; rdfs:label "Bold"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:attack ; pkmn:likesFlavor pkmn:sour ; pkmn:dislikesFlavor pkmn:spicy ; pkmn:introducedIn pkmn:gen3 .
 pkmn:docile  a pkmn:Nature ; rdfs:label "Docile"@en ; pkmn:introducedIn pkmn:gen3 .
-pkmn:relaxed a pkmn:Nature ; rdfs:label "Relaxed"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:speed ; pkmn:introducedIn pkmn:gen3 .
-pkmn:impish  a pkmn:Nature ; rdfs:label "Impish"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:specialAttack ; pkmn:introducedIn pkmn:gen3 .
-pkmn:lax     a pkmn:Nature ; rdfs:label "Lax"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:specialDefense ; pkmn:introducedIn pkmn:gen3 .
-pkmn:timid   a pkmn:Nature ; rdfs:label "Timid"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:attack ; pkmn:introducedIn pkmn:gen3 .
-pkmn:hasty   a pkmn:Nature ; rdfs:label "Hasty"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:defense ; pkmn:introducedIn pkmn:gen3 .
+pkmn:relaxed a pkmn:Nature ; rdfs:label "Relaxed"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:speed ; pkmn:likesFlavor pkmn:sour ; pkmn:dislikesFlavor pkmn:sweet ; pkmn:introducedIn pkmn:gen3 .
+pkmn:impish  a pkmn:Nature ; rdfs:label "Impish"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:specialAttack ; pkmn:likesFlavor pkmn:sour ; pkmn:dislikesFlavor pkmn:dry ; pkmn:introducedIn pkmn:gen3 .
+pkmn:lax     a pkmn:Nature ; rdfs:label "Lax"@en ; pkmn:boostsStat pkmn:defense ; pkmn:reducesStat pkmn:specialDefense ; pkmn:likesFlavor pkmn:sour ; pkmn:dislikesFlavor pkmn:bitter ; pkmn:introducedIn pkmn:gen3 .
+pkmn:timid   a pkmn:Nature ; rdfs:label "Timid"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:attack ; pkmn:likesFlavor pkmn:sweet ; pkmn:dislikesFlavor pkmn:spicy ; pkmn:introducedIn pkmn:gen3 .
+pkmn:hasty   a pkmn:Nature ; rdfs:label "Hasty"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:defense ; pkmn:likesFlavor pkmn:sweet ; pkmn:dislikesFlavor pkmn:sour ; pkmn:introducedIn pkmn:gen3 .
 pkmn:serious a pkmn:Nature ; rdfs:label "Serious"@en ; pkmn:introducedIn pkmn:gen3 .
-pkmn:jolly   a pkmn:Nature ; rdfs:label "Jolly"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:specialAttack ; pkmn:introducedIn pkmn:gen3 .
-pkmn:naive   a pkmn:Nature ; rdfs:label "Naive"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:specialDefense ; pkmn:introducedIn pkmn:gen3 .
-pkmn:modest  a pkmn:Nature ; rdfs:label "Modest"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:attack ; pkmn:introducedIn pkmn:gen3 .
-pkmn:mild    a pkmn:Nature ; rdfs:label "Mild"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:defense ; pkmn:introducedIn pkmn:gen3 .
-pkmn:quiet   a pkmn:Nature ; rdfs:label "Quiet"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:speed ; pkmn:introducedIn pkmn:gen3 .
+pkmn:jolly   a pkmn:Nature ; rdfs:label "Jolly"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:specialAttack ; pkmn:likesFlavor pkmn:sweet ; pkmn:dislikesFlavor pkmn:dry ; pkmn:introducedIn pkmn:gen3 .
+pkmn:naive   a pkmn:Nature ; rdfs:label "Naive"@en ; pkmn:boostsStat pkmn:speed ; pkmn:reducesStat pkmn:specialDefense ; pkmn:likesFlavor pkmn:sweet ; pkmn:dislikesFlavor pkmn:bitter ; pkmn:introducedIn pkmn:gen3 .
+pkmn:modest  a pkmn:Nature ; rdfs:label "Modest"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:attack ; pkmn:likesFlavor pkmn:dry ; pkmn:dislikesFlavor pkmn:spicy ; pkmn:introducedIn pkmn:gen3 .
+pkmn:mild    a pkmn:Nature ; rdfs:label "Mild"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:defense ; pkmn:likesFlavor pkmn:dry ; pkmn:dislikesFlavor pkmn:sour ; pkmn:introducedIn pkmn:gen3 .
+pkmn:quiet   a pkmn:Nature ; rdfs:label "Quiet"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:speed ; pkmn:likesFlavor pkmn:dry ; pkmn:dislikesFlavor pkmn:sweet ; pkmn:introducedIn pkmn:gen3 .
 pkmn:bashful a pkmn:Nature ; rdfs:label "Bashful"@en ; pkmn:introducedIn pkmn:gen3 .
-pkmn:rash    a pkmn:Nature ; rdfs:label "Rash"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:specialDefense ; pkmn:introducedIn pkmn:gen3 .
-pkmn:calm    a pkmn:Nature ; rdfs:label "Calm"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:attack ; pkmn:introducedIn pkmn:gen3 .
-pkmn:gentle  a pkmn:Nature ; rdfs:label "Gentle"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:defense ; pkmn:introducedIn pkmn:gen3 .
-pkmn:sassy   a pkmn:Nature ; rdfs:label "Sassy"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:speed ; pkmn:introducedIn pkmn:gen3 .
-pkmn:careful a pkmn:Nature ; rdfs:label "Careful"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:specialAttack ; pkmn:introducedIn pkmn:gen3 .
+pkmn:rash    a pkmn:Nature ; rdfs:label "Rash"@en ; pkmn:boostsStat pkmn:specialAttack ; pkmn:reducesStat pkmn:specialDefense ; pkmn:likesFlavor pkmn:dry ; pkmn:dislikesFlavor pkmn:bitter ; pkmn:introducedIn pkmn:gen3 .
+pkmn:calm    a pkmn:Nature ; rdfs:label "Calm"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:attack ; pkmn:likesFlavor pkmn:bitter ; pkmn:dislikesFlavor pkmn:spicy ; pkmn:introducedIn pkmn:gen3 .
+pkmn:gentle  a pkmn:Nature ; rdfs:label "Gentle"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:defense ; pkmn:likesFlavor pkmn:bitter ; pkmn:dislikesFlavor pkmn:sour ; pkmn:introducedIn pkmn:gen3 .
+pkmn:sassy   a pkmn:Nature ; rdfs:label "Sassy"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:speed ; pkmn:likesFlavor pkmn:bitter ; pkmn:dislikesFlavor pkmn:sweet ; pkmn:introducedIn pkmn:gen3 .
+pkmn:careful a pkmn:Nature ; rdfs:label "Careful"@en ; pkmn:boostsStat pkmn:specialDefense ; pkmn:reducesStat pkmn:specialAttack ; pkmn:likesFlavor pkmn:bitter ; pkmn:dislikesFlavor pkmn:dry ; pkmn:introducedIn pkmn:gen3 .
 pkmn:quirky  a pkmn:Nature ; rdfs:label "Quirky"@en ; pkmn:introducedIn pkmn:gen3 .
 
 ## Status conditions ##

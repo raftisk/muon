@@ -1,5 +1,7 @@
 import pytest
 
+from tests.unit.shapes.games_fixtures import GENERATION_NODE
+
 EFFECT_CLASSES = ["MoveEffect", "AbilityEffect", "ItemEffect"]
 
 
@@ -56,7 +58,10 @@ def test_effect_text_on_ability_conforms(validate_fixture):
 
 
 def test_effect_text_on_berry_conforms(validate_fixture):
-    data = 'ex:oran a pkmn:Berry ; pkmn:id "oran" ; pkmn:effectText "Restores 10 HP." .'
+    data = GENERATION_NODE + (
+        'ex:oran a pkmn:Berry ; pkmn:id "oran" ; pkmn:introducedIn ex:gen1 ; '
+        'pkmn:effectText "Restores 10 HP." .'
+    )
     assert validate_fixture(data).conforms
 
 

@@ -7,7 +7,7 @@ from muon.plugins import UniverseManifest
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
 
 PKMN = "https://muon.dev/ns/pkmn#"
-TOTAL_CLASSES = 71
+TOTAL_CLASSES = 73
 
 
 @pytest.fixture(scope="module")

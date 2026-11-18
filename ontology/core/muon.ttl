@@ -5,7 +5,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://muon.dev/ns/core> a owl:Ontology ;
-    owl:versionInfo "0.2.0" ;
+    owl:versionInfo "0.3.0" ;
     skos:definition "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph."@en .
 
 #################################################################
@@ -208,6 +208,13 @@ mo:locatedIn a owl:ObjectProperty, owl:TransitiveProperty ;
     rdfs:label "located in"@en ;
     skos:definition "Containment of one location within a larger one."@en ;
     rdfs:comment "Transitive property: if A is located in B, and B is located in C, then A is located in C."@en .
+
+mo:adjacentTo a owl:ObjectProperty ;
+    rdfs:domain mo:Location ;
+    rdfs:range  mo:Location ;
+    rdfs:label "adjacent to"@en ;
+    skos:definition "A location that borders another one, reached from it on foot or by a direct connection."@en ;
+    rdfs:comment "Not symmetric: each side writes its own outgoing edge. In Neo4j the edge carries the property direction (north, south, east or west), the direction in which the target lies from the source."@en .
 
 mo:foundIn a owl:ObjectProperty ;
     rdfs:domain [ a owl:Class ; owl:unionOf ( mo:Agent mo:Object mo:Species ) ] ;

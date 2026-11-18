@@ -16,7 +16,8 @@ def species(name: str, dex: int) -> str:
 BASE = FIRE + species("charmander", 4) + species("charmeleon", 5)
 
 TARGETS = {
-    "Item": 'ex:thing a pkmn:Item ; pkmn:id "thing" .',
+    "Item": GENERATION_NODE
+    + 'ex:thing a pkmn:Item ; pkmn:id "thing" ; pkmn:introducedIn ex:gen1 .',
     "Move": (
         build_move("move", damage_class_local_name="physical")
         + 'ex:physical a pkmn:MoveDamageClass ; pkmn:id "physical" .'

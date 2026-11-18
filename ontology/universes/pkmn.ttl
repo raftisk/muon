@@ -8,7 +8,7 @@
 
 <https://muon.dev/ns/pkmn> a owl:Ontology ;
     dcterms:title   "muon: Pokémon extension"@en ;
-    owl:versionInfo "0.6.0" ;
+    owl:versionInfo "0.7.0" ;
     owl:imports     <https://muon.dev/ns/core> ;
     skos:definition    "Pokémon-universe extension of the muon core ontology."@en .
 
@@ -163,6 +163,18 @@ pkmn:reducesStat a owl:ObjectProperty ;
     rdfs:domain pkmn:Nature ;
     rdfs:range  pkmn:Stat ;
     rdfs:label  "reducesStat"@en .
+
+pkmn:likesFlavor a owl:ObjectProperty ;
+    rdfs:domain pkmn:Nature ;
+    rdfs:range  pkmn:Flavor ;
+    rdfs:label  "likesFlavor"@en ;
+    skos:definition "The flavor a Pokémon of this nature likes: the flavor of the stat the nature boosts."@en .
+
+pkmn:dislikesFlavor a owl:ObjectProperty ;
+    rdfs:domain pkmn:Nature ;
+    rdfs:range  pkmn:Flavor ;
+    rdfs:label  "dislikesFlavor"@en ;
+    skos:definition "The flavor a Pokémon of this nature dislikes: the flavor of the stat the nature reduces."@en .
 
 
 #################################################################
@@ -332,6 +344,30 @@ pkmn:Machine  a owl:Class ; rdfs:subClassOf pkmn:Item ; rdfs:label "Machine"@en 
     skos:definition "A TM, HM or TR in 1 version group. The same number in another version group is another node."@en .
 pkmn:HeldItem a owl:Class ; rdfs:subClassOf pkmn:Item ; rdfs:label "HeldItem"@en .
 
+pkmn:Flavor a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "Flavor"@en ;
+    skos:definition "One of the 5 flavors of berries, which natures like or dislike: Spicy, Dry, Sweet, Bitter and Sour."@en .
+
+pkmn:hasFlavor a owl:ObjectProperty ;
+    rdfs:domain pkmn:Berry ;
+    rdfs:range  pkmn:Flavor ;
+    rdfs:label  "hasFlavor"@en ;
+    skos:definition "A flavor a berry has. A flavor the berry lacks has no edge."@en ;
+    rdfs:comment "In Neo4j the edge carries the property potency, an integer above 0."@en .
+
+pkmn:ItemFind a owl:Class ;
+    rdfs:subClassOf mo:Concept ;
+    rdfs:label "ItemFind"@en ;
+    skos:definition "A reified find of an item at a location in a game version, by a method."@en ;
+    rdfs:comment "Same shape as Encounter: atLocation, inVersion and method. An item find may be hidden."@en .
+
+pkmn:hasFind a owl:ObjectProperty ;
+    rdfs:domain pkmn:Item ;
+    rdfs:range  pkmn:ItemFind ;
+    rdfs:label  "hasFind"@en ;
+    skos:definition "Links an item to one of its finds."@en .
+
 pkmn:teachesMove a owl:ObjectProperty ;
     rdfs:range pkmn:Move ;
     rdfs:label "teachesMove"@en ;
@@ -361,14 +397,18 @@ pkmn:restrictedTo a owl:ObjectProperty ;
     skos:definition "The item effect applies only when the holder is this species or form. Several edges mean any of them."@en .
 
 pkmn:category         a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:string  ; rdfs:label "category"@en .
-pkmn:price            a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "price"@en .
+pkmn:buyPrice         a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "buyPrice"@en ;
+    skos:definition "The price in Poké Dollars at which a shop sells the item in Scarlet and Violet. Absent when no shop sells it."@en .
+pkmn:sellPrice        a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "sellPrice"@en ;
+    skos:definition "The price in Poké Dollars at which a shop buys the item in Scarlet and Violet. Absent when no shop buys it."@en .
+pkmn:flingPower       a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:integer ; rdfs:label "flingPower"@en ;
+    skos:definition "The base power of the move Fling when the holder throws the item. Absent when the item cannot be thrown."@en .
 pkmn:isConsumable     a owl:DatatypeProperty ; rdfs:domain pkmn:Item ; rdfs:range xsd:boolean ; rdfs:label "isConsumable"@en .
 pkmn:machineNumber    a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:integer ; rdfs:label "machineNumber"@en ;
     skos:definition "The number in the machine's name: 30 for TM30, 0 for TM00."@en .
 pkmn:machineKind      a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:string ; rdfs:label "machineKind"@en ; skos:definition "TM, HM or TR."@en .
 pkmn:isReusable       a owl:DatatypeProperty ; rdfs:domain pkmn:Machine ; rdfs:range xsd:boolean ; rdfs:label "isReusable"@en ;
     skos:definition "Whether the machine stays in the bag after it teaches its move."@en .
-pkmn:flavour          a owl:DatatypeProperty ; rdfs:domain pkmn:Berry ; rdfs:range xsd:string ; rdfs:label "flavour"@en .
 pkmn:hpThreshold      a owl:DatatypeProperty ; rdfs:range xsd:decimal ; rdfs:label "hpThreshold"@en ;
     skos:definition "Fraction of max HP (0 to 1). With trigger low_hp the effect fires at it; otherwise the effect applies only at or below it."@en .
 pkmn:amount           a owl:DatatypeProperty ; rdfs:range xsd:integer ; rdfs:label "amount"@en ;
@@ -396,7 +436,7 @@ pkmn:GenerationMechanic a owl:Class ; rdfs:subClassOf mo:Meta ; rdfs:label "Gene
 pkmn:introducedIn a owl:ObjectProperty ;
     rdfs:range pkmn:Generation ;
     rdfs:label "introducedIn"@en ;
-    skos:definition "The generation a species, move, ability, mechanic, region, type, nature, terrain, egg group, entry hazard, status condition or weather debuted in."@en .
+    skos:definition "The generation a species, move, ability, item, flavor, mechanic, region, type, nature, terrain, egg group, entry hazard, status condition or weather debuted in."@en .
 
 #################################################################
 #  Moves: flags, effects, learnset
@@ -575,13 +615,16 @@ pkmn:hasEncounter a owl:ObjectProperty ; rdfs:domain pkmn:PokemonSpecies ; rdfs:
     skos:definition "Links a species to one of its encounters."@en .
 pkmn:encounterKind a owl:DatatypeProperty ; rdfs:domain pkmn:Encounter ; rdfs:range xsd:string ; rdfs:label "encounterKind"@en ;
     skos:definition "How an encounter gives the species: wild (caught in the wild, with a wild method or none), raid (caught after a raid battle), static (a fixed encounter with a set number of Pokémon), gift (received from a character), snag (a Shadow Pokémon snagged from its trainer), migration (brought over from an earlier game at a place in this one)."@en .
-pkmn:atLocation   a owl:ObjectProperty ; rdfs:domain pkmn:Encounter ; rdfs:range mo:Location ; rdfs:label "atLocation"@en ;
-    skos:definition "Where an encounter happens: the location area when one exists, else the location."@en .
-pkmn:inVersion    a owl:ObjectProperty ; rdfs:domain pkmn:Encounter ; rdfs:range pkmn:Version ; rdfs:label "inVersion"@en ;
-    skos:definition "The game version an encounter belongs to."@en .
+pkmn:atLocation   a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Encounter pkmn:ItemFind ) ] ; rdfs:range mo:Location ; rdfs:label "atLocation"@en ;
+    skos:definition "Where an encounter or an item find happens: the location area when one exists, else the location."@en .
+pkmn:inVersion    a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Encounter pkmn:ItemFind ) ] ; rdfs:range pkmn:Version ; rdfs:label "inVersion"@en ;
+    skos:definition "The game version an encounter or an item find belongs to."@en .
 
 pkmn:conditions a owl:DatatypeProperty ; rdfs:domain pkmn:Encounter ; rdfs:range xsd:string ; rdfs:label "conditions"@en ;
     skos:definition "Encounter condition value (time-night, season-spring, swarm-yes). Repeated; absent when unconditional."@en .
 pkmn:maxLevel   a owl:DatatypeProperty ; rdfs:domain pkmn:Encounter ; rdfs:range xsd:integer ; rdfs:label "maxLevel"@en .
 pkmn:chance     a owl:DatatypeProperty ; rdfs:domain pkmn:Encounter ; rdfs:range xsd:integer ; rdfs:label "chance"@en ;
     skos:definition "Encounter slot rate in %."@en .
+
+pkmn:isHidden   a owl:DatatypeProperty ; rdfs:range xsd:boolean ; rdfs:label "isHidden"@en ;
+    skos:definition "Whether an item find is hidden (an item the player finds only by searching) or, on a HAS_ABILITY edge, whether the ability slot is the Hidden Ability."@en .
