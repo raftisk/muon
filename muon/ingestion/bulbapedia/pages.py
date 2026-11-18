@@ -163,7 +163,11 @@ class PageStore:
             raise PageStoreError(f"Cannot read page file {path}: {error}") from error
 
     def read_page(self, page_type: str, pin: PagePin) -> Page:
-        """Return the page file of `pin`, checked against the pin and `page_type`."""
+        """Return the page file of `pin`, checked against the pin.
+
+        `page_type` only names the fetch command in the error of a missing file: 1 page can be
+        pinned under 2 page types and then has 1 file.
+        """
         path = self.build_page_path(pin.page_id)
         if not path.exists():
             hint = FETCH_HINT.format(page_type=page_type)
@@ -174,11 +178,6 @@ class PageStore:
         mismatch = describe_mismatch(page, pin)
         if mismatch is not None:
             raise PageStoreError(f"Page file for {pin.title!r} differs from its pin: {mismatch}")
-        if page.page_type != page_type:
-            raise PageStoreError(
-                f"Page file for {pin.title!r} has page type {page.page_type!r}, "
-                f"expected {page_type!r}"
-            )
         return page
 
     def is_current(self, pin: PagePin) -> bool:

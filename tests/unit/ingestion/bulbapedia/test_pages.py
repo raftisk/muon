@@ -163,11 +163,10 @@ def test_read_page_with_edited_wikitext_fails(store: PageStore) -> None:
         store.read_page(SPECIES, DIGLETT.pin)
 
 
-def test_read_page_with_other_page_type_fails(store: PageStore) -> None:
+def test_read_page_pinned_under_another_page_type_succeeds(store: PageStore) -> None:
     store.write_page(DIGLETT)
 
-    with pytest.raises(PageStoreError, match="page type 'species', expected 'ability'"):
-        store.read_page(ABILITY, DIGLETT.pin)
+    assert store.read_page(ABILITY, DIGLETT.pin) == DIGLETT
 
 
 def test_read_page_with_corrupt_file_fails(store: PageStore) -> None:
