@@ -54,6 +54,11 @@ from muon.ingestion.bulbapedia.items.run import (
     ItemParseRun,
 )
 from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
+from muon.ingestion.bulbapedia.locations.run import (
+    LocationParseReport,
+    LocationParseRequest,
+    LocationParseRun,
+)
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
@@ -1081,7 +1086,7 @@ def test_parse_reports_run_errors_with_exit_1(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["parse", "bulbapedia", "location"], "'location'"),
+        (["parse", "bulbapedia", "trainer"], "'trainer'"),
         (["parse", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -1997,3 +2002,46 @@ def test_parse_item_failure_prints_error(
     assert cli.main(["parse", "bulbapedia", "item"]) == cli.EXIT_FAILURE
 
     assert f"parse bulbapedia item failed: {error}" in capsys.readouterr().err
+
+
+def build_location_report() -> LocationParseReport:
+    return LocationParseReport(
+        pages=(),
+        pages_parsed=1233,
+        pages_skipped=1099,
+        pages_failed=0,
+        skipped_per_reason={"redirect": 20, "no_location_infobox": 973, "not_core_series": 106},
+        locations_per_class={"route": 260, "settlement": 151},
+        notes=(),
+        areas=613,
+        batch_counts=BatchCounts(
+            owner_nodes={"Route": 260}, stubs={"Route": 5}, edges={"locatedIn": 9}
+        ),
+        duplicate_ids=(),
+        unowned_stub_titles=("Cave of Origin",),
+        candidate_count=2920,
+    )
+
+
+def test_parse_location_reaches_the_location_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    requests: list[LocationParseRequest] = []
+
+    def parse(request: LocationParseRequest) -> LocationParseRun:
+        requests.append(request)
+        return LocationParseRun(outputs=(), report=build_location_report(), candidates=())
+
+    monkeypatch.setattr(cli, "run_location_parse", parse)
+
+    exit_code = cli.main(["parse", "bulbapedia", "location", "--title", "Mount Coronet"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert requests == [LocationParseRequest(titles=("Mount Coronet",))]
+    output = capsys.readouterr().out
+    assert "parse bulbapedia location: done" in output
+    assert "pages parsed: 1233" in output
+    assert "skipped not_core_series: 106" in output
+    assert "areas: 613" in output
+    assert "candidates: 2920" in output
+    assert "unowned location stubs: 1" in output

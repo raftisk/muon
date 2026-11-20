@@ -14,7 +14,9 @@ Map:
 - versions and generation: the core game categories give the version groups
   (`read_version_groups`) and `generation=` the first generation (`read_generation`);
 - field moves: a route infobox field with the value `yes` gives a required move or item
-  (`read_field_requirements`).
+  (`read_field_requirements`);
+- places: the links of the Places of interest sections name the building pages that the next
+  export must pin (`read_place_titles`).
 
 The `id` is the slug of the page title, built by `batches.py`. Names stay in Bulbapedia terms;
 `batches.py` maps them onto the ontology. This module knows the pkmn universe, as every
@@ -22,7 +24,7 @@ ingestion module of a source does.
 """
 
 import re
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Mapping, Sequence
 from enum import StrEnum
 
 import mwparserfromhell
@@ -64,6 +66,8 @@ DIRECTION_FIELD_PATTERN = re.compile(r"^(north|south|east|west)\d*(?:alt)?$")
 ROUTE_TITLE_PATTERN = re.compile(r"^Route (\d+)$")
 ROUTE_TEMPLATES = frozenset({"rt", "rtn"})
 KANTO_TEMPLATE = "ka"
+MAIN_TEMPLATE = "main"
+PLACES_SECTION_TITLE = "places of interest"
 KANTO_TITLE_SUFFIX = " (Kanto)"
 ROUTE_TITLE = "{region} Route {number}"
 IGNORED_LINK_PREFIXES = ("file:", "image:", "category:")
@@ -308,6 +312,7 @@ class LocationPageExtract(LocationModel):
     generation: str | None = None
     field_requirements: tuple[FieldRequirement, ...] = ()
     areas: tuple[AreaRef, ...] = ()
+    place_titles: tuple[str, ...] = ()
     aliases: tuple[str, ...] = ()
     notes: tuple[LocationNote, ...] = ()
 
@@ -374,6 +379,36 @@ def read_link_titles(value: str) -> tuple[str, ...]:
             continue
         if title is not None and title not in titles:
             titles.append(title)
+    return tuple(titles)
+
+
+def read_place_titles(sections: Sequence[Section]) -> tuple[str, ...]:
+    """Return the titles linked from the Places of interest sections, in page order.
+
+    A link is a `[[X]]` link or a `{{main|X}}` template of the section or of a subsection.
+    The titles are export candidates: the scope rule of a later run skips those that are not
+    places.
+    """
+    titles: dict[str, None] = {}
+    for section in sections:
+        if PLACES_SECTION_TITLE not in (title.lower() for title in section.path):
+            continue
+        for node in section.parse().filter():
+            found: tuple[str, ...]
+            if isinstance(node, Wikilink):
+                title = read_link_title(node)
+                found = (title,) if title else ()
+            elif isinstance(node, Template) and (
+                normalize_template_name(node.name.strip_code()) == MAIN_TEMPLATE
+            ):
+                found = tuple(
+                    normalize_title(str(param.value).strip())
+                    for param in node.params
+                    if not param.showkey and str(param.value).strip()
+                )
+            else:
+                continue
+            titles.update(dict.fromkeys(found))
     return tuple(titles)
 
 
@@ -555,6 +590,7 @@ def parse_location_page(page: Page, index: LocationIndex) -> LocationPageExtract
         generation=read_generation(infobox),
         field_requirements=requirements,
         areas=read_areas(sections, page.title, index),
+        place_titles=read_place_titles(sections),
         aliases=list_redirect_titles(index, title),
         notes=(*class_notes, *requirement_notes),
     )

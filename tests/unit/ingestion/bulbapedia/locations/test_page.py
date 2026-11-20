@@ -293,3 +293,17 @@ def test_abox_region_page_has_no_class() -> None:
 
     assert result.is_abox_region
     assert result.leaf_class is None
+
+
+def test_place_titles_read_links_and_main_templates_of_the_section() -> None:
+    wikitext = (
+        "{{Town infobox|region=Hoenn}}\n"
+        "==Geography==\nSee [[Not a place]].\n"
+        "==Places of interest==\n===Gym===\n{{main|Sootopolis Gym}}\n"
+        "===Shop===\nA [[Poké Mart]] and {{main|Pokémon Center|Cafe}}.\n"
+        "==Trivia==\n[[Elsewhere]]\n" + GAME
+    )
+
+    result = extract("Sootopolis City", wikitext)
+
+    assert result.place_titles == ("Sootopolis Gym", "Poké Mart", "Pokémon Center", "Cafe")

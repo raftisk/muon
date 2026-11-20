@@ -92,6 +92,17 @@ from muon.ingestion.bulbapedia.items.run import (
 )
 from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
 from muon.ingestion.bulbapedia.items.run import write_outputs as write_item_outputs
+from muon.ingestion.bulbapedia.locations.page import LocationTableError
+from muon.ingestion.bulbapedia.locations.run import PAGE_TYPE as LOCATION_PAGE_TYPE
+from muon.ingestion.bulbapedia.locations.run import (
+    LocationParseReport,
+    LocationParseRequest,
+    LocationParseRun,
+    LocationRunInputs,
+    parse_location_pages,
+)
+from muon.ingestion.bulbapedia.locations.run import ParseRunError as LocationParseRunError
+from muon.ingestion.bulbapedia.locations.run import write_outputs as write_location_outputs
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
@@ -220,6 +231,14 @@ MOVE_PARSE_ERRORS = (
     ABoxError,
 )
 
+LOCATION_PARSE_ERRORS = (
+    LocationParseRunError,
+    LocationTableError,
+    PageStoreError,
+    OntologyError,
+    ABoxError,
+)
+
 ITEM_PARSE_ERRORS = (
     ItemParseRunError,
     GameCodeError,
@@ -294,7 +313,13 @@ def build_parser() -> argparse.ArgumentParser:
     parse.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to parse")
     parse.add_argument(
         "page_type",
-        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE, ITEM_PAGE_TYPE),
+        choices=(
+            PARSE_PAGE_TYPE,
+            MOVE_PAGE_TYPE,
+            ABILITY_PAGE_TYPE,
+            ITEM_PAGE_TYPE,
+            LOCATION_PAGE_TYPE,
+        ),
         help="the set of pages to parse",
     )
     parse.add_argument(
@@ -738,6 +763,63 @@ def execute_item_parse(titles: tuple[str, ...]) -> int:
         return EXIT_FAILURE
 
     print(format_item_parse_report(run.report, time.monotonic() - started))
+    return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
+
+
+def run_location_parse(request: LocationParseRequest) -> LocationParseRun:
+    """Parse the pinned location pages and write the outputs. No Neo4j or LLM setting is read."""
+    inputs = LocationRunInputs(request, PageStore(), OntologySettings().ontology_dir)
+    run = parse_location_pages(inputs)
+    write_location_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
+    return run
+
+
+def format_location_parse_report(report: LocationParseReport, elapsed_seconds: float) -> str:
+    """The page counts, skip reasons, classes, batch counts, notes and unowned references."""
+    counts = report.batch_counts
+    lines = [
+        f"{PARSE_COMMAND} {BULBAPEDIA_SOURCE} {LOCATION_PAGE_TYPE}: done",
+        f"pages parsed: {report.pages_parsed}",
+        f"pages skipped: {report.pages_skipped}",
+        f"pages failed: {report.pages_failed}",
+    ]
+    lines.extend(
+        f"skipped {reason}: {count}" for reason, count in report.skipped_per_reason.items()
+    )
+    lines.extend(f"locations {name}: {count}" for name, count in report.locations_per_class.items())
+    lines.append(f"areas: {report.areas}")
+    lines.extend(
+        f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
+    )
+    lines.append(f"stubs: {sum(counts.stubs.values())}")
+    lines.append(f"edges: {sum(counts.edges.values())}")
+    note_counts = Counter(note.kind.value for note in report.notes)
+    lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
+    lines.append(f"duplicate ids: {len(report.duplicate_ids)}")
+    lines.extend(f"duplicate: {entry}" for entry in report.duplicate_ids)
+    lines.append(f"candidates: {report.candidate_count}")
+    lines.append(f"unowned location stubs: {len(report.unowned_stub_titles)}")
+    lines.extend(
+        f"failed: {page.title}: {page.reason}"
+        for page in report.pages
+        if page.status is PageStatus.FAILED
+    )
+    lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
+    return "\n".join(lines)
+
+
+def execute_location_parse(titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(
+        PARSE_COMMAND, f"{BULBAPEDIA_SOURCE} {LOCATION_PAGE_TYPE}"
+    )
+    started = time.monotonic()
+    try:
+        run = run_location_parse(LocationParseRequest(titles=titles))
+    except LOCATION_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_location_parse_report(run.report, time.monotonic() - started))
     return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
 
 
@@ -1351,6 +1433,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_ability_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
         return execute_item_parse(tuple(arguments.titles))
+    if arguments.command == PARSE_COMMAND and arguments.page_type == LOCATION_PAGE_TYPE:
+        return execute_location_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND:
         return execute_parse(ParseRequest(titles=tuple(arguments.titles)))
 
