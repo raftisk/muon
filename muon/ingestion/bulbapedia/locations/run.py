@@ -15,7 +15,7 @@ so that the next Special:Export replaces the pins with a complete set.
 import json
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, ValidationError
@@ -95,6 +95,7 @@ from muon.ingestion.bulbapedia.runs import (
     write_page_files,
 )
 from muon.ingestion.bulbapedia.wikitext import mask_comments, split_sections
+from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotStore
 from muon.ingestion.seed import read_abox
 from muon.ontology.model import load_ontology_model
 
@@ -107,6 +108,11 @@ ABOX_REGION_CLASS = "abox_region"
 ITEM_PAGE_TYPE = "item"
 TEXT_ENCODING = "utf-8"
 NO_METHOD = "none"
+POKEAPI_LOCATIONS_FILE = "locations.csv"
+POKEAPI_IDENTIFIER_COLUMN = "identifier"
+POKEAPI_REGION_COLUMN = "region_id"
+# PokeAPI region ids of Kanto to Paldea; the other regions are side games.
+CORE_REGION_IDS = frozenset(range(1, 11))
 PART_OF = CORE + "partOf"
 
 
@@ -149,6 +155,8 @@ class LocationParseReport(ReportModel):
     duplicate_finds: int
     item_stub_names: tuple[str, ...]
     is_item_source_missing: bool
+    pokeapi_unmatched: tuple[str, ...]
+    is_pokeapi_source_missing: bool
 
 
 @dataclass(frozen=True)
@@ -162,6 +170,7 @@ class LocationRunInputs:
     store: PageStore
     ontology_dir: Path
     output_root: Path = DEFAULT_OUTPUT_ROOT
+    snapshot: SnapshotStore = field(default_factory=SnapshotStore)
 
 
 @dataclass(frozen=True)
@@ -376,6 +385,42 @@ def read_item_owners(output_root: Path) -> dict[str, tuple[str, str]]:
     return owners
 
 
+@dataclass(frozen=True)
+class PokeAPILocation:
+    """1 PokeAPI location of a core region."""
+
+    identifier: str
+    region_id: int
+
+
+def read_pokeapi_locations(store: SnapshotStore) -> tuple[PokeAPILocation, ...] | None:
+    """Return the locations of the core regions of the pinned PokeAPI snapshot, or `None` when
+    the snapshot lacks `locations.csv`. PokeAPI is a coverage check only, never a source."""
+    try:
+        rows = store.read_table(POKEAPI_LOCATIONS_FILE)
+    except SnapshotError:
+        return None
+    return tuple(
+        PokeAPILocation(row[POKEAPI_IDENTIFIER_COLUMN], int(row[POKEAPI_REGION_COLUMN]))
+        for row in rows
+        if row[POKEAPI_REGION_COLUMN] and int(row[POKEAPI_REGION_COLUMN]) in CORE_REGION_IDS
+    )
+
+
+def list_pokeapi_unmatched(
+    locations: Iterable[PokeAPILocation], extracts: Iterable[LocationPageExtract]
+) -> tuple[str, ...]:
+    """Return the identifiers of the PokeAPI locations that no Location owner has an id or an
+    alias id for, sorted."""
+    owned: set[str] = set()
+    for extract in extracts:
+        if extract.leaf_class is None:
+            continue
+        owned.add(build_location_id(extract.title))
+        owned.update(build_location_id(alias) for alias in extract.aliases)
+    return tuple(sorted({loc.identifier for loc in locations} - owned))
+
+
 def count_finds(facts: Iterable[FindFact]) -> Counter[str]:
     return Counter(fact.method or NO_METHOD for fact in facts)
 
@@ -394,6 +439,7 @@ def build_report(
     candidates: Sequence[str],
     unresolved_mentions: int,
     is_item_source_missing: bool,
+    pokeapi_locations: tuple[PokeAPILocation, ...] | None,
 ) -> LocationParseReport:
     skipped: Counter[str] = Counter(
         result.reason or "" for result in results if result.status is PageStatus.SKIPPED
@@ -448,6 +494,8 @@ def build_report(
         duplicate_finds=sum(o.find_build.duplicates for o in outputs),
         item_stub_names=tuple(sorted({n for o in outputs for n in o.find_build.item_stub_names})),
         is_item_source_missing=is_item_source_missing,
+        pokeapi_unmatched=list_pokeapi_unmatched(pokeapi_locations or (), extracts),
+        is_pokeapi_source_missing=pokeapi_locations is None,
     )
 
 
@@ -484,7 +532,15 @@ def parse_location_pages(inputs: LocationRunInputs) -> LocationParseRun:
     unresolved = sum(
         len(list_unresolved_mentions(output.chunk_reading, build_inputs)) for output in outputs
     )
-    report = build_report(outputs, results, extracts, candidates, unresolved, not item_owners)
+    report = build_report(
+        outputs,
+        results,
+        extracts,
+        candidates,
+        unresolved,
+        not item_owners,
+        read_pokeapi_locations(inputs.snapshot),
+    )
     return LocationParseRun(outputs, report, candidates)
 
 

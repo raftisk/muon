@@ -17,6 +17,7 @@ from muon.ingestion.bulbapedia.locations.run import (
 )
 from muon.ingestion.bulbapedia.pages import Manifest, Page, PageStore, compute_sha1
 from muon.ingestion.bulbapedia.runs import PageStatus
+from muon.ingestion.pokeapi.snapshot import SnapshotManifest, SnapshotStore, compute_sha256
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 TIMESTAMP = datetime(2026, 11, 20, tzinfo=UTC)
@@ -71,9 +72,30 @@ def build_store(root: Path) -> PageStore:
     return store
 
 
-def run_parse(tmp_path: Path, titles: tuple[str, ...] = ()) -> LocationParseRun:
+def build_snapshot(root: Path, text: str | None) -> SnapshotStore:
+    """A PokeAPI snapshot whose `locations.csv` holds `text`, or no snapshot at all."""
+    store = SnapshotStore(root)
+    if text is not None:
+        content = text.encode()
+        store.build_file_path("locations.csv").parent.mkdir(parents=True)
+        store.build_file_path("locations.csv").write_bytes(content)
+        store.write_manifest(
+            SnapshotManifest(
+                repository="x/y", commit="a" * 40, files={"locations.csv": compute_sha256(content)}
+            )
+        )
+    return store
+
+
+def run_parse(
+    tmp_path: Path, titles: tuple[str, ...] = (), locations_csv: str | None = None
+) -> LocationParseRun:
     inputs = LocationRunInputs(
-        LocationParseRequest(titles), build_store(tmp_path / "data"), ONTOLOGY_DIR, tmp_path / "out"
+        LocationParseRequest(titles),
+        build_store(tmp_path / "data"),
+        ONTOLOGY_DIR,
+        tmp_path / "out",
+        build_snapshot(tmp_path / "pokeapi", locations_csv),
     )
     return parse_location_pages(inputs)
 
@@ -191,4 +213,30 @@ def test_a_missing_item_output_is_named_and_the_run_goes_on(tmp_path: Path) -> N
     report = run_parse(tmp_path).report
 
     assert report.is_item_source_missing
+    assert report.pages_parsed == 3
+
+
+LOCATIONS_CSV = (
+    "id,region_id,identifier\n"
+    "1,3,sootopolis-city\n"
+    "2,3,hoenn-route-126\n"
+    "3,3,cave-of-origin\n"
+    "4,5,undella-town\n"
+    "5,,hyrule-castle\n"
+    "6,11,pinball-table\n"
+)
+
+
+def test_pokeapi_locations_with_no_owner_are_listed(tmp_path: Path) -> None:
+    report = run_parse(tmp_path, locations_csv=LOCATIONS_CSV).report
+
+    assert report.pokeapi_unmatched == ("cave-of-origin", "undella-town")
+    assert not report.is_pokeapi_source_missing
+
+
+def test_a_missing_pokeapi_file_is_named_and_the_run_goes_on(tmp_path: Path) -> None:
+    report = run_parse(tmp_path).report
+
+    assert report.is_pokeapi_source_missing
+    assert report.pokeapi_unmatched == ()
     assert report.pages_parsed == 3

@@ -813,6 +813,9 @@ def format_location_parse_report(report: LocationParseReport, elapsed_seconds: f
     lines.append(f"find item stubs: {len(report.item_stub_names)}")
     if report.is_item_source_missing:
         lines.append("item source missing: item")
+    if report.is_pokeapi_source_missing:
+        lines.append("pokeapi source missing: locations.csv")
+    lines.append(f"pokeapi locations with no owner: {len(report.pokeapi_unmatched)}")
     lines.extend(
         f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
     )

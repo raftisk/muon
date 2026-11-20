@@ -2036,6 +2036,8 @@ def build_location_report() -> LocationParseReport:
         duplicate_finds=2,
         item_stub_names=("Moon Stone",),
         is_item_source_missing=True,
+        pokeapi_unmatched=("canalave-city", "sinnoh-route-218"),
+        is_pokeapi_source_missing=False,
     )
 
 
@@ -2064,6 +2066,7 @@ def test_parse_location_reaches_the_location_run(
     assert "finds rock-smash: 1" in output
     assert "find skips machine_find: 4" in output
     assert "item source missing: item" in output
+    assert "pokeapi locations with no owner: 2" in output
     assert "mentions: 4 (1 unresolved)" in output
     assert "candidates: 2920" in output
     assert "unowned location stubs: 1" in output
