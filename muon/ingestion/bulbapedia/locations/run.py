@@ -215,10 +215,11 @@ class LocationPageOutput:
 
 @dataclass(frozen=True, order=True)
 class CoverageRow:
-    """The species with a detailed Encounter at 1 Location in 1 Version."""
+    """The species with a detailed Encounter of 1 kind at 1 Location in 1 Version."""
 
     location_id: str
     version_id: str
+    kind: str
     species_ids: tuple[str, ...]
 
 
@@ -493,9 +494,10 @@ def check_id_overlap(outputs: Iterable[LocationPageOutput], species_titles: Iter
 
 
 def build_coverage(outputs: Iterable[LocationPageOutput]) -> tuple[CoverageRow, ...]:
-    """Return the (location, version) pairs with at least 1 Encounter and the species that have
-    one, sorted. An Encounter at an area counts for the Location of its page."""
-    pairs: dict[tuple[str, str], set[str]] = {}
+    """Return the (location, version, kind) triples with at least 1 Encounter and the species
+    that have one, sorted. An Encounter at an area counts for the Location of its page. The
+    kind keeps a species run from dropping coarse facts of a kind that no location page read."""
+    pairs: dict[tuple[str, str, str], set[str]] = {}
     for output in outputs:
         location_id = build_location_id(output.extract.title)
         versions = {
@@ -503,13 +505,17 @@ def build_coverage(outputs: Iterable[LocationPageOutput]) -> tuple[CoverageRow, 
             for edge in output.encounter_batch.edges
             if edge.property_iri == IN_VERSION
         }
+        kinds = {
+            node.id: str(node.properties[ENCOUNTER_KIND])
+            for node in output.encounter_batch.owner_nodes
+        }
         for edge in output.encounter_batch.edges:
             if edge.property_iri == HAS_ENCOUNTER:
-                key = (location_id, versions[edge.end.id])
+                key = (location_id, versions[edge.end.id], kinds[edge.end.id])
                 pairs.setdefault(key, set()).add(edge.start.id)
     return tuple(
-        CoverageRow(location_id, version_id, tuple(sorted(species)))
-        for (location_id, version_id), species in sorted(pairs.items())
+        CoverageRow(location_id, version_id, kind, tuple(sorted(species)))
+        for (location_id, version_id, kind), species in sorted(pairs.items())
     )
 
 
@@ -519,6 +525,7 @@ def serialize_coverage(rows: Iterable[CoverageRow]) -> str:
             {
                 "location_id": r.location_id,
                 "version_id": r.version_id,
+                "kind": r.kind,
                 "species_ids": list(r.species_ids),
             }
             for r in rows

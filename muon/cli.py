@@ -99,6 +99,9 @@ from muon.ingestion.bulbapedia.locations.ingest import (
     write_location_ingest_report,
 )
 from muon.ingestion.bulbapedia.locations.page import LocationTableError
+from muon.ingestion.bulbapedia.locations.run import (
+    COVERAGE_FILE_NAME as LOCATION_COVERAGE_FILE_NAME,
+)
 from muon.ingestion.bulbapedia.locations.run import PAGE_TYPE as LOCATION_PAGE_TYPE
 from muon.ingestion.bulbapedia.locations.run import (
     LocationParseReport,
@@ -559,7 +562,12 @@ def execute_fetch_pokeapi(is_update: bool) -> int:
 
 def run_parse(request: ParseRequest) -> ParseRun:
     """Parse the pinned pages and write the outputs. No Neo4j setting is read."""
-    inputs = RunInputs(request, PageStore(), OntologySettings().ontology_dir)
+    inputs = RunInputs(
+        request,
+        PageStore(),
+        OntologySettings().ontology_dir,
+        DEFAULT_OUTPUT_ROOT / LOCATION_COVERAGE_FILE_NAME,
+    )
     run = parse_species_pages(inputs)
     write_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
     return run

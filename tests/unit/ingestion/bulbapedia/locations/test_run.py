@@ -262,9 +262,9 @@ def test_encounters_are_counted_and_the_unknown_species_is_listed(tmp_path: Path
 def test_coverage_lists_each_location_and_version_with_its_species(tmp_path: Path) -> None:
     run = run_parse(tmp_path)
 
-    assert [(r.location_id, r.version_id, r.species_ids) for r in run.coverage] == [
-        ("sootopolis-city", "emerald", ("poochyena",)),
-        ("sootopolis-city", "ruby", ("poochyena",)),
+    assert [(r.location_id, r.version_id, r.kind, r.species_ids) for r in run.coverage] == [
+        ("sootopolis-city", "emerald", "wild", ("poochyena",)),
+        ("sootopolis-city", "ruby", "wild", ("poochyena",)),
     ]
     assert run.report.coverage_pairs == 2
 
@@ -278,6 +278,7 @@ def test_the_coverage_file_is_written_with_the_run(tmp_path: Path) -> None:
     assert rows[0] == {
         "location_id": "sootopolis-city",
         "version_id": "emerald",
+        "kind": "wild",
         "species_ids": ["poochyena"],
     }
 

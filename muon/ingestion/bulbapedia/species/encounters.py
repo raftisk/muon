@@ -646,6 +646,16 @@ def read_encounters(
     return EncounterReading(facts=tuple(dict.fromkeys(facts)), counts=counts)
 
 
+class CoarseGap(ReportModel):
+    """A coarse fact at a place and version that a location page covers, whose species has no
+    detailed Encounter there."""
+
+    species_id: str
+    location: str
+    version: str
+    kind: str
+
+
 class EncounterReport(ReportModel):
     """The encounter outcomes and batch counts of the requested pages.
     `candidate_occurrences` and `unknown_location_occurrences` count every link, not every
@@ -669,6 +679,8 @@ class EncounterReport(ReportModel):
     unknown_location: Mapping[str, int]
     unread_markers: Mapping[str, int]
     unmatched_form_labels: Mapping[str, int]
+    covered_skipped: Mapping[str, int] = {}
+    coarse_without_detail: tuple[CoarseGap, ...] = ()
 
 
 def sum_counts(readings: Iterable[EncounterReading]) -> EncounterCounts:
@@ -684,7 +696,10 @@ def sort_counter(counter: Counter[str]) -> dict[str, int]:
 
 
 def build_encounter_report(
-    readings: Sequence[EncounterReading], batches: Sequence[GraphBatch]
+    readings: Sequence[EncounterReading],
+    batches: Sequence[GraphBatch],
+    covered_skipped: Mapping[str, int] | None = None,
+    coarse_without_detail: Sequence[CoarseGap] = (),
 ) -> EncounterReport:
     totals = sum_counts(readings)
     owners = [node for batch in batches for node in batch.owner_nodes]
@@ -722,4 +737,6 @@ def build_encounter_report(
         unknown_location=sort_counter(totals.unknown_location),
         unread_markers=sort_counter(totals.unread_markers),
         unmatched_form_labels=sort_counter(totals.unmatched_form_labels),
+        covered_skipped=dict(sorted((covered_skipped or {}).items())),
+        coarse_without_detail=tuple(coarse_without_detail),
     )
