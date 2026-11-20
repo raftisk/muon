@@ -29,6 +29,7 @@ import mwparserfromhell
 from mwparserfromhell.nodes import Template, Wikilink
 from pydantic import BaseModel, ConfigDict
 
+from muon.ingestion.bulbapedia.locations.areas import AreaRef, read_areas
 from muon.ingestion.bulbapedia.locations.identity import (
     LOCATION_INFOBOXES,
     LocationIndex,
@@ -306,6 +307,7 @@ class LocationPageExtract(LocationModel):
     version_groups: tuple[str, ...] = ()
     generation: str | None = None
     field_requirements: tuple[FieldRequirement, ...] = ()
+    areas: tuple[AreaRef, ...] = ()
     aliases: tuple[str, ...] = ()
     notes: tuple[LocationNote, ...] = ()
 
@@ -526,7 +528,8 @@ def parse_location_page(page: Page, index: LocationIndex) -> LocationPageExtract
     if read_redirect_target(page.wikitext) is not None:
         return skip(SkipReason.REDIRECT)
     masked = mask_comments(page.wikitext)
-    infobox = read_infobox(split_sections(masked)[0])
+    sections = split_sections(masked)
+    infobox = read_infobox(sections[0])
     if infobox is None:
         return skip(SkipReason.NO_LOCATION_INFOBOX)
     categories = read_categories(masked)
@@ -551,6 +554,7 @@ def parse_location_page(page: Page, index: LocationIndex) -> LocationPageExtract
         version_groups=version_groups,
         generation=read_generation(infobox),
         field_requirements=requirements,
+        areas=read_areas(sections, page.title, index),
         aliases=list_redirect_titles(index, title),
         notes=(*class_notes, *requirement_notes),
     )
