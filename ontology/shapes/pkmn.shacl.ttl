@@ -671,11 +671,11 @@ pkmn-shape:X1_TextChunk a sh:NodeShape ;
     sh:property [
         sh:path mo:aspect ;
         sh:name "X1" ;
-        sh:message "A text chunk needs exactly 1 aspect: biology, effect, flavor, trivia, origin, profile, anime, manga, side_game or pokedex."@en ;
+        sh:message "A text chunk needs exactly 1 aspect: biology, effect, flavor, trivia, origin, profile, geography, anime, manga, side_game or pokedex."@en ;
         sh:severity sh:Violation ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
-        sh:in ( "biology" "effect" "flavor" "trivia" "origin" "profile" "anime" "manga" "side_game" "pokedex" )
+        sh:in ( "biology" "effect" "flavor" "trivia" "origin" "profile" "geography" "anime" "manga" "side_game" "pokedex" )
     ] ;
     sh:xone (
         [ sh:property [ sh:path mo:source ; sh:minCount 1 ] ]
@@ -886,7 +886,7 @@ pkmn-shape:R1_RequiresRole a sh:NodeShape ;
     sh:name "R1" ;
     sh:message "A REQUIRES edge needs a role from the table, and its target class must match the role."@en ;
     sh:severity sh:Violation ;
-    pkmn-shape:scope pkmn:Evolution , pkmn:FormChange ;
+    pkmn-shape:scope pkmn:Evolution , pkmn:FormChange , mo:Location ;
     sh:target [
         a sh:SPARQLTarget ;
         sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
@@ -895,7 +895,7 @@ pkmn-shape:R1_RequiresRole a sh:NodeShape ;
     sh:property [
         sh:path pkmn:role ;
         sh:name "R1" ;
-        sh:message "A REQUIRES edge needs exactly 1 role: use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor or fusesWith."@en ;
+        sh:message "A REQUIRES edge needs exactly 1 role: use, hold, knownMove, knownMoveType, atLocation, partySpecies, partyType, tradedFor, fusesWith, fieldMove or fieldItem."@en ;
         sh:severity sh:Violation ;
         sh:minCount 1 ;
         sh:maxCount 1
@@ -903,6 +903,14 @@ pkmn-shape:R1_RequiresRole a sh:NodeShape ;
     sh:or (
         [
             sh:property [ sh:path pkmn:role ; sh:in ( "use" "hold" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:Item ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "fieldMove" ) ] ;
+            sh:property [ sh:path rdf:object ; sh:class pkmn:Move ]
+        ]
+        [
+            sh:property [ sh:path pkmn:role ; sh:in ( "fieldItem" ) ] ;
             sh:property [ sh:path rdf:object ; sh:class pkmn:Item ]
         ]
         [
@@ -1064,4 +1072,38 @@ pkmn-shape:C5_AdjacencyDirection a sh:NodeShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:in ( "north" "south" "east" "west" )
+    ] .
+
+# Item find methods. The other methods of pkmn:method belong to learnsets and encounters.
+pkmn-shape:C6_ItemFindMethod a sh:NodeShape ;
+    sh:name "C6" ;
+    sh:message "An item find has at most 1 method, from the item find method list."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:ItemFind ;
+    sh:targetClass pkmn:ItemFind ;
+    sh:property [
+        sh:path pkmn:method ;
+        sh:name "C6" ;
+        sh:message "An item find method is 1 of rock-smash, fishing, berry-tree or gift."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in ( "rock-smash" "fishing" "berry-tree" "gift" )
+    ] .
+
+# A location area sits inside exactly 1 place, never inside another area.
+pkmn-shape:C7_LocationAreaParent a sh:NodeShape ;
+    sh:name "C7" ;
+    sh:message "A location area has exactly 1 locatedIn, a Location that is not a location area."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:LocationArea ;
+    sh:targetClass pkmn:LocationArea ;
+    sh:property [
+        sh:path mo:locatedIn ;
+        sh:name "C7" ;
+        sh:message "A location area needs exactly 1 locatedIn, a Location that is not a location area."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class mo:Location ;
+        sh:not [ sh:class pkmn:LocationArea ]
     ] .

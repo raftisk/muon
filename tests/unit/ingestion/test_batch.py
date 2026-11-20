@@ -188,6 +188,16 @@ def test_claim_with_any_class_sorts_with_empty_other_class() -> None:
     assert claim.sort_key == (WIDGET, "alpha", HAS_COLOR, "in", "")
 
 
+def test_claim_id_prefix_defaults_to_none_and_survives_a_round_trip() -> None:
+    plain = EdgeClaim(
+        anchor=WIDGET_NODE.node_ref, property_iri=HAS_COLOR, direction=ClaimDirection.OUT
+    )
+    prefixed = plain.model_copy(update={"other_end_id_prefix": "alpha:"})
+
+    assert plain.other_end_id_prefix is None
+    assert EdgeClaim.model_validate_json(prefixed.model_dump_json()) == prefixed
+
+
 def test_claim_without_anchor_node_raises() -> None:
     claim = EdgeClaim(
         anchor=NodeRef(class_iri=WIDGET, id="missing"),

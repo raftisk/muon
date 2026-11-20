@@ -5,9 +5,9 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 | File | Namespace | Content |
 | --- | --- | --- |
 | `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 21 object properties, 6 datatype properties |
-| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.7.0. Imports the core. 39 classes, 51 object properties, 69 datatype properties |
+| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.8.0. Imports the core. 39 classes, 51 object properties, 69 datatype properties |
 | `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 249 enumerable individuals in 20 classes |
-| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 27 rules, listed in [Shapes](#shapes) |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 29 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -85,7 +85,7 @@ Meta
 
 - `aliases` (Entity, repeated string): other names, such as other languages, trademark and beta names.
 - `text` (TextChunk): the verbatim chunk text.
-- `aspect` (TextChunk): the kind of content, one of biology, effect, flavor, trivia, origin, profile, anime, manga, side_game. pkmn adds pokedex.
+- `aspect` (TextChunk): the kind of content, one of biology, effect, flavor, trivia, origin, profile, geography, anime, manga, side_game. pkmn adds pokedex.
 - `source` (TextChunk): the non-canon origin of a chunk. Canon origins use `fromWork`.
 - `section` (TextChunk): the heading path inside the source page, e.g. `Biology > Forms`.
 - `sourceUrl` (TextChunk): permalink to the source page revision.
@@ -172,7 +172,7 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 
 - `Item` properties: `category`, `buyPrice`, `sellPrice`, `flingPower`, `isConsumable`, `effectText`. The prices are the Scarlet/Violet shop prices. `Berry` links to a `Flavor` with `hasFlavor`, written `HAS_FLAVOR` with the edge property `potency`, an integer above 0. A flavor the berry lacks has no edge.
 - `Flavor` has 5 individuals (Spicy, Dry, Sweet, Bitter, Sour). A nature likes the flavor of the stat it boosts (`likesFlavor`) and dislikes the flavor of the stat it reduces (`dislikesFlavor`). The 5 neutral natures have neither.
-- `ItemFind` reifies 1 find of an item at a location in a version, linked with `hasFind`, `atLocation` and `inVersion`, and carries an optional `isHidden` and a `method`.
+- `ItemFind` reifies 1 find of an item at a location in a version, linked with `hasFind`, `atLocation` and `inVersion`, and carries an optional `isHidden` and a `method`, one of `rock-smash`, `fishing`, `berry-tree` or `gift`.
 - Items with a battle effect use the effect model. Items that only gate something (evolution stones, Mega Stones) are reached through `requires`.
 
 ### Generations, versions and encounters
@@ -181,6 +181,15 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 - `GenerationMechanic` records a battle mechanic (Mega Evolution, Z-Move, Dynamax, Gigantamax, Terastallization) and its generation.
 - `Encounter` reifies 1 encounter of any kind: a species caught or received at a location in a version. It links `atLocation` (a `LocationArea` or a location) and `inVersion`, and carries exactly 1 `encounterKind` (`wild`, `raid`, `static`, `gift`, `snag`, `migration`) and at most 1 `method` from the encounter methods of the `method` definition. `conditions`, `minLevel`, `maxLevel` and `chance` are optional, so a coarse encounter has none of them. A species links to it with `hasEncounter`, and `mo:foundIn` is the shortcut from the species to the location. No `locatedIn` edge connects a location to its region yet.
 - `LocationArea` is a subdivision of a location (a floor, a sector) and chains to it with `mo:locatedIn`.
+
+### Location pages
+
+A location page of the core series games gives 3 passes of batches. A page whose title is an A-Box Region (Kanto to Paldea) gives chunks only, and the run never sets a property, label or edge on a seed Region.
+
+- Pass 1 owns the `Location` of the page with the class its infobox and categories give (`Settlement`, `Route`, `GeoFeature`, `Structure`, or `Location` when no rule fits) and its `LocationArea` nodes. The id of an area is the id of its location, a hyphen and the area key, so `B1F (Feebas lake)` and `B1F` are 1 area. The page claims `LOCATED_IN` (to its parents), `ADJACENT_TO` (with the edge property `direction`), `APPEARS_IN` (to every `Version` of the core game categories), `INTRODUCED_IN`, `REQUIRES` (`role` `fieldMove` or `fieldItem`, from the route infobox fields with the value `yes`) and `LOCATED_IN` from its areas, which it owns.
+- Pass 2 owns the `TextChunk` nodes of the page. The lead, Description, Geography, Route description, Places of interest and Layout give `geography`, Trivia gives `trivia` and Origin gives `origin`. Every chunk `DESCRIBES` the location.
+- Pass 3 owns the `ItemFind` nodes. A find is `AT_LOCATION` the location or one of its areas and `IN_VERSION` of 1 version, and its item `HAS_FIND` it. The id is `{place}:{version}:{item}[:{method}][:hidden]`. The location claims the `FOUND_IN` shortcut from each item, to the page location and never to an area.
+- A reference to another place carries the class of that place's own page, because a node written with a class in the batch scope loses the labels of its other classes. A place no page owns is a plain `Location` stub.
 
 ## Shapes
 
@@ -196,8 +205,8 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 | Items | I1 item values (at most 1 `category`, prices at or above 0, `flingPower` above 0, 1 `introducedIn` except for machines), I2 `HAS_FLAVOR` potency, C2 machine links, kind (TM, HM, TR) and number |
 | Meta and text | G1 version part of a version group, G2 version group part of a generation, X1 text chunk completeness, X2 `fromWork` by aspect |
 | Moves: flags, effects, learnset | C2 learnset entry, E1 effect values and booleans (`isOverworld`, `isProtectable`), X3 `effectText` owner |
-| Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role |
-| Encounters and locations | C1 encounter links, kind, level order and chance, C3 encounter method, C4 item find links, C5 `ADJACENT_TO` direction |
+| Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role (a location adds `fieldMove` to a Move and `fieldItem` to an Item) |
+| Encounters and locations | C1 encounter links, kind, level order and chance, C3 encounter method, C4 item find links, C5 `ADJACENT_TO` direction, C6 item find method (`rock-smash`, `fishing`, `berry-tree`, `gift`), C7 `LocationArea` parent |
 
 Every shape carries `pkmn-shape:scope`, the classes it checks, or `pkmn-shape:Always` for the shapes that run on every touched node (L2). `validate(batch, scope)` runs a shape when its scope class is in the requested scope or a subclass of it. A node outside the scope may be a stub with only `id`, `name` and labels, and the Always shapes still apply to it. `scope=None` runs every shape and is the final sweep after all ingestion passes.
 

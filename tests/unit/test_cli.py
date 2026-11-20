@@ -29,7 +29,12 @@ from muon.ingestion.bulbapedia.abilities.run import (
 from muon.ingestion.bulbapedia.abilities.run import ParseRunError as AbilityParseRunError
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
-from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
+from muon.ingestion.bulbapedia.fetch import (
+    ExportConflictError,
+    FetchError,
+    FetchReport,
+    FetchRequest,
+)
 from muon.ingestion.bulbapedia.ingest import (
     BatchRejection,
     CensusReport,
@@ -49,6 +54,12 @@ from muon.ingestion.bulbapedia.items.run import (
     ItemParseRun,
 )
 from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
+from muon.ingestion.bulbapedia.locations.ingest import LocationIngestRun, LocationPass
+from muon.ingestion.bulbapedia.locations.run import (
+    LocationParseReport,
+    LocationParseRequest,
+    LocationParseRun,
+)
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
@@ -421,7 +432,36 @@ def test_fetch_parses_the_export_file(monkeypatch: pytest.MonkeyPatch) -> None:
 
     cli.main(["fetch", "bulbapedia", "move", "--from-export", EXPORT_FILE])
 
-    assert fetch.requests == [FetchRequest(page_type="move", export_path=Path(EXPORT_FILE))]
+    assert fetch.requests == [FetchRequest(page_type="move", export_paths=(Path(EXPORT_FILE),))]
+
+
+def test_fetch_collects_every_export_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetch = arrange_fetch(monkeypatch, EXPORT_REPORT)
+
+    cli.main(
+        ["fetch", "bulbapedia", "location", "--from-export", "a.xml", "--from-export", "b.xml"]
+    )
+
+    assert fetch.requests == [
+        FetchRequest(page_type="location", export_paths=(Path("a.xml"), Path("b.xml")))
+    ]
+
+
+def test_fetch_reports_conflicting_exports(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def conflict(request: FetchRequest) -> FetchReport:
+        raise ExportConflictError("Mount Coronet", 10, 11)
+
+    monkeypatch.setattr(cli, "run_fetch", conflict)
+
+    exit_code = cli.main(["fetch", "bulbapedia", "location", "--from-export", "a.xml"])
+
+    assert exit_code == cli.EXIT_FAILURE
+    error = capsys.readouterr().err
+    assert "Mount Coronet" in error
+    assert "10" in error
+    assert "11" in error
 
 
 @pytest.mark.parametrize("extra", [["--update"], ["--title", "Tackle (move)"]])
@@ -465,7 +505,7 @@ def test_export_run_needs_no_neo4j_setting_and_no_http_client(
     exit_code = cli.main(["fetch", "bulbapedia", "move", "--from-export", str(path)])
 
     assert exit_code == cli.EXIT_SUCCESS
-    assert imports == [FetchRequest(page_type="move", export_path=path)]
+    assert imports == [FetchRequest(page_type="move", export_paths=(path,))]
     assert "fetch bulbapedia move: done" in capsys.readouterr().out
 
 
@@ -1047,7 +1087,7 @@ def test_parse_reports_run_errors_with_exit_1(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["parse", "bulbapedia", "location"], "'location'"),
+        (["parse", "bulbapedia", "trainer"], "'trainer'"),
         (["parse", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -1310,7 +1350,7 @@ def test_ingest_stops_on_invalid_settings_before_the_parse(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["ingest", "bulbapedia", "location"], "'location'"),
+        (["ingest", "bulbapedia", "trainer"], "'trainer'"),
         (["ingest", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -1963,3 +2003,149 @@ def test_parse_item_failure_prints_error(
     assert cli.main(["parse", "bulbapedia", "item"]) == cli.EXIT_FAILURE
 
     assert f"parse bulbapedia item failed: {error}" in capsys.readouterr().err
+
+
+def build_location_report() -> LocationParseReport:
+    return LocationParseReport(
+        pages=(),
+        pages_parsed=1233,
+        pages_skipped=1099,
+        pages_failed=0,
+        skipped_per_reason={"redirect": 20, "no_location_infobox": 973, "not_core_series": 106},
+        locations_per_class={"route": 260, "settlement": 151},
+        notes=(),
+        areas=613,
+        batch_counts=BatchCounts(
+            owner_nodes={"Route": 260}, stubs={"Route": 5}, edges={"locatedIn": 9}
+        ),
+        duplicate_ids=(),
+        unowned_stub_titles=("Cave of Origin",),
+        candidate_count=2920,
+        chunk_counts=BatchCounts(owner_nodes={"TextChunk": 9}, stubs={}, edges={"describes": 9}),
+        chunks_per_aspect={"geography": 7, "trivia": 2},
+        mentions=4,
+        unresolved_mentions=1,
+        dropped_templates=(),
+        removed_tables_total=0,
+        math_formulas_total=0,
+        long_chunks=(),
+        find_counts=BatchCounts(owner_nodes={"ItemFind": 3}, stubs={}, edges={"hasFind": 3}),
+        finds_per_method={"none": 2, "rock-smash": 1},
+        hidden_finds=1,
+        find_skips={"machine_find": 4, "skipped_heading": 0},
+        duplicate_finds=2,
+        item_stub_names=("Moon Stone",),
+        is_item_source_missing=True,
+        pokeapi_unmatched=("canalave-city", "sinnoh-route-218"),
+        is_pokeapi_source_missing=False,
+        encounter_counts=BatchCounts(
+            owner_nodes={"Encounter": 7}, stubs={}, edges={"atLocation": 7}
+        ),
+        encounters_per_kind={"wild/none": 5, "wild/surf": 2},
+        encounter_skips={"trade": 3, "form_row": 1},
+        unmapped_encounter_values={"Rippling": 4},
+        merged_encounters=2,
+        duplicate_encounters=1,
+        unresolved_species=("Any",),
+        coverage_pairs=6,
+    )
+
+
+def test_parse_location_reaches_the_location_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    requests: list[LocationParseRequest] = []
+
+    def parse(request: LocationParseRequest) -> LocationParseRun:
+        requests.append(request)
+        return LocationParseRun(outputs=(), report=build_location_report(), candidates=())
+
+    monkeypatch.setattr(cli, "run_location_parse", parse)
+
+    exit_code = cli.main(["parse", "bulbapedia", "location", "--title", "Mount Coronet"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert requests == [LocationParseRequest(titles=("Mount Coronet",))]
+    output = capsys.readouterr().out
+    assert "parse bulbapedia location: done" in output
+    assert "pages parsed: 1233" in output
+    assert "skipped not_core_series: 106" in output
+    assert "areas: 613" in output
+    assert "chunks: 9" in output
+    assert "item finds: 3" in output
+    assert "finds rock-smash: 1" in output
+    assert "find skips machine_find: 4" in output
+    assert "item source missing: item" in output
+    assert "pokeapi locations with no owner: 2" in output
+    assert "encounters: 7" in output
+    assert "encounters wild/surf: 2" in output
+    assert "encounter skips trade: 3" in output
+    assert "merged encounters: 2" in output
+    assert "coverage pairs: 6" in output
+    assert "mentions: 4 (1 unresolved)" in output
+    assert "candidates: 2920" in output
+    assert "unowned location stubs: 1" in output
+
+
+class RecordingLocationIngest:
+    """Stands in for `cli.run_location_ingest` and `cli.write_location_ingest_report`."""
+
+    def __init__(self, outcome: LocationIngestRun) -> None:
+        self.outcome = outcome
+        self.titles: list[tuple[str, ...]] = []
+        self.reports: list[StubIngestReport] = []
+
+    async def run(
+        self, settings: Settings, run: LocationParseRun, titles: tuple[str, ...]
+    ) -> LocationIngestRun:
+        self.titles.append(titles)
+        return self.outcome
+
+    def write_report(self, report: StubIngestReport) -> Path:
+        self.reports.append(report)
+        return Path("location-ingest-report.json")
+
+
+@pytest.mark.usefixtures("settings")
+def test_location_ingest_parses_ingests_and_prints_the_stubs(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    requests: list[LocationParseRequest] = []
+
+    def parse(request: LocationParseRequest) -> LocationParseRun:
+        requests.append(request)
+        return LocationParseRun(outputs=(), report=build_location_report(), candidates=())
+
+    report = StubIngestReport(
+        titles=(),
+        is_full_run=True,
+        passes=tuple(
+            PassTotals(ingest_pass=ingest_pass, batches_written=1237, counters={})
+            for ingest_pass in LocationPass
+        ),
+        changed_pages=(),
+        failed_pages=(),
+        stop=None,
+        census=CensusReport(labels={"Location": 1237}, relationship_types={}),
+        stub_ids={"Location": ("cave-of-origin",)},
+    )
+    ingest = RecordingLocationIngest(
+        LocationIngestRun(report=report, elapsed_seconds=dict.fromkeys(LocationPass, 1.0))
+    )
+    monkeypatch.setattr(cli, "run_location_parse", parse)
+    monkeypatch.setattr(cli, "run_location_ingest", ingest.run)
+    monkeypatch.setattr(cli, "write_location_ingest_report", ingest.write_report)
+
+    exit_code = cli.main(["ingest", "bulbapedia", "location", "--title", "Mount Coronet"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert requests == [LocationParseRequest(titles=("Mount Coronet",))]
+    assert ingest.titles == [("Mount Coronet",)]
+    assert len(ingest.reports) == 1
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[lines.index("ingest bulbapedia location: done") + 1 :][:4] == [
+        "location: 1237 batches in 1.0 s",
+        "chunk: 1237 batches in 1.0 s",
+        "find: 1237 batches in 1.0 s",
+        "encounter: 1237 batches in 1.0 s",
+    ]

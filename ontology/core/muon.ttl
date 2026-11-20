@@ -5,7 +5,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://muon.dev/ns/core> a owl:Ontology ;
-    owl:versionInfo "0.3.0" ;
+    owl:versionInfo "0.4.0" ;
     skos:definition "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph."@en .
 
 #################################################################
@@ -355,7 +355,7 @@ mo:aspect a owl:DatatypeProperty ;
     rdfs:domain mo:TextChunk ;
     rdfs:range  xsd:string ;
     rdfs:label "aspect"@en ;
-    skos:definition "The kind of content a chunk holds: biology, effect, flavor, trivia, origin, profile, anime, manga, side_game. A universe adds its own values in its SHACL shape (pkmn: pokedex)."@en .
+    skos:definition "The kind of content a chunk holds: biology, effect, flavor, trivia, origin, profile, geography, anime, manga, side_game. A universe adds its own values in its SHACL shape (pkmn: pokedex)."@en .
 
 mo:source a owl:DatatypeProperty ;
     rdfs:domain mo:TextChunk ;

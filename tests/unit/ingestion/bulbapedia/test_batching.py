@@ -6,13 +6,16 @@ from muon.ingestion.bulbapedia.batching import (
     FROM_WORK,
     MENTIONED_IN,
     MOVE,
+    OUT,
     SOURCE,
     TYPE,
     VERSION_GROUP,
     AboxIndex,
     ChunkBuildError,
+    ClaimRule,
     MentionContext,
     build_chunk_record,
+    build_claims,
     build_machine_id,
     build_mention_parts,
     build_stub,
@@ -157,3 +160,20 @@ def test_build_work_parts_links_known_version_groups_and_returns_the_rest() -> N
 
     assert [(e.property_iri, e.end.id) for e in parts.edges] == [(FROM_WORK, "scarlet-violet")]
     assert missing == ("Pokopia",)
+
+
+def test_a_prefixed_claim_rule_gives_each_anchor_its_own_id_prefix() -> None:
+    anchors = [build_stub(MOVE, "Shadow Ball"), build_stub(MOVE, "Tackle")]
+    rules = [
+        ClaimRule(MENTIONED_IN, OUT, None, owns_other_end=True, is_id_prefixed=True),
+        ClaimRule(FROM_WORK, OUT, None, owns_other_end=False),
+    ]
+
+    claims = build_claims([anchor.node_ref for anchor in anchors], rules)
+
+    assert [(c.anchor.id, c.property_iri, c.other_end_id_prefix) for c in claims] == [
+        ("shadow-ball", MENTIONED_IN, "shadow-ball:"),
+        ("shadow-ball", FROM_WORK, None),
+        ("tackle", MENTIONED_IN, "tackle:"),
+        ("tackle", FROM_WORK, None),
+    ]

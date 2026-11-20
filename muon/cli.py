@@ -92,6 +92,26 @@ from muon.ingestion.bulbapedia.items.run import (
 )
 from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
 from muon.ingestion.bulbapedia.items.run import write_outputs as write_item_outputs
+from muon.ingestion.bulbapedia.locations.finds import FindTableError
+from muon.ingestion.bulbapedia.locations.ingest import (
+    LocationIngestRun,
+    ingest_locations,
+    write_location_ingest_report,
+)
+from muon.ingestion.bulbapedia.locations.page import LocationTableError
+from muon.ingestion.bulbapedia.locations.run import (
+    COVERAGE_FILE_NAME as LOCATION_COVERAGE_FILE_NAME,
+)
+from muon.ingestion.bulbapedia.locations.run import PAGE_TYPE as LOCATION_PAGE_TYPE
+from muon.ingestion.bulbapedia.locations.run import (
+    LocationParseReport,
+    LocationParseRequest,
+    LocationParseRun,
+    LocationRunInputs,
+    parse_location_pages,
+)
+from muon.ingestion.bulbapedia.locations.run import ParseRunError as LocationParseRunError
+from muon.ingestion.bulbapedia.locations.run import write_outputs as write_location_outputs
 from muon.ingestion.bulbapedia.moves.batches import GameCodeError, MachineFieldError
 from muon.ingestion.bulbapedia.moves.ingest import (
     MoveIngestRun,
@@ -220,6 +240,15 @@ MOVE_PARSE_ERRORS = (
     ABoxError,
 )
 
+LOCATION_PARSE_ERRORS = (
+    LocationParseRunError,
+    LocationTableError,
+    FindTableError,
+    PageStoreError,
+    OntologyError,
+    ABoxError,
+)
+
 ITEM_PARSE_ERRORS = (
     ItemParseRunError,
     GameCodeError,
@@ -282,9 +311,11 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument(
         "--from-export",
         type=Path,
-        dest="export_path",
+        action="append",
+        default=[],
+        dest="export_paths",
         metavar="FILE",
-        help="pin the pages of the page type from a Special:Export file",
+        help="pin the pages of the page type from a Special:Export file (repeatable)",
     )
     parse = commands.add_parser(
         PARSE_COMMAND, help="parse pinned source pages into batches and a report under data/"
@@ -292,7 +323,13 @@ def build_parser() -> argparse.ArgumentParser:
     parse.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to parse")
     parse.add_argument(
         "page_type",
-        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE, ITEM_PAGE_TYPE),
+        choices=(
+            PARSE_PAGE_TYPE,
+            MOVE_PAGE_TYPE,
+            ABILITY_PAGE_TYPE,
+            ITEM_PAGE_TYPE,
+            LOCATION_PAGE_TYPE,
+        ),
         help="the set of pages to parse",
     )
     parse.add_argument(
@@ -310,7 +347,13 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to ingest")
     ingest.add_argument(
         "page_type",
-        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE, ITEM_PAGE_TYPE),
+        choices=(
+            PARSE_PAGE_TYPE,
+            MOVE_PAGE_TYPE,
+            ABILITY_PAGE_TYPE,
+            ITEM_PAGE_TYPE,
+            LOCATION_PAGE_TYPE,
+        ),
         help="the set of pages to ingest",
     )
     ingest.add_argument(
@@ -446,7 +489,7 @@ async def run_purge(settings: Settings, prefix: str) -> WriteSummary:
 
 def run_fetch(request: FetchRequest) -> FetchReport:
     """Run an export run with no HTTP client, and any other run against the API."""
-    if request.export_path is not None:
+    if request.export_paths:
         return import_pages(request, PageStore())
     with build_http_client() as http_client:
         return fetch_pages(request, PageStore(), BulbapediaClient(http_client))
@@ -465,10 +508,10 @@ def format_fetch_report(request: FetchRequest, report: FetchReport) -> str:
         f"redirects: {len(report.redirects)}",
         f"requests: {report.requests}",
     ]
-    if request.export_path is not None:
+    if request.export_paths:
         lines.append(f"ignored: {report.ignored}")
     lines.append(f"elapsed seconds: {report.elapsed_seconds:.1f}")
-    if request.is_update or request.titles or request.export_path is not None:
+    if request.is_update or request.titles or request.export_paths:
         for label, titles in (
             ("added", report.added),
             ("changed", report.changed),
@@ -519,7 +562,12 @@ def execute_fetch_pokeapi(is_update: bool) -> int:
 
 def run_parse(request: ParseRequest) -> ParseRun:
     """Parse the pinned pages and write the outputs. No Neo4j setting is read."""
-    inputs = RunInputs(request, PageStore(), OntologySettings().ontology_dir)
+    inputs = RunInputs(
+        request,
+        PageStore(),
+        OntologySettings().ontology_dir,
+        DEFAULT_OUTPUT_ROOT / LOCATION_COVERAGE_FILE_NAME,
+    )
     run = parse_species_pages(inputs)
     write_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
     return run
@@ -739,6 +787,94 @@ def execute_item_parse(titles: tuple[str, ...]) -> int:
     return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
 
 
+def run_location_parse(request: LocationParseRequest) -> LocationParseRun:
+    """Parse the pinned location pages and write the outputs. No Neo4j or LLM setting is read."""
+    inputs = LocationRunInputs(request, PageStore(), OntologySettings().ontology_dir)
+    run = parse_location_pages(inputs)
+    write_location_outputs(run, DEFAULT_OUTPUT_ROOT, is_full_run=not request.titles)
+    return run
+
+
+def format_location_parse_report(report: LocationParseReport, elapsed_seconds: float) -> str:
+    """The page counts, skip reasons, classes, batch counts, notes and unowned references."""
+    counts = report.batch_counts
+    lines = [
+        f"{PARSE_COMMAND} {BULBAPEDIA_SOURCE} {LOCATION_PAGE_TYPE}: done",
+        f"pages parsed: {report.pages_parsed}",
+        f"pages skipped: {report.pages_skipped}",
+        f"pages failed: {report.pages_failed}",
+    ]
+    lines.extend(
+        f"skipped {reason}: {count}" for reason, count in report.skipped_per_reason.items()
+    )
+    lines.extend(f"locations {name}: {count}" for name, count in report.locations_per_class.items())
+    lines.append(f"areas: {report.areas}")
+    lines.append(f"chunks: {sum(report.chunks_per_aspect.values())}")
+    lines.extend(f"chunks {name}: {count}" for name, count in report.chunks_per_aspect.items())
+    lines.append(f"mentions: {report.mentions} ({report.unresolved_mentions} unresolved)")
+    lines.append(f"long chunks: {len(report.long_chunks)}")
+    lines.append(f"item finds: {sum(report.finds_per_method.values())}")
+    lines.extend(f"finds {name}: {count}" for name, count in report.finds_per_method.items())
+    lines.append(f"hidden finds: {report.hidden_finds}")
+    lines.extend(f"find skips {name}: {count}" for name, count in report.find_skips.items())
+    lines.append(f"duplicate finds: {report.duplicate_finds}")
+    lines.append(f"find item stubs: {len(report.item_stub_names)}")
+    lines.append(f"encounters: {sum(report.encounters_per_kind.values())}")
+    lines.extend(
+        f"encounters {name}: {count}" for name, count in report.encounters_per_kind.items()
+    )
+    lines.extend(
+        f"encounter skips {name}: {count}" for name, count in report.encounter_skips.items()
+    )
+    lines.append(f"merged encounters: {report.merged_encounters}")
+    lines.append(f"duplicate encounters: {report.duplicate_encounters}")
+    lines.append(f"unresolved species: {len(report.unresolved_species)}")
+    lines.append(f"coverage pairs: {report.coverage_pairs}")
+    if report.is_item_source_missing:
+        lines.append("item source missing: item")
+    if report.is_pokeapi_source_missing:
+        lines.append("pokeapi source missing: locations.csv")
+    lines.append(f"pokeapi locations with no owner: {len(report.pokeapi_unmatched)}")
+    lines.extend(
+        f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
+    )
+    others = (report.chunk_counts, report.find_counts, report.encounter_counts)
+    lines.append(
+        f"stubs: {sum(counts.stubs.values()) + sum(sum(c.stubs.values()) for c in others)}"
+    )
+    lines.append(
+        f"edges: {sum(counts.edges.values()) + sum(sum(c.edges.values()) for c in others)}"
+    )
+    note_counts = Counter(note.kind.value for note in report.notes)
+    lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
+    lines.append(f"duplicate ids: {len(report.duplicate_ids)}")
+    lines.extend(f"duplicate: {entry}" for entry in report.duplicate_ids)
+    lines.append(f"candidates: {report.candidate_count}")
+    lines.append(f"unowned location stubs: {len(report.unowned_stub_titles)}")
+    lines.extend(
+        f"failed: {page.title}: {page.reason}"
+        for page in report.pages
+        if page.status is PageStatus.FAILED
+    )
+    lines.append(f"elapsed seconds: {elapsed_seconds:.1f}")
+    return "\n".join(lines)
+
+
+def execute_location_parse(titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(
+        PARSE_COMMAND, f"{BULBAPEDIA_SOURCE} {LOCATION_PAGE_TYPE}"
+    )
+    started = time.monotonic()
+    try:
+        run = run_location_parse(LocationParseRequest(titles=titles))
+    except LOCATION_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_location_parse_report(run.report, time.monotonic() - started))
+    return EXIT_FAILURE if run.report.pages_failed else EXIT_SUCCESS
+
+
 def format_progress(progress: PassProgress) -> str:
     return (
         f"{progress.ingest_pass.value}: {progress.done}/{progress.total} batches, "
@@ -947,6 +1083,44 @@ def execute_item_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
     write_item_ingest_report(ingest_run.report)
     print(format_item_parse_report(run.report, parse_seconds))
     print(format_ingest_report(ITEM_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
+    return EXIT_SUCCESS if is_clean else EXIT_FAILURE
+
+
+async def run_location_ingest(
+    settings: Settings, run: LocationParseRun, titles: tuple[str, ...]
+) -> LocationIngestRun:
+    request = IngestRequest(
+        ontology_dir=settings.ontology.ontology_dir,
+        universes_dir=settings.universes.universes_dir,
+        titles=titles,
+        on_progress=print_progress,
+    )
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        return await ingest_locations(client, run, request)
+
+
+def execute_location_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(
+        INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {LOCATION_PAGE_TYPE}"
+    )
+    started = time.monotonic()
+    try:
+        run = run_location_parse(LocationParseRequest(titles=titles))
+    except LOCATION_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+    parse_seconds = time.monotonic() - started
+
+    try:
+        ingest_run = asyncio.run(run_location_ingest(settings, run, titles))
+    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    write_location_ingest_report(ingest_run.report)
+    print(format_location_parse_report(run.report, parse_seconds))
+    print(format_ingest_report(LOCATION_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
     is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
@@ -1328,19 +1502,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     arguments = parser.parse_args(argv)
     if arguments.command == FETCH_COMMAND and arguments.source == POKEAPI_SOURCE:
-        if arguments.page_type is not None or arguments.titles or arguments.export_path:
+        if arguments.page_type is not None or arguments.titles or arguments.export_paths:
             parser.error(POKEAPI_OPTIONS_MESSAGE)
         return execute_fetch_pokeapi(arguments.update)
     if arguments.command == FETCH_COMMAND:
         if arguments.page_type is None:
             parser.error(MISSING_PAGE_TYPE_MESSAGE)
-        if arguments.export_path is not None and (arguments.update or arguments.titles):
+        if arguments.export_paths and (arguments.update or arguments.titles):
             parser.error(EXPORT_CONFLICT_MESSAGE)
         request = FetchRequest(
             page_type=arguments.page_type,
             titles=tuple(arguments.titles),
             is_update=arguments.update,
-            export_path=arguments.export_path,
+            export_paths=tuple(arguments.export_paths),
         )
         return execute_fetch(request)
     if arguments.command == PARSE_COMMAND and arguments.page_type == MOVE_PAGE_TYPE:
@@ -1349,6 +1523,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_ability_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
         return execute_item_parse(tuple(arguments.titles))
+    if arguments.command == PARSE_COMMAND and arguments.page_type == LOCATION_PAGE_TYPE:
+        return execute_location_parse(tuple(arguments.titles))
     if arguments.command == PARSE_COMMAND:
         return execute_parse(ParseRequest(titles=tuple(arguments.titles)))
 
@@ -1365,6 +1541,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_ability_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
         return execute_item_ingest(settings, tuple(arguments.titles))
+    if arguments.command == INGEST_COMMAND and arguments.page_type == LOCATION_PAGE_TYPE:
+        return execute_location_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND:
         return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
     if arguments.command == PURGE_COMMAND:

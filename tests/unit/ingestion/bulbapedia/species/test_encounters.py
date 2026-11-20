@@ -4,6 +4,7 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import SH
 
 from muon.ingestion.bulbapedia.batching import UNIVERSE
+from muon.ingestion.bulbapedia.locations.identity import LocationIndex
 from muon.ingestion.bulbapedia.species.batches import VERSION
 from muon.ingestion.bulbapedia.species.encounters import (
     ACQUISITION_LINKS,
@@ -27,7 +28,6 @@ from muon.ingestion.bulbapedia.species.encounters import (
     split_parts,
 )
 from muon.ingestion.bulbapedia.species.forms import ResolvedForm
-from muon.ingestion.bulbapedia.species.locations import LocationIndex
 from muon.ingestion.bulbapedia.species.page import parse_species_page
 from muon.ingestion.seed import read_abox
 from muon.ontology.model import load_ontology_model

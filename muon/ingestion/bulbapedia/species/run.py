@@ -17,13 +17,16 @@ batch. A full run also writes the
 location candidate file, the title list of the next Special:Export of location pages.
 """
 
+import json
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
+from pydantic import BaseModel, ConfigDict, ValidationError
+
 from muon.files import write_text_atomically
-from muon.ingestion.batch import GraphBatch, NodeRef
+from muon.ingestion.batch import GraphBatch, NodeRef, build_node_id
 from muon.ingestion.bulbapedia.batching import (
     ASPECT,
     UNIVERSE,
@@ -31,8 +34,15 @@ from muon.ingestion.bulbapedia.batching import (
     BatchBuildError,
     ChunkBuildError,
     build_abox_index,
+    resolve_abox,
 )
 from muon.ingestion.bulbapedia.fetch import PAGE_TYPES
+from muon.ingestion.bulbapedia.locations.identity import (
+    LOCATION_INFOBOXES,
+    LocationIndex,
+    build_location_index,
+    list_candidate_titles,
+)
 from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore
 from muon.ingestion.bulbapedia.runs import (
     OUTPUT_SUFFIX,
@@ -56,6 +66,7 @@ from muon.ingestion.bulbapedia.species.batches import (
     VERSION,
     ChunkBuild,
     ChunkInputs,
+    Coverage,
     EvolutionBuild,
     SpeciesIndex,
     build_change_id,
@@ -64,9 +75,11 @@ from muon.ingestion.bulbapedia.species.batches import (
     build_evolution_batch,
     build_species_batch,
     build_species_index,
+    is_covered_fact,
     resolve_species,
 )
 from muon.ingestion.bulbapedia.species.encounters import (
+    CoarseGap,
     EncounterInputs,
     EncounterReading,
     EncounterReport,
@@ -88,12 +101,6 @@ from muon.ingestion.bulbapedia.species.extract import (
     SpeciesPageExtract,
 )
 from muon.ingestion.bulbapedia.species.forms import check_override_titles, rank_mega_forms
-from muon.ingestion.bulbapedia.species.locations import (
-    LOCATION_INFOBOXES,
-    LocationIndex,
-    build_location_index,
-    list_candidate_titles,
-)
 from muon.ingestion.bulbapedia.species.page import parse_species_page, read_infobox
 from muon.ingestion.bulbapedia.wikitext import split_sections
 from muon.ingestion.seed import read_abox
@@ -216,9 +223,13 @@ class ParseRun:
 
 @dataclass(frozen=True)
 class RunInputs:
+    """`coverage_path` is the coverage file of the location parse; `None`, or a missing file,
+    keeps every coarse encounter."""
+
     request: ParseRequest
     store: PageStore
     ontology_dir: Path
+    coverage_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -355,6 +366,8 @@ class ReportContext:
     seed_refs: frozenset[NodeRef]
     owner_refs: frozenset[NodeRef]
     unowned: tuple[UnownedPair, ...]
+    covered_skipped: Mapping[str, int] = field(default_factory=dict)
+    coarse_without_detail: tuple[CoarseGap, ...] = ()
 
 
 def count_stub_misses(outputs: Iterable[PageOutput], context: ReportContext) -> tuple[int, int]:
@@ -462,7 +475,10 @@ def build_report(
         evolution_species_stub_misses=species_misses,
         residue=tuple(item for o in outputs for item in o.residue),
         encounters=build_encounter_report(
-            [o.encounters for o in outputs], [o.encounter_batch for o in outputs]
+            [o.encounters for o in outputs],
+            [o.encounter_batch for o in outputs],
+            context.covered_skipped,
+            context.coarse_without_detail,
         ),
     )
 
@@ -494,6 +510,56 @@ def read_location_index(store: PageStore) -> LocationIndex:
         for pin in manifest.list_pins(page_type)
     ]
     return build_location_index(pages, foreign, LOCATION_INFOBOXES)
+
+
+class CoverageRowFile(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    location_id: str
+    version_id: str
+    kind: str
+    species_ids: tuple[str, ...]
+
+
+def read_coverage(path: Path | None) -> Coverage | None:
+    """Read the coverage file of the location parse. A missing file, or no path, gives `None`
+    and the run behaves as before the location pages existed."""
+    if path is None or not path.exists():
+        return None
+    try:
+        rows = [CoverageRowFile.model_validate(row) for row in json.loads(path.read_text("utf-8"))]
+    except (json.JSONDecodeError, ValidationError) as error:
+        raise ParseRunError(f"cannot read coverage file {path}: {error}") from error
+    return Coverage({(r.location_id, r.version_id, r.kind): frozenset(r.species_ids) for r in rows})
+
+
+def find_coverage_effects(
+    encounters: Mapping[str, EncounterReading],
+    abox: AboxIndex,
+    coverage: Coverage | None,
+) -> tuple[Mapping[str, int], tuple[CoarseGap, ...]]:
+    """Count the coarse facts a covered place and version drops, per kind, and list those whose
+    species has no detailed Encounter there."""
+    skipped: Counter[str] = Counter()
+    gaps: list[CoarseGap] = []
+    for reading in encounters.values():
+        for fact in reading.facts:
+            if coverage is None or not is_covered_fact(fact, abox, coverage):
+                continue
+            skipped[fact.kind] += 1
+            version = resolve_abox(abox, VERSION, fact.version)
+            key = (build_node_id(fact.location_title), version.id, fact.kind)
+            species = coverage.species_by_pair[key]
+            if fact.species_id not in species:
+                gaps.append(
+                    CoarseGap(
+                        species_id=fact.species_id,
+                        location=fact.location_title,
+                        version=fact.version,
+                        kind=fact.kind,
+                    )
+                )
+    return dict(sorted(skipped.items())), tuple(sorted(gaps, key=lambda g: tuple(vars(g).values())))
 
 
 def read_page_encounters(
@@ -557,6 +623,11 @@ def parse_species_pages(inputs: RunInputs) -> ParseRun:
     encounters = read_page_encounters(
         ((pages[title], extracts[title]) for title in kept), EncounterInputs(locations, versions)
     )
+    coverage = read_coverage(inputs.coverage_path)
+    covered_skipped, coarse_without_detail = find_coverage_effects(encounters, abox, coverage)
+    context = replace(
+        context, covered_skipped=covered_skipped, coarse_without_detail=coarse_without_detail
+    )
     outputs = tuple(
         build_output(
             pages[title],
@@ -566,7 +637,7 @@ def parse_species_pages(inputs: RunInputs) -> ParseRun:
                 builds[title],
                 chunk_builds[title],
                 encounters[title],
-                build_encounter_batch(extracts[title], encounters[title].facts, abox),
+                build_encounter_batch(extracts[title], encounters[title].facts, abox, coverage),
             ),
         )
         for title in kept

@@ -58,6 +58,7 @@ def build_claim(
     direction: ClaimDirection,
     other_class_iri: str | None,
     owns_other_end: bool = False,
+    other_end_id_prefix: str | None = None,
 ) -> EdgeClaim:
     return EdgeClaim(
         anchor=anchor.node_ref,
@@ -65,6 +66,7 @@ def build_claim(
         direction=direction,
         other_class_iri=other_class_iri,
         owns_other_end=owns_other_end,
+        other_end_id_prefix=other_end_id_prefix,
     )
 
 
@@ -214,3 +216,67 @@ async def test_census_counts_toy_labels_and_relationship_types(toy_runner: Runne
     assert census.labels[TOY_UNIVERSE] == 3
     assert dict(census.relationship_types) == {"HAS_COLOR": 2}
     assert list(census.labels) == sorted(census.labels)
+
+
+def build_prefixed_batch(prefix: str, *widget_ids: str) -> GraphBatch:
+    """A batch that owns the widgets `{prefix}:{id}` paired with gadget `g1`."""
+    widgets = tuple(
+        NodeRecord(class_iri=TOY_WIDGET, id=f"{prefix}:{widget_id}", name=widget_id)
+        for widget_id in widget_ids
+    )
+    claim = build_claim(
+        GADGET_STUB, TOY_PAIRS_WITH, ClaimDirection.IN, TOY_WIDGET, True, f"{prefix}:"
+    )
+    return build_batch(
+        frozenset({TOY_WIDGET}),
+        (*widgets, GADGET_STUB),
+        tuple(build_edge(TOY_PAIRS_WITH, widget, GADGET_STUB) for widget in widgets),
+        (claim,),
+    )
+
+
+def count_changes(report: RunReport) -> int:
+    return (
+        report.nodes_created
+        + report.nodes_deleted
+        + report.relationships_created
+        + report.relationships_deleted
+    )
+
+
+async def test_2_batches_own_different_id_prefixes_of_1_anchor(
+    toy_runner: Runner, graph_client: Neo4jGraphClient
+) -> None:
+    first = build_prefixed_batch("alpha", "w1", "w2")
+    second = build_prefixed_batch("beta", "w3")
+
+    for batch in (first, second, first, second):
+        await toy_runner.write(batch, WriteMode.UPSERT)
+
+    assert await read_node_ids(graph_client) == {"g1", "alpha:w1", "alpha:w2", "beta:w3"}
+
+
+async def test_a_rerun_in_either_order_creates_and_deletes_nothing(toy_runner: Runner) -> None:
+    first = build_prefixed_batch("alpha", "w1", "w2")
+    second = build_prefixed_batch("beta", "w3")
+    await toy_runner.write(first, WriteMode.UPSERT)
+    await toy_runner.write(second, WriteMode.UPSERT)
+
+    reports = [await toy_runner.write(batch, WriteMode.UPSERT) for batch in (second, first, first)]
+
+    assert [count_changes(report) for report in reports] == [0, 0, 0]
+
+
+async def test_a_stale_end_of_1_prefix_goes_while_the_other_prefix_stays(
+    toy_runner: Runner, graph_client: Neo4jGraphClient
+) -> None:
+    await toy_runner.write(build_prefixed_batch("alpha", "w1", "w2"), WriteMode.UPSERT)
+    await toy_runner.write(build_prefixed_batch("beta", "w3"), WriteMode.UPSERT)
+
+    await toy_runner.write(build_prefixed_batch("alpha", "w1"), WriteMode.UPSERT)
+
+    assert await read_node_ids(graph_client) == {"g1", "alpha:w1", "beta:w3"}
+    assert await read_edges(graph_client) == {
+        ("alpha:w1", "PAIRS_WITH", "g1"),
+        ("beta:w3", "PAIRS_WITH", "g1"),
+    }

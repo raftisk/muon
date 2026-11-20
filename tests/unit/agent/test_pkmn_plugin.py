@@ -12,6 +12,7 @@ EXPECTED_HEADINGS = [
     "Games",
     "Learnsets",
     "Encounters",
+    "Locations",
     "Type chart",
     "Text",
     "Gaps",

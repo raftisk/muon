@@ -57,6 +57,7 @@ class ChunkAspect(StrEnum):
     BIOLOGY = "biology"
     ORIGIN = "origin"
     TRIVIA = "trivia"
+    GEOGRAPHY = "geography"
     POKEDEX = "pokedex"
     EFFECT = "effect"
     FLAVOR = "flavor"

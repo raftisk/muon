@@ -299,7 +299,8 @@ reference = """5 species: Clefairy, Geodude, Paras, Sandshrew and Zubat. Without
 filter the location holds 13 species."""
 runbook = "R35"
 gold_query = """
-MATCH (s:PokemonSpecies)-[:HAS_ENCOUNTER]->(e:Encounter)-[:AT_LOCATION]->(l:Location {id: 'mt-moon'}),
+MATCH (s:PokemonSpecies)-[:HAS_ENCOUNTER]->(e:Encounter)-[:AT_LOCATION]->(:Location)
+  -[:LOCATED_IN*0..1]->(l:Location {id: 'mt-moon'}),
   (e)-[:IN_VERSION]->(:Version)-[:PART_OF*]->(g:Generation {id: 'generation-i'})
 RETURN DISTINCT s, l, g
 """
@@ -366,7 +367,8 @@ family = "S4, S5"
 question = "Which Pokémon found at Mt. Moon in the Generation I games can learn Stealth Rock?"
 reference = "Clefairy, Geodude and Sandshrew."
 gold_query = """
-MATCH (s:PokemonSpecies)-[:HAS_ENCOUNTER]->(e:Encounter)-[:AT_LOCATION]->(l:Location {id: 'mt-moon'}),
+MATCH (s:PokemonSpecies)-[:HAS_ENCOUNTER]->(e:Encounter)-[:AT_LOCATION]->(:Location)
+  -[:LOCATED_IN*0..1]->(l:Location {id: 'mt-moon'}),
   (e)-[:IN_VERSION]->(:Version)-[:PART_OF*]->(:Generation {id: 'generation-i'}),
   (s)-[:CAN_LEARN]->(m:Move {id: 'stealth-rock'})
 RETURN DISTINCT s, l, m

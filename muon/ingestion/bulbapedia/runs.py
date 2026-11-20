@@ -35,6 +35,7 @@ from muon.ontology.model import extract_local_name
 DEFAULT_OUTPUT_ROOT = DEFAULT_ROOT / "parsed"
 OUTPUT_SUFFIX = ".json"
 JSON_INDENT = 2
+ID_PREFIX_KEY = "other_end_id_prefix"
 SPECIES_PAGE_TYPE = "species"
 SPECIES_TITLE_SUFFIX = PAGE_TYPES[SPECIES_PAGE_TYPE].title_suffix
 
@@ -135,9 +136,16 @@ def dump_json(data: object) -> str:
 
 
 def serialize_batch(batch: GraphBatch) -> dict[str, object]:
-    """Dump a batch with its scope sorted: pydantic dumps a frozenset in hash order."""
+    """Dump a batch with its scope sorted: pydantic dumps a frozenset in hash order.
+
+    A claim with no `other_end_id_prefix` leaves the key out, so the outputs of the page
+    types that never set a prefix keep the bytes they had before the field existed.
+    """
     data = batch.model_dump(mode="json")
     data["scope"] = sorted(batch.scope)
+    for claim in data["claims"]:
+        if claim.get(ID_PREFIX_KEY, "") is None:
+            del claim[ID_PREFIX_KEY]
     return data
 
 

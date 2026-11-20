@@ -230,9 +230,11 @@ EVOLUTION_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
     EVOLUTION: (ClaimRule(REQUIRES, OUT, None, False),),
 }
 CHUNK_ANCHOR_CLAIMS: tuple[ClaimRule, ...] = (ClaimRule(DESCRIBES, IN, TEXT_CHUNK, True),)
-# `atLocation` and `inVersion` are not claimed: the Encounter id fixes both ends.
+# `atLocation` and `inVersion` are not claimed: the Encounter id fixes both ends. The
+# `hasEncounter` claim filters on the id prefix `{species id}:`, so the detailed Encounters
+# of the location pages, whose ids start with a place, are never deleted from here.
 ENCOUNTER_ANCHOR_CLAIMS: tuple[ClaimRule, ...] = (
-    ClaimRule(HAS_ENCOUNTER, OUT, ENCOUNTER, True),
+    ClaimRule(HAS_ENCOUNTER, OUT, ENCOUNTER, True, is_id_prefixed=True),
     ClaimRule(FOUND_IN, OUT, LOCATION, False),
 )
 CHUNK_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
@@ -789,17 +791,57 @@ def build_encounter_parts(fact: EncounterFact, species: NodeRecord, abox: AboxIn
     )
 
 
+@dataclass(frozen=True)
+class Coverage:
+    """The (location id, version id, kind) triples that location pages give detailed Encounters
+    for, with the ids of the species that have one there. The kind is part of the key: a place
+    whose page reads only wild tables keeps its coarse raid and gift facts."""
+
+    species_by_pair: Mapping[tuple[str, str, str], frozenset[str]]
+
+    def is_covered(self, location_id: str, version_id: str, kind: str) -> bool:
+        return (location_id, version_id, kind) in self.species_by_pair
+
+
+def is_covered_fact(fact: EncounterFact, abox: AboxIndex, coverage: Coverage | None) -> bool:
+    """Whether a location page gives detailed Encounters of the kind of `fact` at its place and
+    version."""
+    if coverage is None:
+        return False
+    version = resolve_abox(abox, VERSION, fact.version)
+    return coverage.is_covered(build_node_id(fact.location_title), version.id, fact.kind)
+
+
+def build_covered_parts(fact: EncounterFact, species: NodeRecord) -> Parts:
+    """The `foundIn` shortcut of a covered fact; the detailed Encounters come from the location
+    page."""
+    location = build_stub(LOCATION, fact.location_title)
+    return Parts(nodes=(location,), edges=(build_edge(FOUND_IN, species, location),))
+
+
 def build_encounter_batch(
-    extract: SpeciesPageExtract, facts: Sequence[EncounterFact], abox: AboxIndex
+    extract: SpeciesPageExtract,
+    facts: Sequence[EncounterFact],
+    abox: AboxIndex,
+    coverage: Coverage | None = None,
 ) -> GraphBatch:
     """Build the pass 4 batch of a page. A page with no fact gives the anchors and their
     claims only. Every fact version is an A-Box Version: the run checks the table rows
-    before any page is read."""
+    before any page is read. A fact at a place and version that `coverage` holds gives its
+    Location stub and `foundIn` only, no Encounter."""
     context = PageContext(extract.title, abox, build_species_index([extract]))
     anchors = build_page_anchors(extract, context)
     species = {anchor.id: anchor for anchor in anchors.nodes}
     joined = join_parts(
-        [*(build_encounter_parts(fact, species[fact.species_id], abox) for fact in facts), anchors]
+        [
+            *(
+                build_covered_parts(fact, species[fact.species_id])
+                if is_covered_fact(fact, abox, coverage)
+                else build_encounter_parts(fact, species[fact.species_id], abox)
+                for fact in facts
+            ),
+            anchors,
+        ]
     )
     claims = build_claims([anchor.node_ref for anchor in anchors.nodes], ENCOUNTER_ANCHOR_CLAIMS)
     return assemble_batch(ENCOUNTER_SCOPE, joined, claims)
