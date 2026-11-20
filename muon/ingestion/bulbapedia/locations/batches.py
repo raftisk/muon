@@ -12,6 +12,11 @@ The owner claims cover `locatedIn`, `adjacentTo`, `appearsIn`, `introducedIn` an
 out of the Location and `locatedIn` in from its areas, so an upsert prunes whatever the page
 no longer lists.
 
+Pass 3 owns the ItemFinds of the page (scope {`ItemFind`}). A find is at the Location or one of
+its areas in 1 Version, and its Item `hasFind` it. The Location and each area claim their
+finds, so a re-run removes the finds a page no longer lists, and the Location claims the
+`foundIn` shortcut of the Items it holds.
+
 Pass 2 owns the TextChunks of the page (scope {`TextChunk`}). Every chunk `describes` the
 Location, and a mention links in through `mentionedIn`. The Location is a reference of the
 class of its page, so a page with no chunk left still removes the chunks it had.
@@ -19,14 +24,15 @@ class of its page, so a page with no chunk left still removes the chunks it had.
 This module knows the pkmn universe, as every ingestion module of a source does.
 """
 
-from collections.abc import Mapping
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 
 from muon.ingestion.batch import GraphBatch, NodeRecord, PropertyValue, build_node_id
 from muon.ingestion.bulbapedia.batching import (
     ALIASES,
     CORE,
     DESCRIBES,
+    FOUND_IN,
     GENERATION,
     IN,
     INTRODUCED_IN,
@@ -60,6 +66,7 @@ from muon.ingestion.bulbapedia.batching import (
 from muon.ingestion.bulbapedia.chunking import MentionRef
 from muon.ingestion.bulbapedia.locations.areas import build_area_id
 from muon.ingestion.bulbapedia.locations.chunks import LocationChunkReading
+from muon.ingestion.bulbapedia.locations.finds import FindFact
 from muon.ingestion.bulbapedia.locations.identity import (
     LocationIndex,
     LocationVerdict,
@@ -116,6 +123,19 @@ LOCATION_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
 }
 
 
+ITEM_FIND = PKMN + "ItemFind"
+AT_LOCATION = PKMN + "atLocation"
+IN_VERSION = PKMN + "inVersion"
+HAS_FIND = PKMN + "hasFind"
+IS_HIDDEN = PKMN + "isHidden"
+METHOD = PKMN + "method"
+FIND_ID_SEPARATOR = ":"
+HIDDEN_SEGMENT = "hidden"
+FIND_NAME_TEMPLATE = "{item} at {place} ({version}{suffix})"
+
+LOCATION_FIND_SCOPE = frozenset({ITEM_FIND})
+LOCATION_FIND_ANCHOR_CLAIMS = (ClaimRule(AT_LOCATION, IN, ITEM_FIND, owns_other_end=True),)
+LOCATION_FIND_SHORTCUT_CLAIMS = (ClaimRule(FOUND_IN, IN, ITEM, owns_other_end=False),)
 LOCATION_CHUNK_SCOPE = frozenset({TEXT_CHUNK})
 LOCATION_CHUNK_ANCHOR_CLAIMS = (ClaimRule(DESCRIBES, IN, TEXT_CHUNK, owns_other_end=True),)
 LOCATION_CHUNK_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
@@ -132,8 +152,8 @@ class LocationBuildInputs:
     """What every page of a run resolves against.
 
     `classes` maps the normalized title of each owned page to its class IRI, `group_versions`
-    a VersionGroup label to the labels of its Versions and `resolver` a `{{p}}` mention to a
-    species stub.
+    a VersionGroup label to the labels of its Versions, `resolver` a `{{p}}` mention to a
+    species stub and `item_owners` the lowercase name of each Item owner to its id and name.
     """
 
     abox: AboxIndex
@@ -141,6 +161,7 @@ class LocationBuildInputs:
     classes: Mapping[str, str]
     group_versions: Mapping[str, tuple[str, ...]]
     resolver: SpeciesResolver = resolve_no_species
+    item_owners: Mapping[str, tuple[str, str]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -299,3 +320,109 @@ def list_unresolved_mentions(
         for mention in fact.mentions
         if resolve_mention(mention, context) is None
     )
+
+
+@dataclass(frozen=True)
+class FindBuild:
+    """The pass 3 batch of a page, the facts that collapsed into another and the Item names
+    no Item owner has."""
+
+    batch: GraphBatch
+    duplicates: int
+    item_stub_names: tuple[str, ...]
+
+
+def build_find_id(
+    at_id: str, version_id: str, item_id: str, method: str | None, is_hidden: bool
+) -> str:
+    """Return the ItemFind id `{place}:{version}:{item}[:{method}][:hidden]`."""
+    segments = (at_id, version_id, item_id, *((method,) if method else ()))
+    return FIND_ID_SEPARATOR.join((*segments, *((HIDDEN_SEGMENT,) if is_hidden else ())))
+
+
+def build_find_item(name: str, inputs: LocationBuildInputs) -> tuple[NodeRecord, bool]:
+    """Return the Item reference of a name and whether no Item owner has it.
+
+    The reference has the id and name of the owner. An unowned name gets the id of the name.
+    """
+    owner = inputs.item_owners.get(name.lower())
+    if owner is None:
+        return build_stub(ITEM, name), True
+    return NodeRecord(class_iri=ITEM, id=owner[0], name=owner[1]), False
+
+
+def build_find_place(
+    fact: FindFact, owner: NodeRecord, extract: LocationPageExtract, inputs: LocationBuildInputs
+) -> NodeRecord:
+    """Return the reference of the place a find is at: the page Location, one of its areas
+    or the Location a heading names."""
+    area = fact.area
+    if area is None:
+        return owner
+    if area.key:
+        return NodeRecord(
+            class_iri=LOCATION_AREA,
+            id=build_area_id(owner.id, area.key),
+            name=f"{extract.title} {area.name}",
+        )
+    named = build_reference(area.location_title, inputs)
+    return named if named is not None else owner
+
+
+def build_find_batch(
+    extract: LocationPageExtract, facts: Sequence[FindFact], inputs: LocationBuildInputs
+) -> FindBuild:
+    """Build the pass 3 batch of 1 page. A Version label the A-Box lacks raises
+    `BatchBuildError`; facts with the same id give 1 find."""
+    context = LocationContext(extract.title, inputs.abox)
+    owner = build_chunk_subject(extract, inputs)
+    parts: list[Parts] = [Parts(nodes=(owner,))]
+    anchors = {owner.node_ref: owner}
+    finds: set[str] = set()
+    duplicates = 0
+    unowned: set[str] = set()
+    for fact in facts:
+        place = build_find_place(fact, owner, extract, inputs)
+        version = require_abox(context, VERSION, fact.version, (PAGE_PATH, VERSION_GROUP_FIELD))
+        item, is_unowned = build_find_item(fact.item_name, inputs)
+        if is_unowned:
+            unowned.add(fact.item_name)
+        find_id = build_find_id(place.id, version.id, item.id, fact.method, fact.is_hidden)
+        if find_id in finds:
+            duplicates += 1
+            continue
+        finds.add(find_id)
+        properties: dict[str, PropertyValue | None] = {
+            IS_HIDDEN: True if fact.is_hidden else None,
+            METHOD: fact.method,
+        }
+        suffix = "".join(
+            f", {part}"
+            for part in (fact.method, HIDDEN_SEGMENT if fact.is_hidden else None)
+            if part
+        )
+        find = NodeRecord(
+            class_iri=ITEM_FIND,
+            id=find_id,
+            name=FIND_NAME_TEMPLATE.format(
+                item=item.name, place=place.name, version=version.name, suffix=suffix
+            ),
+            properties=drop_none(properties),
+        )
+        if place.class_iri == LOCATION_AREA:
+            anchors[place.node_ref] = place
+        edges = (
+            build_edge(AT_LOCATION, find, place),
+            build_edge(IN_VERSION, find, version),
+            build_edge(HAS_FIND, item, find),
+            build_edge(FOUND_IN, item, owner),
+        )
+        parts.append(Parts((find, place, version, item), edges))
+    claims = (
+        *build_claims(
+            [anchor.node_ref for anchor in anchors.values()], LOCATION_FIND_ANCHOR_CLAIMS
+        ),
+        *build_claims([owner.node_ref], LOCATION_FIND_SHORTCUT_CLAIMS),
+    )
+    batch = assemble_batch(LOCATION_FIND_SCOPE, join_parts(parts), claims)
+    return FindBuild(batch, duplicates, tuple(sorted(unowned)))

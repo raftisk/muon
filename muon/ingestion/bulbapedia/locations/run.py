@@ -12,10 +12,13 @@ The candidates file lists every pinned title and every title the pages name that
 so that the next Special:Export replaces the pins with a complete set.
 """
 
+import json
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from muon.files import write_text_atomically
 from muon.ingestion.batch import GraphBatch
@@ -33,15 +36,26 @@ from muon.ingestion.bulbapedia.batching import (
 )
 from muon.ingestion.bulbapedia.locations.batches import (
     CLASS_IRIS,
+    IS_HIDDEN,
     LOCATION_FAMILY,
+    METHOD,
     VERSION,
+    FindBuild,
     LocationBuildInputs,
+    build_find_batch,
     build_location_batch,
     build_location_chunk_batch,
     build_location_id,
     list_unresolved_mentions,
 )
 from muon.ingestion.bulbapedia.locations.chunks import LocationChunkReading, read_location_chunks
+from muon.ingestion.bulbapedia.locations.finds import (
+    FindFact,
+    FindReading,
+    FindSkipReason,
+    check_version_codes,
+    read_item_finds,
+)
 from muon.ingestion.bulbapedia.locations.identity import (
     LOCATION_INFOBOXES,
     LocationIndex,
@@ -90,6 +104,9 @@ PAGE_OUTPUT_DIR = "location"
 REPORT_FILE_NAME = "location-report.json"
 CANDIDATES_FILE_NAME = "location-candidates.txt"
 ABOX_REGION_CLASS = "abox_region"
+ITEM_PAGE_TYPE = "item"
+TEXT_ENCODING = "utf-8"
+NO_METHOD = "none"
 PART_OF = CORE + "partOf"
 
 
@@ -125,6 +142,13 @@ class LocationParseReport(ReportModel):
     removed_tables_total: int
     math_formulas_total: int
     long_chunks: tuple[str, ...]
+    find_counts: BatchCounts
+    finds_per_method: Mapping[str, int]
+    hidden_finds: int
+    find_skips: Mapping[str, int]
+    duplicate_finds: int
+    item_stub_names: tuple[str, ...]
+    is_item_source_missing: bool
 
 
 @dataclass(frozen=True)
@@ -149,6 +173,9 @@ class LocationPageOutput:
     batch: GraphBatch
     chunk_batch: GraphBatch
     chunk_reading: LocationChunkReading
+    find_batch: GraphBatch
+    find_build: FindBuild
+    find_reading: FindReading
 
 
 @dataclass(frozen=True)
@@ -165,6 +192,7 @@ class ParsedPage:
     page: Page
     result: LocationPageExtract | SkippedPage
     chunks: LocationChunkReading | None
+    finds: FindReading | None
 
 
 def check_request(request: LocationParseRequest, titles: Iterable[str]) -> None:
@@ -203,10 +231,11 @@ def parse_page(page: Page, index: LocationIndex) -> ParsedPage:
     """Parse 1 page and read its chunks, then drop its text."""
     result = parse_location_page(page, index)
     if isinstance(result, SkippedPage):
-        return ParsedPage(strip_page(page), result, None)
+        return ParsedPage(strip_page(page), result, None, None)
     sections = split_sections(mask_comments(page.wikitext))
     chunks = read_location_chunks(sections, build_location_id(result.title))
-    return ParsedPage(strip_page(page), result, chunks)
+    finds = read_item_finds(sections, result.title, index)
+    return ParsedPage(strip_page(page), result, chunks, finds)
 
 
 def parse_pages(pages: Iterable[Page], index: LocationIndex) -> tuple[ParsedPage, ...]:
@@ -256,17 +285,29 @@ def build_outputs(
     for item in parsed:
         if item.page.title not in requested:
             continue
-        if isinstance(item.result, SkippedPage) or item.chunks is None:
+        if isinstance(item.result, SkippedPage) or item.chunks is None or item.finds is None:
             reason = item.result.reason.value if isinstance(item.result, SkippedPage) else None
             results.append(build_result(item.page, PageStatus.SKIPPED, reason))
             continue
         try:
             batch = build_location_batch(item.result, inputs)
             chunk_batch = build_location_chunk_batch(item.result, item.chunks, inputs)
+            find_build = build_find_batch(item.result, item.finds.facts, inputs)
         except (BatchBuildError, ChunkBuildError) as error:
             results.append(build_result(item.page, PageStatus.FAILED, str(error)))
             continue
-        outputs.append(LocationPageOutput(item.page, item.result, batch, chunk_batch, item.chunks))
+        outputs.append(
+            LocationPageOutput(
+                item.page,
+                item.result,
+                batch,
+                chunk_batch,
+                item.chunks,
+                find_build.batch,
+                find_build,
+                item.finds,
+            )
+        )
         results.append(build_result(item.page, PageStatus.PARSED))
     return tuple(outputs), tuple(results)
 
@@ -308,6 +349,37 @@ def list_long_chunks(outputs: Iterable[LocationPageOutput]) -> tuple[str, ...]:
     )
 
 
+class OwnerExtract(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    item_id: str
+    name: str
+
+
+class OwnerFile(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    extract: OwnerExtract
+
+
+def read_item_owners(output_root: Path) -> dict[str, tuple[str, str]]:
+    """Return the Item owners of the item parse outputs: the lowercase name of each item to its
+    id and name. A missing output folder gives an empty mapping."""
+    folder = output_root / ITEM_PAGE_TYPE
+    owners: dict[str, tuple[str, str]] = {}
+    for path in sorted(folder.glob(f"*{OUTPUT_SUFFIX}")) if folder.is_dir() else []:
+        try:
+            owner = OwnerFile.model_validate(json.loads(path.read_text(TEXT_ENCODING)))
+        except (json.JSONDecodeError, ValidationError) as error:
+            raise ParseRunError(f"cannot read item output {path}: {error}") from error
+        owners[owner.extract.name.lower()] = (owner.extract.item_id, owner.extract.name)
+    return owners
+
+
+def count_finds(facts: Iterable[FindFact]) -> Counter[str]:
+    return Counter(fact.method or NO_METHOD for fact in facts)
+
+
 def count_chunk_aspects(outputs: Iterable[LocationPageOutput]) -> dict[str, int]:
     aspects: Counter[str] = Counter(
         str(node.properties[ASPECT]) for o in outputs for node in o.chunk_batch.owner_nodes
@@ -321,6 +393,7 @@ def build_report(
     extracts: Sequence[LocationPageExtract],
     candidates: Sequence[str],
     unresolved_mentions: int,
+    is_item_source_missing: bool,
 ) -> LocationParseReport:
     skipped: Counter[str] = Counter(
         result.reason or "" for result in results if result.status is PageStatus.SKIPPED
@@ -330,8 +403,12 @@ def build_report(
         for output in outputs
     )
     dropped: Counter[str] = Counter()
+    finds_per_method: Counter[str] = Counter()
     for output in outputs:
         dropped.update(output.chunk_reading.dropped_templates)
+        finds_per_method.update(
+            str(node.properties.get(METHOD, NO_METHOD)) for node in output.find_batch.owner_nodes
+        )
     return LocationParseReport(
         pages=results,
         pages_parsed=sum(r.status is PageStatus.PARSED for r in results),
@@ -357,6 +434,20 @@ def build_report(
         removed_tables_total=sum(o.chunk_reading.removed_tables for o in outputs),
         math_formulas_total=sum(o.chunk_reading.math_formulas for o in outputs),
         long_chunks=list_long_chunks(outputs),
+        find_counts=count_batches(o.find_batch for o in outputs),
+        finds_per_method=dict(sorted(finds_per_method.items())),
+        hidden_finds=sum(
+            node.properties.get(IS_HIDDEN) is True
+            for o in outputs
+            for node in o.find_batch.owner_nodes
+        ),
+        find_skips={
+            reason.value: sum(o.find_reading.skips[reason.value] for o in outputs)
+            for reason in FindSkipReason
+        },
+        duplicate_finds=sum(o.find_build.duplicates for o in outputs),
+        item_stub_names=tuple(sorted({n for o in outputs for n in o.find_build.item_stub_names})),
+        is_item_source_missing=is_item_source_missing,
     )
 
 
@@ -377,21 +468,23 @@ def parse_location_pages(inputs: LocationRunInputs) -> LocationParseRun:
     group_versions = build_group_versions(seed)
     check_category_table(group_versions)
     check_abox_regions(abox)
+    check_version_codes([label for labels in group_versions.values() for label in labels])
     foreign = [pin.title for name in FOREIGN_PAGE_TYPES for pin in manifest.list_pins(name)]
     pages = [inputs.store.read_page(PAGE_TYPE, pin) for pin in pins]
     index = build_location_index(pages, foreign, LOCATION_INFOBOXES)
     parsed = parse_pages(pages, index)
     extracts = list_extracts(parsed)
     resolver = build_species_resolver(manifest.list_pins(SPECIES_PAGE_TYPE))
+    item_owners = read_item_owners(inputs.output_root)
     build_inputs = LocationBuildInputs(
-        abox, index, map_page_classes(extracts), group_versions, resolver
+        abox, index, map_page_classes(extracts), group_versions, resolver, item_owners
     )
     outputs, results = build_outputs(parsed, requested, build_inputs)
     candidates = build_candidate_titles(index, extracts)
     unresolved = sum(
         len(list_unresolved_mentions(output.chunk_reading, build_inputs)) for output in outputs
     )
-    report = build_report(outputs, results, extracts, candidates, unresolved)
+    report = build_report(outputs, results, extracts, candidates, unresolved, not item_owners)
     return LocationParseRun(outputs, report, candidates)
 
 
@@ -404,6 +497,7 @@ def serialize_output(output: LocationPageOutput) -> str:
             "extract": output.extract.model_dump(mode="json"),
             "batch": serialize_batch(output.batch),
             "chunk_batch": serialize_batch(output.chunk_batch),
+            "find_batch": serialize_batch(output.find_batch),
         }
     )
 

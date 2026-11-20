@@ -189,17 +189,11 @@ def is_area_heading(heading: str) -> bool:
     )
 
 
-def find_area(
-    path: tuple[str, ...], section_title: str, page_title: str, index: LocationIndex
-) -> AreaRef | None:
-    """Return the area of a section path below the `section_title` section, or `None` when
-    the rows belong to the page Location.
+def read_headings_below(path: tuple[str, ...], section_title: str) -> tuple[str, ...] | None:
+    """Return the headings of `path` below the last `section_title` section, or `None` when
+    `path` has no such section or it sits below anything but a core games section.
 
-    `section_title` is `pokémon` or `items`. The headings below its last occurrence in `path`
-    are read from the deepest up; the first one that can name an area wins. A heading that
-    names a pinned location gives that location with an empty key. A path whose section does
-    not sit at the top of the page or below a core games section gives `None`. `page_title`
-    is the title of the page the path belongs to.
+    `section_title` is `pokémon` or `items`, in lowercase.
     """
     lowered = [title.lower() for title in path]
     if section_title not in lowered:
@@ -207,7 +201,22 @@ def find_area(
     position = len(lowered) - 1 - lowered[::-1].index(section_title)
     if not set(lowered[:position]) <= CORE_SECTION_TITLES:
         return None
-    for heading in reversed(path[position + 1 :]):
+    return path[position + 1 :]
+
+
+def find_area(
+    path: tuple[str, ...], section_title: str, page_title: str, index: LocationIndex
+) -> AreaRef | None:
+    """Return the area of a section path below the `section_title` section, or `None` when
+    the rows belong to the page Location.
+
+    The headings below the last occurrence of `section_title` in `path` are read from the
+    deepest up; the first one that can name an area wins. A heading that names a pinned
+    location gives that location with an empty key. A path whose section does not sit at the
+    top of the page or below a core games section gives `None`. `page_title` is the title of
+    the page the path belongs to.
+    """
+    for heading in reversed(read_headings_below(path, section_title) or ()):
         if not is_area_heading(heading):
             continue
         test = classify_location(index, heading)

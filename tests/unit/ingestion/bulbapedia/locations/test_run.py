@@ -32,7 +32,9 @@ PAGE_IDS = {SOOTOPOLIS: 701, ROUTE: 702, KANTO: 703, BADGE: 704, MT_CORONET: 705
 SOOTOPOLIS_WIKITEXT = (
     "{{Town infobox|region=Hoenn|generation=3|north=Cave of Origin|south=Route 126"
     "|regionsouth=Hoenn}}\n==Places of interest==\n===Gym===\n{{main|Sootopolis Gym}}\n"
-    "==Items==\n===1F===\n" + GAME
+    "==Items==\n===1F===\n{{Itemlist|Moon Stone|Floor|Sw=yes|Sh=yes}}\n"
+    "===Hidden items===\n{{Itemlist|Potion|Hidden|Sw=yes}}\n"
+    "{{Itemlist|Potion|Again|Sw=yes}}\n" + GAME
 )
 ROUTE_WIKITEXT = (
     "{{Route infobox|region=Hoenn|generation=3|north=Sootopolis City|surf=yes}}\n" + GAME
@@ -162,3 +164,31 @@ def test_two_runs_give_identical_files_and_a_full_run_deletes_stale_ones(tmp_pat
     assert (root / REPORT_FILE_NAME).read_bytes() == report
     assert (root / CANDIDATES_FILE_NAME).read_bytes() == candidates
     assert json.loads(first["701.json"])["extract"]["title"] == SOOTOPOLIS
+
+
+def write_item_output(root: Path, item_id: str, name: str) -> None:
+    folder = root / "item"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / f"{item_id}.json").write_text(
+        json.dumps({"extract": {"item_id": item_id, "name": name, "x": 1}})
+    )
+
+
+def test_finds_are_counted_and_items_without_an_owner_are_listed(tmp_path: Path) -> None:
+    write_item_output(tmp_path / "out", "moon-stone", "Moon Stone")
+
+    report = run_parse(tmp_path).report
+
+    assert report.finds_per_method == {"none": 3}
+    assert report.hidden_finds == 1
+    assert report.duplicate_finds == 1
+    assert report.item_stub_names == ("Potion",)
+    assert not report.is_item_source_missing
+    assert report.find_counts.owner_nodes == {"ItemFind": 3}
+
+
+def test_a_missing_item_output_is_named_and_the_run_goes_on(tmp_path: Path) -> None:
+    report = run_parse(tmp_path).report
+
+    assert report.is_item_source_missing
+    assert report.pages_parsed == 3

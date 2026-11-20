@@ -792,12 +792,24 @@ def format_location_parse_report(report: LocationParseReport, elapsed_seconds: f
     lines.extend(f"chunks {name}: {count}" for name, count in report.chunks_per_aspect.items())
     lines.append(f"mentions: {report.mentions} ({report.unresolved_mentions} unresolved)")
     lines.append(f"long chunks: {len(report.long_chunks)}")
+    lines.append(f"item finds: {sum(report.finds_per_method.values())}")
+    lines.extend(f"finds {name}: {count}" for name, count in report.finds_per_method.items())
+    lines.append(f"hidden finds: {report.hidden_finds}")
+    lines.extend(f"find skips {name}: {count}" for name, count in report.find_skips.items())
+    lines.append(f"duplicate finds: {report.duplicate_finds}")
+    lines.append(f"find item stubs: {len(report.item_stub_names)}")
+    if report.is_item_source_missing:
+        lines.append("item source missing: item")
     lines.extend(
         f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
     )
-    chunk_counts = report.chunk_counts
-    lines.append(f"stubs: {sum(counts.stubs.values()) + sum(chunk_counts.stubs.values())}")
-    lines.append(f"edges: {sum(counts.edges.values()) + sum(chunk_counts.edges.values())}")
+    others = (report.chunk_counts, report.find_counts)
+    lines.append(
+        f"stubs: {sum(counts.stubs.values()) + sum(sum(c.stubs.values()) for c in others)}"
+    )
+    lines.append(
+        f"edges: {sum(counts.edges.values()) + sum(sum(c.edges.values()) for c in others)}"
+    )
     note_counts = Counter(note.kind.value for note in report.notes)
     lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
     lines.append(f"duplicate ids: {len(report.duplicate_ids)}")

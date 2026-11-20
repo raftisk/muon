@@ -2028,6 +2028,13 @@ def build_location_report() -> LocationParseReport:
         removed_tables_total=0,
         math_formulas_total=0,
         long_chunks=(),
+        find_counts=BatchCounts(owner_nodes={"ItemFind": 3}, stubs={}, edges={"hasFind": 3}),
+        finds_per_method={"none": 2, "rock-smash": 1},
+        hidden_finds=1,
+        find_skips={"machine_find": 4, "skipped_heading": 0},
+        duplicate_finds=2,
+        item_stub_names=("Moon Stone",),
+        is_item_source_missing=True,
     )
 
 
@@ -2052,6 +2059,10 @@ def test_parse_location_reaches_the_location_run(
     assert "skipped not_core_series: 106" in output
     assert "areas: 613" in output
     assert "chunks: 9" in output
+    assert "item finds: 3" in output
+    assert "finds rock-smash: 1" in output
+    assert "find skips machine_find: 4" in output
+    assert "item source missing: item" in output
     assert "mentions: 4 (1 unresolved)" in output
     assert "candidates: 2920" in output
     assert "unowned location stubs: 1" in output

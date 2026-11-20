@@ -24,11 +24,16 @@ from muon.ingestion.bulbapedia.locations.areas import AreaRef
 from muon.ingestion.bulbapedia.locations.batches import (
     ADJACENT_TO,
     APPEARS_IN,
+    AT_LOCATION,
     DIRECTION,
     GEO_FEATURE,
+    HAS_FIND,
+    IN_VERSION,
+    ITEM_FIND,
     LOCATED_IN,
     LOCATION_AREA,
     LOCATION_CHUNK_SCOPE,
+    LOCATION_FIND_SCOPE,
     REQUIRES,
     ROLE,
     ROUTE,
@@ -36,11 +41,14 @@ from muon.ingestion.bulbapedia.locations.batches import (
     STRUCTURE,
     VERSION,
     LocationBuildInputs,
+    build_find_batch,
+    build_find_id,
     build_location_batch,
     build_location_chunk_batch,
     list_unresolved_mentions,
 )
 from muon.ingestion.bulbapedia.locations.chunks import LocationChunkReading
+from muon.ingestion.bulbapedia.locations.finds import FindFact
 from muon.ingestion.bulbapedia.locations.identity import LocationIndex
 from muon.ingestion.bulbapedia.locations.page import (
     FieldRequirement,
@@ -366,3 +374,97 @@ def test_a_resolved_mention_links_in_and_the_rest_are_listed(inputs: LocationBui
     assert list_unresolved_mentions(build_reading(fact), inputs) == (
         MentionRef(template="p", target="Ghost"),
     )
+
+
+FOUND_IN = "https://muon.dev/ns/core#foundIn"
+
+
+def build_fact(item: str = "Moon Stone", version: str = "Gold", **values: object) -> FindFact:
+    base: dict[str, object] = {
+        "item_name": item,
+        "area": None,
+        "version": version,
+        "method": None,
+        "is_hidden": False,
+    }
+    return FindFact(**(base | values))  # type: ignore[arg-type]
+
+
+def test_find_id_joins_place_version_item_method_and_hidden() -> None:
+    assert build_find_id("cave", "gold", "moon-stone", None, False) == "cave:gold:moon-stone"
+    assert (
+        build_find_id("cave-1f", "red", "potion", "rock-smash", True)
+        == "cave-1f:red:potion:rock-smash:hidden"
+    )
+
+
+def test_a_find_is_at_the_location_in_a_version_and_belongs_to_its_item(
+    inputs: LocationBuildInputs,
+) -> None:
+    owners = {"moon stone": ("moon-stone", "Moon Stone")}
+    with_items = LocationBuildInputs(
+        inputs.abox, inputs.index, inputs.classes, inputs.group_versions, item_owners=owners
+    )
+
+    build = build_find_batch(build_extract(), [build_fact(is_hidden=True)], with_items)
+
+    batch = build.batch
+    assert batch.scope == LOCATION_FIND_SCOPE
+    find = batch.owner_nodes[0]
+    assert (find.class_iri, find.id) == (ITEM_FIND, "sootopolis-city:gold:moon-stone:hidden")
+    assert find.properties == {"https://muon.dev/ns/pkmn#isHidden": True}
+    assert find.name == "Moon Stone at Sootopolis City (Gold, hidden)"
+    assert list_edges(batch, AT_LOCATION) == [(find.id, "sootopolis-city", "Settlement")]
+    assert list_edges(batch, IN_VERSION) == [(find.id, "gold", "Version")]
+    assert [(e.start.id, e.end.id) for e in batch.edges if e.property_iri == HAS_FIND] == [
+        ("moon-stone", find.id)
+    ]
+    assert [(e.start.id, e.end.id) for e in batch.edges if e.property_iri == FOUND_IN] == [
+        ("moon-stone", "sootopolis-city")
+    ]
+    assert build.item_stub_names == ()
+
+
+def test_a_find_in_an_area_is_at_the_area_and_the_shortcut_goes_to_the_page(
+    inputs: LocationBuildInputs,
+) -> None:
+    area = AreaRef(key="b1f", name="B1F", location_title="Sootopolis City")
+
+    build = build_find_batch(build_extract(), [build_fact(area=area, method="rock-smash")], inputs)
+
+    find = build.batch.owner_nodes[0]
+    assert find.id == "sootopolis-city-b1f:gold:moon-stone:rock-smash"
+    assert find.properties == {"https://muon.dev/ns/pkmn#method": "rock-smash"}
+    assert list_edges(build.batch, AT_LOCATION) == [
+        (find.id, "sootopolis-city-b1f", "LocationArea")
+    ]
+    assert [e.end.id for e in build.batch.edges if e.property_iri == FOUND_IN] == [
+        "sootopolis-city"
+    ]
+    anchors = {(c.anchor.id, c.property_iri.rsplit("#", 1)[1]) for c in build.batch.claims}
+    assert anchors == {
+        ("sootopolis-city", "atLocation"),
+        ("sootopolis-city-b1f", "atLocation"),
+        ("sootopolis-city", "foundIn"),
+    }
+    assert all(c.owns_other_end for c in build.batch.claims if c.property_iri == AT_LOCATION)
+    assert not any(c.owns_other_end for c in build.batch.claims if c.property_iri == FOUND_IN)
+
+
+def test_facts_with_the_same_id_give_1_find_and_an_unowned_item_is_listed(
+    inputs: LocationBuildInputs,
+) -> None:
+    facts = [build_fact(), build_fact(), build_fact(item="Potion")]
+
+    build = build_find_batch(build_extract(), facts, inputs)
+
+    assert len(build.batch.owner_nodes) == 2
+    assert build.duplicates == 1
+    assert build.item_stub_names == ("Moon Stone", "Potion")
+
+
+def test_a_page_with_no_finds_still_claims_its_location(inputs: LocationBuildInputs) -> None:
+    build = build_find_batch(build_extract(), [], inputs)
+
+    assert build.batch.owner_nodes == ()
+    assert {c.anchor.id for c in build.batch.claims} == {"sootopolis-city"}
