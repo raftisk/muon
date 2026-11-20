@@ -2038,6 +2038,16 @@ def build_location_report() -> LocationParseReport:
         is_item_source_missing=True,
         pokeapi_unmatched=("canalave-city", "sinnoh-route-218"),
         is_pokeapi_source_missing=False,
+        encounter_counts=BatchCounts(
+            owner_nodes={"Encounter": 7}, stubs={}, edges={"atLocation": 7}
+        ),
+        encounters_per_kind={"wild/none": 5, "wild/surf": 2},
+        encounter_skips={"trade": 3, "form_row": 1},
+        unmapped_encounter_values={"Rippling": 4},
+        merged_encounters=2,
+        duplicate_encounters=1,
+        unresolved_species=("Any",),
+        coverage_pairs=6,
     )
 
 
@@ -2067,6 +2077,11 @@ def test_parse_location_reaches_the_location_run(
     assert "find skips machine_find: 4" in output
     assert "item source missing: item" in output
     assert "pokeapi locations with no owner: 2" in output
+    assert "encounters: 7" in output
+    assert "encounters wild/surf: 2" in output
+    assert "encounter skips trade: 3" in output
+    assert "merged encounters: 2" in output
+    assert "coverage pairs: 6" in output
     assert "mentions: 4 (1 unresolved)" in output
     assert "candidates: 2920" in output
     assert "unowned location stubs: 1" in output

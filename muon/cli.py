@@ -811,6 +811,17 @@ def format_location_parse_report(report: LocationParseReport, elapsed_seconds: f
     lines.extend(f"find skips {name}: {count}" for name, count in report.find_skips.items())
     lines.append(f"duplicate finds: {report.duplicate_finds}")
     lines.append(f"find item stubs: {len(report.item_stub_names)}")
+    lines.append(f"encounters: {sum(report.encounters_per_kind.values())}")
+    lines.extend(
+        f"encounters {name}: {count}" for name, count in report.encounters_per_kind.items()
+    )
+    lines.extend(
+        f"encounter skips {name}: {count}" for name, count in report.encounter_skips.items()
+    )
+    lines.append(f"merged encounters: {report.merged_encounters}")
+    lines.append(f"duplicate encounters: {report.duplicate_encounters}")
+    lines.append(f"unresolved species: {len(report.unresolved_species)}")
+    lines.append(f"coverage pairs: {report.coverage_pairs}")
     if report.is_item_source_missing:
         lines.append("item source missing: item")
     if report.is_pokeapi_source_missing:
@@ -819,7 +830,7 @@ def format_location_parse_report(report: LocationParseReport, elapsed_seconds: f
     lines.extend(
         f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
     )
-    others = (report.chunk_counts, report.find_counts)
+    others = (report.chunk_counts, report.find_counts, report.encounter_counts)
     lines.append(
         f"stubs: {sum(counts.stubs.values()) + sum(sum(c.stubs.values()) for c in others)}"
     )

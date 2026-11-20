@@ -6,8 +6,10 @@ import pytest
 
 from muon.ingestion.bulbapedia.locations.run import (
     CANDIDATES_FILE_NAME,
+    COVERAGE_FILE_NAME,
     PAGE_OUTPUT_DIR,
     REPORT_FILE_NAME,
+    IdOverlapError,
     LocationParseRequest,
     LocationParseRun,
     LocationRunInputs,
@@ -28,6 +30,7 @@ KANTO = "Kanto"
 BADGE = "Badge"
 MT_CORONET = "Mt. Coronet"
 CYNDAQUIL = "Cyndaquil (Pokémon)"
+POOCHYENA = "Poochyena (Pokémon)"
 PAGE_IDS = {SOOTOPOLIS: 701, ROUTE: 702, KANTO: 703, BADGE: 704, MT_CORONET: 705}
 
 SOOTOPOLIS_WIKITEXT = (
@@ -35,7 +38,10 @@ SOOTOPOLIS_WIKITEXT = (
     "|regionsouth=Hoenn}}\n==Places of interest==\n===Gym===\n{{main|Sootopolis Gym}}\n"
     "==Items==\n===1F===\n{{Itemlist|Moon Stone|Floor|Sw=yes|Sh=yes}}\n"
     "===Hidden items===\n{{Itemlist|Potion|Hidden|Sw=yes}}\n"
-    "{{Itemlist|Potion|Again|Sw=yes}}\n" + GAME
+    "{{Itemlist|Potion|Again|Sw=yes}}\n"
+    "==Pokémon==\n===1F===\n"
+    "{{catch/entry3|261|Poochyena|yes|no|yes|Grass|3-4|15%}}\n"
+    "{{catch/entry3|999|Ghostmon|yes|no|no|Grass|3|5%}}\n" + GAME
 )
 ROUTE_WIKITEXT = (
     "{{Route infobox|region=Hoenn|generation=3|north=Sootopolis City|surf=yes}}\n" + GAME
@@ -64,11 +70,14 @@ def build_store(root: Path) -> PageStore:
         build_page(BADGE, "{{ItemInfobox/head|name=Badge}}\n" + GAME),
         build_page(MT_CORONET, "#REDIRECT [[Mount Coronet]]"),
     ]
-    species = build_page(CYNDAQUIL, "{{Pokémon Infobox|name=Cyndaquil}}", "species")
-    for page in [*pages, species]:
+    species = [
+        build_page(CYNDAQUIL, "{{Pokémon Infobox|name=Cyndaquil}}", "species"),
+        build_page(POOCHYENA, "{{Pokémon Infobox|name=Poochyena}}", "species"),
+    ]
+    for page in [*pages, *species]:
         store.write_page(page)
     manifest = Manifest().replace_pins("location", [page.pin for page in pages])
-    store.write_manifest(manifest.replace_pins("species", [species.pin]))
+    store.write_manifest(manifest.replace_pins("species", [page.pin for page in species]))
     return store
 
 
@@ -240,3 +249,53 @@ def test_a_missing_pokeapi_file_is_named_and_the_run_goes_on(tmp_path: Path) -> 
     assert report.is_pokeapi_source_missing
     assert report.pokeapi_unmatched == ()
     assert report.pages_parsed == 3
+
+
+def test_encounters_are_counted_and_the_unknown_species_is_listed(tmp_path: Path) -> None:
+    report = run_parse(tmp_path).report
+
+    assert report.encounters_per_kind == {"wild/none": 2}
+    assert report.unresolved_species == ("Ghostmon",)
+    assert report.encounter_counts.owner_nodes == {"Encounter": 2}
+
+
+def test_coverage_lists_each_location_and_version_with_its_species(tmp_path: Path) -> None:
+    run = run_parse(tmp_path)
+
+    assert [(r.location_id, r.version_id, r.species_ids) for r in run.coverage] == [
+        ("sootopolis-city", "emerald", ("poochyena",)),
+        ("sootopolis-city", "ruby", ("poochyena",)),
+    ]
+    assert run.report.coverage_pairs == 2
+
+
+def test_the_coverage_file_is_written_with_the_run(tmp_path: Path) -> None:
+    root = tmp_path / "files"
+
+    write_outputs(run_parse(tmp_path), root, is_full_run=True)
+
+    rows = json.loads((root / COVERAGE_FILE_NAME).read_text())
+    assert rows[0] == {
+        "location_id": "sootopolis-city",
+        "version_id": "emerald",
+        "species_ids": ["poochyena"],
+    }
+
+
+def test_a_location_id_equal_to_a_species_id_stops_the_run(tmp_path: Path) -> None:
+    store = build_store(tmp_path / "data")
+    clash = build_page("Poochyena", "{{Infobox location|type=cave}}\n" + GAME, "location")
+    store.write_page(clash)
+    manifest = store.read_manifest()
+    pins = [*manifest.list_pins("location"), clash.pin]
+    store.write_manifest(manifest.replace_pins("location", pins))
+    inputs = LocationRunInputs(
+        LocationParseRequest(),
+        store,
+        ONTOLOGY_DIR,
+        tmp_path / "out",
+        build_snapshot(tmp_path / "pk", None),
+    )
+
+    with pytest.raises(IdOverlapError, match="poochyena"):
+        parse_location_pages(inputs)

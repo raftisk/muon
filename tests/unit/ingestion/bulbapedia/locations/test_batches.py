@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from muon.config import DEFAULT_UNIVERSES_DIR
-from muon.ingestion.batch import GraphBatch
+from muon.ingestion.batch import GraphBatch, NodeRecord
 from muon.ingestion.bulbapedia.batching import (
     ALIASES,
     DESCRIBES,
@@ -27,6 +27,7 @@ from muon.ingestion.bulbapedia.locations.batches import (
     AT_LOCATION,
     DIRECTION,
     GEO_FEATURE,
+    HAS_ENCOUNTER,
     HAS_FIND,
     IN_VERSION,
     ITEM_FIND,
@@ -41,13 +42,16 @@ from muon.ingestion.bulbapedia.locations.batches import (
     STRUCTURE,
     VERSION,
     LocationBuildInputs,
+    build_encounter_batch,
     build_find_batch,
     build_find_id,
     build_location_batch,
     build_location_chunk_batch,
+    build_location_encounter_id,
     list_unresolved_mentions,
 )
 from muon.ingestion.bulbapedia.locations.chunks import LocationChunkReading
+from muon.ingestion.bulbapedia.locations.encounters import EncounterFact
 from muon.ingestion.bulbapedia.locations.finds import FindFact
 from muon.ingestion.bulbapedia.locations.identity import LocationIndex
 from muon.ingestion.bulbapedia.locations.page import (
@@ -498,3 +502,118 @@ def test_a_find_under_a_heading_that_names_another_location_stays_at_the_page(
     assert find.id == "sootopolis-city:gold:moon-stone"
     assert list_edges(build.batch, AT_LOCATION) == [(find.id, "sootopolis-city", "Settlement")]
     assert {c.anchor.id for c in build.batch.claims} == {"sootopolis-city"}
+
+
+PIDGEY = NodeRecord(class_iri="https://muon.dev/ns/pkmn#PokemonSpecies", id="pidgey", name="Pidgey")
+
+
+def resolve_pidgey(name: str) -> NodeRecord | None:
+    return PIDGEY if name == "Pidgey" else None
+
+
+def build_encounter_fact(**values: object) -> EncounterFact:
+    base: dict[str, object] = {
+        "species_title": "Pidgey",
+        "area": None,
+        "version": "Gold",
+        "kind": "wild",
+        "method": None,
+        "min_level": 2,
+        "max_level": 5,
+        "chance": 50,
+        "conditions": (),
+    }
+    return EncounterFact(**(base | values))  # type: ignore[arg-type]
+
+
+def with_species(inputs: LocationBuildInputs) -> LocationBuildInputs:
+    return LocationBuildInputs(
+        inputs.abox, inputs.index, inputs.classes, inputs.group_versions, resolve_pidgey
+    )
+
+
+def test_encounter_id_joins_place_version_species_method_and_sorted_conditions() -> None:
+    assert (
+        build_location_encounter_id(
+            "cave", "gold", "zubat", "surf", ["time-night", "season-spring"]
+        )
+        == "cave:gold:zubat:surf:season-spring:time-night"
+    )
+    assert build_location_encounter_id("cave", "gold", "zubat", None, []) == "cave:gold:zubat"
+
+
+def test_an_encounter_is_at_the_place_in_a_version_and_belongs_to_its_species(
+    inputs: LocationBuildInputs,
+) -> None:
+    fact = build_encounter_fact(method="old-rod", conditions=("time-night",))
+
+    build = build_encounter_batch(build_extract(), [fact], with_species(inputs))
+
+    encounter = build.batch.owner_nodes[0]
+    assert encounter.id == "sootopolis-city:gold:pidgey:old-rod:time-night"
+    assert encounter.name == "Pidgey at Sootopolis City (Gold, old-rod, time-night)"
+    assert encounter.properties == {
+        "https://muon.dev/ns/pkmn#encounterKind": "wild",
+        "https://muon.dev/ns/pkmn#method": "old-rod",
+        "https://muon.dev/ns/pkmn#minLevel": 2,
+        "https://muon.dev/ns/pkmn#maxLevel": 5,
+        "https://muon.dev/ns/pkmn#chance": 50,
+        "https://muon.dev/ns/pkmn#conditions": ("time-night",),
+    }
+    assert list_edges(build.batch, AT_LOCATION) == [(encounter.id, "sootopolis-city", "Settlement")]
+    assert [
+        (e.start.id, e.end.id) for e in build.batch.edges if e.property_iri == HAS_ENCOUNTER
+    ] == [("pidgey", encounter.id)]
+
+
+def test_encounter_claims_filter_on_the_id_prefix_of_each_anchor(
+    inputs: LocationBuildInputs,
+) -> None:
+    area = AreaRef(key="b1f", name="B1F", location_title="Sootopolis City")
+    extract = build_extract(areas=(area,))
+
+    build = build_encounter_batch(extract, [build_encounter_fact(area=area)], with_species(inputs))
+
+    claims = {(c.anchor.id, c.other_end_id_prefix, c.owns_other_end) for c in build.batch.claims}
+    assert claims == {
+        ("sootopolis-city", "sootopolis-city:", True),
+        ("sootopolis-city-b1f", "sootopolis-city-b1f:", True),
+    }
+    assert build.batch.owner_nodes[0].id.startswith("sootopolis-city-b1f:")
+
+
+def test_identical_rows_collapse_and_different_rows_with_1_id_merge_without_a_chance(
+    inputs: LocationBuildInputs,
+) -> None:
+    facts = [
+        build_encounter_fact(),
+        build_encounter_fact(),
+        build_encounter_fact(min_level=6, max_level=8, chance=10),
+    ]
+
+    build = build_encounter_batch(build_extract(), facts, with_species(inputs))
+
+    encounter = build.batch.owner_nodes[0]
+    assert (build.duplicates, build.merges) == (1, 1)
+    assert encounter.properties["https://muon.dev/ns/pkmn#minLevel"] == 2
+    assert encounter.properties["https://muon.dev/ns/pkmn#maxLevel"] == 8
+    assert "https://muon.dev/ns/pkmn#chance" not in encounter.properties
+
+
+def test_a_species_no_page_has_gives_no_encounter_and_is_listed(
+    inputs: LocationBuildInputs,
+) -> None:
+    build = build_encounter_batch(
+        build_extract(), [build_encounter_fact(species_title="Ghostmon")], with_species(inputs)
+    )
+
+    assert build.batch.owner_nodes == ()
+    assert build.unresolved_species == ("Ghostmon",)
+    assert {c.anchor.id for c in build.batch.claims} == {"sootopolis-city"}
+
+
+def test_an_encounter_with_an_unknown_version_fails_the_page(inputs: LocationBuildInputs) -> None:
+    with pytest.raises(BatchBuildError, match="Nowhere"):
+        build_encounter_batch(
+            build_extract(), [build_encounter_fact(version="Nowhere")], with_species(inputs)
+        )

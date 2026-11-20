@@ -17,6 +17,11 @@ its areas in 1 Version, and its Item `hasFind` it. The Location and each area cl
 finds, so a re-run removes the finds a page no longer lists, and the Location claims the
 `foundIn` shortcut of the Items it holds.
 
+Pass 4 owns the Encounters of the page (scope {`Encounter`}). An encounter is at the Location
+or one of its areas in 1 Version, and its species `hasEncounter` it. The id starts with the id
+of the place, so the claims at the Location and at each area filter on the id prefix and a
+species page that owns the coarse Encounters of the same species never loses them.
+
 Pass 2 owns the TextChunks of the page (scope {`TextChunk`}). Every chunk `describes` the
 Location, and a mention links in through `mentionedIn`. The Location is a reference of the
 class of its page, so a page with no chunk left still removes the chunks it had.
@@ -64,8 +69,9 @@ from muon.ingestion.bulbapedia.batching import (
     resolve_mention,
 )
 from muon.ingestion.bulbapedia.chunking import MentionRef
-from muon.ingestion.bulbapedia.locations.areas import build_area_id
+from muon.ingestion.bulbapedia.locations.areas import AreaRef, build_area_id
 from muon.ingestion.bulbapedia.locations.chunks import LocationChunkReading
+from muon.ingestion.bulbapedia.locations.encounters import EncounterFact
 from muon.ingestion.bulbapedia.locations.finds import FindFact
 from muon.ingestion.bulbapedia.locations.identity import (
     LocationIndex,
@@ -133,6 +139,19 @@ FIND_ID_SEPARATOR = ":"
 HIDDEN_SEGMENT = "hidden"
 FIND_NAME_TEMPLATE = "{item} at {place} ({version}{suffix})"
 
+ENCOUNTER = PKMN + "Encounter"
+HAS_ENCOUNTER = PKMN + "hasEncounter"
+ENCOUNTER_KIND = PKMN + "encounterKind"
+MIN_LEVEL = PKMN + "minLevel"
+MAX_LEVEL = PKMN + "maxLevel"
+CHANCE = PKMN + "chance"
+CONDITIONS = PKMN + "conditions"
+ENCOUNTER_NAME_TEMPLATE = "{species} at {place} ({details})"
+
+LOCATION_ENCOUNTER_SCOPE = frozenset({ENCOUNTER})
+LOCATION_ENCOUNTER_ANCHOR_CLAIMS = (
+    ClaimRule(AT_LOCATION, IN, ENCOUNTER, owns_other_end=True, is_id_prefixed=True),
+)
 LOCATION_FIND_SCOPE = frozenset({ITEM_FIND})
 LOCATION_FIND_ANCHOR_CLAIMS = (ClaimRule(AT_LOCATION, IN, ITEM_FIND, owns_other_end=True),)
 LOCATION_FIND_SHORTCUT_CLAIMS = (ClaimRule(FOUND_IN, IN, ITEM, owns_other_end=False),)
@@ -351,20 +370,44 @@ def build_find_item(name: str, inputs: LocationBuildInputs) -> tuple[NodeRecord,
     return NodeRecord(class_iri=ITEM, id=owner[0], name=owner[1]), False
 
 
-def build_find_place(fact: FindFact, owner: NodeRecord, extract: LocationPageExtract) -> NodeRecord:
-    """Return the reference of the place a find is at: the page Location or one of its areas.
+def build_place(
+    area: AreaRef | None, owner: NodeRecord, extract: LocationPageExtract
+) -> NodeRecord:
+    """Return the reference of the place a find or an encounter is at: the page Location or
+    one of its areas.
 
     A heading that names another pinned location gives the page Location. The named location
-    claims every find at it, so a find of this page there would be deleted by that page's run.
+    claims every find and encounter at it, so a row of this page there would be deleted by
+    that page's run.
     """
-    area = fact.area
     if area is None or not area.key:
         return owner
+    return build_area_reference(area, owner, extract)
+
+
+def build_area_reference(
+    area: AreaRef, owner: NodeRecord, extract: LocationPageExtract
+) -> NodeRecord:
     return NodeRecord(
         class_iri=LOCATION_AREA,
         id=build_area_id(owner.id, area.key),
         name=f"{extract.title} {area.name}",
     )
+
+
+def list_anchors(
+    owner: NodeRecord, extract: LocationPageExtract, places: Sequence[NodeRecord]
+) -> list[NodeRecord]:
+    """Return the Location, every area of the page and every place a row is at, once each:
+    the nodes a pass claims its rows at, so that a place that lost its rows loses them in the
+    graph too."""
+    anchors = {owner.node_ref: owner}
+    for area in extract.areas:
+        reference = build_area_reference(area, owner, extract)
+        anchors[reference.node_ref] = reference
+    for place in places:
+        anchors[place.node_ref] = place
+    return list(anchors.values())
 
 
 def build_find_batch(
@@ -378,12 +421,12 @@ def build_find_batch(
     if extract.is_abox_region:
         return FindBuild(assemble_batch(frozenset(), Parts(nodes=(owner,))), 0, ())
     parts: list[Parts] = [Parts(nodes=(owner,))]
-    anchors = {owner.node_ref: owner}
+    places: list[NodeRecord] = []
     finds: set[str] = set()
     duplicates = 0
     unowned: set[str] = set()
     for fact in facts:
-        place = build_find_place(fact, owner, extract)
+        place = build_place(fact.area, owner, extract)
         version = require_abox(context, VERSION, fact.version, (PAGE_PATH, VERSION_GROUP_FIELD))
         item, is_unowned = build_find_item(fact.item_name, inputs)
         if is_unowned:
@@ -410,8 +453,7 @@ def build_find_batch(
             ),
             properties=drop_none(properties),
         )
-        if place.class_iri == LOCATION_AREA:
-            anchors[place.node_ref] = place
+        places.append(place)
         edges = (
             build_edge(AT_LOCATION, find, place),
             build_edge(IN_VERSION, find, version),
@@ -421,9 +463,131 @@ def build_find_batch(
         parts.append(Parts((find, place, version, item), edges))
     claims = (
         *build_claims(
-            [anchor.node_ref for anchor in anchors.values()], LOCATION_FIND_ANCHOR_CLAIMS
+            [a.node_ref for a in list_anchors(owner, extract, places)], LOCATION_FIND_ANCHOR_CLAIMS
         ),
         *build_claims([owner.node_ref], LOCATION_FIND_SHORTCUT_CLAIMS),
     )
-    batch = assemble_batch(LOCATION_FIND_SCOPE, join_parts(parts), claims)
+    anchor_parts = Parts(tuple(list_anchors(owner, extract, places)))
+    batch = assemble_batch(LOCATION_FIND_SCOPE, join_parts([*parts, anchor_parts]), claims)
     return FindBuild(batch, duplicates, tuple(sorted(unowned)))
+
+
+@dataclass(frozen=True)
+class EncounterBuild:
+    """The pass 4 batch of a page, the encounters that merged into another, the identical rows
+    that collapsed and the species names no species page has."""
+
+    batch: GraphBatch
+    merges: int
+    duplicates: int
+    unresolved_species: tuple[str, ...]
+
+
+def build_location_encounter_id(
+    at_id: str,
+    version_id: str,
+    species_id: str,
+    method: str | None,
+    conditions: Sequence[str],
+) -> str:
+    """Return the Encounter id `{place}:{version}:{species}[:{method}][:{condition} ...]`, the
+    conditions sorted."""
+    segments = (at_id, version_id, species_id, *((method,) if method else ()), *sorted(conditions))
+    return FIND_ID_SEPARATOR.join(segments)
+
+
+def merge_encounter_facts(first: EncounterFact, second: EncounterFact) -> EncounterFact:
+    """Return the union of the level ranges of 2 facts with 1 id and no chance: the rows differ,
+    and a chance of either would be wrong for both."""
+    levels = [
+        level
+        for fact in (first, second)
+        for level in (fact.min_level, fact.max_level)
+        if level is not None
+    ]
+    return EncounterFact(
+        species_title=first.species_title,
+        area=first.area,
+        version=first.version,
+        kind=first.kind,
+        method=first.method,
+        min_level=min(levels) if levels else None,
+        max_level=max(levels) if levels else None,
+        chance=None,
+        conditions=first.conditions,
+    )
+
+
+def build_encounter_record(
+    fact: EncounterFact,
+    encounter_id: str,
+    species: NodeRecord,
+    place: NodeRecord,
+    version: NodeRecord,
+) -> NodeRecord:
+    properties: dict[str, PropertyValue | None] = {
+        ENCOUNTER_KIND: fact.kind,
+        METHOD: fact.method,
+        MIN_LEVEL: fact.min_level,
+        MAX_LEVEL: fact.max_level,
+        CHANCE: fact.chance,
+        CONDITIONS: tuple(sorted(fact.conditions)) or None,
+    }
+    details = ", ".join(
+        part for part in (version.name, fact.method, *sorted(fact.conditions)) if part
+    )
+    name = ENCOUNTER_NAME_TEMPLATE.format(species=species.name, place=place.name, details=details)
+    return NodeRecord(
+        class_iri=ENCOUNTER, id=encounter_id, name=name, properties=drop_none(properties)
+    )
+
+
+def build_encounter_batch(
+    extract: LocationPageExtract, facts: Sequence[EncounterFact], inputs: LocationBuildInputs
+) -> EncounterBuild:
+    """Build the pass 4 batch of 1 page. A Version label the A-Box lacks raises
+    `BatchBuildError`. A species no species page has gives no encounter and is listed. Facts
+    with the same id and the same values give 1 encounter; facts with the same id and other
+    values merge. An A-Box Region page gives a batch with the Region as its only node."""
+    context = LocationContext(extract.title, inputs.abox)
+    owner = build_chunk_subject(extract, inputs)
+    if extract.is_abox_region:
+        return EncounterBuild(assemble_batch(frozenset(), Parts(nodes=(owner,))), 0, 0, ())
+    kept: dict[str, tuple[EncounterFact, NodeRecord, NodeRecord, NodeRecord]] = {}
+    places: list[NodeRecord] = []
+    duplicates = merges = 0
+    unresolved: set[str] = set()
+    for fact in facts:
+        species = inputs.resolver(fact.species_title)
+        if species is None:
+            unresolved.add(fact.species_title)
+            continue
+        place = build_place(fact.area, owner, extract)
+        version = require_abox(context, VERSION, fact.version, (PAGE_PATH, VERSION_GROUP_FIELD))
+        encounter_id = build_location_encounter_id(
+            place.id, version.id, species.id, fact.method, fact.conditions
+        )
+        earlier = kept.get(encounter_id)
+        if earlier is None:
+            kept[encounter_id] = (fact, species, place, version)
+            places.append(place)
+        elif earlier[0] == fact:
+            duplicates += 1
+        else:
+            merges += 1
+            kept[encounter_id] = (merge_encounter_facts(earlier[0], fact), *earlier[1:])
+    parts: list[Parts] = [Parts(nodes=(owner,))]
+    for encounter_id, (fact, species, place, version) in kept.items():
+        encounter = build_encounter_record(fact, encounter_id, species, place, version)
+        edges = (
+            build_edge(HAS_ENCOUNTER, species, encounter),
+            build_edge(AT_LOCATION, encounter, place),
+            build_edge(IN_VERSION, encounter, version),
+        )
+        parts.append(Parts((encounter, species, place, version), edges))
+    anchors = list_anchors(owner, extract, places)
+    claims = build_claims([a.node_ref for a in anchors], LOCATION_ENCOUNTER_ANCHOR_CLAIMS)
+    batch = assemble_batch(
+        LOCATION_ENCOUNTER_SCOPE, join_parts([*parts, Parts(tuple(anchors))]), claims
+    )
+    return EncounterBuild(batch, merges, duplicates, tuple(sorted(unresolved)))
