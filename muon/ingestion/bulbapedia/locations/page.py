@@ -68,6 +68,7 @@ ROUTE_TEMPLATES = frozenset({"rt", "rtn"})
 KANTO_TEMPLATE = "ka"
 MAIN_TEMPLATE = "main"
 PLACES_SECTION_TITLE = "places of interest"
+BREADCRUMB_SEPARATOR = " → "
 KANTO_TITLE_SUFFIX = " (Kanto)"
 ROUTE_TITLE = "{region} Route {number}"
 IGNORED_LINK_PREFIXES = ("file:", "image:", "category:")
@@ -382,6 +383,13 @@ def read_link_titles(value: str) -> tuple[str, ...]:
     return tuple(titles)
 
 
+def read_main_title(value: str) -> str:
+    """Return the page a `{{main}}` argument names: the text before an anchor or a
+    " → " breadcrumb, normalized, or an empty string."""
+    target = value.split(ANCHOR_MARK, 1)[0].split(BREADCRUMB_SEPARATOR, 1)[0]
+    return normalize_title(target) if target.strip() else ""
+
+
 def read_place_titles(sections: Sequence[Section]) -> tuple[str, ...]:
     """Return the titles linked from the Places of interest sections, in page order.
 
@@ -402,9 +410,9 @@ def read_place_titles(sections: Sequence[Section]) -> tuple[str, ...]:
                 normalize_template_name(node.name.strip_code()) == MAIN_TEMPLATE
             ):
                 found = tuple(
-                    normalize_title(str(param.value).strip())
+                    title
                     for param in node.params
-                    if not param.showkey and str(param.value).strip()
+                    if not param.showkey and (title := read_main_title(str(param.value)))
                 )
             else:
                 continue

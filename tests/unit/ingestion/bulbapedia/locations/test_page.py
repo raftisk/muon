@@ -307,3 +307,13 @@ def test_place_titles_read_links_and_main_templates_of_the_section() -> None:
     result = extract("Sootopolis City", wikitext)
 
     assert result.place_titles == ("Sootopolis Gym", "Poké Mart", "Pokémon Center", "Cafe")
+
+
+def test_place_titles_drop_anchors_and_breadcrumbs_of_main_templates() -> None:
+    wikitext = (
+        "{{Town infobox|region=Hoenn}}\n==Places of interest==\n"
+        "{{main|Player's house#Hoenn}} {{main|Player's house → Johto}} {{main|#Only an anchor}}\n"
+        + GAME
+    )
+
+    assert extract("Sootopolis City", wikitext).place_titles == ("Player's house",)
