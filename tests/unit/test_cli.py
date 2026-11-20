@@ -2143,8 +2143,9 @@ def test_location_ingest_parses_ingests_and_prints_the_stubs(
     assert ingest.titles == [("Mount Coronet",)]
     assert len(ingest.reports) == 1
     lines = capsys.readouterr().out.splitlines()
-    assert lines[lines.index("ingest bulbapedia location: done") + 1 :][:3] == [
+    assert lines[lines.index("ingest bulbapedia location: done") + 1 :][:4] == [
         "location: 1237 batches in 1.0 s",
         "chunk: 1237 batches in 1.0 s",
         "find: 1237 batches in 1.0 s",
+        "encounter: 1237 batches in 1.0 s",
     ]

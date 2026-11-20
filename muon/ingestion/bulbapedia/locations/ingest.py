@@ -1,10 +1,11 @@
-"""Location ingest: the batches of a `LocationParseRun` go into the graph in 3 passes.
+"""Location ingest: the batches of a `LocationParseRun` go into the graph in 4 passes.
 
 `ingest_locations` checks the seed and ensures the constraints of every class in the run once,
 then writes every pass 1 batch (Location, its class and LocationArea), then every pass 2
-batch (TextChunk), then every pass 3 batch (ItemFind), and reads the census of the universe
-and the ids of the Location family nodes that are still stubs. A page owns its Location
-through the `Location` key label, so it finds the stub a species page wrote. The write loop,
+batch (TextChunk), then every pass 3 batch (ItemFind), then every pass 4 batch (Encounter), and
+reads the census of the universe and the ids of the Location family nodes that are still
+stubs. A page owns its Location through the `Location` key label, so it finds the stub a species
+page wrote. The write loop,
 the stop rule and the report models are the shared ones of `bulbapedia/ingest.py`.
 
 This module knows the pkmn universe, as every ingestion module of a source does.
@@ -36,11 +37,12 @@ STUB_CLASSES = (LOCATION,)
 
 
 class LocationPass(StrEnum):
-    """The passes in write order: chunks and finds point at the nodes pass 1 owns."""
+    """The passes in write order: chunks, finds and encounters point at the nodes pass 1 owns."""
 
     LOCATION = "location"
     CHUNK = "chunk"
     FIND = "find"
+    ENCOUNTER = "encounter"
 
 
 @dataclass(frozen=True)
@@ -54,7 +56,9 @@ def select_location_batch(output: LocationPageOutput, ingest_pass: LocationPass)
         return output.batch
     if ingest_pass is LocationPass.CHUNK:
         return output.chunk_batch
-    return output.find_batch
+    if ingest_pass is LocationPass.FIND:
+        return output.find_batch
+    return output.encounter_batch
 
 
 def list_location_constraint_classes(outputs: Iterable[LocationPageOutput]) -> frozenset[str]:

@@ -11,7 +11,12 @@ from muon.config import DEFAULT_UNIVERSES_DIR
 from muon.graph import GraphQueryError, Statement
 from muon.ingestion.bulbapedia.batching import LOCATION, TEXT_CHUNK
 from muon.ingestion.bulbapedia.ingest import CensusReport, IngestRequest, IngestStop
-from muon.ingestion.bulbapedia.locations.batches import ITEM_FIND, LOCATION_AREA, SETTLEMENT
+from muon.ingestion.bulbapedia.locations.batches import (
+    ENCOUNTER,
+    ITEM_FIND,
+    LOCATION_AREA,
+    SETTLEMENT,
+)
 from muon.ingestion.bulbapedia.locations.ingest import (
     LOCATION_INGEST_REPORT_FILE_NAME,
     STUB_CLASSES,
@@ -27,11 +32,13 @@ from muon.ingestion.runner import LIST_STUB_IDS, PRUNE_CLAIMED_IN, PRUNE_CLAIMED
 from tests.unit.ingestion.bulbapedia.locations.test_run import ONTOLOGY_DIR, SOOTOPOLIS, run_parse
 from tests.unit.ingestion.recording_client import RecordingGraphClient
 
-# A relationship type that only the claims of 1 pass hold, so a batch can be told apart.
+# The relationship types that identify the claims of a pass, tested in this order: a find batch
+# claims `AT_LOCATION` too, and an encounter batch claims nothing else.
 PASS_MARKERS = {
     LocationPass.LOCATION: "ADJACENT_TO",
     LocationPass.CHUNK: "DESCRIBES",
-    LocationPass.FIND: "AT_LOCATION",
+    LocationPass.FIND: "FOUND_IN",
+    LocationPass.ENCOUNTER: "AT_LOCATION",
 }
 
 
@@ -86,11 +93,10 @@ async def test_batches_are_written_pass_by_pass(run: LocationParseRun) -> None:
     assert passes.count(LocationPass.LOCATION) == owners
     assert passes.count(LocationPass.CHUNK) == len(run.outputs)
     assert passes.count(LocationPass.FIND) == owners
-    assert passes.count(None) == 2  # the A-Box Region page claims nothing in passes 1 and 3
-    first_chunk = passes.index(LocationPass.CHUNK)
-    first_find = passes.index(LocationPass.FIND)
-    assert LocationPass.LOCATION not in passes[first_chunk:]
-    assert LocationPass.CHUNK not in passes[first_find:]
+    assert passes.count(LocationPass.ENCOUNTER) == owners
+    assert passes.count(None) == 3  # the A-Box Region page claims nothing in passes 1, 3 and 4
+    ordered = [p for p in passes if p is not None]
+    assert ordered == sorted(ordered, key=list(LocationPass).index)
 
 
 def test_select_location_batch_returns_the_batch_of_the_pass(run: LocationParseRun) -> None:
@@ -99,12 +105,13 @@ def test_select_location_batch_returns_the_batch_of_the_pass(run: LocationParseR
     assert select_location_batch(output, LocationPass.LOCATION) is output.batch
     assert select_location_batch(output, LocationPass.CHUNK) is output.chunk_batch
     assert select_location_batch(output, LocationPass.FIND) is output.find_batch
+    assert select_location_batch(output, LocationPass.ENCOUNTER) is output.encounter_batch
 
 
 def test_constraint_classes_cover_scope_and_stub_classes(run: LocationParseRun) -> None:
     classes = list_location_constraint_classes(run.outputs)
 
-    assert {SETTLEMENT, LOCATION_AREA, TEXT_CHUNK, ITEM_FIND, LOCATION} <= classes
+    assert {SETTLEMENT, LOCATION_AREA, TEXT_CHUNK, ITEM_FIND, ENCOUNTER, LOCATION} <= classes
 
 
 def test_the_stub_class_is_the_location_family_key() -> None:

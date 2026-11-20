@@ -40,7 +40,11 @@ Every entry belongs to `scarlet-violet`. Older games have no learnset data, so t
 
 ### Encounters
 
-An `Encounter` is reached from a species through `HAS_ENCOUNTER`. It gives the game (`IN_VERSION`), the place (`AT_LOCATION`), the `method` and the `encounterKind` (`wild`, `raid`, `migration`, `static`, `snag` or `gift`). It has no level, rate or area. `FOUND_IN` is a separate edge from a species to a location and carries no version, so it cannot say in which game a species is found.
+An `Encounter` is reached from a species through `HAS_ENCOUNTER`. It gives the game (`IN_VERSION`), the place (`AT_LOCATION`), the `method` and the `encounterKind` (`wild`, `raid`, `migration`, `static`, `snag` or `gift`). `FOUND_IN` is a separate edge from a species to a location and carries no version, so it cannot say in which game a species is found.
+
+There are 2 kinds of encounter node. A detailed encounter comes from a location page: its id starts with the place (`mount-coronet-2f:diamond:golbat`), `AT_LOCATION` is the location or one of its `LocationArea` nodes, and it has `minLevel` and `maxLevel` when the table gives a level, `chance` (a percentage from 1 to 100) when it gives a rate, and `conditions` (`time-morning`, `time-day`, `time-night`, `season-spring` and so on, or `weather-rain`) when the rate depends on the time, the season or the weather. A coarse encounter comes from a species page and has none of these: its id starts with the species (`diglett:vermilion-city:heartgold`) and its place is a whole location.
+
+For a place, version and encounter kind that a location page covers, only the detailed encounters exist. A kind that the location pages do not read stays coarse: the Max Raid Battle dens of Sword and Shield and the Pal Park migrations are coarse only. A species that a location table leaves out (a form row, or a method cell no rule maps, such as `Rippling`) has no encounter at that place and version at all, so a missing species is not proof that it is absent from the game.
 
 ### Locations
 
@@ -63,4 +67,5 @@ A `TextChunk` is a passage of prose with `text`, `aspect` (`biology`, `origin`, 
 - Moves and abilities carry their effect as `effectText` and as chunks with the aspect `effect`. There is no `MoveEffect`, `AbilityEffect` or `ItemEffect` node.
 - Item pages are ingested for the core series games. An item has `category`, the Scarlet/Violet `buyPrice` and `sellPrice` when a shop trades it, `flingPower` when it can be thrown and, for a berry, `HAS_FLAVOR` with a `potency`. Items have no `isConsumable` and no `effectText`.
 - Location pages are ingested for the core series games. A place has a class, a region, neighbours, versions and the first generation it appeared in, when its page names them. A page with no core game category is read only when it is in a small table of places (the Sevii islands, Hammerlocke and Wyndon Stadium, Naranja and Uva Academy). Other places that a page names without a page of their own are `Location` nodes with only a name.
+- Detailed encounters cover the wild tables of the core series games. The rows of other forms (Alolan, Galarian and the like), in-game trades, curry encounters and Dynamax Adventures are not read, and neither are the star columns of the dens. A rate or a level that a table writes as text is left out.
 - A floor or sector area comes from the headings of the Items and Pokémon sections, so a few areas are item or encounter groups that the heading table does not know yet (for example `Mt. Moon Walking Pokémon`).
