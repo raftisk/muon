@@ -91,12 +91,18 @@ SpeciesResolver = Callable[[str], NodeRecord | None]
 
 @dataclass(frozen=True)
 class ClaimRule:
-    """An edge pattern that a batch claims at every anchor of a class."""
+    """An edge pattern that a batch claims at every anchor of a class.
+
+    A prefixed rule claims only the other ends whose id starts with the anchor id and
+    `ENCOUNTER_ID_SEPARATOR`, so that an Encounter id `{anchor id}:...` belongs to the batch
+    of that anchor and no other batch deletes it.
+    """
 
     property_iri: str
     direction: ClaimDirection
     other_class_iri: str | None
     owns_other_end: bool
+    is_id_prefixed: bool = False
 
 
 OUT = ClaimDirection.OUT
@@ -229,6 +235,9 @@ def build_claims(anchors: Iterable[NodeRef], rules: Sequence[ClaimRule]) -> tupl
             direction=rule.direction,
             other_class_iri=rule.other_class_iri,
             owns_other_end=rule.owns_other_end,
+            other_end_id_prefix=(
+                f"{anchor.id}{ENCOUNTER_ID_SEPARATOR}" if rule.is_id_prefixed else None
+            ),
         )
         for anchor in anchors
         for rule in rules

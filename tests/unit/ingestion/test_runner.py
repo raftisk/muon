@@ -395,10 +395,29 @@ def test_claim_row_keeps_the_other_ends_of_matching_edges(materializer: LabelMat
             "anchor_id": "alpha",
             "type": "HAS_COLOR",
             "other_label": "ToyColor",
+            "other_id_prefix": None,
             "owns_other_end": False,
             "kept": [{"label": "ToyColor", "id": "red"}, {"label": "ToyColor", "id": "blue"}],
         }
     ]
+
+
+def test_claim_row_with_an_id_prefix_keeps_only_the_ends_that_start_with_it(
+    materializer: LabelMaterializer,
+) -> None:
+    claim = COLOR_CLAIM.model_copy(update={"other_end_id_prefix": "re"})
+
+    rows = build_claim_rows(build_claim_batch(claim), materializer, ClaimDirection.OUT)
+
+    assert rows[0]["other_id_prefix"] == "re"
+    assert rows[0]["kept"] == [{"label": "ToyColor", "id": "red"}]
+
+
+def test_prune_statement_filters_the_other_end_by_the_id_prefix() -> None:
+    for query in (runner.PRUNE_CLAIMED_OUT, runner.PRUNE_CLAIMED_IN):
+        assert (
+            "claim.other_id_prefix IS NULL OR other.id STARTS WITH claim.other_id_prefix" in query
+        )
 
 
 def test_claim_row_for_any_class_has_null_other_label(materializer: LabelMaterializer) -> None:

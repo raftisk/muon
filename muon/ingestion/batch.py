@@ -91,6 +91,10 @@ class EdgeClaim(BaseModel):
     universe. A write in upsert mode deletes the matching edges that the batch does
     not list. With `owns_other_end`, it also deletes the node at the other end of
     each deleted edge, unless the batch lists that node as an owner record.
+
+    With `other_end_id_prefix`, the claim matches only the other ends whose `id` starts
+    with the prefix, so 2 batches can each own the edges of 1 property at 1 anchor when
+    their other ends have disjoint id prefixes. `None` matches every id.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -100,6 +104,7 @@ class EdgeClaim(BaseModel):
     direction: ClaimDirection
     other_class_iri: str | None = None
     owns_other_end: bool = False
+    other_end_id_prefix: str | None = None
 
     @property
     def sort_key(self) -> tuple[str, str, str, str, str]:
