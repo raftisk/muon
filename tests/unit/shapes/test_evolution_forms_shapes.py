@@ -24,7 +24,7 @@ TARGETS = {
         + GENERATION_NODE
     ),
     "Type": FIRE,
-    "Location": 'ex:thing a pkmn:LocationArea ; pkmn:id "thing" .',
+    "Location": 'ex:thing a mo:Location ; pkmn:id "thing" .',
     "PokemonSpecies": species("thing", 6),
 }
 ROLE_TARGETS = [
@@ -34,6 +34,8 @@ ROLE_TARGETS = [
     ("knownMoveType", "Type", "ex:fire"),
     ("partyType", "Type", "ex:fire"),
     ("atLocation", "Location", "ex:thing"),
+    ("fieldMove", "Move", "ex:move"),
+    ("fieldItem", "Item", "ex:thing"),
     ("partySpecies", "PokemonSpecies", "ex:thing"),
     ("tradedFor", "PokemonSpecies", "ex:thing"),
     ("fusesWith", "PokemonSpecies", "ex:thing"),
@@ -115,6 +117,11 @@ def test_role_with_matching_target_conforms(validate_fixture, role, target_class
 
 def test_hold_pointing_at_a_move_fails(validate_fixture):
     data = BASE + TARGETS["Move"] + requires_edge("hold", "ex:move")
+    assert validate_fixture(data).rule_ids == {"R1"}
+
+
+def test_field_move_pointing_at_an_item_fails(validate_fixture):
+    data = BASE + TARGETS["Item"] + requires_edge("fieldMove", "ex:thing")
     assert validate_fixture(data).rule_ids == {"R1"}
 
 
