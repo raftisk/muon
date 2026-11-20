@@ -282,9 +282,11 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument(
         "--from-export",
         type=Path,
-        dest="export_path",
+        action="append",
+        default=[],
+        dest="export_paths",
         metavar="FILE",
-        help="pin the pages of the page type from a Special:Export file",
+        help="pin the pages of the page type from a Special:Export file (repeatable)",
     )
     parse = commands.add_parser(
         PARSE_COMMAND, help="parse pinned source pages into batches and a report under data/"
@@ -446,7 +448,7 @@ async def run_purge(settings: Settings, prefix: str) -> WriteSummary:
 
 def run_fetch(request: FetchRequest) -> FetchReport:
     """Run an export run with no HTTP client, and any other run against the API."""
-    if request.export_path is not None:
+    if request.export_paths:
         return import_pages(request, PageStore())
     with build_http_client() as http_client:
         return fetch_pages(request, PageStore(), BulbapediaClient(http_client))
@@ -465,10 +467,10 @@ def format_fetch_report(request: FetchRequest, report: FetchReport) -> str:
         f"redirects: {len(report.redirects)}",
         f"requests: {report.requests}",
     ]
-    if request.export_path is not None:
+    if request.export_paths:
         lines.append(f"ignored: {report.ignored}")
     lines.append(f"elapsed seconds: {report.elapsed_seconds:.1f}")
-    if request.is_update or request.titles or request.export_path is not None:
+    if request.is_update or request.titles or request.export_paths:
         for label, titles in (
             ("added", report.added),
             ("changed", report.changed),
@@ -1328,19 +1330,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     arguments = parser.parse_args(argv)
     if arguments.command == FETCH_COMMAND and arguments.source == POKEAPI_SOURCE:
-        if arguments.page_type is not None or arguments.titles or arguments.export_path:
+        if arguments.page_type is not None or arguments.titles or arguments.export_paths:
             parser.error(POKEAPI_OPTIONS_MESSAGE)
         return execute_fetch_pokeapi(arguments.update)
     if arguments.command == FETCH_COMMAND:
         if arguments.page_type is None:
             parser.error(MISSING_PAGE_TYPE_MESSAGE)
-        if arguments.export_path is not None and (arguments.update or arguments.titles):
+        if arguments.export_paths and (arguments.update or arguments.titles):
             parser.error(EXPORT_CONFLICT_MESSAGE)
         request = FetchRequest(
             page_type=arguments.page_type,
             titles=tuple(arguments.titles),
             is_update=arguments.update,
-            export_path=arguments.export_path,
+            export_paths=tuple(arguments.export_paths),
         )
         return execute_fetch(request)
     if arguments.command == PARSE_COMMAND and arguments.page_type == MOVE_PAGE_TYPE:

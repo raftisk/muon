@@ -33,6 +33,12 @@ from muon.ingestion.bulbapedia.batching import (
     build_abox_index,
 )
 from muon.ingestion.bulbapedia.fetch import PAGE_TYPES
+from muon.ingestion.bulbapedia.locations.identity import (
+    LOCATION_INFOBOXES,
+    LocationIndex,
+    build_location_index,
+    list_candidate_titles,
+)
 from muon.ingestion.bulbapedia.pages import Page, PagePin, PageStore
 from muon.ingestion.bulbapedia.runs import (
     OUTPUT_SUFFIX,
@@ -88,12 +94,6 @@ from muon.ingestion.bulbapedia.species.extract import (
     SpeciesPageExtract,
 )
 from muon.ingestion.bulbapedia.species.forms import check_override_titles, rank_mega_forms
-from muon.ingestion.bulbapedia.species.locations import (
-    LOCATION_INFOBOXES,
-    LocationIndex,
-    build_location_index,
-    list_candidate_titles,
-)
 from muon.ingestion.bulbapedia.species.page import parse_species_page, read_infobox
 from muon.ingestion.bulbapedia.wikitext import split_sections
 from muon.ingestion.seed import read_abox

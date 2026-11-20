@@ -29,7 +29,12 @@ from muon.ingestion.bulbapedia.abilities.run import (
 from muon.ingestion.bulbapedia.abilities.run import ParseRunError as AbilityParseRunError
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
-from muon.ingestion.bulbapedia.fetch import FetchError, FetchReport, FetchRequest
+from muon.ingestion.bulbapedia.fetch import (
+    ExportConflictError,
+    FetchError,
+    FetchReport,
+    FetchRequest,
+)
 from muon.ingestion.bulbapedia.ingest import (
     BatchRejection,
     CensusReport,
@@ -421,7 +426,36 @@ def test_fetch_parses_the_export_file(monkeypatch: pytest.MonkeyPatch) -> None:
 
     cli.main(["fetch", "bulbapedia", "move", "--from-export", EXPORT_FILE])
 
-    assert fetch.requests == [FetchRequest(page_type="move", export_path=Path(EXPORT_FILE))]
+    assert fetch.requests == [FetchRequest(page_type="move", export_paths=(Path(EXPORT_FILE),))]
+
+
+def test_fetch_collects_every_export_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetch = arrange_fetch(monkeypatch, EXPORT_REPORT)
+
+    cli.main(
+        ["fetch", "bulbapedia", "location", "--from-export", "a.xml", "--from-export", "b.xml"]
+    )
+
+    assert fetch.requests == [
+        FetchRequest(page_type="location", export_paths=(Path("a.xml"), Path("b.xml")))
+    ]
+
+
+def test_fetch_reports_conflicting_exports(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def conflict(request: FetchRequest) -> FetchReport:
+        raise ExportConflictError("Mount Coronet", 10, 11)
+
+    monkeypatch.setattr(cli, "run_fetch", conflict)
+
+    exit_code = cli.main(["fetch", "bulbapedia", "location", "--from-export", "a.xml"])
+
+    assert exit_code == cli.EXIT_FAILURE
+    error = capsys.readouterr().err
+    assert "Mount Coronet" in error
+    assert "10" in error
+    assert "11" in error
 
 
 @pytest.mark.parametrize("extra", [["--update"], ["--title", "Tackle (move)"]])
@@ -465,7 +499,7 @@ def test_export_run_needs_no_neo4j_setting_and_no_http_client(
     exit_code = cli.main(["fetch", "bulbapedia", "move", "--from-export", str(path)])
 
     assert exit_code == cli.EXIT_SUCCESS
-    assert imports == [FetchRequest(page_type="move", export_path=path)]
+    assert imports == [FetchRequest(page_type="move", export_paths=(path,))]
     assert "fetch bulbapedia move: done" in capsys.readouterr().out
 
 

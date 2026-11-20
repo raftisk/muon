@@ -29,18 +29,18 @@ from mwparserfromhell.wikicode import Wikicode
 
 from muon.ingestion.batch import GraphBatch
 from muon.ingestion.bulbapedia.batching import LOCATION
+from muon.ingestion.bulbapedia.locations.identity import (
+    LocationIndex,
+    LocationVerdict,
+    classify_location,
+    normalize_title,
+)
 from muon.ingestion.bulbapedia.pages import Page
 from muon.ingestion.bulbapedia.runs import BatchCounts, ReportModel, count_batches
 from muon.ingestion.bulbapedia.species.batches import ENCOUNTER_KIND, IN_VERSION, METHOD
 from muon.ingestion.bulbapedia.species.chunks import match_marker
 from muon.ingestion.bulbapedia.species.extract import EncounterFact, SpeciesPageExtract
 from muon.ingestion.bulbapedia.species.forms import ResolvedForm
-from muon.ingestion.bulbapedia.species.locations import (
-    LocationIndex,
-    LocationVerdict,
-    classify_location,
-    normalize_title,
-)
 from muon.ingestion.bulbapedia.wikitext import (
     Section,
     normalize_template_name,

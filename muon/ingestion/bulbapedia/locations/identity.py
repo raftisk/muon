@@ -8,6 +8,7 @@ Map:
 - Test: `classify_location` gives every candidate 1 verdict. A redirect is followed 1 step.
 - Candidates: `list_candidate_titles` gives the titles the next Special:Export must hold,
   so that 1 export replaces the location pins with a complete set.
+- Aliases: `list_redirect_titles` gives the pinned redirects that point at a title.
 
 A candidate that fails the test gives no node: a Location stub with a wrong id would last
 until a purge. This module knows nothing about encounters.
@@ -144,3 +145,9 @@ def list_candidate_titles(index: LocationIndex, unknown: Iterable[str]) -> tuple
         index.foreign_titles
     )
     return tuple(sorted(titles))
+
+
+def list_redirect_titles(index: LocationIndex, title: str) -> tuple[str, ...]:
+    """Return the sorted titles of the pinned redirects whose target is `title`."""
+    target = normalize_title(title)
+    return tuple(sorted(source for source, goal in index.redirects.items() if goal == target))
