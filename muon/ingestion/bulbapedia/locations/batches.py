@@ -12,6 +12,10 @@ The owner claims cover `locatedIn`, `adjacentTo`, `appearsIn`, `introducedIn` an
 out of the Location and `locatedIn` in from its areas, so an upsert prunes whatever the page
 no longer lists.
 
+Pass 2 owns the TextChunks of the page (scope {`TextChunk`}). Every chunk `describes` the
+Location, and a mention links in through `mentionedIn`. The Location is a reference of the
+class of its page, so a page with no chunk left still removes the chunks it had.
+
 This module knows the pkmn universe, as every ingestion module of a source does.
 """
 
@@ -22,28 +26,40 @@ from muon.ingestion.batch import GraphBatch, NodeRecord, PropertyValue, build_no
 from muon.ingestion.bulbapedia.batching import (
     ALIASES,
     CORE,
+    DESCRIBES,
     GENERATION,
     IN,
     INTRODUCED_IN,
     ITEM,
     LOCATION,
+    MENTIONED_IN,
     MOVE,
     OUT,
     PKMN,
     REGION,
+    TEXT_CHUNK,
     AboxIndex,
     BatchBuildError,
     ClaimRule,
+    MentionContext,
     Parts,
+    SpeciesResolver,
     assemble_batch,
+    build_chunk_record,
+    build_claims,
     build_edge,
+    build_mention_parts,
     build_owner_claims,
     build_stub,
     drop_none,
     join_parts,
+    number_chunks,
     require_abox,
+    resolve_mention,
 )
+from muon.ingestion.bulbapedia.chunking import MentionRef
 from muon.ingestion.bulbapedia.locations.areas import build_area_id
+from muon.ingestion.bulbapedia.locations.chunks import LocationChunkReading
 from muon.ingestion.bulbapedia.locations.identity import (
     LocationIndex,
     LocationVerdict,
@@ -55,6 +71,7 @@ from muon.ingestion.bulbapedia.locations.page import (
     LocationClass,
     LocationPageExtract,
 )
+from muon.ingestion.bulbapedia.pages import build_permalink
 
 SETTLEMENT = CORE + "Settlement"
 ROUTE = CORE + "Route"
@@ -99,18 +116,31 @@ LOCATION_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
 }
 
 
+LOCATION_CHUNK_SCOPE = frozenset({TEXT_CHUNK})
+LOCATION_CHUNK_ANCHOR_CLAIMS = (ClaimRule(DESCRIBES, IN, TEXT_CHUNK, owns_other_end=True),)
+LOCATION_CHUNK_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
+    TEXT_CHUNK: (ClaimRule(MENTIONED_IN, IN, None, owns_other_end=False),),
+}
+
+
+def resolve_no_species(target: str) -> NodeRecord | None:
+    return None
+
+
 @dataclass(frozen=True)
 class LocationBuildInputs:
     """What every page of a run resolves against.
 
     `classes` maps the normalized title of each owned page to its class IRI, `group_versions`
-    a VersionGroup label to the labels of its Versions.
+    a VersionGroup label to the labels of its Versions and `resolver` a `{{p}}` mention to a
+    species stub.
     """
 
     abox: AboxIndex
     index: LocationIndex
     classes: Mapping[str, str]
     group_versions: Mapping[str, tuple[str, ...]]
+    resolver: SpeciesResolver = resolve_no_species
 
 
 @dataclass(frozen=True)
@@ -215,3 +245,57 @@ def build_location_batch(extract: LocationPageExtract, inputs: LocationBuildInpu
     claims = build_owner_claims([owner], LOCATION_OWNER_CLAIMS)
     scope = frozenset({owner.class_iri, LOCATION_AREA})
     return assemble_batch(scope, join_parts(parts), claims)
+
+
+def build_chunk_subject(extract: LocationPageExtract, inputs: LocationBuildInputs) -> NodeRecord:
+    """Return the reference of the Location a chunk describes: a Region for an A-Box Region
+    page, else a node of the class of the page."""
+    if extract.is_abox_region:
+        context = LocationContext(extract.title, inputs.abox)
+        return require_abox(
+            context, REGION, normalize_title(extract.title), (PAGE_PATH, REGION_FIELD)
+        )
+    if extract.leaf_class is None:
+        raise ValueError(f"{extract.title}: a page that is not an A-Box Region needs a class")
+    return build_stub(CLASS_IRIS[extract.leaf_class], normalize_title(extract.title))
+
+
+def build_location_chunk_batch(
+    extract: LocationPageExtract, reading: LocationChunkReading, inputs: LocationBuildInputs
+) -> GraphBatch:
+    """Build the pass 2 batch of 1 page.
+
+    Raises `ChunkBuildError` for a chunk id collision. A mention that resolves to nothing
+    gives no `mentionedIn` edge.
+    """
+    subject = build_chunk_subject(extract, inputs)
+    source_url = build_permalink(extract.title, extract.revision_id)
+    mentions = MentionContext(inputs.abox, inputs.resolver)
+    parts: list[Parts] = [Parts(nodes=(subject,))]
+    for fact, label in number_chunks(extract.title, reading.chunks):
+        chunk = build_chunk_record(fact, label, subject, source_url)
+        parts.append(Parts((chunk,), (build_edge(DESCRIBES, chunk, subject),)))
+        mention_parts, _ = build_mention_parts(fact, chunk, subject, mentions)
+        parts.append(mention_parts)
+    joined = join_parts(parts)
+    claims = (
+        *build_claims([subject.node_ref], LOCATION_CHUNK_ANCHOR_CLAIMS),
+        *build_owner_claims(
+            [node for node in joined.nodes if node.class_iri in LOCATION_CHUNK_SCOPE],
+            LOCATION_CHUNK_OWNER_CLAIMS,
+        ),
+    )
+    return assemble_batch(LOCATION_CHUNK_SCOPE, joined, claims)
+
+
+def list_unresolved_mentions(
+    reading: LocationChunkReading, inputs: LocationBuildInputs
+) -> tuple[MentionRef, ...]:
+    """Return the mentions of the chunks that resolve to nothing, in page order."""
+    context = MentionContext(inputs.abox, inputs.resolver)
+    return tuple(
+        mention
+        for fact in reading.chunks
+        for mention in fact.mentions
+        if resolve_mention(mention, context) is None
+    )

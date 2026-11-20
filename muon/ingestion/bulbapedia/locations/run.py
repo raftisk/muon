@@ -20,12 +20,15 @@ from pathlib import Path
 from muon.files import write_text_atomically
 from muon.ingestion.batch import GraphBatch
 from muon.ingestion.bulbapedia.batching import (
+    ASPECT,
     CORE,
+    MENTIONED_IN,
     REGION,
     UNIVERSE,
     VERSION_GROUP,
     AboxIndex,
     BatchBuildError,
+    ChunkBuildError,
     build_abox_index,
 )
 from muon.ingestion.bulbapedia.locations.batches import (
@@ -34,8 +37,11 @@ from muon.ingestion.bulbapedia.locations.batches import (
     VERSION,
     LocationBuildInputs,
     build_location_batch,
+    build_location_chunk_batch,
     build_location_id,
+    list_unresolved_mentions,
 )
+from muon.ingestion.bulbapedia.locations.chunks import LocationChunkReading, read_location_chunks
 from muon.ingestion.bulbapedia.locations.identity import (
     LOCATION_INFOBOXES,
     LocationIndex,
@@ -59,17 +65,22 @@ from muon.ingestion.bulbapedia.pages import Page, PageStore
 from muon.ingestion.bulbapedia.runs import (
     DEFAULT_OUTPUT_ROOT,
     OUTPUT_SUFFIX,
+    SPECIES_PAGE_TYPE,
     BatchCounts,
     PageResult,
     PageStatus,
     ReportModel,
+    TemplateCount,
     build_result,
+    build_species_resolver,
     count_batches,
     dump_json,
     find_unpinned_titles,
+    rank_templates,
     serialize_batch,
     write_page_files,
 )
+from muon.ingestion.bulbapedia.wikitext import mask_comments, split_sections
 from muon.ingestion.seed import read_abox
 from muon.ontology.model import load_ontology_model
 
@@ -106,6 +117,14 @@ class LocationParseReport(ReportModel):
     duplicate_ids: tuple[str, ...]
     unowned_stub_titles: tuple[str, ...]
     candidate_count: int
+    chunk_counts: BatchCounts
+    chunks_per_aspect: Mapping[str, int]
+    mentions: int
+    unresolved_mentions: int
+    dropped_templates: tuple[TemplateCount, ...]
+    removed_tables_total: int
+    math_formulas_total: int
+    long_chunks: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -123,11 +142,13 @@ class LocationRunInputs:
 
 @dataclass(frozen=True)
 class LocationPageOutput:
-    """A page with its extract and pass 1 batch. The page has no text."""
+    """A page with its extract, both batches and its chunk reading. The page has no text."""
 
     page: Page
     extract: LocationPageExtract
     batch: GraphBatch
+    chunk_batch: GraphBatch
+    chunk_reading: LocationChunkReading
 
 
 @dataclass(frozen=True)
@@ -139,10 +160,11 @@ class LocationParseRun:
 
 @dataclass(frozen=True)
 class ParsedPage:
-    """A page without its text and what the parser made of it."""
+    """A page without its text, what the parser made of it and the chunks it holds."""
 
     page: Page
     result: LocationPageExtract | SkippedPage
+    chunks: LocationChunkReading | None
 
 
 def check_request(request: LocationParseRequest, titles: Iterable[str]) -> None:
@@ -177,9 +199,19 @@ def strip_page(page: Page) -> Page:
     return page.model_copy(update={"wikitext": ""})
 
 
+def parse_page(page: Page, index: LocationIndex) -> ParsedPage:
+    """Parse 1 page and read its chunks, then drop its text."""
+    result = parse_location_page(page, index)
+    if isinstance(result, SkippedPage):
+        return ParsedPage(strip_page(page), result, None)
+    sections = split_sections(mask_comments(page.wikitext))
+    chunks = read_location_chunks(sections, build_location_id(result.title))
+    return ParsedPage(strip_page(page), result, chunks)
+
+
 def parse_pages(pages: Iterable[Page], index: LocationIndex) -> tuple[ParsedPage, ...]:
     """Parse every page in turn and drop its text."""
-    return tuple(ParsedPage(strip_page(page), parse_location_page(page, index)) for page in pages)
+    return tuple(parse_page(page, index) for page in pages)
 
 
 def list_extracts(parsed: Iterable[ParsedPage]) -> tuple[LocationPageExtract, ...]:
@@ -224,15 +256,17 @@ def build_outputs(
     for item in parsed:
         if item.page.title not in requested:
             continue
-        if isinstance(item.result, SkippedPage):
-            results.append(build_result(item.page, PageStatus.SKIPPED, item.result.reason.value))
+        if isinstance(item.result, SkippedPage) or item.chunks is None:
+            reason = item.result.reason.value if isinstance(item.result, SkippedPage) else None
+            results.append(build_result(item.page, PageStatus.SKIPPED, reason))
             continue
         try:
             batch = build_location_batch(item.result, inputs)
-        except BatchBuildError as error:
+            chunk_batch = build_location_chunk_batch(item.result, item.chunks, inputs)
+        except (BatchBuildError, ChunkBuildError) as error:
             results.append(build_result(item.page, PageStatus.FAILED, str(error)))
             continue
-        outputs.append(LocationPageOutput(item.page, item.result, batch))
+        outputs.append(LocationPageOutput(item.page, item.result, batch, chunk_batch, item.chunks))
         results.append(build_result(item.page, PageStatus.PARSED))
     return tuple(outputs), tuple(results)
 
@@ -261,11 +295,32 @@ def find_duplicate_ids(extracts: Iterable[LocationPageExtract]) -> tuple[str, ..
     )
 
 
+def count_edges(batches: Iterable[GraphBatch], property_iri: str) -> int:
+    return sum(edge.property_iri == property_iri for batch in batches for edge in batch.edges)
+
+
+def list_long_chunks(outputs: Iterable[LocationPageOutput]) -> tuple[str, ...]:
+    """Return `title: section` for each chunk above the long chunk length."""
+    return tuple(
+        f"{output.extract.title}: {chunk.section_path}"
+        for output in outputs
+        for chunk in output.chunk_reading.long_chunks
+    )
+
+
+def count_chunk_aspects(outputs: Iterable[LocationPageOutput]) -> dict[str, int]:
+    aspects: Counter[str] = Counter(
+        str(node.properties[ASPECT]) for o in outputs for node in o.chunk_batch.owner_nodes
+    )
+    return dict(sorted(aspects.items()))
+
+
 def build_report(
     outputs: tuple[LocationPageOutput, ...],
     results: tuple[PageResult, ...],
     extracts: Sequence[LocationPageExtract],
     candidates: Sequence[str],
+    unresolved_mentions: int,
 ) -> LocationParseReport:
     skipped: Counter[str] = Counter(
         result.reason or "" for result in results if result.status is PageStatus.SKIPPED
@@ -274,6 +329,9 @@ def build_report(
         output.extract.leaf_class.value if output.extract.leaf_class else ABOX_REGION_CLASS
         for output in outputs
     )
+    dropped: Counter[str] = Counter()
+    for output in outputs:
+        dropped.update(output.chunk_reading.dropped_templates)
     return LocationParseReport(
         pages=results,
         pages_parsed=sum(r.status is PageStatus.PARSED for r in results),
@@ -291,11 +349,19 @@ def build_report(
         duplicate_ids=find_duplicate_ids(extracts),
         unowned_stub_titles=list_unowned_stub_titles(outputs),
         candidate_count=len(candidates),
+        chunk_counts=count_batches(o.chunk_batch for o in outputs),
+        chunks_per_aspect=count_chunk_aspects(outputs),
+        mentions=count_edges((o.chunk_batch for o in outputs), MENTIONED_IN),
+        unresolved_mentions=unresolved_mentions,
+        dropped_templates=rank_templates(dropped),
+        removed_tables_total=sum(o.chunk_reading.removed_tables for o in outputs),
+        math_formulas_total=sum(o.chunk_reading.math_formulas for o in outputs),
+        long_chunks=list_long_chunks(outputs),
     )
 
 
 def parse_location_pages(inputs: LocationRunInputs) -> LocationParseRun:
-    """Parse the pinned location pages and build the pass 1 batch of each requested one.
+    """Parse the pinned location pages and build the pass 1 and 2 batches of each requested page.
 
     Raises `ParseRunError` or `LocationTableError` before anything is written. The caller
     writes the outputs with `write_outputs`. Every pin is parsed whatever the request, so a
@@ -316,12 +382,17 @@ def parse_location_pages(inputs: LocationRunInputs) -> LocationParseRun:
     index = build_location_index(pages, foreign, LOCATION_INFOBOXES)
     parsed = parse_pages(pages, index)
     extracts = list_extracts(parsed)
-    build_inputs = LocationBuildInputs(abox, index, map_page_classes(extracts), group_versions)
+    resolver = build_species_resolver(manifest.list_pins(SPECIES_PAGE_TYPE))
+    build_inputs = LocationBuildInputs(
+        abox, index, map_page_classes(extracts), group_versions, resolver
+    )
     outputs, results = build_outputs(parsed, requested, build_inputs)
     candidates = build_candidate_titles(index, extracts)
-    return LocationParseRun(
-        outputs, build_report(outputs, results, extracts, candidates), candidates
+    unresolved = sum(
+        len(list_unresolved_mentions(output.chunk_reading, build_inputs)) for output in outputs
     )
+    report = build_report(outputs, results, extracts, candidates, unresolved)
+    return LocationParseRun(outputs, report, candidates)
 
 
 def serialize_output(output: LocationPageOutput) -> str:
@@ -332,6 +403,7 @@ def serialize_output(output: LocationPageOutput) -> str:
             "revision_id": output.page.revision_id,
             "extract": output.extract.model_dump(mode="json"),
             "batch": serialize_batch(output.batch),
+            "chunk_batch": serialize_batch(output.chunk_batch),
         }
     )
 

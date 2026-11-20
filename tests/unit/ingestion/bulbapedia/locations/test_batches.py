@@ -6,16 +6,20 @@ from muon.config import DEFAULT_UNIVERSES_DIR
 from muon.ingestion.batch import GraphBatch
 from muon.ingestion.bulbapedia.batching import (
     ALIASES,
+    DESCRIBES,
     GENERATION,
     INTRODUCED_IN,
     ITEM,
     LOCATION,
+    MENTIONED_IN,
     MOVE,
     REGION,
+    TEXT_CHUNK,
     AboxIndex,
     BatchBuildError,
     build_abox_index,
 )
+from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
 from muon.ingestion.bulbapedia.locations.areas import AreaRef
 from muon.ingestion.bulbapedia.locations.batches import (
     ADJACENT_TO,
@@ -24,6 +28,7 @@ from muon.ingestion.bulbapedia.locations.batches import (
     GEO_FEATURE,
     LOCATED_IN,
     LOCATION_AREA,
+    LOCATION_CHUNK_SCOPE,
     REQUIRES,
     ROLE,
     ROUTE,
@@ -32,7 +37,10 @@ from muon.ingestion.bulbapedia.locations.batches import (
     VERSION,
     LocationBuildInputs,
     build_location_batch,
+    build_location_chunk_batch,
+    list_unresolved_mentions,
 )
+from muon.ingestion.bulbapedia.locations.chunks import LocationChunkReading
 from muon.ingestion.bulbapedia.locations.identity import LocationIndex
 from muon.ingestion.bulbapedia.locations.page import (
     FieldRequirement,
@@ -285,3 +293,76 @@ def test_batches_compile_into_upsert_statements_that_stub_other_pages(
 
 def test_structure_class_has_its_own_iri() -> None:
     assert STRUCTURE.endswith("#Structure")
+
+
+def build_reading(*facts: ChunkFact) -> LocationChunkReading:
+    return LocationChunkReading(
+        chunks=facts, dropped_templates={}, removed_tables=0, math_formulas=0, long_chunks=()
+    )
+
+
+def build_geography(text: str, *mentions: MentionRef) -> ChunkFact:
+    return ChunkFact(
+        subject_id="sootopolis-city",
+        aspect=ChunkAspect.GEOGRAPHY,
+        section_path="Lead",
+        text=text,
+        mentions=mentions,
+    )
+
+
+def test_chunks_describe_the_location_of_the_page(inputs: LocationBuildInputs) -> None:
+    reading = build_reading(build_geography("A city."), build_geography("A crater."))
+
+    batch = build_location_chunk_batch(build_extract(), reading, inputs)
+
+    assert batch.scope == LOCATION_CHUNK_SCOPE
+    assert [n.id for n in batch.owner_nodes] == [
+        "bulbapedia:settlement:sootopolis-city:geography:1",
+        "bulbapedia:settlement:sootopolis-city:geography:2",
+    ]
+    assert {(e.end.class_iri, e.end.id) for e in batch.edges if e.property_iri == DESCRIBES} == {
+        (SETTLEMENT, "sootopolis-city")
+    }
+    assert [(n.class_iri, n.id) for n in batch.stub_nodes] == [(SETTLEMENT, "sootopolis-city")]
+
+
+def test_chunk_claims_anchor_at_the_location_and_own_its_chunks(
+    inputs: LocationBuildInputs,
+) -> None:
+    batch = build_location_chunk_batch(build_extract(), build_reading(), inputs)
+
+    describes = [c for c in batch.claims if c.property_iri == DESCRIBES]
+
+    assert [(c.anchor.id, c.direction.value, c.owns_other_end) for c in describes] == [
+        ("sootopolis-city", "in", True)
+    ]
+    assert batch.owner_nodes == ()
+
+
+def test_a_chunk_of_a_region_page_describes_the_region(inputs: LocationBuildInputs) -> None:
+    extract = build_extract(
+        title="Kanto", kind=InfoboxKind.REGION, leaf_class=None, is_abox_region=True
+    )
+
+    batch = build_location_chunk_batch(extract, build_reading(build_geography("A region.")), inputs)
+
+    assert [n.id for n in batch.owner_nodes] == ["bulbapedia:region:kanto:geography:1"]
+    assert [(n.class_iri, n.id) for n in batch.stub_nodes] == [(REGION, "kanto")]
+
+
+def test_a_resolved_mention_links_in_and_the_rest_are_listed(inputs: LocationBuildInputs) -> None:
+    fact = build_geography(
+        "Fire and nothing.",
+        MentionRef(template="t", target="Fire"),
+        MentionRef(template="p", target="Ghost"),
+    )
+
+    batch = build_location_chunk_batch(build_extract(), build_reading(fact), inputs)
+
+    assert [
+        (e.start.id, e.end.class_iri) for e in batch.edges if e.property_iri == MENTIONED_IN
+    ] == [("fire", TEXT_CHUNK)]
+    assert list_unresolved_mentions(build_reading(fact), inputs) == (
+        MentionRef(template="p", target="Ghost"),
+    )

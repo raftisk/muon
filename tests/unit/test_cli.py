@@ -2020,6 +2020,14 @@ def build_location_report() -> LocationParseReport:
         duplicate_ids=(),
         unowned_stub_titles=("Cave of Origin",),
         candidate_count=2920,
+        chunk_counts=BatchCounts(owner_nodes={"TextChunk": 9}, stubs={}, edges={"describes": 9}),
+        chunks_per_aspect={"geography": 7, "trivia": 2},
+        mentions=4,
+        unresolved_mentions=1,
+        dropped_templates=(),
+        removed_tables_total=0,
+        math_formulas_total=0,
+        long_chunks=(),
     )
 
 
@@ -2043,5 +2051,7 @@ def test_parse_location_reaches_the_location_run(
     assert "pages parsed: 1233" in output
     assert "skipped not_core_series: 106" in output
     assert "areas: 613" in output
+    assert "chunks: 9" in output
+    assert "mentions: 4 (1 unresolved)" in output
     assert "candidates: 2920" in output
     assert "unowned location stubs: 1" in output

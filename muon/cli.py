@@ -788,11 +788,16 @@ def format_location_parse_report(report: LocationParseReport, elapsed_seconds: f
     )
     lines.extend(f"locations {name}: {count}" for name, count in report.locations_per_class.items())
     lines.append(f"areas: {report.areas}")
+    lines.append(f"chunks: {sum(report.chunks_per_aspect.values())}")
+    lines.extend(f"chunks {name}: {count}" for name, count in report.chunks_per_aspect.items())
+    lines.append(f"mentions: {report.mentions} ({report.unresolved_mentions} unresolved)")
+    lines.append(f"long chunks: {len(report.long_chunks)}")
     lines.extend(
         f"owner nodes {name}: {count}" for name, count in sorted(counts.owner_nodes.items())
     )
-    lines.append(f"stubs: {sum(counts.stubs.values())}")
-    lines.append(f"edges: {sum(counts.edges.values())}")
+    chunk_counts = report.chunk_counts
+    lines.append(f"stubs: {sum(counts.stubs.values()) + sum(chunk_counts.stubs.values())}")
+    lines.append(f"edges: {sum(counts.edges.values()) + sum(chunk_counts.edges.values())}")
     note_counts = Counter(note.kind.value for note in report.notes)
     lines.extend(f"notes {kind}: {count}" for kind, count in sorted(note_counts.items()))
     lines.append(f"duplicate ids: {len(report.duplicate_ids)}")
