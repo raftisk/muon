@@ -182,6 +182,15 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 - `Encounter` reifies 1 encounter of any kind: a species caught or received at a location in a version. It links `atLocation` (a `LocationArea` or a location) and `inVersion`, and carries exactly 1 `encounterKind` (`wild`, `raid`, `static`, `gift`, `snag`, `migration`) and at most 1 `method` from the encounter methods of the `method` definition. `conditions`, `minLevel`, `maxLevel` and `chance` are optional, so a coarse encounter has none of them. A species links to it with `hasEncounter`, and `mo:foundIn` is the shortcut from the species to the location. No `locatedIn` edge connects a location to its region yet.
 - `LocationArea` is a subdivision of a location (a floor, a sector) and chains to it with `mo:locatedIn`.
 
+### Location pages
+
+A location page of the core series games gives 3 passes of batches. A page whose title is an A-Box Region (Kanto to Paldea) gives chunks only, and the run never sets a property, label or edge on a seed Region.
+
+- Pass 1 owns the `Location` of the page with the class its infobox and categories give (`Settlement`, `Route`, `GeoFeature`, `Structure`, or `Location` when no rule fits) and its `LocationArea` nodes. The id of an area is the id of its location, a hyphen and the area key, so `B1F (Feebas lake)` and `B1F` are 1 area. The page claims `LOCATED_IN` (to its parents), `ADJACENT_TO` (with the edge property `direction`), `APPEARS_IN` (to every `Version` of the core game categories), `INTRODUCED_IN`, `REQUIRES` (`role` `fieldMove` or `fieldItem`, from the route infobox fields with the value `yes`) and `LOCATED_IN` from its areas, which it owns.
+- Pass 2 owns the `TextChunk` nodes of the page. The lead, Description, Geography, Route description, Places of interest and Layout give `geography`, Trivia gives `trivia` and Origin gives `origin`. Every chunk `DESCRIBES` the location.
+- Pass 3 owns the `ItemFind` nodes. A find is `AT_LOCATION` the location or one of its areas and `IN_VERSION` of 1 version, and its item `HAS_FIND` it. The id is `{place}:{version}:{item}[:{method}][:hidden]`. The location claims the `FOUND_IN` shortcut from each item, to the page location and never to an area.
+- A reference to another place carries the class of that place's own page, because a node written with a class in the batch scope loses the labels of its other classes. A place no page owns is a plain `Location` stub.
+
 ## Shapes
 
 `shapes/pkmn.shacl.ttl` holds the constraints a pkmn node or edge must meet. The Validator loads it with `pyshacl` and checks every batch before its write, using the T-Box as the ontology graph. Its sections follow `universes/pkmn.ttl`. A shape's `sh:name` is its rule id and `sh:message` names the values involved.

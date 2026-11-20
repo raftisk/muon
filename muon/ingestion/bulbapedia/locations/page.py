@@ -131,6 +131,22 @@ CORE_GAME_CATEGORIES: Mapping[str, tuple[str, ...]] = {
     "XD locations": ("XD",),
 }
 
+# Places of the core series games that carry no core game category. A page of these titles
+# is in scope and takes the version groups listed, which the categories would have given.
+SCOPE_OVERRIDES: Mapping[str, tuple[str, ...]] = {
+    "One Island": ("FireRed-LeafGreen",),
+    "Two Island": ("FireRed-LeafGreen",),
+    "Three Island": ("FireRed-LeafGreen",),
+    "Four Island": ("FireRed-LeafGreen",),
+    "Five Island": ("FireRed-LeafGreen",),
+    "Six Island": ("FireRed-LeafGreen",),
+    "Seven Island": ("FireRed-LeafGreen",),
+    "Hammerlocke Stadium": ("Sword-Shield",),
+    "Wyndon Stadium": ("Sword-Shield",),
+    "Naranja Academy": ("Scarlet-Violet",),
+    "Uva Academy": ("Scarlet-Violet",),
+}
+
 # The A-Box Regions. A page of these titles gives chunks only (L5). Must stay in sync with
 # `individuals/pkmn.ttl`; `batches.py` checks the titles against the A-Box at run start.
 ABOX_REGION_TITLES: frozenset[str] = frozenset(
@@ -326,6 +342,7 @@ def check_category_table(version_groups: Collection[str]) -> None:
     """Raise `LocationTableError` when `CORE_GAME_CATEGORIES` names a label outside
     `version_groups`, the VersionGroup labels of the A-Box."""
     named = {label for labels in CORE_GAME_CATEGORIES.values() for label in labels}
+    named |= {label for labels in SCOPE_OVERRIDES.values() for label in labels}
     missing = sorted(named - set(version_groups))
     if missing:
         raise LocationTableError(
@@ -576,10 +593,10 @@ def parse_location_page(page: Page, index: LocationIndex) -> LocationPageExtract
     if infobox is None:
         return skip(SkipReason.NO_LOCATION_INFOBOX)
     categories = read_categories(masked)
-    version_groups = read_version_groups(categories)
+    title = normalize_title(page.title)
+    version_groups = read_version_groups(categories) or SCOPE_OVERRIDES.get(title, ())
     if not version_groups:
         return skip(SkipReason.NOT_CORE_SERIES)
-    title = normalize_title(page.title)
     leaf_class, class_notes = read_location_class(
         infobox.kind, categories, infobox.params.get(TYPE_FIELD, ""), title
     )

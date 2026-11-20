@@ -193,15 +193,15 @@ def build_reference(title: str, inputs: LocationBuildInputs) -> NodeRecord | Non
     """Return the reference node of a place a page names, or `None` when the title is not a
     place.
 
-    An A-Box Region is a Region. A place with a page of its own has that page's class, and
-    a place with no owner is a `mo:Location`.
+    A redirect is followed to its target. An A-Box Region is a Region. A place with a page of
+    its own has that page's class, and a place with no owner is a `mo:Location`.
     """
-    region_id = inputs.abox.ids.get((REGION, title))
-    if region_id is not None:
-        return NodeRecord(class_iri=REGION, id=region_id, name=title)
     test = classify_location(inputs.index, title)
     if test.verdict is LocationVerdict.NOT_A_LOCATION:
         return None
+    region_id = inputs.abox.ids.get((REGION, test.title))
+    if region_id is not None:
+        return NodeRecord(class_iri=REGION, id=region_id, name=test.title)
     return build_stub(inputs.classes.get(test.title, LOCATION), test.title)
 
 
@@ -351,38 +351,39 @@ def build_find_item(name: str, inputs: LocationBuildInputs) -> tuple[NodeRecord,
     return NodeRecord(class_iri=ITEM, id=owner[0], name=owner[1]), False
 
 
-def build_find_place(
-    fact: FindFact, owner: NodeRecord, extract: LocationPageExtract, inputs: LocationBuildInputs
-) -> NodeRecord:
-    """Return the reference of the place a find is at: the page Location, one of its areas
-    or the Location a heading names."""
+def build_find_place(fact: FindFact, owner: NodeRecord, extract: LocationPageExtract) -> NodeRecord:
+    """Return the reference of the place a find is at: the page Location or one of its areas.
+
+    A heading that names another pinned location gives the page Location. The named location
+    claims every find at it, so a find of this page there would be deleted by that page's run.
+    """
     area = fact.area
-    if area is None:
+    if area is None or not area.key:
         return owner
-    if area.key:
-        return NodeRecord(
-            class_iri=LOCATION_AREA,
-            id=build_area_id(owner.id, area.key),
-            name=f"{extract.title} {area.name}",
-        )
-    named = build_reference(area.location_title, inputs)
-    return named if named is not None else owner
+    return NodeRecord(
+        class_iri=LOCATION_AREA,
+        id=build_area_id(owner.id, area.key),
+        name=f"{extract.title} {area.name}",
+    )
 
 
 def build_find_batch(
     extract: LocationPageExtract, facts: Sequence[FindFact], inputs: LocationBuildInputs
 ) -> FindBuild:
     """Build the pass 3 batch of 1 page. A Version label the A-Box lacks raises
-    `BatchBuildError`; facts with the same id give 1 find."""
+    `BatchBuildError`; facts with the same id give 1 find. An A-Box Region page gives a batch
+    with the Region as its only node and no claim, like its pass 1 batch."""
     context = LocationContext(extract.title, inputs.abox)
     owner = build_chunk_subject(extract, inputs)
+    if extract.is_abox_region:
+        return FindBuild(assemble_batch(frozenset(), Parts(nodes=(owner,))), 0, ())
     parts: list[Parts] = [Parts(nodes=(owner,))]
     anchors = {owner.node_ref: owner}
     finds: set[str] = set()
     duplicates = 0
     unowned: set[str] = set()
     for fact in facts:
-        place = build_find_place(fact, owner, extract, inputs)
+        place = build_find_place(fact, owner, extract)
         version = require_abox(context, VERSION, fact.version, (PAGE_PATH, VERSION_GROUP_FIELD))
         item, is_unowned = build_find_item(fact.item_name, inputs)
         if is_unowned:

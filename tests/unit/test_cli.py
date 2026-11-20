@@ -54,6 +54,7 @@ from muon.ingestion.bulbapedia.items.run import (
     ItemParseRun,
 )
 from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
+from muon.ingestion.bulbapedia.locations.ingest import LocationIngestRun, LocationPass
 from muon.ingestion.bulbapedia.locations.run import (
     LocationParseReport,
     LocationParseRequest,
@@ -1349,7 +1350,7 @@ def test_ingest_stops_on_invalid_settings_before_the_parse(
 @pytest.mark.parametrize(
     ("argv", "invalid"),
     [
-        (["ingest", "bulbapedia", "location"], "'location'"),
+        (["ingest", "bulbapedia", "trainer"], "'trainer'"),
         (["ingest", "serebii", "species"], "'serebii'"),
     ],
 )
@@ -2066,3 +2067,66 @@ def test_parse_location_reaches_the_location_run(
     assert "mentions: 4 (1 unresolved)" in output
     assert "candidates: 2920" in output
     assert "unowned location stubs: 1" in output
+
+
+class RecordingLocationIngest:
+    """Stands in for `cli.run_location_ingest` and `cli.write_location_ingest_report`."""
+
+    def __init__(self, outcome: LocationIngestRun) -> None:
+        self.outcome = outcome
+        self.titles: list[tuple[str, ...]] = []
+        self.reports: list[StubIngestReport] = []
+
+    async def run(
+        self, settings: Settings, run: LocationParseRun, titles: tuple[str, ...]
+    ) -> LocationIngestRun:
+        self.titles.append(titles)
+        return self.outcome
+
+    def write_report(self, report: StubIngestReport) -> Path:
+        self.reports.append(report)
+        return Path("location-ingest-report.json")
+
+
+@pytest.mark.usefixtures("settings")
+def test_location_ingest_parses_ingests_and_prints_the_stubs(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    requests: list[LocationParseRequest] = []
+
+    def parse(request: LocationParseRequest) -> LocationParseRun:
+        requests.append(request)
+        return LocationParseRun(outputs=(), report=build_location_report(), candidates=())
+
+    report = StubIngestReport(
+        titles=(),
+        is_full_run=True,
+        passes=tuple(
+            PassTotals(ingest_pass=ingest_pass, batches_written=1237, counters={})
+            for ingest_pass in LocationPass
+        ),
+        changed_pages=(),
+        failed_pages=(),
+        stop=None,
+        census=CensusReport(labels={"Location": 1237}, relationship_types={}),
+        stub_ids={"Location": ("cave-of-origin",)},
+    )
+    ingest = RecordingLocationIngest(
+        LocationIngestRun(report=report, elapsed_seconds=dict.fromkeys(LocationPass, 1.0))
+    )
+    monkeypatch.setattr(cli, "run_location_parse", parse)
+    monkeypatch.setattr(cli, "run_location_ingest", ingest.run)
+    monkeypatch.setattr(cli, "write_location_ingest_report", ingest.write_report)
+
+    exit_code = cli.main(["ingest", "bulbapedia", "location", "--title", "Mount Coronet"])
+
+    assert exit_code == cli.EXIT_SUCCESS
+    assert requests == [LocationParseRequest(titles=("Mount Coronet",))]
+    assert ingest.titles == [("Mount Coronet",)]
+    assert len(ingest.reports) == 1
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[lines.index("ingest bulbapedia location: done") + 1 :][:3] == [
+        "location: 1237 batches in 1.0 s",
+        "chunk: 1237 batches in 1.0 s",
+        "find: 1237 batches in 1.0 s",
+    ]

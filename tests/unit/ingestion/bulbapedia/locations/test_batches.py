@@ -468,3 +468,33 @@ def test_a_page_with_no_finds_still_claims_its_location(inputs: LocationBuildInp
 
     assert build.batch.owner_nodes == ()
     assert {c.anchor.id for c in build.batch.claims} == {"sootopolis-city"}
+
+
+def test_a_title_that_redirects_to_a_region_is_the_region(
+    seed: GraphBatch, abox: AboxIndex
+) -> None:
+    index = LocationIndex(
+        locations=frozenset({"Paldea"}),
+        non_locations=frozenset(),
+        redirects={"South Province": "Paldea"},
+        foreign_titles=frozenset(),
+    )
+    inputs = LocationBuildInputs(abox, index, {}, build_group_versions(seed))
+
+    batch = build_location_batch(build_extract(parent_titles=("South Province", "Paldea")), inputs)
+
+    assert list_edges(batch, LOCATED_IN) == [("sootopolis-city", "paldea", "Region")]
+    assert [n.class_iri for n in batch.nodes if n.id == "paldea"] == [REGION]
+
+
+def test_a_find_under_a_heading_that_names_another_location_stays_at_the_page(
+    inputs: LocationBuildInputs,
+) -> None:
+    named = AreaRef(key="", name="Route 126", location_title="Route 126")
+
+    build = build_find_batch(build_extract(), [build_fact(area=named)], inputs)
+
+    find = build.batch.owner_nodes[0]
+    assert find.id == "sootopolis-city:gold:moon-stone"
+    assert list_edges(build.batch, AT_LOCATION) == [(find.id, "sootopolis-city", "Settlement")]
+    assert {c.anchor.id for c in build.batch.claims} == {"sootopolis-city"}

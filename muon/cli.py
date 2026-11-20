@@ -92,6 +92,12 @@ from muon.ingestion.bulbapedia.items.run import (
 )
 from muon.ingestion.bulbapedia.items.run import ParseRunError as ItemParseRunError
 from muon.ingestion.bulbapedia.items.run import write_outputs as write_item_outputs
+from muon.ingestion.bulbapedia.locations.finds import FindTableError
+from muon.ingestion.bulbapedia.locations.ingest import (
+    LocationIngestRun,
+    ingest_locations,
+    write_location_ingest_report,
+)
 from muon.ingestion.bulbapedia.locations.page import LocationTableError
 from muon.ingestion.bulbapedia.locations.run import PAGE_TYPE as LOCATION_PAGE_TYPE
 from muon.ingestion.bulbapedia.locations.run import (
@@ -234,6 +240,7 @@ MOVE_PARSE_ERRORS = (
 LOCATION_PARSE_ERRORS = (
     LocationParseRunError,
     LocationTableError,
+    FindTableError,
     PageStoreError,
     OntologyError,
     ABoxError,
@@ -337,7 +344,13 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("source", choices=(BULBAPEDIA_SOURCE,), help="the wiki to ingest")
     ingest.add_argument(
         "page_type",
-        choices=(PARSE_PAGE_TYPE, MOVE_PAGE_TYPE, ABILITY_PAGE_TYPE, ITEM_PAGE_TYPE),
+        choices=(
+            PARSE_PAGE_TYPE,
+            MOVE_PAGE_TYPE,
+            ABILITY_PAGE_TYPE,
+            ITEM_PAGE_TYPE,
+            LOCATION_PAGE_TYPE,
+        ),
         help="the set of pages to ingest",
     )
     ingest.add_argument(
@@ -1052,6 +1065,44 @@ def execute_item_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
+async def run_location_ingest(
+    settings: Settings, run: LocationParseRun, titles: tuple[str, ...]
+) -> LocationIngestRun:
+    request = IngestRequest(
+        ontology_dir=settings.ontology.ontology_dir,
+        universes_dir=settings.universes.universes_dir,
+        titles=titles,
+        on_progress=print_progress,
+    )
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        return await ingest_locations(client, run, request)
+
+
+def execute_location_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+    failure_prefix = build_failure_prefix(
+        INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {LOCATION_PAGE_TYPE}"
+    )
+    started = time.monotonic()
+    try:
+        run = run_location_parse(LocationParseRequest(titles=titles))
+    except LOCATION_PARSE_ERRORS as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+    parse_seconds = time.monotonic() - started
+
+    try:
+        ingest_run = asyncio.run(run_location_ingest(settings, run, titles))
+    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        print(f"{failure_prefix} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    write_location_ingest_report(ingest_run.report)
+    print(format_location_parse_report(run.report, parse_seconds))
+    print(format_ingest_report(LOCATION_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
+    return EXIT_SUCCESS if is_clean else EXIT_FAILURE
+
+
 def execute_seed(settings: Settings, prefix: str) -> int:
     try:
         report = asyncio.run(run_seed(settings, prefix))
@@ -1468,6 +1519,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_ability_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
         return execute_item_ingest(settings, tuple(arguments.titles))
+    if arguments.command == INGEST_COMMAND and arguments.page_type == LOCATION_PAGE_TYPE:
+        return execute_location_ingest(settings, tuple(arguments.titles))
     if arguments.command == INGEST_COMMAND:
         return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
     if arguments.command == PURGE_COMMAND:

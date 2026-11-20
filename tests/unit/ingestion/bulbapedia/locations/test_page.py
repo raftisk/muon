@@ -7,6 +7,7 @@ from muon.ingestion.bulbapedia.locations.page import (
     CLASS_BY_CATEGORY,
     CLASS_BY_TYPE,
     CORE_GAME_CATEGORIES,
+    SCOPE_OVERRIDES,
     FieldRequirement,
     InfoboxKind,
     LocationClass,
@@ -317,3 +318,34 @@ def test_place_titles_drop_anchors_and_breadcrumbs_of_main_templates() -> None:
     )
 
     assert extract("Sootopolis City", wikitext).place_titles == ("Player's house",)
+
+
+def test_a_place_in_the_override_table_is_in_scope_with_its_version_groups() -> None:
+    result = extract("Wyndon Stadium", "{{gyminfobox|name=Wyndon Stadium}}\n[[Category:Gyms]]\n")
+
+    assert result.version_groups == ("Sword-Shield",)
+
+
+def test_the_override_table_does_not_widen_the_scope_of_other_pages() -> None:
+    result = parse("Unlisted Stadium", "{{gyminfobox|name=Unlisted}}\n[[Category:Gyms]]\n")
+
+    assert isinstance(result, SkippedPage)
+    assert (
+        result.reason is SkipReason.NO_LOCATION_INFOBOX
+        or result.reason is SkipReason.NOT_CORE_SERIES
+    )
+
+
+def test_a_game_category_wins_over_the_override_table() -> None:
+    result = extract("One Island", "{{Infobox location|type=land}}\n" + GAME)
+
+    assert result.version_groups == ("Emerald",)
+
+
+def test_override_labels_are_checked_against_the_version_groups() -> None:
+    labels = {label for names in CORE_GAME_CATEGORIES.values() for label in names}
+    overridden = {label for names in SCOPE_OVERRIDES.values() for label in names}
+
+    check_category_table(labels | overridden)
+    with pytest.raises(LocationTableError, match="Scarlet-Violet"):
+        check_category_table(labels - {"Scarlet-Violet"})
