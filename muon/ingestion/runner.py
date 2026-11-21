@@ -107,6 +107,7 @@ MATCH (anchor:$([claim.anchor_label, $universe]) {id: claim.anchor_id})
 
 PRUNE_CLAIMED_TAIL: LiteralString = """
 WHERE (claim.other_label IS NULL OR claim.other_label IN labels(other))
+  AND (claim.other_id_prefix IS NULL OR other.id STARTS WITH claim.other_id_prefix)
   AND NOT any(kept IN claim.kept WHERE kept.label IN labels(other) AND kept.id = other.id)
 WITH collect(DISTINCT r) AS stale_edges,
   collect(DISTINCT CASE
@@ -342,7 +343,8 @@ def build_claim_rows(
 
     `kept` lists the other ends of the batch's own edges that the claim matches: same
     property, anchor at the claimed end and, when the claim names a class, an other
-    end that carries that class label.
+    end that carries that class label and, when the claim has an id prefix, an id that
+    starts with it.
     """
     other_ends = index_other_ends(batch, direction)
     rows: list[dict[str, Any]] = []
@@ -359,12 +361,19 @@ def build_claim_rows(
                 "anchor_id": claim.anchor.id,
                 "type": materializer.map_relationship_type(claim.property_iri),
                 "other_label": other_label,
+                "other_id_prefix": claim.other_end_id_prefix,
                 "owns_other_end": claim.owns_other_end,
                 "kept": [
                     {"label": materializer.map_key_label(end.class_iri), "id": end.id}
                     for end in kept_ends
-                    if other_label is None
-                    or other_label in materializer.map_class_labels(end.class_iri)
+                    if (
+                        other_label is None
+                        or other_label in materializer.map_class_labels(end.class_iri)
+                    )
+                    and (
+                        claim.other_end_id_prefix is None
+                        or end.id.startswith(claim.other_end_id_prefix)
+                    )
                 ],
             }
         )

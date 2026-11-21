@@ -2,16 +2,17 @@ from datetime import UTC, datetime
 
 import pytest
 
-from muon.ingestion.bulbapedia.pages import Page, compute_sha1
-from muon.ingestion.bulbapedia.species.locations import (
+from muon.ingestion.bulbapedia.locations.identity import (
     LocationIndex,
     LocationVerdict,
     build_location_index,
     classify_location,
     list_candidate_titles,
+    list_redirect_titles,
     normalize_title,
     read_redirect_target,
 )
+from muon.ingestion.bulbapedia.pages import Page, compute_sha1
 
 INFOBOX = "location infobox"
 INFOBOXES = frozenset({INFOBOX})
@@ -134,3 +135,8 @@ def test_empty_index_gives_unknown_for_every_candidate() -> None:
     for candidate in ("Diglett's Cave", "Jade Orb", "Sinnoh Route 228"):
         assert classify_location(empty, candidate).verdict is LocationVerdict.UNKNOWN_LOCATION
     assert list_candidate_titles(empty, ["Jade Orb"]) == ("Jade Orb",)
+
+
+def test_redirect_titles_of_a_target(index: LocationIndex) -> None:
+    assert list_redirect_titles(index, "Route 228 (Sinnoh)") == ("Sinnoh Route 228",)
+    assert list_redirect_titles(index, "Diglett's Cave") == ()

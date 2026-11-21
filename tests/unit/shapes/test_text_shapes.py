@@ -90,3 +90,10 @@ def test_two_describes_fail(validate_fixture):
         'mo:aspect "biology" ; mo:describes ex:charmander , ex:fire ; mo:source "bulbapedia"'
     )
     assert validate_fixture(data).rule_ids == {"X1"}
+
+
+def test_geography_chunk_conforms(validate_fixture):
+    data = REFERENCES + chunk(
+        'mo:aspect "geography" ; mo:describes ex:fire ; mo:source "bulbapedia"'
+    )
+    assert validate_fixture(data).conforms

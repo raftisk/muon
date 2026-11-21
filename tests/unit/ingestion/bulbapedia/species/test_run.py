@@ -4,12 +4,17 @@ from pathlib import Path
 import pytest
 
 from muon.ingestion.bulbapedia import batching
+from muon.ingestion.bulbapedia.batching import build_abox_index
 from muon.ingestion.bulbapedia.pages import Page, PageStore, compute_sha1
 from muon.ingestion.bulbapedia.runs import PageStatus
 from muon.ingestion.bulbapedia.species import encounters, forms, run
 from muon.ingestion.bulbapedia.species.batches import ENCOUNTER, ENCOUNTER_SCOPE, POKEMON_SPECIES
-from muon.ingestion.bulbapedia.species.encounters import EncounterTableError
-from muon.ingestion.bulbapedia.species.extract import NoteKind, ResidueKind
+from muon.ingestion.bulbapedia.species.encounters import (
+    EncounterCounts,
+    EncounterReading,
+    EncounterTableError,
+)
+from muon.ingestion.bulbapedia.species.extract import EncounterFact, NoteKind, ResidueKind
 from muon.ingestion.bulbapedia.species.forms import OverrideError, PageOverride
 from muon.ingestion.bulbapedia.species.run import (
     CANDIDATE_FILE_NAME,
@@ -17,8 +22,12 @@ from muon.ingestion.bulbapedia.species.run import (
     PAGE_OUTPUT_DIR,
     REPORT_FILE_NAME,
     ParseRunError,
+    find_coverage_effects,
+    read_coverage,
     write_outputs,
 )
+from muon.ingestion.seed import read_abox
+from muon.ontology.model import load_ontology_model
 from tests.unit.ingestion.bulbapedia.species.claim_summary import (
     CHUNK_ANCHOR_PATTERNS,
     EVOLUTION_ANCHOR_PATTERNS,
@@ -29,6 +38,7 @@ from tests.unit.ingestion.bulbapedia.species.synthetic_pages import (
     BETA,
     DELTA,
     GAMMA,
+    ONTOLOGY_DIR,
     TIMESTAMP,
     build_store,
     default_wikitexts,
@@ -488,3 +498,66 @@ def test_a_page_without_game_locations_gives_anchors_and_claims_only(tmp_path: P
     assert beta.encounter_batch.edges == ()
     assert {node.class_iri for node in beta.encounter_batch.nodes} == {POKEMON_SPECIES}
     assert beta.encounter_batch.claims
+
+
+def build_coverage_file(path: Path) -> Path:
+    path.write_text(
+        '[{"location_id": "vermilion-city", "version_id": "heartgold", "kind": "wild", '
+        '"species_ids": ["beta"]}]'
+    )
+    return path
+
+
+def test_no_coverage_path_or_a_missing_file_gives_no_coverage(tmp_path: Path) -> None:
+    assert read_coverage(None) is None
+    assert read_coverage(tmp_path / "missing.json") is None
+
+
+def test_the_coverage_file_gives_the_species_of_each_place_and_version(tmp_path: Path) -> None:
+    coverage = read_coverage(build_coverage_file(tmp_path / "coverage.json"))
+
+    assert coverage is not None
+    assert coverage.species_by_pair == {
+        ("vermilion-city", "heartgold", "wild"): frozenset({"beta"})
+    }
+
+
+def test_a_broken_coverage_file_stops_the_run(tmp_path: Path) -> None:
+    path = tmp_path / "coverage.json"
+    path.write_text('[{"location_id": 1}]')
+
+    with pytest.raises(ParseRunError, match="coverage"):
+        read_coverage(path)
+
+
+def test_covered_facts_are_counted_per_kind_and_a_species_with_no_detail_is_listed(
+    tmp_path: Path,
+) -> None:
+    coverage = read_coverage(build_coverage_file(tmp_path / "coverage.json"))
+    abox = build_abox_index(read_abox(load_ontology_model(ONTOLOGY_DIR, "pkmn"), ONTOLOGY_DIR))
+    facts = tuple(
+        EncounterFact(
+            species_id=species,
+            location_title="Vermilion City",
+            version="HeartGold",
+            method=None,
+            kind="wild",
+        )
+        for species in ("beta", "alpha")
+    )
+    uncovered = EncounterFact(
+        species_id="alpha",
+        location_title="Pallet Town",
+        version="HeartGold",
+        method=None,
+        kind="wild",
+    )
+    reading = EncounterReading(facts=(*facts, uncovered), counts=EncounterCounts())
+
+    skipped, gaps = find_coverage_effects({"Alpha": reading}, abox, coverage)
+
+    assert skipped == {"wild": 2}
+    assert [(g.species_id, g.location, g.version) for g in gaps] == [
+        ("alpha", "Vermilion City", "HeartGold")
+    ]
+    assert find_coverage_effects({"Alpha": reading}, abox, None) == ({}, ())

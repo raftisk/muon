@@ -41,6 +41,7 @@ SNAPSHOT_FILES = (
     "abilities.csv",
     "ability_prose.csv",
     "items.csv",
+    "locations.csv",
     "machines.csv",
     "move_damage_classes.csv",
     "move_effect_prose.csv",

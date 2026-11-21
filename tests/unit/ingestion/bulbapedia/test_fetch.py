@@ -9,6 +9,7 @@ import pytest
 from muon.ingestion.bulbapedia.api import BulbapediaAPIError
 from muon.ingestion.bulbapedia.export import ExportError
 from muon.ingestion.bulbapedia.fetch import (
+    ExportConflictError,
     FetchError,
     FetchReport,
     FetchRequest,
@@ -313,7 +314,7 @@ def build_move_export(wiki: FakeWiki) -> list[ExportFixturePage]:
 
 
 def import_moves(store: PageStore, path: Path) -> FetchReport:
-    return import_pages(FetchRequest(MOVE, export_path=path), store)
+    return import_pages(FetchRequest(MOVE, export_paths=(path,)), store)
 
 
 def read_page_files(store: PageStore) -> dict[int, bytes]:
@@ -473,7 +474,7 @@ def test_location_import_keeps_redirect_pages(
     species_pins = store.read_manifest().list_pins(SPECIES)
 
     report = import_pages(
-        FetchRequest(LOCATION, export_path=write_export(tmp_path, build_location_export(wiki))),
+        FetchRequest(LOCATION, export_paths=(write_export(tmp_path, build_location_export(wiki)),)),
         store,
     )
 
@@ -495,3 +496,42 @@ def test_move_import_still_drops_redirect_pages(
 
     assert [pin.title for pin in store.read_manifest().list_pins(MOVE)] == ALL_MOVES
     assert report.ignored == 4
+
+
+def write_named_export(directory: Path, name: str, pages: list[ExportFixturePage]) -> Path:
+    path = write_export(directory, pages)
+    return path.rename(directory / name)
+
+
+def test_import_pins_the_union_of_several_exports(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path
+) -> None:
+    pages = build_location_export(wiki)
+    first = write_named_export(tmp_path, "first.xml", pages[:2])
+    second = write_named_export(tmp_path, "second.xml", [pages[1], pages[2]])
+
+    report = import_pages(FetchRequest(LOCATION, export_paths=(first, second)), store)
+
+    pins = store.read_manifest().list_pins(LOCATION)
+    assert sorted(pin.title for pin in pins) == ["Diglett Cave", "Diglett's Cave", "Vermilion City"]
+    assert report.listed == 3
+
+
+def test_import_of_conflicting_revisions_writes_nothing(
+    wiki: FakeWiki, store: PageStore, tmp_path: Path
+) -> None:
+    pages = build_location_export(wiki)
+    first = write_named_export(tmp_path, "first.xml", pages)
+    newer = replace(pages[0], revision_id=pages[0].revision_id + 1)
+    second = write_named_export(tmp_path, "second.xml", [newer])
+
+    with pytest.raises(ExportConflictError) as error:
+        import_pages(FetchRequest(LOCATION, export_paths=(first, second)), store)
+
+    assert (error.value.title, error.value.first_revision, error.value.second_revision) == (
+        pages[0].title,
+        pages[0].revision_id,
+        newer.revision_id,
+    )
+    assert store.read_manifest().list_pins(LOCATION) == ()
+    assert store.list_page_files() == {}

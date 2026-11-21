@@ -151,3 +151,17 @@ def test_adjacency_with_an_unknown_direction_fails(validate_fixture):
 
 def test_adjacency_without_a_direction_fails(validate_fixture):
     assert validate_fixture(f"{ADJACENCY} .").rule_ids == {"C5"}
+
+
+def test_item_find_method_conforms(validate_fixture):
+    data = REFERENCES + item_find(
+        'pkmn:atLocation ex:cave ; pkmn:inVersion ex:red ; pkmn:method "berry-tree"'
+    )
+    assert validate_fixture(data).conforms
+
+
+def test_item_find_with_an_encounter_method_fails(validate_fixture):
+    data = REFERENCES + item_find(
+        'pkmn:atLocation ex:cave ; pkmn:inVersion ex:red ; pkmn:method "level"'
+    )
+    assert validate_fixture(data).rule_ids == {"C6"}

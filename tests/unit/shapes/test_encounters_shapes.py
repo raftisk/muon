@@ -11,7 +11,10 @@ SPECIES = (
 )
 GROUP = build_version_group("rb", "red-blue")
 VERSION = build_version("red", "red", "rb")
-AREA = 'ex:cave-1f a pkmn:LocationArea ; pkmn:id "cave-1f" .'
+AREA = (
+    'ex:cave a mo:Location ; pkmn:id "cave" . '
+    'ex:cave-1f a pkmn:LocationArea ; pkmn:id "cave-1f" ; mo:locatedIn ex:cave .'
+)
 REFERENCES = FIRE + SPECIES + GENERATION_NODE + GROUP + VERSION + AREA
 
 
@@ -106,3 +109,33 @@ def test_unknown_method_fails(validate_fixture):
 def test_learnset_method_on_an_encounter_fails(validate_fixture):
     data = REFERENCES + encounter('pkmn:method "level"') + LINK
     assert validate_fixture(data).rule_ids == {"C3"}
+
+
+PLACE = 'ex:cave a mo:Location ; pkmn:id "cave" .'
+OTHER_PLACE = 'ex:town a mo:Location ; pkmn:id "town" .'
+
+
+def area(parents: str) -> str:
+    return f'ex:area a pkmn:LocationArea ; pkmn:id "cave-1f" {parents} .'
+
+
+def test_area_with_one_parent_conforms(validate_fixture):
+    assert validate_fixture(PLACE + area("; mo:locatedIn ex:cave")).conforms
+
+
+def test_area_without_a_parent_fails(validate_fixture):
+    assert validate_fixture(PLACE + area("")).rule_ids == {"C7"}
+
+
+def test_area_with_two_parents_fails(validate_fixture):
+    data = PLACE + OTHER_PLACE + area("; mo:locatedIn ex:cave , ex:town")
+    assert validate_fixture(data).rule_ids == {"C7"}
+
+
+def test_area_inside_an_area_fails(validate_fixture):
+    data = (
+        PLACE
+        + area("; mo:locatedIn ex:cave")
+        + ('ex:inner a pkmn:LocationArea ; pkmn:id "cave-1f-room" ; mo:locatedIn ex:area .')
+    )
+    assert validate_fixture(data).rule_ids == {"C7"}

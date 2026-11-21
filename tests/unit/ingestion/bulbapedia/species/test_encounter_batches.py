@@ -17,6 +17,7 @@ from muon.ingestion.bulbapedia.species.batches import (
     METHOD,
     POKEMON_SPECIES,
     VERSION,
+    Coverage,
     build_encounter_batch,
     build_encounter_name,
 )
@@ -168,4 +169,73 @@ def test_location_stub_takes_its_id_from_the_title(
     locations = [node for node in batch.nodes if node.class_iri == LOCATION]
     assert [(node.id, node.name, node.properties) for node in locations] == [
         ("digletts-cave", "Diglett's Cave", {})
+    ]
+
+
+COVERED = Coverage({("vermilion-city", "heartgold", "wild"): frozenset({"beta"})})
+
+
+def test_a_covered_fact_gives_its_location_and_found_in_only(
+    extract: SpeciesPageExtract, abox: AboxIndex
+) -> None:
+    batch = build_encounter_batch(extract, [fact(), fact(version="Gold")], abox, COVERED)
+
+    encounters = [node for node in batch.nodes if node.class_iri == ENCOUNTER]
+    assert [node.id for node in encounters] == ["alpha:vermilion-city:gold:rock-smash"]
+    assert {
+        (e.property_iri.rsplit("#")[1], e.end.id) for e in batch.edges if e.start.id == "alpha"
+    } >= {
+        ("foundIn", "vermilion-city"),
+    }
+    assert sum(e.property_iri == FOUND_IN for e in batch.edges) == 1
+
+
+def test_a_covered_fact_with_no_other_fact_leaves_the_claim_to_prune_the_old_encounter(
+    extract: SpeciesPageExtract, abox: AboxIndex
+) -> None:
+    batch = build_encounter_batch(extract, [fact()], abox, COVERED)
+
+    assert [n for n in batch.nodes if n.class_iri == ENCOUNTER] == []
+    claim = next(c for c in batch.claims if c.property_iri == HAS_ENCOUNTER)
+    assert (claim.anchor.id, claim.owns_other_end, claim.other_end_id_prefix) == (
+        "alpha",
+        True,
+        "alpha:",
+    )
+
+
+def test_no_coverage_keeps_every_fact(extract: SpeciesPageExtract, abox: AboxIndex) -> None:
+    with_none = build_encounter_batch(extract, [fact()], abox, None)
+    without = build_encounter_batch(extract, [fact()], abox)
+
+    assert with_none == without
+
+
+def test_the_has_encounter_claim_of_every_anchor_carries_its_id_prefix(
+    extract: SpeciesPageExtract, abox: AboxIndex
+) -> None:
+    batch = build_encounter_batch(extract, [], abox)
+
+    prefixes = {
+        c.anchor.id: c.other_end_id_prefix for c in batch.claims if c.property_iri == HAS_ENCOUNTER
+    }
+    assert prefixes == {"alpha": "alpha:", ALOLA_ID: f"{ALOLA_ID}:"}
+    assert all(c.other_end_id_prefix is None for c in batch.claims if c.property_iri == FOUND_IN)
+
+
+def test_a_fact_of_a_kind_the_location_page_did_not_read_stays_coarse(
+    extract: SpeciesPageExtract, abox: AboxIndex
+) -> None:
+    raid = EncounterFact(
+        species_id="alpha",
+        location_title="Vermilion City",
+        version="HeartGold",
+        method="max-raid",
+        kind="raid",
+    )
+
+    batch = build_encounter_batch(extract, [fact(), raid], abox, COVERED)
+
+    assert [n.id for n in batch.nodes if n.class_iri == ENCOUNTER] == [
+        "alpha:vermilion-city:heartgold:max-raid"
     ]

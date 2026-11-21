@@ -65,7 +65,7 @@ class FetchRequest:
     page_type: str
     titles: tuple[str, ...] = ()
     is_update: bool = False
-    export_path: Path | None = None
+    export_paths: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -102,6 +102,18 @@ class FetchOutcome:
 class FetchError(Exception):
     """A run that cannot proceed: an unknown page type, an empty category or export, or a
     pin whose revision the API describes differently."""
+
+
+class ExportConflictError(FetchError):
+    """Two export files hold different revisions of 1 title."""
+
+    def __init__(self, title: str, first_revision: int, second_revision: int) -> None:
+        super().__init__(
+            f"Exports hold 2 revisions of {title!r}: {first_revision} and {second_revision}"
+        )
+        self.title = title
+        self.first_revision = first_revision
+        self.second_revision = second_revision
 
 
 def find_page_type(page_type: str) -> PageType:
@@ -143,20 +155,24 @@ def fetch_pages(request: FetchRequest, store: PageStore, client: BulbapediaClien
 
 
 def import_pages(request: FetchRequest, store: PageStore) -> FetchReport:
-    """The export run: pin every page of the page type that the export file holds.
+    """The export run: pin every page of the page type that the export files hold.
+
+    Several files give the union of their pages. A title that 2 files hold in different
+    revisions raises `ExportConflictError` before any write.
 
     The pins of the page type are replaced as an update run replaces them, and only the
     page files that differ from their new pin are written. The run makes no request.
     """
-    if request.export_path is None:
+    if not request.export_paths:
         raise FetchError(f"An export run of {request.page_type!r} needs an export file")
     definition = find_page_type(request.page_type)
     started = time.monotonic()
-    exported = read_export_revisions(request.export_path)
+    exported = join_exports(request.export_paths)
     revisions = [page.revision for page in exported if is_importable(page, definition)]
     if not revisions:
         raise FetchError(
-            f"{request.export_path} holds no page ending in {definition.title_suffix!r}"
+            f"{', '.join(map(str, request.export_paths))} holds no page ending in "
+            f"{definition.title_suffix!r}"
         )
     manifest = store.read_manifest()
     old_pins = {pin.title: pin for pin in manifest.list_pins(request.page_type)}
@@ -181,6 +197,22 @@ def import_pages(request: FetchRequest, store: PageStore) -> FetchReport:
         elapsed_seconds=time.monotonic() - started,
         ignored=len(exported) - len(revisions),
     )
+
+
+def join_exports(paths: Sequence[Path]) -> tuple[ExportedPage, ...]:
+    """Read every export file and join the pages by title, in first-seen order."""
+    joined: dict[str, ExportedPage] = {}
+    for path in paths:
+        for page in read_export_revisions(path):
+            title = page.revision.title
+            seen = joined.get(title)
+            if seen is None:
+                joined[title] = page
+            elif seen.revision.revision_id != page.revision.revision_id:
+                raise ExportConflictError(
+                    title, seen.revision.revision_id, page.revision.revision_id
+                )
+    return tuple(joined.values())
 
 
 def is_importable(page: ExportedPage, definition: PageType) -> bool:

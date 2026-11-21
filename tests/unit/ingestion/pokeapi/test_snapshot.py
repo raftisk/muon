@@ -174,3 +174,7 @@ def test_a_failed_update_names_the_file_and_keeps_the_old_pin(tmp_path: Path) ->
         fetch_snapshot(store, github.client(), is_update=True)
 
     assert store.manifest_path.read_bytes() == manifest_bytes
+
+
+def test_the_snapshot_pins_the_locations_file() -> None:
+    assert "locations.csv" in SNAPSHOT_FILES
