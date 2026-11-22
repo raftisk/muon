@@ -25,6 +25,7 @@ from muon.ingestion.bulbapedia.batching import (
     resolve_abox,
     to_roman,
 )
+from muon.ingestion.bulbapedia.pages import build_permalink
 from muon.ingestion.bulbapedia.species import batches
 from muon.ingestion.bulbapedia.species.batches import (
     CAN_LEARN,
@@ -341,6 +342,17 @@ def test_species_records_carry_the_page_values(abox: AboxIndex) -> None:
         1.0,
         False,
     )
+
+
+def test_every_form_carries_the_page_permalink_and_stubs_do_not(abox: AboxIndex) -> None:
+    batch = build_species_batch(build_diglett_extract(), abox)
+
+    species = [node for node in batch.nodes if node.class_iri == POKEMON_SPECIES]
+    assert len(species) == 2
+    expected = build_permalink("Diglett (Pokémon)", 2)
+    assert {node.properties[batching.SOURCE_URL] for node in species} == {expected}
+    stubs = [node for node in batch.nodes if node not in batch.owner_nodes]
+    assert all(batching.SOURCE_URL not in node.properties for node in stubs)
 
 
 def test_a_genderless_species_has_no_female_rate_and_unknown_values_are_left_out(

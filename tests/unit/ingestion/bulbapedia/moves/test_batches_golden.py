@@ -13,6 +13,7 @@ from muon.ingestion.bulbapedia.batching import (
     INTRODUCED_IN,
     MACHINE,
     MOVE,
+    SOURCE_URL,
     TEACHES_MOVE,
     build_abox_index,
 )
@@ -35,6 +36,7 @@ from muon.ingestion.bulbapedia.moves.batches import (
 )
 from muon.ingestion.bulbapedia.moves.page import MovePageExtract
 from muon.ingestion.bulbapedia.moves.pokeapi import build_pokeapi_index, read_effect_text
+from muon.ingestion.bulbapedia.pages import build_permalink
 from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotStore
 from muon.ingestion.runner import MERGE_NODES_UPSERT, WriteMode, build_statements
 from muon.ingestion.seed import read_abox
@@ -90,7 +92,8 @@ def batch(read_extract: Callable[[str], MovePageExtract]) -> GraphBatch:
     )
 
 
-def test_the_move_owner(batch: GraphBatch) -> None:
+def test_the_move_owner(batch: GraphBatch, read_extract: Callable[[str], MovePageExtract]) -> None:
+    extract = read_extract("Shadow Ball")
     owners = [node for node in batch.nodes if node.class_iri == MOVE]
 
     assert batch.scope == MOVE_SCOPE
@@ -106,6 +109,7 @@ def test_the_move_owner(batch: GraphBatch) -> None:
         IS_PROTECTABLE: True,
         IS_MIRRORABLE: True,
         EFFECT_TEXT: EFFECT,
+        SOURCE_URL: build_permalink(extract.title, extract.revision_id),
     }
     assert isinstance(aliases, tuple)
     assert {"Ball'Ombre", "Spukball", "Palla Ombra", "シャドーボール"} <= set(aliases)
@@ -145,7 +149,10 @@ def test_the_21_machines(batch: GraphBatch) -> None:
         for machine_id, node in machines.items()
     } == expected
     assert teaches == {(machine_id, "shadow-ball") for machine_id in expected}
-    assert all(len(node.properties) == 2 for node in machines.values())
+    assert all(len(node.properties) == 3 for node in machines.values())
+    assert {node.properties[SOURCE_URL] for node in machines.values()} == {
+        batch.owner_nodes[0].properties[SOURCE_URL]
+    }
 
 
 def test_the_claims(batch: GraphBatch) -> None:

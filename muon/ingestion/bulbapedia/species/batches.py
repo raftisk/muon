@@ -60,6 +60,7 @@ from muon.ingestion.bulbapedia.batching import (
     MOVE,
     OUT,
     PKMN,
+    SOURCE_URL,
     TEACHES_MOVE,
     TEXT_CHUNK,
     TYPE,
@@ -90,6 +91,7 @@ from muon.ingestion.bulbapedia.batching import (
     to_roman,
 )
 from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
+from muon.ingestion.bulbapedia.pages import build_permalink
 from muon.ingestion.bulbapedia.species.evolution import EVOLUTION_PATH
 from muon.ingestion.bulbapedia.species.extract import (
     BaseStats,
@@ -344,9 +346,10 @@ def read_base_stat_values(stats: BaseStats) -> dict[str, PropertyValue]:
     }
 
 
-def build_species_record(form: FormFacts) -> NodeRecord:
+def build_species_record(form: FormFacts, source_url: str) -> NodeRecord:
     properties = drop_none(
         {
+            SOURCE_URL: source_url,
             POKEDEX_NUMBER: form.pokedex_number,
             IS_DEFAULT_FORM: form.is_default,
             HEIGHT: form.height,
@@ -495,7 +498,8 @@ def build_form_change_parts(change: FormChangeFact, records: Mapping[str, NodeRe
 def build_species_batch(extract: SpeciesPageExtract, abox: AboxIndex) -> GraphBatch:
     """Build the pass-1 batch of a page. Raises `BatchBuildError` for a name the A-Box lacks."""
     context = PageContext(extract.title, abox)
-    records = {form.id: build_species_record(form) for form in extract.forms}
+    source_url = build_permalink(extract.title, extract.revision_id)
+    records = {form.id: build_species_record(form, source_url) for form in extract.forms}
     base = records[extract.forms[0].id]
     parts: list[Parts] = [Parts(nodes=tuple(records.values()))]
     for form in extract.forms:

@@ -35,6 +35,7 @@ from muon.ingestion.bulbapedia.batching import (
     MOVE,
     OUT,
     PKMN,
+    SOURCE_URL,
     TEACHES_MOVE,
     TEXT_CHUNK,
     TYPE,
@@ -77,6 +78,7 @@ from muon.ingestion.bulbapedia.moves.page import (
     MovePageExtract,
     TableError,
 )
+from muon.ingestion.bulbapedia.pages import build_permalink
 
 MOVE_DAMAGE_CLASS = PKMN + "MoveDamageClass"
 MOVE_FLAG = PKMN + "MoveFlag"
@@ -174,6 +176,7 @@ def build_move_record(extract: MovePageExtract, effect_text: str | None) -> Node
         IS_MIRRORABLE: extract.is_mirrorable,
         EFFECT_TEXT: effect_text,
         ALIASES: extract.aliases or None,
+        SOURCE_URL: build_permalink(extract.title, extract.revision_id),
     }
     return NodeRecord(
         class_iri=MOVE, id=extract.id, name=extract.name, properties=drop_none(properties)
@@ -223,7 +226,11 @@ def build_machine(fact: MachineFact, move: NodeRecord, context: MoveContext) -> 
         class_iri=MACHINE,
         id=build_machine_id(fact.kind, fact.number_text, group.id),
         name=f"{fact.kind}{fact.number_text}",
-        properties={MACHINE_KIND: fact.kind, MACHINE_NUMBER: int(fact.number_text)},
+        properties={
+            MACHINE_KIND: fact.kind,
+            MACHINE_NUMBER: int(fact.number_text),
+            SOURCE_URL: move.properties[SOURCE_URL],
+        },
     )
     return Parts(
         nodes=(machine, group),

@@ -29,7 +29,9 @@ from muon.ingestion.bulbapedia.batching import (
     build_abox_index,
     hash_chunk_text,
 )
+from muon.ingestion.bulbapedia.batching import SOURCE_URL as SOURCE_URL_IRI
 from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
+from muon.ingestion.bulbapedia.pages import build_permalink
 from muon.ingestion.bulbapedia.species.batches import POKEMON_SPECIES
 from muon.ingestion.seed import read_abox
 from muon.ontology.model import load_ontology_model
@@ -94,7 +96,11 @@ def test_pass_1_owns_the_ability_with_its_generation_and_claim(abox: AboxIndex) 
     (ability,) = batch.owner_nodes
     assert batch.scope == ABILITY_SCOPE
     assert (ability.id, ability.name) == ("test-guard", "Test Guard")
-    assert ability.properties == {EFFECT_TEXT: "Guards.", ALIASES: ("Garde Test",)}
+    assert ability.properties == {
+        EFFECT_TEXT: "Guards.",
+        ALIASES: ("Garde Test",),
+        SOURCE_URL_IRI: build_permalink("Test Guard (Ability)", 2),
+    }
     assert list_edges(batch, INTRODUCED_IN) == [("test-guard", "generation-iii")]
     assert [(c.property_iri, c.other_class_iri) for c in batch.claims] == [
         (INTRODUCED_IN, GENERATION)
@@ -104,7 +110,7 @@ def test_pass_1_owns_the_ability_with_its_generation_and_claim(abox: AboxIndex) 
 def test_an_ability_without_effect_text_or_aliases_has_no_such_property(abox: AboxIndex) -> None:
     batch = build_ability_batch(build_extract(aliases=()), abox, None)
 
-    assert batch.owner_nodes[0].properties == {}
+    assert set(batch.owner_nodes[0].properties) == {SOURCE_URL_IRI}
 
 
 def test_a_generation_the_a_box_lacks_fails_the_page(abox: AboxIndex) -> None:
