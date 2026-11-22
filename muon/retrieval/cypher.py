@@ -22,6 +22,7 @@ from muon.graph import (
     GraphRelationship,
 )
 from muon.retrieval.evidence import (
+    UNRESOLVED_LABEL,
     Cell,
     Evidence,
     EvidenceStatus,
@@ -38,7 +39,6 @@ from muon.retrieval.schema import SchemaIntrospectionError, find_leaf_label
 
 MAX_RESULT_RECORDS = 5000
 TOOL_NAME = "run_cypher"
-UNRESOLVED_LABEL = "Node"
 NAME_PROPERTY = "name"
 SOURCE_URL_PROPERTY = "sourceUrl"
 ID_PROPERTY = "id"

@@ -18,6 +18,8 @@ from pydantic import BaseModel, ConfigDict, Field
 MAX_CONTENT_ROWS = 50
 CELL_SEPARATOR = " | "
 LIST_SEPARATOR = ", "
+# The label of a relationship end that no row returned as a node.
+UNRESOLVED_LABEL = "Node"
 
 
 class EvidenceModel(BaseModel):
