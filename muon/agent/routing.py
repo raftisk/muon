@@ -11,8 +11,9 @@ from typing import Protocol
 
 from langchain_core.language_models import BaseChatModel
 
-from muon.config import AgentSettings, Settings
+from muon.config import AgentSettings, AgentStep, Settings
 from muon.graph import GraphClient
+from muon.llm.client import create_chat_model
 from muon.ontology.materializer import LabelMaterializer, check_artifact_properties
 from muon.ontology.model import load_ontology_model
 from muon.plugins import UniversePlugin, UniverseRegistry
@@ -66,6 +67,22 @@ class AgentRuntime:
     retrieve_model: BaseChatModel
     generate_model: BaseChatModel
     agent_settings: AgentSettings
+
+
+def create_agent_runtime(client: GraphClient, agent_settings: AgentSettings) -> AgentRuntime:
+    models = {
+        step: create_chat_model(
+            agent_settings, agent_settings.model_for(step), agent_settings.reasoning_for(step)
+        )
+        for step in AgentStep
+    }
+    return AgentRuntime(
+        client=client,
+        resolve_model=models[AgentStep.RESOLVE],
+        retrieve_model=models[AgentStep.RETRIEVE],
+        generate_model=models[AgentStep.GENERATE],
+        agent_settings=agent_settings,
+    )
 
 
 def select_universe(registry: UniverseRegistry, requested: str | None) -> UniversePlugin:

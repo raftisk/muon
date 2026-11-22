@@ -7,10 +7,11 @@ exported variable always overrides the file. Each layer owns one settings group.
 import functools
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
+from urllib.parse import urlsplit
 
-from pydantic import BaseModel, Field, SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, Field, SecretStr, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = PROJECT_ROOT / ".env"
@@ -28,6 +29,12 @@ DEFAULT_MAX_RETRIES = 2
 
 DEFAULT_MAX_TOOL_CALLS = 10
 DEFAULT_MAX_CYPHER_CALLS = 2
+
+DEFAULT_API_HOST = "127.0.0.1"
+DEFAULT_API_PORT = 8000
+DEFAULT_CORS_ORIGIN = "http://localhost:5173"
+ALLOWED_ORIGIN_SCHEMES = ("http", "https")
+MAX_PORT = 65535
 
 # The values mirror `openai.types.shared.ReasoningEffort`.
 ReasoningLevel = Literal["none", "low", "medium", "high", "xhigh", "max"]
@@ -146,6 +153,41 @@ class AgentSettings(ProviderSettings):
                 return self.retrieve_reasoning
             case AgentStep.GENERATE:
                 return self.generate_reasoning
+
+
+class ApiSettings(BaseSettings):
+    """Chat server settings, read from `MUON_API_*` variables.
+
+    `cors_origins` takes a comma-separated string. Each entry must be an http or https
+    origin with a host and no path, and must match the browser origin exactly.
+    """
+
+    model_config = SettingsConfigDict(env_prefix="MUON_API_", env_file=ENV_FILE, extra="ignore")
+
+    host: str = DEFAULT_API_HOST
+    port: int = Field(default=DEFAULT_API_PORT, gt=0, le=MAX_PORT)
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: [DEFAULT_CORS_ORIGIN]
+    )
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def split_origins(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",")]
+        return value
+
+    @field_validator("cors_origins")
+    @classmethod
+    def validate_origin_format(cls, origins: list[str]) -> list[str]:
+        for origin in origins:
+            parts = urlsplit(origin)
+            if parts.scheme not in ALLOWED_ORIGIN_SCHEMES or not parts.netloc or parts.path:
+                raise ValueError(
+                    f"cors origin {origin!r} must be an http or https origin with a host "
+                    "and no path"
+                )
+        return origins
 
 
 class Settings(BaseModel):

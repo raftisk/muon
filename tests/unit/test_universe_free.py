@@ -12,7 +12,7 @@ from muon.ontology.model import extract_local_name
 UNIVERSE_PREFIX = "pkmn"
 UNIVERSE_NAMESPACE = f"https://muon.dev/ns/{UNIVERSE_PREFIX}#"
 UNIVERSE_TBOX = PROJECT_ROOT / "ontology" / "universes" / f"{UNIVERSE_PREFIX}.ttl"
-UNIVERSE_FREE_PACKAGES = ("agent", "retrieval", "generation", "evaluation", "validation")
+UNIVERSE_FREE_PACKAGES = ("agent", "retrieval", "generation", "evaluation", "validation", "api")
 UNIVERSE_FREE_MODULES = ("plugins.py",)
 SOURCE_PATTERNS = ("*.py", "prompts/*.md")
 READ_ONLY_PACKAGES = ("retrieval", "generation", "evaluation")
@@ -68,6 +68,18 @@ def test_retrieval_and_generation_never_call_a_write_method() -> None:
         violation
         for path in source_paths
         for violation in find_violations(path, {"a write method": WRITE_METHOD_PATTERN})
+    ]
+
+    assert source_paths
+    assert violations == []
+
+
+def test_api_imports_no_rich() -> None:
+    pattern = re.compile(r"^\s*(import|from)\s+rich\b")
+    source_paths = list_source_paths(("api",))
+
+    violations = [
+        violation for path in source_paths for violation in find_violations(path, {"rich": pattern})
     ]
 
     assert source_paths
