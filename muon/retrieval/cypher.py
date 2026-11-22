@@ -7,7 +7,7 @@ accepted or not, becomes 1 `Evidence` item in the question's `EvidenceLog`.
 """
 
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, LiteralString
 
@@ -198,6 +198,22 @@ def check_universe_labels(rows: list[dict[str, Any]], universe_label: str) -> No
                 )
 
 
+def select_listed_properties(
+    labels: Iterable[str], node_properties: Mapping[str, Any], listed: Mapping[str, tuple[str, ...]]
+) -> dict[str, Any]:
+    """Return the properties of a node that its labels list, with their raw values.
+
+    The result is the union of the lists of every label the node carries, restricted to the
+    properties the node has, in label order then list order.
+    """
+    selected: dict[str, Any] = {}
+    for label in sorted(set(labels)):
+        for name in listed.get(label, ()):
+            if name in node_properties:
+                selected.setdefault(name, node_properties[name])
+    return selected
+
+
 @dataclass
 class SliceBuilder:
     """Collects the nodes and relationships of the rows of 1 result."""
@@ -226,6 +242,14 @@ class SliceBuilder:
             name=name if isinstance(name, str) else None,
             labels=tuple(sorted(node.labels)),
             source_url=source_url if isinstance(source_url, str) else None,
+            properties={
+                property_name: self.convert_value(value)
+                for property_name, value in select_listed_properties(
+                    node.labels,
+                    node.properties,
+                    self.scope.plugin.manifest.artifact.properties,
+                ).items()
+            },
         )
         return key
 

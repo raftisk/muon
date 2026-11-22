@@ -65,10 +65,13 @@ type Cell = (
 
 
 class SliceNode(EvidenceModel):
+    """A node of the slice. `properties` holds only the plugin's listed properties."""
+
     key: NodeKey
     name: str | None
     labels: tuple[str, ...]
     source_url: str | None
+    properties: dict[str, Cell] = Field(default_factory=dict)
 
 
 class SliceRelationship(EvidenceModel):
