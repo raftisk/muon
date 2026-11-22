@@ -9,6 +9,7 @@ provenance record of an answer.
 """
 
 import json
+from collections.abc import Callable
 from enum import StrEnum
 from typing import Literal
 
@@ -133,27 +134,34 @@ def render_node(key: NodeKey, graph_slice: GraphSlice) -> str:
     return f"({key.label} {key.id}{name})"
 
 
+type NodeRenderer = Callable[[NodeKey, GraphSlice], str]
+
+
 def render_relationship(cell: RelationshipCell) -> str:
     return f"[:{cell.type}]"
 
 
-def render_cell(cell: Cell, graph_slice: GraphSlice) -> str:
-    """Show a cell as the model reads it: nodes as `(Leaf id "name")`, scalars as JSON."""
+def render_cell(
+    cell: Cell, graph_slice: GraphSlice, node_renderer: NodeRenderer = render_node
+) -> str:
+    """Show a cell as the model reads it: nodes through `node_renderer`, scalars as JSON."""
     if isinstance(cell, NodeCell):
-        return render_node(cell.key, graph_slice)
+        return node_renderer(cell.key, graph_slice)
     if isinstance(cell, RelationshipCell):
         return render_relationship(cell)
     if isinstance(cell, PathCell):
-        parts = [render_node(cell.nodes[0], graph_slice)] if cell.nodes else []
+        parts = [node_renderer(cell.nodes[0], graph_slice)] if cell.nodes else []
         for relationship, node in zip(cell.relationships, cell.nodes[1:], strict=False):
             parts.append(f"-{render_relationship(relationship)}-")
-            parts.append(render_node(node, graph_slice))
+            parts.append(node_renderer(node, graph_slice))
         return "".join(parts)
     if isinstance(cell, list):
-        return "[" + LIST_SEPARATOR.join(render_cell(item, graph_slice) for item in cell) + "]"
+        items = (render_cell(item, graph_slice, node_renderer) for item in cell)
+        return "[" + LIST_SEPARATOR.join(items) + "]"
     if isinstance(cell, dict):
         entries = (
-            f"{json.dumps(key)}: {render_cell(item, graph_slice)}" for key, item in cell.items()
+            f"{json.dumps(key)}: {render_cell(item, graph_slice, node_renderer)}"
+            for key, item in cell.items()
         )
         return "{" + LIST_SEPARATOR.join(entries) + "}"
     return json.dumps(cell, ensure_ascii=False)
@@ -169,6 +177,22 @@ def describe_row_count(evidence: Evidence) -> str:
     return ", ".join(parts)
 
 
+def render_evidence_rows(
+    evidence: Evidence, node_renderer: NodeRenderer = render_node
+) -> list[str]:
+    """Return the columns line and the first `MAX_CONTENT_ROWS` rows of an item, as text lines."""
+    lines = []
+    if evidence.columns:
+        lines.append("columns: " + LIST_SEPARATOR.join(evidence.columns))
+    for row in evidence.rows[:MAX_CONTENT_ROWS]:
+        cells = (
+            render_cell(row.get(column), evidence.graph_slice, node_renderer)
+            for column in evidence.columns
+        )
+        lines.append(CELL_SEPARATOR.join(cells))
+    return lines
+
+
 def render_evidence_content(evidence: Evidence) -> str:
     """Return the text the model reads for 1 evidence item.
 
@@ -177,10 +201,5 @@ def render_evidence_content(evidence: Evidence) -> str:
     """
     if evidence.status in (EvidenceStatus.REJECTED, EvidenceStatus.FAILED):
         return f"{evidence.id} {evidence.status}: {evidence.purpose}\n{evidence.message}"
-    lines = [f"{evidence.id} {evidence.status}, {describe_row_count(evidence)}: {evidence.purpose}"]
-    if evidence.columns:
-        lines.append("columns: " + LIST_SEPARATOR.join(evidence.columns))
-    for row in evidence.rows[:MAX_CONTENT_ROWS]:
-        cells = (render_cell(row.get(column), evidence.graph_slice) for column in evidence.columns)
-        lines.append(CELL_SEPARATOR.join(cells))
-    return "\n".join(lines)
+    header = f"{evidence.id} {evidence.status}, {describe_row_count(evidence)}: {evidence.purpose}"
+    return "\n".join([header, *render_evidence_rows(evidence)])
