@@ -103,7 +103,6 @@ class RunMeta(RunModel):
     generate_reasoning: ReasoningLevel
     max_tool_calls: int
     max_cypher_calls: int
-    max_check_retries: int
     hashes: dict[str, str]
     census: Census
 
@@ -302,7 +301,6 @@ def build_meta(
         generate_reasoning=agent_settings.reasoning_for(AgentStep.GENERATE),
         max_tool_calls=agent_settings.max_tool_calls,
         max_cypher_calls=agent_settings.max_cypher_calls,
-        max_check_retries=agent_settings.max_check_retries,
         hashes={
             **{
                 f"{HASH_QUESTIONS_PREFIX}{name}": value

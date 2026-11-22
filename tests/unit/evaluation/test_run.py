@@ -280,7 +280,7 @@ async def test_meta_holds_the_run_identity_limits_hashes_and_census(tmp_path: Pa
         "none",
         "none",
     )
-    assert (meta.max_tool_calls, meta.max_cypher_calls, meta.max_check_retries) == (10, 2, 1)
+    assert (meta.max_tool_calls, meta.max_cypher_calls) == (10, 2)
     assert set(meta.hashes) == {
         f"questions:{EVAL_SET_NAME}",
         "resolve_prompt",

@@ -161,7 +161,6 @@ def build_run_meta(run_id: str = "20261116-143005") -> RunMeta:
         generate_reasoning="none",
         max_tool_calls=10,
         max_cypher_calls=2,
-        max_check_retries=1,
         hashes={f"questions:{EVAL_SET_NAME}": "0" * 64},
         census=Census(node_counts={WIDGET_LABEL: 1}, relationship_counts={}),
     )

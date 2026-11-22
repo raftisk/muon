@@ -1,1 +1,1 @@
-"""Answer writing: the answer models, the generator call and the citation checker."""
+"""Answer writing: citation handles, the marker rewriter, the answer builder and the stream."""
