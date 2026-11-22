@@ -10,12 +10,14 @@ from muon.ingestion.bulbapedia.locations.areas import (
     read_areas,
 )
 from muon.ingestion.bulbapedia.locations.identity import (
-    LOCATION_INFOBOXES,
     LocationIndex,
-    build_location_index,
 )
-from muon.ingestion.bulbapedia.pages import FETCH_HINT, PageStore
+from muon.ingestion.bulbapedia.pages import PageStore
 from muon.ingestion.bulbapedia.wikitext import split_sections
+from tests.unit.ingestion.bulbapedia.page_cache import (
+    read_cached_location_index,
+    read_cached_location_page,
+)
 
 INDEX = LocationIndex(
     locations=frozenset({"Hau'oli Outskirts", "Mount Coronet"}),
@@ -123,19 +125,8 @@ pages = pytest.mark.pages
 
 def read_cached_areas(title: str) -> tuple[AreaRef, ...]:
     store = PageStore()
-    manifest = store.read_manifest()
-    pins = manifest.list_pins(PAGE_TYPE)
-    if manifest.find_pin(PAGE_TYPE, title) is None:
-        pytest.skip(f"{title!r} is not pinned: {FETCH_HINT.format(page_type=PAGE_TYPE)}")
-    foreign = [
-        pin.title
-        for name in ("species", "item", "move", "ability")
-        for pin in manifest.list_pins(name)
-    ]
-    index = build_location_index(
-        [store.read_page(PAGE_TYPE, pin) for pin in pins], foreign, LOCATION_INFOBOXES
-    )
-    page = store.read_page(PAGE_TYPE, manifest.find_pin(PAGE_TYPE, title))
+    index = read_cached_location_index(store)
+    page = read_cached_location_page(store, title)
     return read_areas(split_sections(page.wikitext), page.title, index)
 
 

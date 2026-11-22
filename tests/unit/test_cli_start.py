@@ -5,7 +5,13 @@ from typing import Any
 import pytest
 
 from muon import cli
-from muon.config import AgentSettings, OntologySettings, Settings, UniverseSettings
+from muon.config import (
+    AgentSettings,
+    Neo4jSettings,
+    OntologySettings,
+    Settings,
+    UniverseSettings,
+)
 from muon.plugins import UniverseRegistry
 
 AGENT_ENV = {
@@ -15,8 +21,19 @@ AGENT_ENV = {
 }
 
 
+NEO4J_URI = "neo4j://x"
+NEO4J_USERNAME = "neo4j"
+NEO4J_PASSWORD = "secret"
+
+
 def build_settings() -> Settings:
-    return Settings.model_construct(universes=UniverseSettings(), ontology=OntologySettings())
+    return Settings.model_construct(
+        neo4j=Neo4jSettings(
+            uri=NEO4J_URI, username=NEO4J_USERNAME, password=NEO4J_PASSWORD, _env_file=None
+        ),
+        universes=UniverseSettings(),
+        ontology=OntologySettings(),
+    )
 
 
 def record_server(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:

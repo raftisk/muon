@@ -27,11 +27,11 @@ from muon.ingestion.bulbapedia.species.encounters import (
     read_encounters,
 )
 from muon.ingestion.bulbapedia.species.page import parse_species_page
-from muon.ingestion.bulbapedia.species.run import LOCATION_PAGE_TYPE, read_location_index
 from muon.ingestion.runner import WriteMode, build_statements
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import load_ontology_model
+from tests.unit.ingestion.bulbapedia.page_cache import read_cached_location_index
 
 pytestmark = pytest.mark.pages
 
@@ -56,12 +56,11 @@ class GoldenPage:
 @pytest.fixture(scope="module")
 def golden(read_pinned_page: Callable[[str], Page]) -> dict[str, GoldenPage]:
     store = PageStore()
-    if not store.read_manifest().list_pins(LOCATION_PAGE_TYPE):
-        pytest.skip("no location pins: run `muon fetch bulbapedia location --from-export FILE`")
+    location_index = read_cached_location_index(store)
     seed = read_abox(load_ontology_model(ONTOLOGY_DIR, UNIVERSE), ONTOLOGY_DIR)
     abox = build_abox_index(seed)
     inputs = EncounterInputs(
-        read_location_index(store),
+        location_index,
         frozenset(node.name for node in seed.nodes if node.class_iri == VERSION),
     )
     pages: dict[str, GoldenPage] = {}
