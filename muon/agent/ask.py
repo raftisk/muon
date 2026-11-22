@@ -5,7 +5,7 @@
 """
 
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from contextlib import aclosing
 
 from pydantic import BaseModel, ConfigDict
@@ -31,6 +31,40 @@ SCHEMA_STEP = "reading schema"
 RESOLVE_PROGRESS_STEP = "resolving names"
 QUERY_STEP = "querying graph"
 ANSWER_STEP = "writing answer"
+
+
+class StepMessages(BaseModel):
+    """The plain-English text of 1 step in each of its 3 states."""
+
+    model_config = ConfigDict(frozen=True)
+
+    running: str
+    completed: str
+    failed: str
+
+
+STEP_MESSAGES: Mapping[str, StepMessages] = {
+    SCHEMA_STEP: StepMessages(
+        running="Reading the graph schema",
+        completed="Read the graph schema",
+        failed="Could not read the graph schema",
+    ),
+    RESOLVE_PROGRESS_STEP: StepMessages(
+        running="Finding the names in the question",
+        completed="Found the names in the question",
+        failed="Could not resolve the names in the question",
+    ),
+    QUERY_STEP: StepMessages(
+        running="Querying the graph",
+        completed="Queried the graph",
+        failed="Could not query the graph",
+    ),
+    ANSWER_STEP: StepMessages(
+        running="Writing the answer",
+        completed="Wrote the answer",
+        failed="Could not write the answer",
+    ),
+}
 
 
 class AskRequest(BaseModel):

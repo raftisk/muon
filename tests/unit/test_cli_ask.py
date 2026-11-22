@@ -5,14 +5,13 @@ import pytest
 from pydantic import SecretStr
 
 from muon import cli
+from muon.agent import routing
 from muon.agent.ask import AskRequest
 from muon.agent.events import AskResult, AskStats
-from muon.agent.routing import NO_PROGRESS
 from muon.config import AgentSettings, Neo4jSettings, Settings
 from muon.generation.contract import CitedAnswer, CitedHandles, Source
 from muon.graph import GraphConnectionError
 from muon.llm.client import ModelCallError
-from muon.plugins import UniverseRegistry
 from muon.retrieval.evidence import (
     Evidence,
     EvidenceBundle,
@@ -301,7 +300,7 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
         created.append((model, reasoning))
         return object()
 
-    monkeypatch.setattr(cli, "create_chat_model", record_chat_model)
+    monkeypatch.setattr(routing, "create_chat_model", record_chat_model)
     agent_settings = AgentSettings(
         _env_file=None,
         base_url="https://a.test/v1",
@@ -312,14 +311,7 @@ def test_the_runtime_builds_each_chat_model_with_its_step_model_and_level(
         retrieve_reasoning="low",
         generate_reasoning="medium",
     )
-    context = cli.AgentContext(
-        settings=Settings.model_construct(),
-        agent_settings=agent_settings,
-        registry=UniverseRegistry({}),
-        progress=NO_PROGRESS,
-    )
-
-    cli.create_agent_runtime(object(), context)  # type: ignore[arg-type]
+    routing.create_agent_runtime(object(), agent_settings)  # type: ignore[arg-type]
 
     assert created == [("base", "high"), ("base", "low"), ("writer", "medium")]
 

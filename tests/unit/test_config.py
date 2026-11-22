@@ -13,6 +13,7 @@ from muon.config import (
     PROJECT_ROOT,
     AgentSettings,
     AgentStep,
+    ApiSettings,
     EmbeddingSettings,
     LLMSettings,
     Neo4jSettings,
@@ -325,3 +326,23 @@ def test_agent_reasoning_level_reads_from_the_env(monkeypatch: pytest.MonkeyPatc
 def test_agent_settings_reject_an_unknown_reasoning_level() -> None:
     with pytest.raises(ValidationError, match="retrieve_reasoning"):
         build_agent_settings(retrieve_reasoning="fast")
+
+
+def test_api_settings_default_to_localhost_and_the_toki_origin() -> None:
+    settings = ApiSettings(_env_file=None)
+
+    assert settings.host == "127.0.0.1"
+    assert settings.port == 8000
+    assert settings.cors_origins == ["http://localhost:5173"]
+
+
+def test_api_cors_origins_split_on_commas() -> None:
+    settings = ApiSettings(_env_file=None, cors_origins="http://a.test, https://b.test:3000")
+
+    assert settings.cors_origins == ["http://a.test", "https://b.test:3000"]
+
+
+@pytest.mark.parametrize("origin", ["localhost:5173", "http://x/path"])
+def test_api_cors_origins_reject_a_bad_origin(origin: str) -> None:
+    with pytest.raises(ValidationError):
+        ApiSettings(_env_file=None, cors_origins=origin)

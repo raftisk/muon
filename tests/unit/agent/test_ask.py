@@ -14,6 +14,7 @@ from muon.agent.ask import (
     QUERY_STEP,
     RESOLVE_PROGRESS_STEP,
     SCHEMA_STEP,
+    STEP_MESSAGES,
     AskRequest,
     ask,
 )
@@ -380,3 +381,9 @@ async def test_a_question_without_names_runs_no_lookup_and_sends_the_bare_questi
     assert result.resolved_names == []
     assert LOOK_UP_NAMES not in pipeline.client.list_queries()
     assert pipeline.model.calls[1][1].content == QUESTION
+
+
+def test_step_messages_cover_the_four_steps() -> None:
+    assert set(STEP_MESSAGES) == {SCHEMA_STEP, RESOLVE_PROGRESS_STEP, QUERY_STEP, ANSWER_STEP}
+    for messages in STEP_MESSAGES.values():
+        assert messages.running and messages.completed and messages.failed

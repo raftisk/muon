@@ -22,8 +22,8 @@ from pydantic import SecretStr, ValidationError
 
 from muon.agent.ask import AskRequest, ask
 from muon.agent.events import AskResult, collect_answer
-from muon.agent.routing import AgentRuntime, RoutingError, StepTracker, select_universe
-from muon.config import AgentSettings, AgentStep, OntologySettings, Settings, get_settings
+from muon.agent.routing import RoutingError, StepTracker, create_agent_runtime, select_universe
+from muon.config import AgentSettings, OntologySettings, Settings, get_settings
 from muon.console import (
     STDERR,
     STDOUT,
@@ -41,7 +41,7 @@ from muon.evaluation.run import (
     run_eval,
     write_run,
 )
-from muon.graph import GraphClient, GraphError, Neo4jGraphClient, WriteSummary
+from muon.graph import GraphError, Neo4jGraphClient, WriteSummary
 from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
 from muon.ingestion.bulbapedia.abilities.crosscheck import CrossCheckError
 from muon.ingestion.bulbapedia.abilities.ingest import (
@@ -162,7 +162,7 @@ from muon.ingestion.pokeapi.snapshot import (
 )
 from muon.ingestion.runner import Runner, RunReport
 from muon.ingestion.seed import ABoxError, read_abox, seed_universe
-from muon.llm.client import ModelCallError, create_chat_model
+from muon.llm.client import ModelCallError
 from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
 from muon.ontology.model import OntologyError, extract_local_name, load_ontology_model
 from muon.plugins import UniverseError, UniversePlugin, UniverseRegistry, discover_universes
@@ -1333,24 +1333,9 @@ class AgentContext:
     progress: StepTracker
 
 
-def create_agent_runtime(client: GraphClient, context: AgentContext) -> AgentRuntime:
-    settings = context.agent_settings
-    models = {
-        step: create_chat_model(settings, settings.model_for(step), settings.reasoning_for(step))
-        for step in AgentStep
-    }
-    return AgentRuntime(
-        client=client,
-        resolve_model=models[AgentStep.RESOLVE],
-        retrieve_model=models[AgentStep.RETRIEVE],
-        generate_model=models[AgentStep.GENERATE],
-        agent_settings=settings,
-    )
-
-
 async def run_ask(context: AgentContext, request: AskRequest) -> AskResult:
     async with Neo4jGraphClient(context.settings.neo4j) as client:
-        runtime = create_agent_runtime(client, context)
+        runtime = create_agent_runtime(client, context.agent_settings)
         events = ask(request, context.registry, context.settings, runtime)
         return await collect_answer(events, context.progress)
 
@@ -1401,7 +1386,7 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
 
 async def run_eval_session(context: AgentContext, request: EvalRequest) -> EvalRun:
     async with Neo4jGraphClient(context.settings.neo4j) as client:
-        runtime = create_agent_runtime(client, context)
+        runtime = create_agent_runtime(client, context.agent_settings)
         tracked = replace(request, progress=context.progress)
         return await run_eval(tracked, context.registry, runtime)
 

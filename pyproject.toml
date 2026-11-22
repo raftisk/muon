@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Multi-universe ontology and GraphRAG engine"
 requires-python = ">=3.12"
 dependencies = [
+    "ag-ui-protocol>=1.0.0",
+    "fastapi>=0.165.0",
     "httpx>=0.28.1",
     "langchain>=1.5,<2",
     "langchain-openai>=1.8,<2",
@@ -14,6 +16,7 @@ dependencies = [
     "pyshacl>=0.40.1",
     "rdflib>=7.6.0",
     "rich>=14",
+    "uvicorn>=0.54.0",
 ]
 
 [project.scripts]
@@ -41,6 +44,10 @@ select = ["E", "F", "I", "UP", "B", "ASYNC"]
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["ag_ui", "ag_ui.*"]
+follow_untyped_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
