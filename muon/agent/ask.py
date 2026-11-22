@@ -5,7 +5,7 @@
 """
 
 import time
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncGenerator, Mapping
 from contextlib import aclosing
 
 from pydantic import BaseModel, ConfigDict
@@ -78,7 +78,7 @@ class AskRequest(BaseModel):
 
 async def ask(
     request: AskRequest, registry: UniverseRegistry, settings: Settings, runtime: AgentRuntime
-) -> AsyncIterator[AskEvent]:
+) -> AsyncGenerator[AskEvent]:
     """Answer `request.question` from the graph of 1 universe, as a stream of events.
 
     The universe is chosen before the first event, so `RoutingError` for an unknown universe
