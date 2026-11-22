@@ -45,6 +45,33 @@ class ProjectionEntry(BaseModel):
     values: dict[str, str]
 
 
+class ArtifactManifest(BaseModel):
+    """The `[artifact]` table of `universe.toml`.
+
+    `properties` maps a class local name to the datatype property names that an answer
+    artifact keeps on the nodes of that class and its subclasses.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    properties: dict[str, tuple[str, ...]] = {}
+
+    @field_validator("properties")
+    @classmethod
+    def check_properties(cls, properties: dict[str, tuple[str, ...]]) -> dict[str, tuple[str, ...]]:
+        for class_name, names in properties.items():
+            if not KEY_CLASS_NAME_PATTERN.fullmatch(class_name):
+                raise ValueError(
+                    f"artifact class {class_name!r} does not match {KEY_CLASS_NAME_PATTERN.pattern}"
+                )
+            repeated = sorted({name for name in names if names.count(name) > 1})
+            if repeated:
+                raise ValueError(
+                    f"artifact properties of {class_name!r} repeat: {', '.join(repeated)}"
+                )
+        return properties
+
+
 class UniverseManifest(BaseModel):
     """The contents of `universe.toml`.
 
@@ -54,7 +81,8 @@ class UniverseManifest(BaseModel):
     `namespace` and `shapes_namespace` are the IRI prefixes of the universe T-Box and its
     shapes; both end with `#` or `/`. `projection` maps edge properties to sub-properties
     for the Validator. `key_classes` lists the local names of the classes whose label keys
-    a node by `id` for the whole class family below them.
+    a node by `id` for the whole class family below them. `artifact` lists the node
+    properties that answer artifacts keep, per class.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -68,6 +96,7 @@ class UniverseManifest(BaseModel):
     evals: dict[str, str] | None = None
     projection: tuple[ProjectionEntry, ...] = ()
     key_classes: tuple[str, ...] = ()
+    artifact: ArtifactManifest = ArtifactManifest()
 
     @field_validator("namespace", "shapes_namespace")
     @classmethod

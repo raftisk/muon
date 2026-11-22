@@ -256,3 +256,37 @@ def test_pkmn_plugin_names_its_key_classes() -> None:
     manifest = discover_universes(DEFAULT_UNIVERSES_DIR, DEFAULT_ONTOLOGY_DIR).get("pkmn").manifest
 
     assert manifest.key_classes == ("Item", "Location")
+
+
+def test_artifact_properties_are_read_from_the_manifest(
+    universes_dir: Path, ontology_dir: Path
+) -> None:
+    write_toy_plugin(universes_dir, extra_toml='[artifact.properties]\nToyWidget = ["serial"]')
+
+    plugin = discover_universes(universes_dir, ontology_dir).get(TOY_UNIVERSE)
+
+    assert plugin.manifest.artifact.properties == {"ToyWidget": ("serial",)}
+
+
+def test_no_artifact_table_gives_an_empty_mapping(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(universes_dir)
+
+    plugin = discover_universes(universes_dir, ontology_dir).get(TOY_UNIVERSE)
+
+    assert plugin.manifest.artifact.properties == {}
+
+
+def test_a_lowercase_artifact_class_name_raises(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(universes_dir, extra_toml='[artifact.properties]\ntoyWidget = ["serial"]')
+
+    with pytest.raises(UniverseError, match="artifact class 'toyWidget'"):
+        discover_universes(universes_dir, ontology_dir)
+
+
+def test_a_repeated_artifact_property_raises(universes_dir: Path, ontology_dir: Path) -> None:
+    write_toy_plugin(
+        universes_dir, extra_toml='[artifact.properties]\nToyWidget = ["serial", "serial"]'
+    )
+
+    with pytest.raises(UniverseError, match="'ToyWidget' repeat: serial"):
+        discover_universes(universes_dir, ontology_dir)
