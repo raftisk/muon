@@ -59,13 +59,17 @@ def create_thread(client: TestClient) -> str:
 
 
 def test_cors_preflight_allows_only_the_configured_origin(client: TestClient) -> None:
-    headers = {"Access-Control-Request-Method": "POST"}
+    headers = {
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "Content-Type",
+    }
 
     allowed = client.options("/threads", headers={"Origin": ORIGIN, **headers})
     other = client.options("/threads", headers={"Origin": "http://evil.test", **headers})
 
     assert allowed.headers["access-control-allow-origin"] == ORIGIN
     assert allowed.headers["access-control-allow-credentials"] == "true"
+    assert allowed.status_code == 200
     assert "access-control-allow-origin" not in other.headers
 
 

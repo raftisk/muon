@@ -20,7 +20,7 @@ from muon.graph import Neo4jGraphClient
 from muon.plugins import UniverseRegistry
 
 CORS_METHODS = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
-CORS_HEADERS = ["Accept", "Content-Type"]
+CORS_HEADERS = ["accept", "content-type"]
 APP_TITLE = "muon chat server"
 
 OpenAnswerStream = Callable[[], AbstractAsyncContextManager[AnswerStream]]
