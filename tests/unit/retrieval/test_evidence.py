@@ -129,3 +129,9 @@ def test_bundle_round_trips_through_json_with_nested_cells() -> None:
     assert restored == bundle
     assert restored.get("e1") is not None
     assert restored.get("e9") is None
+
+
+def test_slice_node_has_no_properties_by_default() -> None:
+    node = SliceNode(key=SPECIES_KEY, name="Regieleki", labels=("PokemonSpecies",), source_url=None)
+
+    assert node.properties == {}

@@ -14,3 +14,10 @@ name-resolution = "evals/name-resolution.toml"
 property = "hasType"
 edge_property = "slot"
 values = { "1" = "primaryType", "2" = "secondaryType" }
+
+[artifact.properties]
+PokemonSpecies = ["pokedexNumber"]
+LearnsetEntry = ["method", "level"]
+Encounter = ["encounterKind", "method", "minLevel", "maxLevel", "chance"]
+Evolution = ["evoTrigger", "timeOfDay"]
+Machine = ["machineKind", "machineNumber"]

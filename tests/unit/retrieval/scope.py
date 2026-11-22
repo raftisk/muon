@@ -24,11 +24,11 @@ def build_toy_settings(root: Path, ontology_dir: Path) -> Settings:
     )
 
 
-async def build_toy_scope(root: Path) -> UniverseScope:
+async def build_toy_scope(root: Path, extra_toml: str = "") -> UniverseScope:
     ontology_dir = copy_toy_ontology(root / "ontology")
     universes_dir = root / "universes"
     universes_dir.mkdir()
-    write_toy_plugin(universes_dir)
+    write_toy_plugin(universes_dir, extra_toml=extra_toml)
     plugin = discover_universes(universes_dir, ontology_dir).get(TOY_UNIVERSE)
     answers = build_toy_answers()
     answers[READ_GRAPH_COUNTS] = lambda parameters: [TOY_COUNTS]

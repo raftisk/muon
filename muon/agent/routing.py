@@ -13,7 +13,7 @@ from langchain_core.language_models import BaseChatModel
 
 from muon.config import AgentSettings, Settings
 from muon.graph import GraphClient
-from muon.ontology.materializer import LabelMaterializer
+from muon.ontology.materializer import LabelMaterializer, check_artifact_properties
 from muon.ontology.model import load_ontology_model
 from muon.plugins import UniversePlugin, UniverseRegistry
 from muon.retrieval.context import SchemaContext, SchemaRequest, load_schema_context
@@ -87,6 +87,7 @@ async def build_scope(
     """Load the schema context of `plugin` and derive the allowed terms from it."""
     model = load_ontology_model(settings.ontology.ontology_dir, plugin.prefix)
     materializer = LabelMaterializer(model)
+    check_artifact_properties(materializer, plugin.manifest.artifact.properties)
     request = SchemaRequest(plugin, materializer, should_refresh=False)
     context = await load_schema_context(client, request, settings.universes.schema_cache_dir)
     graph_schema = context.graph_schema

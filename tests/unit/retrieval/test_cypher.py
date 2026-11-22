@@ -269,3 +269,47 @@ async def test_ids_follow_call_order_including_rejected_calls(scope: UniverseSco
 
     assert [item.id for item in log.items] == ["e1", "e2"]
     assert [item.status for item in log.items] == [EvidenceStatus.REJECTED, EvidenceStatus.OK]
+
+
+COLOR_LABELS = frozenset({"ToyColor", "Concept", "Entity", "muontoy"})
+
+
+def build_serial_row() -> list[dict[str, Any]]:
+    gadget = GraphNode("1", WIDGET_LABELS, {"id": "w1", "name": "Alpha", "serial": 1, "weight": 2})
+    color = GraphNode("2", COLOR_LABELS, {"id": "red", "serial": 9})
+    return [{"w": gadget, "c": color}]
+
+
+async def test_listed_properties_reach_the_slice_node(tmp_path: Path) -> None:
+    scope = await build_toy_scope(
+        tmp_path, extra_toml='[artifact.properties]\nToyWidget = ["serial"]'
+    )
+
+    _, evidence = await call_tool(scope, StubReadClient(build_serial_row()), EvidenceLog())
+
+    nodes = {node.key.id: node for node in evidence.graph_slice.nodes}
+    assert nodes["w1"].properties == {"serial": 1}
+    assert nodes["red"].properties == {}
+
+
+async def test_a_property_listed_on_a_parent_class_reaches_the_subclass_node(
+    tmp_path: Path,
+) -> None:
+    scope = await build_toy_scope(
+        tmp_path, extra_toml='[artifact.properties]\nToyGadget = ["serial", "weight"]'
+    )
+
+    _, evidence = await call_tool(scope, StubReadClient(build_serial_row()), EvidenceLog())
+
+    node = evidence.graph_slice.find_node(NodeKey(label="ToyWidget", id="w1"))
+    assert node is not None
+    assert node.properties == {"serial": 1, "weight": 2}
+
+
+async def test_no_artifact_table_leaves_every_slice_node_without_properties(
+    scope: UniverseScope,
+) -> None:
+    _, evidence = await call_tool(scope, StubReadClient(build_serial_row()), EvidenceLog())
+
+    assert evidence.graph_slice.nodes
+    assert all(node.properties == {} for node in evidence.graph_slice.nodes)

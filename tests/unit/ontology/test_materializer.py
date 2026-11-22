@@ -1,7 +1,11 @@
 import pytest
 from rdflib.namespace import RDFS
 
-from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
+from muon.ontology.materializer import (
+    LabelMaterializer,
+    build_plugin_materializer,
+    check_artifact_properties,
+)
 from muon.ontology.model import OntologyError, OntologyModel, load_ontology_model
 from muon.plugins import UniverseManifest
 from tests.fixtures.toy_ontology import TOY_UNIVERSE, copy_toy_ontology
@@ -130,3 +134,19 @@ def test_plugin_materializer_uses_the_manifest_key_classes(toy_model: OntologyMo
     materializer = build_plugin_materializer(toy_model, manifest)
 
     assert materializer.map_key_label(TOY + "ToyGizmo") == "ToyGadget"
+
+
+def test_artifact_properties_of_known_terms_pass(toy_model: OntologyModel) -> None:
+    check_artifact_properties(LabelMaterializer(toy_model), {"ToyWidget": ("serial",)})
+
+
+def test_artifact_properties_name_an_unknown_class(toy_model: OntologyModel) -> None:
+    with pytest.raises(OntologyError, match="Artifact class 'ToyNothing' is not a class"):
+        check_artifact_properties(LabelMaterializer(toy_model), {"ToyNothing": ("serial",)})
+
+
+def test_artifact_properties_name_an_unknown_property(toy_model: OntologyModel) -> None:
+    with pytest.raises(
+        OntologyError, match="Artifact property 'nope' of 'ToyWidget' is not a datatype property"
+    ):
+        check_artifact_properties(LabelMaterializer(toy_model), {"ToyWidget": ("nope",)})

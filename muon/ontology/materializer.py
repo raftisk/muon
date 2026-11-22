@@ -113,3 +113,26 @@ def build_plugin_materializer(
 ) -> LabelMaterializer:
     """Return the materializer of a universe, with the key classes of its manifest."""
     return LabelMaterializer(model, manifest.key_classes)
+
+
+def check_artifact_properties(
+    materializer: LabelMaterializer, properties: Mapping[str, tuple[str, ...]]
+) -> None:
+    """Raise `OntologyError` when a class or property of `properties` is not in the model.
+
+    Classes are matched by local name and properties by their Neo4j name.
+    """
+    model = materializer.model
+    class_names = {extract_local_name(iri) for iri in model.classes}
+    property_names = {materializer.map_property_name(iri) for iri in model.datatype_properties}
+    for class_name, names in properties.items():
+        if class_name not in class_names:
+            raise OntologyError(
+                f"Artifact class {class_name!r} is not a class of the {model.universe} model"
+            )
+        for name in names:
+            if name not in property_names:
+                raise OntologyError(
+                    f"Artifact property {name!r} of {class_name!r} is not a datatype "
+                    f"property of the {model.universe} model"
+                )
