@@ -33,6 +33,7 @@ from muon.ingestion.bulbapedia.batching import (
     MENTIONED_IN,
     OUT,
     PKMN,
+    SOURCE_URL,
     TEXT_CHUNK,
     VERSION_GROUP,
     AboxIndex,
@@ -121,6 +122,7 @@ def build_item_record(extract: ItemPageExtract) -> NodeRecord:
         SELL_PRICE: extract.sell_price,
         FLING_POWER: extract.fling_power,
         ALIASES: extract.aliases or None,
+        SOURCE_URL: build_permalink(extract.title, extract.revision_id),
     }
     return NodeRecord(
         class_iri=ITEM_CLASS_IRIS[extract.item_class],

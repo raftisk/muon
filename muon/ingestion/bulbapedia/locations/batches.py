@@ -48,6 +48,7 @@ from muon.ingestion.bulbapedia.batching import (
     OUT,
     PKMN,
     REGION,
+    SOURCE_URL,
     TEXT_CHUNK,
     AboxIndex,
     BatchBuildError,
@@ -199,7 +200,10 @@ def build_location_record(extract: LocationPageExtract) -> NodeRecord:
     """Return the Location owner record, with `aliases` only when the page has some."""
     if extract.leaf_class is None:
         raise ValueError(f"{extract.title}: an A-Box Region page has no owner record")
-    properties: dict[str, PropertyValue | None] = {ALIASES: extract.aliases or None}
+    properties: dict[str, PropertyValue | None] = {
+        ALIASES: extract.aliases or None,
+        SOURCE_URL: build_permalink(extract.title, extract.revision_id),
+    }
     return NodeRecord(
         class_iri=CLASS_IRIS[extract.leaf_class],
         id=build_location_id(extract.title),

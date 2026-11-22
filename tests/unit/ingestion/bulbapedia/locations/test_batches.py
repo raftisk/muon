@@ -14,6 +14,7 @@ from muon.ingestion.bulbapedia.batching import (
     MENTIONED_IN,
     MOVE,
     REGION,
+    SOURCE_URL,
     TEXT_CHUNK,
     AboxIndex,
     BatchBuildError,
@@ -62,6 +63,7 @@ from muon.ingestion.bulbapedia.locations.page import (
     Neighbour,
 )
 from muon.ingestion.bulbapedia.locations.run import build_group_versions
+from muon.ingestion.bulbapedia.pages import build_permalink
 from muon.ingestion.runner import WriteMode, build_statements
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import build_plugin_materializer
@@ -223,6 +225,17 @@ def test_owner_claims_cover_the_edges_the_page_writes(inputs: LocationBuildInput
     assert area_claim.other_class_iri == LOCATION_AREA
 
 
+def test_only_the_page_location_carries_the_page_permalink(inputs: LocationBuildInputs) -> None:
+    batch = build_location_batch(build_extract(), inputs)
+
+    carriers = [node for node in batch.nodes if SOURCE_URL in node.properties]
+    assert [(node.class_iri, node.id) for node in carriers] == [
+        (node.class_iri, node.id) for node in batch.owner_nodes if node.class_iri != LOCATION_AREA
+    ]
+    assert carriers[0].properties[SOURCE_URL] == build_permalink("Sootopolis City", 2)
+    assert len(batch.nodes) > len(carriers)
+
+
 def test_abox_region_page_gives_a_reference_and_no_claims(inputs: LocationBuildInputs) -> None:
     extract = build_extract(
         title="Kanto", kind=InfoboxKind.REGION, leaf_class=None, is_abox_region=True
@@ -234,6 +247,7 @@ def test_abox_region_page_gives_a_reference_and_no_claims(inputs: LocationBuildI
     assert [(n.class_iri, n.id) for n in batch.nodes] == [(REGION, "kanto")]
     assert batch.edges == ()
     assert batch.claims == ()
+    assert all(SOURCE_URL not in node.properties for node in batch.nodes)
 
 
 def test_references_resolve_redirects_and_drop_pages_that_are_not_places(
