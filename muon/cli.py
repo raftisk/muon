@@ -29,6 +29,7 @@ from muon.console import (
     STDOUT,
     EvalDisplay,
     StepDisplay,
+    build_answer_renderable,
     build_eval_summary,
     format_validator_report,
 )
@@ -1273,10 +1274,15 @@ def render_table(evidence: Evidence) -> str:
     return "\n".join([evidence.purpose, *lines])
 
 
-def render_answer(result: AskResult) -> str:
-    """Render the answer for a reader: its text, the cited tables in full and the warnings."""
+def render_answer_text(result: AskResult) -> str:
+    """Return the answer text, which holds its source links and its attribution line."""
+    return result.answer.text
+
+
+def render_answer_details(result: AskResult) -> str:
+    """Return the cited tables in full, then the warnings; empty when there is neither."""
     answer, bundle = result.answer, result.bundle
-    sections = [answer.text]
+    sections: list[str] = []
     for evidence_id in answer.cited.table_ids:
         evidence = bundle.get(evidence_id)
         if evidence is not None and evidence.rows:
@@ -1381,7 +1387,11 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
     if arguments.is_json:
         STDOUT.print(result.model_dump_json(indent=ASK_JSON_INDENT, by_alias=True))
         return EXIT_SUCCESS
-    STDOUT.print(render_answer(result))
+    STDOUT.print(build_answer_renderable(render_answer_text(result), STDOUT.is_terminal))
+    details = render_answer_details(result)
+    if details:
+        STDOUT.print()
+        STDOUT.print(details)
     if arguments.should_show_cypher:
         STDOUT.print()
         STDOUT.print(render_queries(result.bundle))

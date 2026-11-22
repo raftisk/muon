@@ -11,6 +11,7 @@ from muon.console import (
     EvalDisplay,
     StepDisplay,
     StepLine,
+    build_answer_renderable,
     build_eval_summary,
     build_results_table,
     render_steps,
@@ -219,3 +220,25 @@ def test_eval_summary_has_no_set_lines_for_a_single_set() -> None:
     run = EvalRun(meta=build_run_meta(), records=(build_scored_record("Q01", 10),), stop=None)
 
     assert "general: " not in render_to_text(build_eval_summary(run))
+
+
+ANSWER_MARKDOWN = 'Lapras [[1]](https://a.test/p "Lapras").'
+
+
+def test_an_answer_on_a_terminal_renders_its_links_as_links() -> None:
+    console = Console(
+        file=io.StringIO(), width=WIDTH, force_terminal=True, record=True, emoji=False
+    )
+
+    console.print(build_answer_renderable(ANSWER_MARKDOWN, True))
+
+    exported = console.export_text(clear=False)
+    assert "Lapras [1]." in exported
+    assert "](" not in exported
+    assert "https://a.test/p" in console.export_html()
+
+
+def test_an_answer_off_a_terminal_is_the_raw_markdown() -> None:
+    text = render_to_text(build_answer_renderable(ANSWER_MARKDOWN, False))
+
+    assert text.strip() == ANSWER_MARKDOWN
