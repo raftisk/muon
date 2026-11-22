@@ -10,7 +10,7 @@ What the model reads never goes past `MAX_CONTENT_ROWS` rows per item.
 """
 
 import time
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import dataclass
 from pathlib import Path
@@ -163,7 +163,7 @@ def build_stream_stats(total: AIMessageChunk | None, latency: float) -> StepStat
 
 async def stream_answer(
     question: str, bundle: EvidenceBundle, scope: UniverseScope, runtime: AgentRuntime
-) -> AsyncIterator[TextDelta | GeneratedAnswer]:
+) -> AsyncGenerator[TextDelta | GeneratedAnswer, None]:
     """Stream the answer to `question` from `bundle`.
 
     Yields each piece of rewritten text as a `TextDelta`, the attribution line last, then

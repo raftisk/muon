@@ -11,7 +11,7 @@ that finished.
 
 import hashlib
 import subprocess
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -19,8 +19,15 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
-from muon.agent.ask import AskRequest, AskResult, ask
-from muon.agent.routing import AgentRuntime, build_scope, select_universe
+from muon.agent.ask import AskRequest, ask
+from muon.agent.events import AskEvent, AskResult, collect_answer
+from muon.agent.routing import (
+    NO_PROGRESS,
+    AgentRuntime,
+    StepTracker,
+    build_scope,
+    select_universe,
+)
 from muon.config import PROJECT_ROOT, AgentSettings, AgentStep, ReasoningLevel, Settings
 from muon.evaluation.eval_scores import (
     NodeComparison,
@@ -60,7 +67,7 @@ GOLD_STEP = "resolving gold queries"
 VERDICT_LINE = "Verdict: [ ] correct  [ ] partial  [ ] wrong"
 
 type AskFunction = Callable[
-    [AskRequest, UniverseRegistry, Settings, AgentRuntime], Awaitable[AskResult]
+    [AskRequest, UniverseRegistry, Settings, AgentRuntime], AsyncIterator[AskEvent]
 ]
 type AskText = Callable[[str], Awaitable[AskResult]]
 
@@ -165,7 +172,8 @@ class EvalRequest:
     """The questions to ask, the universe to ask them in and the time the run started.
 
     `set_hashes` holds the sha256 of the question file of each set in the run. `on_result` is
-    called with each record as soon as its question finishes.
+    called with each record as soon as its question finishes. `progress` shows the steps of the
+    run.
     """
 
     prefix: str
@@ -174,6 +182,7 @@ class EvalRequest:
     settings: Settings
     started_at: datetime
     on_result: Callable[[RunRecord], None] | None = None
+    progress: StepTracker = NO_PROGRESS
 
 
 def hash_file(path: Path) -> str:
@@ -249,7 +258,7 @@ async def run_eval(
     """
     plugin = select_universe(registry, request.prefix)
     scope = await build_scope(runtime.client, plugin, request.settings)
-    with runtime.progress.step(GOLD_STEP):
+    with request.progress.step(GOLD_STEP):
         gold = {
             selected.question.id: await resolve_gold(selected.question, scope, runtime.client)
             for selected in request.questions
@@ -259,7 +268,8 @@ async def run_eval(
 
     async def ask_text(text: str) -> AskResult:
         ask_request = AskRequest(question=text, universe=request.prefix)
-        return await ask_question(ask_request, registry, request.settings, runtime)
+        events = ask_question(ask_request, registry, request.settings, runtime)
+        return await collect_answer(events, request.progress)
 
     records: list[RunRecord] = []
     stop: str | None = None
@@ -360,7 +370,6 @@ def render_record(record: RunRecord) -> str:
     else:
         answer = result.answer
         lines.append(f"Answer: {answer.text}")
-        lines.extend(f"Assumption: {item}" for item in answer.assumptions)
         lines.extend(f"Warning: {item}" for item in answer.warnings)
         lines.append("Queries:")
         for number, item in enumerate(result.bundle.items, start=1):

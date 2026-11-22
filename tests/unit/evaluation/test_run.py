@@ -1,4 +1,5 @@
 import json
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -7,7 +8,8 @@ from typing import Any
 import pytest
 from pydantic import SecretStr
 
-from muon.agent.ask import AskRequest, AskResult
+from muon.agent.ask import AskRequest
+from muon.agent.events import AnswerFinished, AskEvent, AskResult
 from muon.agent.routing import AgentRuntime
 from muon.config import AgentSettings, Settings
 from muon.evaluation.eval_scores import compare_nodes, score_answer
@@ -37,7 +39,6 @@ from tests.unit.evaluation.fakes import (
     RETRIEVE_TOKENS,
     WIDGET_QUERY,
     build_ask_result,
-    build_claim,
     build_eval_client,
     build_evidence,
     build_question_toml,
@@ -77,12 +78,12 @@ class FakeAsk:
         registry: UniverseRegistry,
         settings: Settings,
         runtime: AgentRuntime,
-    ) -> AskResult:
+    ) -> AsyncIterator[AskEvent]:
         self.asked.append(request.question)
         outcome = self.outcomes[request.question]
         if isinstance(outcome, Exception):
             raise outcome
-        return outcome
+        yield AnswerFinished(result=outcome)
 
 
 def build_setup(tmp_path: Path, has_second_set: bool = False) -> Setup:
@@ -143,9 +144,7 @@ def build_request(
 
 
 def build_good_result() -> AskResult:
-    return build_ask_result(
-        claims=[build_claim("c1", "e1", ["a"])], items=[build_evidence("e1", ["a"])]
-    )
+    return build_ask_result(cited_widget_ids=["a"], items=[build_evidence("e1", ["a"])])
 
 
 def build_outcomes(**overrides: AskResult | Exception) -> dict[str, AskResult | Exception]:
@@ -197,14 +196,15 @@ async def test_gold_queries_resolve_inside_their_step_before_the_first_ask(
     tracker = RecordingTracker()
 
     class OrderedAsk(FakeAsk):
-        async def __call__(self, *args: Any) -> AskResult:
+        async def __call__(self, *args: Any) -> AsyncIterator[AskEvent]:
             tracker.events.append(("ask", "call"))
-            return await super().__call__(*args)
+            async for event in super().__call__(*args):
+                yield event
 
     fake = OrderedAsk(build_outcomes())
-    runtime = replace(setup.runtime, progress=tracker)
+    request = replace(build_request(setup), progress=tracker)
 
-    await run_eval(build_request(setup), setup.registry, runtime, fake)
+    await run_eval(request, setup.registry, setup.runtime, fake)
 
     assert tracker.events[:3] == [(GOLD_STEP, "start"), (GOLD_STEP, "end"), ("ask", "call")]
 

@@ -8,7 +8,6 @@
 import argparse
 import asyncio
 import getpass
-import re
 import secrets
 import sys
 import time
@@ -21,7 +20,8 @@ from pathlib import Path
 import httpx
 from pydantic import SecretStr, ValidationError
 
-from muon.agent.ask import AskRequest, AskResult, ask
+from muon.agent.ask import AskRequest, ask
+from muon.agent.events import AskResult, collect_answer
 from muon.agent.routing import AgentRuntime, RoutingError, StepTracker, select_universe
 from muon.config import AgentSettings, AgentStep, OntologySettings, Settings, get_settings
 from muon.console import (
@@ -40,7 +40,6 @@ from muon.evaluation.run import (
     run_eval,
     write_run,
 )
-from muon.generation.answer import CLAIM_MARKER_PATTERN, Claim
 from muon.graph import GraphClient, GraphError, Neo4jGraphClient, WriteSummary
 from muon.ingestion.bulbapedia.abilities.batches import SupCodeError
 from muon.ingestion.bulbapedia.abilities.crosscheck import CrossCheckError
@@ -205,7 +204,6 @@ EVAL_COMMAND = "eval"
 ASK_TARGET = "question"
 BULBAPEDIA_SOURCE = "bulbapedia"
 POKEAPI_SOURCE = "pokeapi"
-TEXT_CHUNK_LABEL = "TextChunk"
 ASK_JSON_INDENT = 2
 TABLE_COLUMN_SEPARATOR = " | "
 TABLE_PATH_SEPARATOR = " > "
@@ -1275,66 +1273,14 @@ def render_table(evidence: Evidence) -> str:
     return "\n".join([evidence.purpose, *lines])
 
 
-def number_footnotes(text: str) -> tuple[str, list[str]]:
-    """Turn claim markers into footnote numbers in order of first use."""
-    claim_ids: list[str] = []
-
-    def replace_marker(match: re.Match[str]) -> str:
-        claim_id = match.group(1)
-        if claim_id not in claim_ids:
-            claim_ids.append(claim_id)
-        return f"[{claim_ids.index(claim_id) + 1}]"
-
-    return CLAIM_MARKER_PATTERN.sub(replace_marker, text), claim_ids
-
-
-def render_source(number: int, claim: Claim, bundle: EvidenceBundle) -> tuple[list[str], bool]:
-    """Return the lines of 1 footnote in the sources block, and whether it cites a chunk."""
-    cited = [item for item in map(bundle.get, claim.evidence_ids) if item is not None]
-    names: list[str] = []
-    urls: list[str] = []
-    for key in claim.node_keys:
-        node = next((n for n in (e.graph_slice.find_node(key) for e in cited) if n), None)
-        if node is None:
-            continue
-        names.append(node.name or key.id)
-        if key.label == TEXT_CHUNK_LABEL and node.source_url:
-            urls.append(node.source_url)
-    purposes = "; ".join(item.purpose for item in cited)
-    line = f"[{number}] {purposes}" + (f" ({', '.join(names)})" if names else "")
-    return [line, *(f"    {url}" for url in urls)], any(
-        key.label == TEXT_CHUNK_LABEL for key in claim.node_keys
-    )
-
-
-def render_answer(result: AskResult, attribution: str | None) -> str:
-    """Render the answer for a reader.
-
-    Shows footnote numbers, assumptions, the tables the answer asked for in full, the
-    sources, the attribution when a text chunk is cited, and the warnings. It never shows
-    a node id, an evidence id, a label or a query.
-    """
+def render_answer(result: AskResult) -> str:
+    """Render the answer for a reader: its text, the cited tables in full and the warnings."""
     answer, bundle = result.answer, result.bundle
-    text, cited_claim_ids = number_footnotes(answer.text)
-    sections = [text]
-    if answer.assumptions:
-        sections.append("\n".join(["Assumptions:", *(f"- {item}" for item in answer.assumptions)]))
-    for evidence_id in answer.table_evidence_ids:
+    sections = [answer.text]
+    for evidence_id in answer.cited.table_ids:
         evidence = bundle.get(evidence_id)
         if evidence is not None and evidence.rows:
             sections.append(render_table(evidence))
-    claims = {claim.id: claim for claim in answer.claims}
-    source_lines: list[str] = []
-    is_chunk_cited = False
-    for number, claim_id in enumerate(cited_claim_ids, start=1):
-        if claim_id in claims:
-            lines, has_chunk = render_source(number, claims[claim_id], bundle)
-            source_lines.extend(lines)
-            is_chunk_cited = is_chunk_cited or has_chunk
-    if source_lines:
-        sections.append("\n".join(["Sources", *source_lines]))
-    if is_chunk_cited and attribution:
-        sections.append(attribution)
     if answer.warnings:
         sections.append("\n".join(["Warnings:", *(f"- {item}" for item in answer.warnings)]))
     return "\n\n".join(sections)
@@ -1357,7 +1303,7 @@ def format_ask_status(result: AskResult) -> str:
     output_tokens = sum(step.output_tokens for step in stats.steps)
     reasoning_tokens = sum(step.reasoning_tokens for step in stats.steps)
     return (
-        f"{ASK_COMMAND} {result.answer.universe}: {stats.cypher_calls} queries, "
+        f"{ASK_COMMAND} {result.universe}: {stats.cypher_calls} queries, "
         f"{model_calls} model calls, {input_tokens:,} input ({cached_tokens:,} cached) and "
         f"{output_tokens:,} output ({reasoning_tokens:,} reasoning) tokens, "
         f"{stats.total_latency_seconds:.1f} s"
@@ -1393,14 +1339,14 @@ def create_agent_runtime(client: GraphClient, context: AgentContext) -> AgentRun
         retrieve_model=models[AgentStep.RETRIEVE],
         generate_model=models[AgentStep.GENERATE],
         agent_settings=settings,
-        progress=context.progress,
     )
 
 
 async def run_ask(context: AgentContext, request: AskRequest) -> AskResult:
     async with Neo4jGraphClient(context.settings.neo4j) as client:
         runtime = create_agent_runtime(client, context)
-        return await ask(request, context.registry, context.settings, runtime)
+        events = ask(request, context.registry, context.settings, runtime)
+        return await collect_answer(events, context.progress)
 
 
 def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
@@ -1433,9 +1379,9 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
         return EXIT_FAILURE
 
     if arguments.is_json:
-        STDOUT.print(result.model_dump_json(indent=ASK_JSON_INDENT))
+        STDOUT.print(result.model_dump_json(indent=ASK_JSON_INDENT, by_alias=True))
         return EXIT_SUCCESS
-    STDOUT.print(render_answer(result, plugin.manifest.attribution))
+    STDOUT.print(render_answer(result))
     if arguments.should_show_cypher:
         STDOUT.print()
         STDOUT.print(render_queries(result.bundle))
@@ -1446,7 +1392,8 @@ def execute_ask(settings: Settings, arguments: argparse.Namespace) -> int:
 async def run_eval_session(context: AgentContext, request: EvalRequest) -> EvalRun:
     async with Neo4jGraphClient(context.settings.neo4j) as client:
         runtime = create_agent_runtime(client, context)
-        return await run_eval(request, context.registry, runtime)
+        tracked = replace(request, progress=context.progress)
+        return await run_eval(tracked, context.registry, runtime)
 
 
 def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:

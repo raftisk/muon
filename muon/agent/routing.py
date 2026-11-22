@@ -66,7 +66,6 @@ class AgentRuntime:
     retrieve_model: BaseChatModel
     generate_model: BaseChatModel
     agent_settings: AgentSettings
-    progress: StepTracker = NO_PROGRESS
 
 
 def select_universe(registry: UniverseRegistry, requested: str | None) -> UniversePlugin:

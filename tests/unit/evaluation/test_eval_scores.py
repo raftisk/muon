@@ -15,7 +15,6 @@ from tests.unit.evaluation.fakes import (
     WIDGET_LABEL,
     WIDGET_QUERY,
     build_ask_result,
-    build_claim,
     build_eval_client,
     build_evidence,
     build_widget_key,
@@ -40,9 +39,7 @@ def build_question(gold_query: str = WIDGET_QUERY, has_empty_gold: bool = False)
 
 
 def test_precision_and_recall_count_shared_nodes() -> None:
-    result = build_ask_result(
-        claims=[build_claim("c1", "e1", ["a", "b", "c"])], items=[build_evidence("e1", ["a"])]
-    )
+    result = build_ask_result(cited_widget_ids=["a", "b", "c"], items=[build_evidence("e1", ["a"])])
 
     comparison = compare_nodes(result, build_gold("b", "c", "d", "e"))
     score = score_answer(result, comparison)
@@ -53,10 +50,10 @@ def test_precision_and_recall_count_shared_nodes() -> None:
     assert [node.key.id for node in comparison.extra] == ["a"]
 
 
-def test_cited_nodes_hold_claim_nodes_and_the_nodes_of_printed_tables() -> None:
+def test_cited_nodes_hold_handle_nodes_and_the_nodes_of_cited_tables() -> None:
     rows = build_evidence("e2", ["x", "y", "z"])
     result = build_ask_result(
-        claims=[build_claim("c1", "e1", ["a"])],
+        cited_widget_ids=["a"],
         table_evidence_ids=["e2"],
         items=[build_evidence("e1", ["a"]), rows],
     )
@@ -77,9 +74,7 @@ def test_a_table_id_that_the_bundle_lacks_adds_no_node() -> None:
 
 
 def test_names_come_from_the_slices() -> None:
-    result = build_ask_result(
-        claims=[build_claim("c1", "e1", ["a", "unseen"])], items=[build_evidence("e1", ["a"])]
-    )
+    result = build_ask_result(cited_widget_ids=["a", "unseen"], items=[build_evidence("e1", ["a"])])
 
     comparison = compare_nodes(result, build_gold("a"))
 
@@ -91,7 +86,7 @@ def test_names_come_from_the_slices() -> None:
 
 def test_citation_is_valid_only_without_warnings() -> None:
     clean = build_ask_result()
-    warned = build_ask_result(warnings=["c1 cites no evidence"])
+    warned = build_ask_result(warnings=["[n99] names no node in the evidence"])
 
     assert score_answer(clean, compare_nodes(clean, [])).is_citation_valid is True
     assert score_answer(warned, compare_nodes(warned, [])).is_citation_valid is False
@@ -118,9 +113,7 @@ def test_nothing_cited_against_an_empty_gold_set_scores_1_and_1() -> None:
 
 
 def test_something_cited_against_an_empty_gold_set_scores_0_and_1() -> None:
-    result = build_ask_result(
-        claims=[build_claim("c1", "e1", ["a"])], items=[build_evidence("e1", ["a"])]
-    )
+    result = build_ask_result(cited_widget_ids=["a"], items=[build_evidence("e1", ["a"])])
 
     score = score_answer(result, compare_nodes(result, []))
 
