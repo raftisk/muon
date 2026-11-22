@@ -18,12 +18,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
+import uvicorn
 from pydantic import SecretStr, ValidationError
 
 from muon.agent.ask import AskRequest, ask
 from muon.agent.events import AskResult, collect_answer
 from muon.agent.routing import RoutingError, StepTracker, create_agent_runtime, select_universe
-from muon.config import AgentSettings, OntologySettings, Settings, get_settings
+from muon.api.app import create_app, open_ask_stream
+from muon.api.store import ThreadStore
+from muon.config import AgentSettings, ApiSettings, OntologySettings, Settings, get_settings
 from muon.console import (
     STDERR,
     STDOUT,
@@ -202,6 +205,8 @@ INGEST_COMMAND = "ingest"
 SCHEMA_COMMAND = "schema"
 ASK_COMMAND = "ask"
 EVAL_COMMAND = "eval"
+START_COMMAND = "start"
+START_TARGET = "server"
 ASK_TARGET = "question"
 BULBAPEDIA_SOURCE = "bulbapedia"
 POKEAPI_SOURCE = "pokeapi"
@@ -395,6 +400,13 @@ def build_parser() -> argparse.ArgumentParser:
         dest="should_show_cypher",
         help="list the queries that ran, after the answer",
     )
+    start_parser = commands.add_parser(START_COMMAND, help="serve the Toki chat API over ask()")
+    start_parser.add_argument(
+        "--host", help="address to listen on (default: MUON_API_HOST or 127.0.0.1)"
+    )
+    start_parser.add_argument(
+        "--port", type=int, help="port to listen on (default: MUON_API_PORT or 8000)"
+    )
     eval_parser = commands.add_parser(
         EVAL_COMMAND, help="ask the eval questions of a universe and score the answers"
     )
@@ -431,6 +443,8 @@ def describe_target(arguments: argparse.Namespace) -> str:
         return f"{arguments.source} {arguments.page_type}"
     if arguments.command == ASK_COMMAND:
         return str(arguments.universe or ASK_TARGET)
+    if arguments.command == START_COMMAND:
+        return START_TARGET
     return str(arguments.prefix)
 
 
@@ -1439,6 +1453,37 @@ def execute_eval(settings: Settings, arguments: argparse.Namespace) -> int:
     return EXIT_FAILURE if has_error or run.stop is not None else EXIT_SUCCESS
 
 
+def execute_start(settings: Settings, arguments: argparse.Namespace) -> int:
+    failure_prefix = build_failure_prefix(START_COMMAND, START_TARGET)
+    try:
+        agent_settings = AgentSettings()
+    except ValidationError as error:
+        STDERR.print(f"{failure_prefix} {describe_missing_agent_settings(error)}")
+        return EXIT_FAILURE
+    try:
+        api_settings = ApiSettings()
+    except ValidationError as error:
+        STDERR.print(f"{failure_prefix} invalid settings: {error}")
+        return EXIT_FAILURE
+    try:
+        registry = discover_universes(
+            settings.universes.universes_dir, settings.ontology.ontology_dir
+        )
+        select_universe(registry, None)
+    except (UniverseError, RoutingError, OntologyError) as error:
+        STDERR.print(f"{failure_prefix} {error}")
+        return EXIT_FAILURE
+    app = create_app(
+        api_settings, open_ask_stream(settings, agent_settings, registry), ThreadStore()
+    )
+    uvicorn.run(
+        app,
+        host=arguments.host or api_settings.host,
+        port=arguments.port or api_settings.port,
+    )
+    return EXIT_SUCCESS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command in `argv` and return the process exit code."""
     parser = build_parser()
@@ -1497,4 +1542,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_ask(settings, arguments)
     if arguments.command == EVAL_COMMAND:
         return execute_eval(settings, arguments)
+    if arguments.command == START_COMMAND:
+        return execute_start(settings, arguments)
     return execute_seed(settings, arguments.prefix)
