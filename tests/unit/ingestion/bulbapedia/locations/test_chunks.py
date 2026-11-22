@@ -15,16 +15,16 @@ from muon.ingestion.bulbapedia.locations.chunks import (
     read_location_aspect,
     read_location_chunks,
 )
-from muon.ingestion.bulbapedia.locations.identity import (
-    LOCATION_INFOBOXES,
-    build_location_index,
-)
 from muon.ingestion.bulbapedia.locations.page import LocationPageExtract, parse_location_page
 from muon.ingestion.bulbapedia.locations.run import build_group_versions
-from muon.ingestion.bulbapedia.pages import FETCH_HINT, PageStore
+from muon.ingestion.bulbapedia.pages import PageStore
 from muon.ingestion.bulbapedia.wikitext import mask_comments, split_sections
 from muon.ingestion.seed import read_abox
 from muon.ontology.model import load_ontology_model
+from tests.unit.ingestion.bulbapedia.page_cache import (
+    read_cached_location_index,
+    read_cached_location_page,
+)
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
 LOREM = "This sentence is long enough to stand as a paragraph of its own in a chunk."
@@ -80,16 +80,8 @@ pages = pytest.mark.pages
 
 def build_golden(title: str):
     store = PageStore()
-    manifest = store.read_manifest()
-    pin = manifest.find_pin("location", title)
-    if pin is None:
-        pytest.skip(f"{title!r} is not pinned: {FETCH_HINT.format(page_type='location')}")
-    foreign = [
-        p.title for n in ("species", "item", "move", "ability") for p in manifest.list_pins(n)
-    ]
-    all_pages = [store.read_page("location", p) for p in manifest.list_pins("location")]
-    index = build_location_index(all_pages, foreign, LOCATION_INFOBOXES)
-    page = store.read_page("location", pin)
+    index = read_cached_location_index(store)
+    page = read_cached_location_page(store, title)
     extract = parse_location_page(page, index)
     assert isinstance(extract, LocationPageExtract)
     reading = read_location_chunks(split_sections(mask_comments(page.wikitext)), "x")

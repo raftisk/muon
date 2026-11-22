@@ -4,9 +4,7 @@ clone without the page cache."""
 import pytest
 
 from muon.ingestion.bulbapedia.locations.identity import (
-    LOCATION_INFOBOXES,
     LocationIndex,
-    build_location_index,
 )
 from muon.ingestion.bulbapedia.locations.page import (
     InfoboxKind,
@@ -15,12 +13,13 @@ from muon.ingestion.bulbapedia.locations.page import (
     Neighbour,
     parse_location_page,
 )
-from muon.ingestion.bulbapedia.pages import FETCH_HINT, PageStore
+from muon.ingestion.bulbapedia.pages import PageStore
+from tests.unit.ingestion.bulbapedia.page_cache import (
+    read_cached_location_index,
+    read_cached_location_page,
+)
 
 pytestmark = pytest.mark.pages
-
-PAGE_TYPE = "location"
-FOREIGN_PAGE_TYPES = ("species", "item", "move", "ability")
 
 
 @pytest.fixture(scope="module")
@@ -30,20 +29,11 @@ def store() -> PageStore:
 
 @pytest.fixture(scope="module")
 def index(store: PageStore) -> LocationIndex:
-    manifest = store.read_manifest()
-    pins = manifest.list_pins(PAGE_TYPE)
-    if not pins:
-        pytest.skip(f"No location pins: {FETCH_HINT.format(page_type=PAGE_TYPE)}")
-    foreign = [pin.title for name in FOREIGN_PAGE_TYPES for pin in manifest.list_pins(name)]
-    pages = [store.read_page(PAGE_TYPE, pin) for pin in pins]
-    return build_location_index(pages, foreign, LOCATION_INFOBOXES)
+    return read_cached_location_index(store)
 
 
 def parse(store: PageStore, index: LocationIndex, title: str) -> LocationPageExtract:
-    pin = store.read_manifest().find_pin(PAGE_TYPE, title)
-    if pin is None:
-        pytest.skip(f"{title!r} is not pinned: {FETCH_HINT.format(page_type=PAGE_TYPE)}")
-    result = parse_location_page(store.read_page(PAGE_TYPE, pin), index)
+    result = parse_location_page(read_cached_location_page(store, title), index)
     assert isinstance(result, LocationPageExtract)
     return result
 
