@@ -246,7 +246,6 @@ def test_agent_settings_default_limits() -> None:
 
     assert settings.max_tool_calls == 10
     assert settings.max_cypher_calls == 2
-    assert settings.max_check_retries == 1
 
 
 def test_agent_env_vars_override_the_limits(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -261,10 +260,6 @@ def test_agent_env_vars_override_the_limits(monkeypatch: pytest.MonkeyPatch) -> 
 def test_agent_settings_reject_zero_tool_calls() -> None:
     with pytest.raises(ValidationError):
         build_agent_settings(max_tool_calls=0)
-
-
-def test_agent_settings_accept_zero_check_retries() -> None:
-    assert build_agent_settings(max_check_retries=0).max_check_retries == 0
 
 
 def test_settings_build_without_agent_variables(monkeypatch: pytest.MonkeyPatch) -> None:

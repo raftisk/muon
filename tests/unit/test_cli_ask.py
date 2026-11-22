@@ -1,15 +1,15 @@
 import json
 from functools import partial
-from typing import Any
 
 import pytest
 from pydantic import SecretStr
 
 from muon import cli
-from muon.agent.ask import AskRequest, AskResult, AskStats
+from muon.agent.ask import AskRequest
+from muon.agent.events import AskResult, AskStats
 from muon.agent.routing import NO_PROGRESS
 from muon.config import AgentSettings, Neo4jSettings, Settings
-from muon.generation.answer import Answer, Claim
+from muon.generation.contract import CitedAnswer, CitedHandles, Source
 from muon.graph import GraphConnectionError
 from muon.llm.client import ModelCallError
 from muon.plugins import UniverseRegistry
@@ -30,8 +30,10 @@ UNIVERSE = "pkmn"
 QUESTION = "What type is Diglett?"
 SPECIES = NodeKey(label="PokemonSpecies", id="diglett")
 TYPE = NodeKey(label="Type", id="ground")
-CHUNK = NodeKey(label="TextChunk", id="chunk-1")
-CHUNK_URL = "https://bulbapedia.test/w/index.php?title=Diglett&oldid=1"
+PAGE_URL = "https://bulbapedia.test/w/index.php?title=Diglett&oldid=1"
+LINKED_TEXT = (
+    f'Diglett is Ground type [[1]]({PAGE_URL} "Diglett") and Ground [[2]]({PAGE_URL} "Ground").'
+)
 QUERY = "MATCH (s:pkmn:PokemonSpecies {id: 'diglett'}) RETURN s"
 SECRET = SecretStr("secret")
 
@@ -56,7 +58,6 @@ def build_slice() -> GraphSlice:
     nodes = (
         SliceNode(key=SPECIES, name="Diglett", labels=("PokemonSpecies",), source_url=None),
         SliceNode(key=TYPE, name="Ground", labels=("Type",), source_url=None),
-        SliceNode(key=CHUNK, name="Diglett page", labels=("TextChunk",), source_url=CHUNK_URL),
     )
     return GraphSlice(nodes=nodes)
 
@@ -78,28 +79,24 @@ def build_evidence(evidence_id: str, row_count: int = 1) -> Evidence:
 
 
 def build_result(
-    text: str = "Diglett is Ground type [c1].",
-    node_keys: list[NodeKey] | None = None,
+    text: str = LINKED_TEXT,
+    table_ids: tuple[str, ...] = (),
+    warnings: tuple[str, ...] = (),
     resolved_names: list[ResolvedName] | None = None,
-    **answer_fields: Any,
 ) -> AskResult:
-    claim = Claim(
-        id="c1",
-        text="Diglett is Ground",
-        evidence_ids=["e1"],
-        node_keys=[SPECIES, TYPE] if node_keys is None else node_keys,
+    sources = (
+        Source(number=1, url=PAGE_URL, title="Diglett"),
+        Source(number=2, url=PAGE_URL, title="Ground"),
     )
-    fields: dict[str, Any] = {
-        "text": text,
-        "claims": [claim],
-        "assumptions": [],
-        "table_evidence_ids": [],
-        "universe": UNIVERSE,
-        "warnings": [],
-        **answer_fields,
-    }
+    cited = CitedHandles(
+        node_keys=(SPECIES, TYPE), table_ids=table_ids, sources=sources, warnings=warnings
+    )
+    answer = CitedAnswer(
+        text=text, sources=sources, graph=None, tables=(), cited=cited, warnings=warnings
+    )
     return AskResult(
-        answer=Answer.model_validate(fields),
+        answer=answer,
+        universe=UNIVERSE,
         bundle=EvidenceBundle(
             universe=UNIVERSE, question=QUESTION, items=(build_evidence("e1", row_count=3),)
         ),
@@ -162,46 +159,27 @@ def test_json_stdout_is_the_model_dump_byte_for_byte(
 
     run_ask_command(monkeypatch, result, "--json")
 
-    expected = result.model_dump_json(indent=cli.ASK_JSON_INDENT) + "\n"
+    expected = result.model_dump_json(indent=cli.ASK_JSON_INDENT, by_alias=True) + "\n"
     assert capsys.readouterr().out == expected
 
 
-def test_ask_renders_names_and_footnotes_and_never_ids(
+def test_ask_prints_the_raw_markdown_text_and_never_ids(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     run = run_ask_command(monkeypatch, build_result())
 
     captured = capsys.readouterr()
     assert run.requests == [AskRequest(question=QUESTION, universe=UNIVERSE)]
-    assert "Diglett is Ground type [1]." in captured.out
-    assert "Sources\n[1] type of Diglett (Diglett, Ground)" in captured.out
-    for hidden in ("e1", "PokemonSpecies", "diglett", "MATCH", "[c1]"):
+    assert LINKED_TEXT in captured.out
+    for hidden in ("e1", "PokemonSpecies", "diglett", "MATCH"):
         assert hidden not in captured.out
     assert "1 queries" in captured.err
-
-
-def test_footnotes_follow_the_order_of_first_use(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    result = build_result(text="Second [c2] first [c1] again [c2].")
-    second = Claim(id="c2", text="s", evidence_ids=["e1"], node_keys=[TYPE])
-    result = result.model_copy(
-        update={
-            "answer": result.answer.model_copy(update={"claims": [*result.answer.claims, second]})
-        }
-    )
-    run_ask_command(monkeypatch, result)
-
-    out = capsys.readouterr().out
-
-    assert "Second [1] first [2] again [1]." in out
-    assert out.index("[1] type of Diglett (Ground)") < out.index("[2] type of Diglett (Diglett")
 
 
 def test_a_table_prints_all_its_rows(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    result = build_result(table_evidence_ids=["e1"])
+    result = build_result(table_ids=("e1",))
     items = (build_evidence("e1", row_count=120),)
     result = result.model_copy(update={"bundle": result.bundle.model_copy(update={"items": items})})
     run_ask_command(monkeypatch, result)
@@ -214,15 +192,18 @@ def test_a_table_prints_all_its_rows(
     assert table[-1] == "Diglett | 119"
 
 
-def test_json_prints_one_document_and_nothing_else(
+def test_json_prints_one_document_with_camel_case_contract_keys(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    run_ask_command(monkeypatch, build_result(), "--json", "--show-cypher")
+    run_ask_command(monkeypatch, build_result(table_ids=("e1",)), "--json", "--show-cypher")
 
     captured = capsys.readouterr()
     document = json.loads(captured.out)
-    assert set(document) == {"answer", "bundle", "resolved_names", "stats"}
-    assert document["answer"]["universe"] == UNIVERSE
+    assert set(document) == {"answer", "universe", "bundle", "resolved_names", "stats"}
+    assert {"sources", "graph", "tables", "warnings", "cited"} <= set(document["answer"])
+    assert document["answer"]["sources"][0] == {"number": 1, "url": PAGE_URL, "title": "Diglett"}
+    assert document["answer"]["cited"]["tableIds"] == ["e1"]
+    assert document["universe"] == UNIVERSE
     assert document["bundle"]["items"][0]["query"] == QUERY
     assert captured.err == ""
 
@@ -233,38 +214,31 @@ def test_show_cypher_lists_the_queries_after_the_answer(
     run_ask_command(monkeypatch, build_result(), "--show-cypher")
 
     out = capsys.readouterr().out
-    assert out.index("Sources") < out.index("Queries")
+    assert out.index("Diglett is Ground") < out.index("Queries")
     assert f"1. type of Diglett [ok, 3 rows]\n   {QUERY}" in out
 
 
-def test_a_cited_chunk_adds_its_link_and_one_attribution_line(
+def test_the_table_and_the_warnings_follow_the_text(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    result = build_result(text="One [c1] two [c1].", node_keys=[CHUNK])
+    result = build_result(table_ids=("e1",), warnings=("[n99] names no node in the evidence",))
+
     run_ask_command(monkeypatch, result)
 
     out = capsys.readouterr().out
+    assert (
+        out.index("Diglett is Ground")
+        < out.index("species | n")
+        < out.index("Warnings:\n- [n99] names no node in the evidence")
+    )
 
-    assert f"    {CHUNK_URL}" in out
-    assert out.count("licensed under CC BY-NC-SA 2.5") == 1
 
-
-def test_no_attribution_without_a_cited_chunk(
+def test_a_result_with_no_warning_prints_no_warnings_section(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     run_ask_command(monkeypatch, build_result())
 
-    assert "CC BY-NC-SA" not in capsys.readouterr().out
-
-
-def test_warnings_print_after_the_sources(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    exit_code_run = run_ask_command(monkeypatch, build_result(warnings=["c2 cites no evidence"]))
-
-    out = capsys.readouterr().out
-    assert exit_code_run.requests
-    assert out.index("Sources") < out.index("Warnings:\n- c2 cites no evidence")
+    assert "Warnings:" not in capsys.readouterr().out
 
 
 def test_missing_agent_settings_exit_1_before_any_connection(

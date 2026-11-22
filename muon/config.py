@@ -28,7 +28,6 @@ DEFAULT_MAX_RETRIES = 2
 
 DEFAULT_MAX_TOOL_CALLS = 10
 DEFAULT_MAX_CYPHER_CALLS = 2
-DEFAULT_MAX_CHECK_RETRIES = 1
 
 # The values mirror `openai.types.shared.ReasoningEffort`.
 ReasoningLevel = Literal["none", "low", "medium", "high", "xhigh", "max"]
@@ -109,8 +108,7 @@ class AgentSettings(ProviderSettings):
     """Agent provider and loop limits, read from `MUON_AGENT_*` variables.
 
     `max_tool_calls` caps all tool calls of 1 question, `max_cypher_calls` caps the
-    `run_cypher` calls, and `max_check_retries` is the number of generator reruns after
-    a failed citation check (0 disables the rerun).
+    `run_cypher` calls.
 
     The 3 steps are `AgentStep.RESOLVE`, `RETRIEVE` and `GENERATE`. `resolve_model`,
     `retrieve_model` and `generate_model` override `default_model` for their step, and an
@@ -122,7 +120,6 @@ class AgentSettings(ProviderSettings):
 
     max_tool_calls: int = Field(default=DEFAULT_MAX_TOOL_CALLS, gt=0)
     max_cypher_calls: int = Field(default=DEFAULT_MAX_CYPHER_CALLS, gt=0)
-    max_check_retries: int = Field(default=DEFAULT_MAX_CHECK_RETRIES, ge=0)
     default_model: str
     resolve_model: str | None = None
     retrieve_model: str | None = None

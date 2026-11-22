@@ -4,14 +4,14 @@ Map: `resolve_gold` runs the gold query of a question through the same guardrail
 agent's own queries and returns the nodes of its graph slice. `compare_nodes` sets the
 nodes an answer cites against the gold nodes. `score_answer` turns that comparison and the
 `AskStats` of the answer into the numbers of `QuestionScore`. A node counts as cited when a
-claim names it or when it sits in the rows of an evidence item the answer prints in full.
+handle names it or when it sits in the rows of an evidence item the answer prints in full.
 """
 
 from collections.abc import Iterable, Sequence
 
 from pydantic import BaseModel, ConfigDict
 
-from muon.agent.ask import AskResult
+from muon.agent.events import AskResult
 from muon.agent.routing import UniverseScope
 from muon.evaluation.questions import EvalError, EvalQuestion
 from muon.graph import GraphClient
@@ -99,13 +99,12 @@ def find_name(key: NodeKey, bundle: EvidenceBundle) -> str | None:
 
 
 def collect_cited(result: AskResult) -> dict[NodeKey, ScoredNode]:
-    """Return the cited nodes by key: claim nodes plus the nodes of the printed tables."""
-    answer, bundle = result.answer, result.bundle
+    """Return the cited nodes by key: the handle nodes plus the nodes of the cited tables."""
+    cited_handles, bundle = result.answer.cited, result.bundle
     cited: dict[NodeKey, ScoredNode] = {}
-    for claim in answer.claims:
-        for key in claim.node_keys:
-            cited[key] = ScoredNode(key=key, name=find_name(key, bundle))
-    for evidence_id in answer.table_evidence_ids:
+    for key in cited_handles.node_keys:
+        cited[key] = ScoredNode(key=key, name=find_name(key, bundle))
+    for evidence_id in cited_handles.table_ids:
         item = bundle.get(evidence_id)
         if item is None:
             continue
@@ -146,7 +145,7 @@ def compute_recall(comparison: NodeComparison) -> float:
 def score_answer(result: AskResult, comparison: NodeComparison) -> QuestionScore:
     """Score `result`: precision and recall from `comparison`, the rest from its stats.
 
-    The citation is valid when the checker left no warning on the answer.
+    The citation is valid when the answer has no warning.
     """
     stats = result.stats
     return QuestionScore(

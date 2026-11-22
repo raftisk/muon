@@ -3,7 +3,8 @@
 Map: `STDOUT` and `STDERR` are the 2 consoles every command prints through. `StepDisplay`
 and `EvalDisplay` show the steps live on a terminal and implement `StepTracker` of
 `muon.agent.routing`. `build_results_table` and `build_eval_summary` render a run, and
-`format_validator_report` renders the summary of `muon validate`.
+`format_validator_report` renders the summary of `muon validate`. `build_answer_renderable`
+renders the answer text of `muon ask`: Markdown on a terminal, raw text otherwise.
 """
 
 import time
@@ -16,6 +17,7 @@ from typing import Self
 from rich.box import ROUNDED
 from rich.console import Console, Group, RenderableType
 from rich.live import Live
+from rich.markdown import Markdown
 from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
@@ -123,6 +125,11 @@ class LiveDisplay:
     def __exit__(self, *exc_info: object) -> None:
         if self.live is not None:
             self.live.stop()
+
+
+def build_answer_renderable(text: str, is_terminal: bool) -> RenderableType:
+    """Return the answer as `Markdown` on a terminal, so its links are clickable, else as text."""
+    return Markdown(text) if is_terminal else Text(text)
 
 
 class StepDisplay(LiveDisplay):

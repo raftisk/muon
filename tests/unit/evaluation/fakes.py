@@ -4,11 +4,11 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Any
 
-from muon.agent.ask import AskResult, AskStats
+from muon.agent.events import AskResult, AskStats
 from muon.evaluation.eval_scores import compare_nodes, score_answer
 from muon.evaluation.questions import EvalQuestion
 from muon.evaluation.run import Census, RunMeta, RunRecord, RunStatus
-from muon.generation.answer import Answer, Claim
+from muon.generation.contract import CitedAnswer, CitedHandles
 from muon.graph import GraphNode
 from muon.retrieval.context import READ_GRAPH_COUNTS
 from muon.retrieval.evidence import (
@@ -78,33 +78,30 @@ def build_evidence(evidence_id: str, widget_ids: Sequence[str]) -> Evidence:
     )
 
 
-def build_claim(claim_id: str, evidence_id: str, widget_ids: Sequence[str]) -> Claim:
-    return Claim(
-        id=claim_id,
-        text=f"Claim {claim_id}",
-        evidence_ids=[evidence_id],
-        node_keys=[build_widget_key(widget_id) for widget_id in widget_ids],
-    )
-
-
 def build_ask_result(
-    claims: Sequence[Claim] = (),
+    cited_widget_ids: Sequence[str] = (),
     table_evidence_ids: Sequence[str] = (),
     items: Sequence[Evidence] = (),
     warnings: Sequence[str] = (),
     resolved_names: Sequence[ResolvedName] = (),
 ) -> AskResult:
-    """An answer with the given claims, printed tables, evidence and warnings.
+    """An answer that cites the given widgets and tables, with the given evidence and warnings.
 
     The stats hold 1 tool call, 1 `run_cypher` call and the token constants above.
     """
-    answer = Answer(
+    cited = CitedHandles(
+        node_keys=tuple(build_widget_key(widget_id) for widget_id in cited_widget_ids),
+        table_ids=tuple(table_evidence_ids),
+        sources=(),
+        warnings=tuple(warnings),
+    )
+    answer = CitedAnswer(
         text="Answer text.",
-        claims=list(claims),
-        assumptions=[],
-        table_evidence_ids=list(table_evidence_ids),
-        universe=TOY_UNIVERSE,
-        warnings=list(warnings),
+        sources=(),
+        graph=None,
+        tables=(),
+        cited=cited,
+        warnings=tuple(warnings),
     )
     steps = [
         StepStats(
@@ -128,6 +125,7 @@ def build_ask_result(
     ]
     return AskResult(
         answer=answer,
+        universe=TOY_UNIVERSE,
         bundle=EvidenceBundle(universe=TOY_UNIVERSE, question="Q?", items=tuple(items)),
         resolved_names=list(resolved_names),
         stats=AskStats(
@@ -163,7 +161,6 @@ def build_run_meta(run_id: str = "20261116-143005") -> RunMeta:
         generate_reasoning="none",
         max_tool_calls=10,
         max_cypher_calls=2,
-        max_check_retries=1,
         hashes={f"questions:{EVAL_SET_NAME}": "0" * 64},
         census=Census(node_counts={WIDGET_LABEL: 1}, relationship_counts={}),
     )
