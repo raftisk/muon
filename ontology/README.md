@@ -88,7 +88,7 @@ Meta
 - `aspect` (TextChunk): the kind of content, one of biology, effect, flavor, trivia, origin, profile, geography, anime, manga, side_game. pkmn adds pokedex.
 - `source` (TextChunk): the non-canon origin of a chunk. Canon origins use `fromWork`.
 - `section` (TextChunk): the heading path inside the source page, e.g. `Biology > Forms`.
-- `sourceUrl` (TextChunk): permalink to the source page revision.
+- `sourceUrl` (TextChunk, Entity): permalink to the revision of the source page a node was parsed from.
 
 ## Pokemon ontology (pkmn:)
 

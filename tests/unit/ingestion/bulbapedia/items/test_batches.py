@@ -17,6 +17,7 @@ from muon.ingestion.bulbapedia.batching import (
     ITEM,
     MENTIONED_IN,
     SOURCE,
+    SOURCE_URL,
     TEXT_CHUNK,
     AboxIndex,
     BatchBuildError,
@@ -37,6 +38,7 @@ from muon.ingestion.bulbapedia.items.batches import (
 )
 from muon.ingestion.bulbapedia.items.chunks import ItemChunkReading
 from muon.ingestion.bulbapedia.items.page import ItemClass, ItemPageExtract
+from muon.ingestion.bulbapedia.pages import build_permalink
 from muon.ingestion.runner import WriteMode, build_statements
 from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import build_plugin_materializer
@@ -122,6 +124,7 @@ def test_owner_record_carries_its_values(abox: AboxIndex) -> None:
         SELL_PRICE: 20,
         FLING_POWER: 10,
         ALIASES: ("オレンのみ",),
+        SOURCE_URL: build_permalink("Oran Berry", 2),
     }
 
 
@@ -132,7 +135,7 @@ def test_values_without_a_value_are_absent(abox: AboxIndex) -> None:
 
     owner = get_node(build_item_batch(extract, abox), BERRY, "oran-berry")
 
-    assert owner.properties == {}
+    assert set(owner.properties) == {SOURCE_URL}
 
 
 @pytest.mark.parametrize(
@@ -147,6 +150,16 @@ def test_owner_has_the_class_of_the_extract(
     batch = build_item_batch(extract, abox)
 
     assert get_node(batch, class_iri, "oran-berry")
+
+
+@pytest.mark.parametrize("item_class", [ItemClass.BERRY, ItemClass.HELD_ITEM, ItemClass.ITEM])
+def test_owner_carries_the_page_permalink(abox: AboxIndex, item_class: ItemClass) -> None:
+    extract = build_extract(item_class=item_class, flavor_potencies={})
+
+    batch = build_item_batch(extract, abox)
+
+    (owner,) = batch.owner_nodes
+    assert owner.properties[SOURCE_URL] == build_permalink("Oran Berry", 2)
 
 
 def test_buy_price_is_written_when_present(abox: AboxIndex) -> None:

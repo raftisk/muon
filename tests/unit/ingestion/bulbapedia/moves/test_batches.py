@@ -10,6 +10,7 @@ from muon.ingestion.bulbapedia.batching import (
     INTRODUCED_IN,
     MACHINE,
     MOVE,
+    SOURCE_URL,
     TEACHES_MOVE,
     TYPE,
     VERSION_GROUP,
@@ -35,6 +36,7 @@ from muon.ingestion.bulbapedia.moves.batches import (
     check_machine_fields,
 )
 from muon.ingestion.bulbapedia.moves.page import MachineFact, MachineField, MovePageExtract
+from muon.ingestion.bulbapedia.pages import build_permalink
 from muon.ingestion.runner import (
     MERGE_EDGES_UPSERT,
     MERGE_NODES_UPSERT,
@@ -141,9 +143,18 @@ def test_machines_are_owners_with_kind_number_and_edges(abox: AboxIndex) -> None
     batch = build_move_batch(build_extract(), abox, None)
 
     machines = [node for node in batch.nodes if node.class_iri == MACHINE]
+    source_url = build_permalink("Testmove (move)", 2)
     assert [(m.id, m.name, m.properties) for m in machines] == [
-        ("tm074-legends-z-a", "TM074", {MACHINE_KIND: "TM", MACHINE_NUMBER: 74}),
-        ("tm30-gold-silver", "TM30", {MACHINE_KIND: "TM", MACHINE_NUMBER: 30}),
+        (
+            "tm074-legends-z-a",
+            "TM074",
+            {MACHINE_KIND: "TM", MACHINE_NUMBER: 74, SOURCE_URL: source_url},
+        ),
+        (
+            "tm30-gold-silver",
+            "TM30",
+            {MACHINE_KIND: "TM", MACHINE_NUMBER: 30, SOURCE_URL: source_url},
+        ),
     ]
     assert sorted(list_edges(batch, TEACHES_MOVE)) == [
         ("tm074-legends-z-a", "testmove"),
@@ -154,6 +165,13 @@ def test_machines_are_owners_with_kind_number_and_edges(abox: AboxIndex) -> None
         ("tm30-gold-silver", "gold-silver"),
     ]
     assert sorted(find_node_ids(batch, VERSION_GROUP)) == ["gold-silver", "legends-z-a"]
+
+
+def test_the_move_owner_carries_the_page_permalink(abox: AboxIndex) -> None:
+    batch = build_move_batch(build_extract(), abox, None)
+
+    (move,) = [node for node in batch.nodes if node.class_iri == MOVE]
+    assert move.properties[SOURCE_URL] == build_permalink("Testmove (move)", 2)
 
 
 def test_claims_are_the_5_move_rules(abox: AboxIndex) -> None:

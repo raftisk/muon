@@ -5,7 +5,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://muon.dev/ns/core> a owl:Ontology ;
-    owl:versionInfo "0.4.0" ;
+    owl:versionInfo "0.5.0" ;
     skos:definition "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph."@en .
 
 #################################################################
@@ -371,10 +371,10 @@ mo:section a owl:DatatypeProperty ;
     skos:definition "Heading path of a chunk inside its source page, e.g. 'Biology > Forms'."@en .
 
 mo:sourceUrl a owl:DatatypeProperty ;
-    rdfs:domain mo:TextChunk ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( mo:TextChunk mo:Entity ) ] ;
     rdfs:range  xsd:string ;
     rdfs:label "source URL"@en ;
-    skos:definition "Permalink to the source page revision a chunk was parsed from."@en .
+    skos:definition "Permalink to the revision of the source page a node was parsed from."@en .
 
 ## Entity names ##
 

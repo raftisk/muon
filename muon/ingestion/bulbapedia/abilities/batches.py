@@ -39,6 +39,7 @@ from muon.ingestion.bulbapedia.batching import (
     MENTIONED_IN,
     OUT,
     PKMN,
+    SOURCE_URL,
     TEXT_CHUNK,
     VERSION_GROUP,
     AboxIndex,
@@ -63,6 +64,7 @@ from muon.ingestion.bulbapedia.batching import (
     require_abox,
 )
 from muon.ingestion.bulbapedia.chunking import ChunkAspect
+from muon.ingestion.bulbapedia.pages import build_permalink
 
 EFFECT_TEXT = PKMN + "effectText"
 SUP_CODE_FIELD = "sup code"
@@ -114,6 +116,7 @@ def build_ability_record(extract: AbilityPageExtract, effect_text: str | None) -
     properties: dict[str, PropertyValue | None] = {
         EFFECT_TEXT: effect_text,
         ALIASES: extract.aliases or None,
+        SOURCE_URL: build_permalink(extract.title, extract.revision_id),
     }
     return NodeRecord(
         class_iri=ABILITY, id=extract.id, name=extract.name, properties=drop_none(properties)
