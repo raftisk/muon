@@ -34,7 +34,8 @@ def create_chat_model(
 ) -> ChatOpenAI:
     """Return a LangChain chat model of `model` for the endpoint, key, timeout and retries.
 
-    `reasoning` is always sent as `reasoning_effort`.
+    `reasoning` is always sent as `reasoning_effort`. Streamed calls report token usage on the
+    last chunk.
     """
     return ChatOpenAI(
         base_url=settings.base_url,
@@ -43,4 +44,5 @@ def create_chat_model(
         timeout=settings.timeout,
         max_retries=settings.max_retries,
         reasoning_effort=reasoning,
+        stream_usage=True,
     )

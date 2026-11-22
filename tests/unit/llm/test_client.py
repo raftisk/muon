@@ -189,3 +189,9 @@ def test_chat_model_keeps_the_key_secret_in_repr() -> None:
     chat_model = create_chat_model(build_llm_settings(), CHAT_MODEL)
 
     assert CHAT_KEY not in repr(chat_model)
+
+
+def test_chat_model_streams_usage() -> None:
+    chat_model = create_chat_model(build_llm_settings(), CHAT_MODEL)
+
+    assert chat_model.stream_usage is True

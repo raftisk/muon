@@ -1,12 +1,13 @@
 """A scripted stand-in for `ChatOpenAI`: no network, replies in a fixed order."""
 
-from collections.abc import Sequence
+import asyncio
+from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
-from langchain_core.callbacks import CallbackManagerForLLMRun
+from langchain_core.callbacks import AsyncCallbackManagerForLLMRun, CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage
-from langchain_core.outputs import ChatGeneration, ChatResult
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
+from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.runnables import Runnable, RunnableLambda
 from pydantic import BaseModel, PrivateAttr
 
@@ -55,13 +56,29 @@ class ScriptedChatModel(BaseChatModel):
     """Returns `replies` in order from `invoke`, and `drafts` in order from structured output.
 
     `calls` records the messages of every call, so tests can read what the model was sent.
+
+    `astream()` yields the chunk texts of `streams` in call order. The last chunk of a stream
+    carries `stream_usage`. `stream_failure` is raised after `fail_after` chunks.
+    `stream_progress` counts the chunks yielded so far and `is_stream_closed` is true once the
+    stream generator has been closed or has finished.
     """
 
     replies: list[AIMessage] = []
     drafts: list[BaseModel] = []
+    streams: list[list[str]] = []
+    stream_usage: dict[str, Any] = DEFAULT_USAGE
+    stream_failure: Exception | None = None
+    fail_after: int = 0
+    stream_progress: list[int] = []
     _reply_index: int = PrivateAttr(default=0)
     _draft_index: int = PrivateAttr(default=0)
+    _stream_index: int = PrivateAttr(default=0)
+    _is_stream_closed: bool = PrivateAttr(default=False)
     _calls: list[list[BaseMessage]] = PrivateAttr(default_factory=list)
+
+    @property
+    def is_stream_closed(self) -> bool:
+        return self._is_stream_closed
 
     @property
     def calls(self) -> list[list[BaseMessage]]:
@@ -82,6 +99,34 @@ class ScriptedChatModel(BaseChatModel):
         reply = self.replies[self._reply_index]
         self._reply_index += 1
         return ChatResult(generations=[ChatGeneration(message=reply)])
+
+    async def _astream(
+        self,
+        messages: list[BaseMessage],
+        stop: list[str] | None = None,
+        run_manager: AsyncCallbackManagerForLLMRun | None = None,
+        **kwargs: Any,
+    ) -> AsyncIterator[ChatGenerationChunk]:
+        self._calls.append(list(messages))
+        texts = self.streams[self._stream_index]
+        self._stream_index += 1
+        self._is_stream_closed = False
+        try:
+            for index, text in enumerate(texts):
+                if self.stream_failure is not None and index == self.fail_after:
+                    raise self.stream_failure
+                is_last = index == len(texts) - 1
+                chunk = AIMessageChunk(
+                    content=text,
+                    usage_metadata=self.stream_usage if is_last else None,  # type: ignore[arg-type]
+                )
+                self.stream_progress.append(index + 1)
+                yield ChatGenerationChunk(message=chunk)
+                await asyncio.sleep(0)
+            if self.stream_failure is not None and self.fail_after >= len(texts):
+                raise self.stream_failure
+        finally:
+            self._is_stream_closed = True
 
     def bind_tools(self, tools: Sequence[Any], **kwargs: Any) -> Runnable[Any, AIMessage]:  # type: ignore[override]
         return self  # type: ignore[return-value]
