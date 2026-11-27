@@ -24,9 +24,18 @@ Each form is its own `PokemonSpecies` node, and `isDefaultForm` is true on the 1
 
 ### Evolutions and form changes
 
-An `Evolution` node holds 1 evolution rule. `FROM_SPECIES` and `TO_SPECIES` point at the 2 species, and `REQUIRES` points at what the rule needs. `EVOLVES_TO` is a direct edge between the same 2 species. Some species have no evolution data yet. Eevee has no `Evolution` node and no `EVOLVES_TO` edge, so the graph cannot say what Eevee evolves into.
+An `Evolution` node holds 1 method by which a species evolves into another. `FROM_SPECIES` and `TO_SPECIES` point at the 2 species, and `REQUIRES` points at what the method needs. `EVOLVES_TO` is a direct edge between the same 2 species. A species pair may have several methods, 1 node each: the earliest has the id `<from id>:<to id>`, and a later one has an id that ends in `:gen<n>`, the generation it starts in. Some species have no evolution data yet. Eevee has no `Evolution` node and no `EVOLVES_TO` edge, so the graph cannot say what Eevee evolves into.
 
-`FormChange` nodes cover Mega Evolution (91) and Primal Reversion (2). Other form changes are not ingested.
+A `FormChange` node holds 1 method by which a species reaches a form, under the same id rule. `FormChange` nodes cover the mechanics Mega Evolution (91, `formKind` `mega`) and Primal Reversion (2, `formKind` `primal`). Other form changes are not ingested.
+
+Every `Evolution` and `FormChange` node has `INTRODUCED_IN`, the first `Generation` in which the method applies. It is the latest debut among the species, items and mechanic the method links, so a method added later to old species can show an earlier generation. A method that ended also has `LAST_VALID_IN`, the last `Generation` in which it applied. A query for current methods keeps the nodes without it:
+
+```cypher
+MATCH (e:Evolution)-[:TO_SPECIES]->(:PokemonSpecies {id: $id})
+WHERE NOT (e)-[:LAST_VALID_IN]->()
+MATCH (e)-[:INTRODUCED_IN]->(g:Generation)
+RETURN e.id, e.evoTrigger, g.id
+```
 
 ### Games
 
