@@ -15,7 +15,7 @@ This module knows the pkmn universe, as every ingestion module of a source does.
 import hashlib
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from muon.ingestion.batch import (
@@ -37,6 +37,7 @@ CORE = "https://muon.dev/ns/core#"
 
 TYPE = PKMN + "Type"
 GENERATION = PKMN + "Generation"
+GENERATION_MECHANIC = PKMN + "GenerationMechanic"
 VERSION_GROUP = PKMN + "VersionGroup"
 MOVE = PKMN + "Move"
 MACHINE = PKMN + "Machine"
@@ -51,6 +52,7 @@ TEXT_CHUNK = CORE + "TextChunk"
 
 HAS_TYPE = PKMN + "hasType"
 INTRODUCED_IN = PKMN + "introducedIn"
+LAST_VALID_IN = PKMN + "lastValidIn"
 HAS_FLAVOR = PKMN + "hasFlavor"
 TEACHES_MOVE = PKMN + "teachesMove"
 IN_VERSION_GROUP = PKMN + "inVersionGroup"
@@ -122,11 +124,13 @@ class BatchBuildError(Exception):
 
 @dataclass(frozen=True)
 class AboxIndex:
-    """The ids of the hand-written A-Box nodes by class and label, and the generation of
-    each region."""
+    """The ids of the hand-written A-Box nodes by class and label, the generation label of
+    each region and generation mechanic, and the number of each generation label."""
 
     ids: Mapping[tuple[str, str], str]
     region_generations: Mapping[str, str]
+    mechanic_generations: Mapping[str, str] = field(default_factory=dict)
+    generation_numbers: Mapping[str, int] = field(default_factory=dict)
 
 
 class AboxContext(Protocol):
@@ -152,19 +156,30 @@ class AboxMissError(Exception):
         self.label = label
 
 
-def build_abox_index(abox: GraphBatch) -> AboxIndex:
-    """Index the nodes of `read_abox()` by (class, label) and map each region to the label
-    of the generation its `introducedIn` edge names."""
-    ids = {(node.class_iri, node.name): node.id for node in abox.nodes}
+def index_generation_labels(abox: GraphBatch, class_iri: str) -> dict[str, str]:
+    """Map the label of each node of a class to the label of the generation its
+    `introducedIn` edge names."""
     names = {node.node_ref: node.name for node in abox.nodes}
-    region_generations = {
+    return {
         names[edge.start]: names[edge.end]
         for edge in abox.edges
         if edge.property_iri == INTRODUCED_IN
-        and edge.start.class_iri == REGION
+        and edge.start.class_iri == class_iri
         and edge.end.class_iri == GENERATION
     }
-    return AboxIndex(ids=ids, region_generations=region_generations)
+
+
+def build_abox_index(abox: GraphBatch) -> AboxIndex:
+    """Index the nodes of `read_abox()`. Generations are numbered from 1 without gaps."""
+    generation_count = sum(node.class_iri == GENERATION for node in abox.nodes)
+    return AboxIndex(
+        ids={(node.class_iri, node.name): node.id for node in abox.nodes},
+        region_generations=index_generation_labels(abox, REGION),
+        mechanic_generations=index_generation_labels(abox, GENERATION_MECHANIC),
+        generation_numbers={
+            format_generation_label(number): number for number in range(1, generation_count + 1)
+        },
+    )
 
 
 def resolve_abox(index: AboxIndex, class_iri: str, label: str) -> NodeRecord:
@@ -193,6 +208,11 @@ def to_roman(number: int) -> str:
         count, number = divmod(number, value)
         numeral += symbol * count
     return numeral
+
+
+def format_generation_label(number: int) -> str:
+    """Return the A-Box label of a generation, e.g. "Generation IX"."""
+    return GENERATION_LABEL.format(numeral=to_roman(number))
 
 
 def build_stub(class_iri: str, name: str) -> NodeRecord:

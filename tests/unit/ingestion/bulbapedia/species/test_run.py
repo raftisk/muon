@@ -21,9 +21,13 @@ from muon.ingestion.bulbapedia.species.run import (
     LOCATION_PAGE_TYPE,
     PAGE_OUTPUT_DIR,
     REPORT_FILE_NAME,
+    ParseRequest,
     ParseRunError,
+    RunInputs,
     find_coverage_effects,
+    parse_species_pages,
     read_coverage,
+    read_item_debuts,
     write_outputs,
 )
 from muon.ingestion.seed import read_abox
@@ -44,6 +48,7 @@ from tests.unit.ingestion.bulbapedia.species.synthetic_pages import (
     default_wikitexts,
     run_parse,
     species_wikitext,
+    write_item_outputs,
 )
 
 pytestmark = pytest.mark.usefixtures("no_overrides")
@@ -119,6 +124,38 @@ def test_an_unpinned_title_stops_the_run_before_any_page_is_read(
         run_parse(store, "Ghost (Pokémon)")
 
     assert not (tmp_path / "parsed").exists()
+
+
+@pytest.mark.parametrize("is_created", [False, True], ids=["missing", "empty"])
+def test_a_run_without_item_outputs_stops_and_names_the_directory(
+    tmp_path: Path, store: PageStore, is_created: bool
+) -> None:
+    item_dir = tmp_path / "no-items"
+    if is_created:
+        item_dir.mkdir()
+    inputs = RunInputs(ParseRequest(), store, ONTOLOGY_DIR, item_dir)
+
+    with pytest.raises(ParseRunError, match="no-items"):
+        parse_species_pages(inputs)
+
+
+def test_item_debuts_come_from_the_owner_records(tmp_path: Path) -> None:
+    abox = build_abox_index(read_abox(load_ontology_model(ONTOLOGY_DIR, "pkmn"), ONTOLOGY_DIR))
+
+    debuts = read_item_debuts(write_item_outputs(tmp_path / "item"), abox)
+
+    assert debuts == {"charizardite-x": 6}
+
+
+@pytest.mark.parametrize("content", ["{", '{"batch": {"universe": "pkmn"}}'])
+def test_a_broken_item_output_stops_the_run_and_names_the_file(
+    tmp_path: Path, content: str
+) -> None:
+    abox = build_abox_index(read_abox(load_ontology_model(ONTOLOGY_DIR, "pkmn"), ONTOLOGY_DIR))
+    (tmp_path / "broken.json").write_text(content, encoding="utf-8")
+
+    with pytest.raises(ParseRunError, match="broken.json"):
+        read_item_debuts(tmp_path, abox)
 
 
 def test_a_stale_override_stops_the_run(store: PageStore, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -394,7 +431,13 @@ def test_the_report_counts_the_claims_of_each_pass_by_property(store: PageStore)
             "viaMachine",
         )
     }
-    assert report.evolution_counts.claims == {"evolvesTo": 2, "fromSpecies": 2, "requires": 1}
+    assert report.evolution_counts.claims == {
+        "evolvesTo": 2,
+        "fromSpecies": 2,
+        "introducedIn": 1,
+        "lastValidIn": 1,
+        "requires": 1,
+    }
     assert report.chunk_counts.claims == {"describes": 2}
 
 

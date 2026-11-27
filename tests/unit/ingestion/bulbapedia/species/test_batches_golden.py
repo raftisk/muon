@@ -7,6 +7,7 @@ import pytest
 
 from muon.ingestion.batch import GraphBatch, NodeRecord
 from muon.ingestion.bulbapedia.batching import (
+    GENERATION,
     INTRODUCED_IN,
     MACHINE,
     PKMN,
@@ -37,9 +38,9 @@ from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
 from tests.unit.ingestion.bulbapedia.species.claim_summary import (
+    CHANGE_CLAIM_PATTERNS,
     ENTRY_CLAIM_PATTERNS,
     EVOLUTION_ANCHOR_PATTERNS,
-    REQUIRES_CLAIM_PATTERNS,
     SPECIES_CLAIM_PATTERNS,
     claims_by_anchor,
 )
@@ -62,13 +63,15 @@ def abox(model: OntologyModel) -> AboxIndex:
 
 
 @pytest.fixture(scope="module")
-def species_index(pilot_extracts: Extracts) -> SpeciesIndex:
-    return build_species_index(pilot_extracts.values())
+def species_index(pilot_extracts: Extracts, abox: AboxIndex) -> SpeciesIndex:
+    return build_species_index(pilot_extracts.values(), abox)
 
 
 @pytest.fixture(scope="module")
 def species_batches(pilot_extracts: Extracts, abox: AboxIndex) -> dict[str, GraphBatch]:
-    return {title: build_species_batch(extract, abox) for title, extract in pilot_extracts.items()}
+    return {
+        title: build_species_batch(extract, abox, {}) for title, extract in pilot_extracts.items()
+    }
 
 
 @pytest.fixture(scope="module")
@@ -76,7 +79,7 @@ def evolution_builds(
     pilot_extracts: Extracts, abox: AboxIndex, species_index: SpeciesIndex
 ) -> dict[str, EvolutionBuild]:
     return {
-        title: build_evolution_batch(extract, abox, species_index)
+        title: build_evolution_batch(extract, abox, species_index, {})
         for title, extract in pilot_extracts.items()
     }
 
@@ -186,7 +189,11 @@ def test_diglett_evolution_batch(evolution_builds: dict[str, EvolutionBuild]) ->
         ("diglett:dugtrio", "diglett"),
         ("diglett-alola:dugtrio-alola", "diglett-alola"),
     }
-    assert {n.class_iri for n in build.batch.stub_nodes} == {POKEMON_SPECIES}
+    assert edge_keys(build.batch, INTRODUCED_IN) == {
+        ("diglett:dugtrio", "generation-i"),
+        ("diglett-alola:dugtrio-alola", "generation-vii"),
+    }
+    assert {n.class_iri for n in build.batch.stub_nodes} == {POKEMON_SPECIES, GENERATION}
     assert (build.structured, build.total, build.notes) == (2, 2, ())
 
 
@@ -332,8 +339,8 @@ def test_diglett_evolution_batch_claims_2_patterns_per_form_and_requires_per_evo
     assert claims_by_anchor(batch) == {
         "diglett": EVOLUTION_ANCHOR_PATTERNS,
         "diglett-alola": EVOLUTION_ANCHOR_PATTERNS,
-        "diglett:dugtrio": REQUIRES_CLAIM_PATTERNS,
-        "diglett-alola:dugtrio-alola": REQUIRES_CLAIM_PATTERNS,
+        "diglett:dugtrio": CHANGE_CLAIM_PATTERNS,
+        "diglett-alola:dugtrio-alola": CHANGE_CLAIM_PATTERNS,
     }
 
 
@@ -342,8 +349,8 @@ def test_charizard_species_batch_claims_requires_at_each_mega_form_change(
 ) -> None:
     claims = claims_by_anchor(species_batches[title_of("Charizard")])
 
-    assert claims["charizard:charizard-mega-x"] == REQUIRES_CLAIM_PATTERNS
-    assert claims["charizard:charizard-mega-y"] == REQUIRES_CLAIM_PATTERNS
+    assert claims["charizard:charizard-mega-x"] == CHANGE_CLAIM_PATTERNS
+    assert claims["charizard:charizard-mega-y"] == CHANGE_CLAIM_PATTERNS
 
 
 def test_every_pilot_claim_anchors_at_a_node_of_its_batch(

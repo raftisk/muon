@@ -8,7 +8,17 @@ infobox.
 from datetime import UTC, datetime
 from pathlib import Path
 
+from muon.ingestion.bulbapedia.batching import (
+    GENERATION,
+    HELD_ITEM,
+    INTRODUCED_IN,
+    Parts,
+    assemble_batch,
+    build_edge,
+    build_stub,
+)
 from muon.ingestion.bulbapedia.pages import Manifest, Page, PageStore, compute_sha1
+from muon.ingestion.bulbapedia.runs import OUTPUT_SUFFIX, dump_json, serialize_batch
 from muon.ingestion.bulbapedia.species.run import (
     ParseRequest,
     ParseRun,
@@ -17,6 +27,8 @@ from muon.ingestion.bulbapedia.species.run import (
 )
 
 ONTOLOGY_DIR = Path(__file__).resolve().parents[5] / "ontology"
+ITEM_DIR_NAME = "item-outputs"
+ITEM_PAGE_ID = 501
 PAGE_TYPE = "species"
 TIMESTAMP = datetime(2026, 10, 10, tzinfo=UTC)
 ALPHA = "Alpha (Pokémon)"
@@ -88,6 +100,18 @@ def build_store(root: Path, wikitexts: dict[str, str]) -> PageStore:
     return store
 
 
+def write_item_outputs(item_dir: Path) -> Path:
+    """Write the item parse output of Charizardite X, introduced in Generation VI."""
+    stone = build_stub(HELD_ITEM, "Charizardite X")
+    generation = build_stub(GENERATION, "Generation VI")
+    parts = Parts((stone, generation), (build_edge(INTRODUCED_IN, stone, generation),))
+    batch = assemble_batch(frozenset({HELD_ITEM}), parts)
+    item_dir.mkdir(parents=True, exist_ok=True)
+    output_path = item_dir / f"{ITEM_PAGE_ID}{OUTPUT_SUFFIX}"
+    output_path.write_text(dump_json({"batch": serialize_batch(batch)}), encoding="utf-8")
+    return item_dir
+
+
 def default_wikitexts() -> dict[str, str]:
     return {
         ALPHA: species_wikitext(
@@ -102,4 +126,6 @@ def default_wikitexts() -> dict[str, str]:
 
 
 def run_parse(store: PageStore, *titles: str) -> ParseRun:
-    return parse_species_pages(RunInputs(ParseRequest(titles), store, ONTOLOGY_DIR))
+    """Parse the store with the item parse outputs that sit next to its manifest."""
+    item_dir = write_item_outputs(store.manifest_path.parent / ITEM_DIR_NAME)
+    return parse_species_pages(RunInputs(ParseRequest(titles), store, ONTOLOGY_DIR, item_dir))

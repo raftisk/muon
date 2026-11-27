@@ -29,6 +29,8 @@ from muon.files import write_text_atomically
 from muon.ingestion.batch import GraphBatch, NodeRef, build_node_id
 from muon.ingestion.bulbapedia.batching import (
     ASPECT,
+    GENERATION,
+    INTRODUCED_IN,
     UNIVERSE,
     AboxIndex,
     BatchBuildError,
@@ -118,7 +120,8 @@ RESIDUE_ID_TEMPLATE = "{page_id}:{kind}:{number}"
 
 
 class ParseRunError(Exception):
-    """A request the run cannot start: a title that is not pinned."""
+    """A run that cannot start: a title that is not pinned, or an input file of another
+    parse run that is missing or unreadable."""
 
 
 class ResidueItem(ReportModel):
@@ -223,12 +226,13 @@ class ParseRun:
 
 @dataclass(frozen=True)
 class RunInputs:
-    """`coverage_path` is the coverage file of the location parse; `None`, or a missing file,
-    keeps every coarse encounter."""
+    """`item_dir` holds the page outputs of the item parse. `coverage_path` is the coverage
+    file of the location parse; `None`, or a missing file, keeps every coarse encounter."""
 
     request: ParseRequest
     store: PageStore
     ontology_dir: Path
+    item_dir: Path
     coverage_path: Path | None = None
 
 
@@ -290,15 +294,61 @@ def parse_pages(pages: Iterable[Page]) -> ParsedPages:
     return ParsedPages(extracts, results)
 
 
+class ItemOutputFile(BaseModel):
+    """The part of an item page output that holds its owner records and their edges."""
+
+    model_config = ConfigDict(frozen=True)
+
+    batch: GraphBatch
+
+
+def read_item_batch(path: Path) -> GraphBatch:
+    try:
+        return ItemOutputFile.model_validate_json(path.read_text("utf-8")).batch
+    except (OSError, UnicodeDecodeError, ValidationError) as error:
+        raise ParseRunError(f"cannot read item parse output {path}: {error}") from error
+
+
+def read_item_debuts(item_dir: Path, abox: AboxIndex) -> dict[str, int]:
+    """Map each item id of the item parse outputs to the number of its debut generation.
+
+    Raises `ParseRunError` for a directory with no page output, a file that is no item page
+    output and a generation the A-Box lacks.
+    """
+    paths = sorted(item_dir.glob(f"*{OUTPUT_SUFFIX}"))
+    if not paths:
+        raise ParseRunError(
+            f"no item parse output in {item_dir}; run `muon parse bulbapedia item` first"
+        )
+    numbers = {
+        abox.ids[(GENERATION, label)]: number for label, number in abox.generation_numbers.items()
+    }
+    debuts: dict[str, int] = {}
+    for path in paths:
+        batch = read_item_batch(path)
+        owners = {node.node_ref for node in batch.owner_nodes}
+        for edge in batch.edges:
+            if edge.property_iri != INTRODUCED_IN or edge.start not in owners:
+                continue
+            if edge.end.id not in numbers:
+                raise ParseRunError(
+                    f"cannot read item parse output {path}: unknown generation {edge.end.id!r}"
+                )
+            debuts[edge.start.id] = numbers[edge.end.id]
+    return debuts
+
+
 def build_species_batches(
-    extracts: Mapping[str, SpeciesPageExtract], abox: AboxIndex
+    extracts: Mapping[str, SpeciesPageExtract],
+    abox: AboxIndex,
+    item_debuts: Mapping[str, int],
 ) -> tuple[dict[str, GraphBatch], dict[str, str]]:
     """Build pass 1 for every page. Returns the batches and the reason of each failed page."""
     batches: dict[str, GraphBatch] = {}
     failures: dict[str, str] = {}
     for title, extract in extracts.items():
         try:
-            batches[title] = build_species_batch(extract, abox)
+            batches[title] = build_species_batch(extract, abox, item_debuts)
         except BatchBuildError as error:
             failures[title] = str(error)
     return batches, failures
@@ -571,10 +621,10 @@ def read_page_encounters(
 def parse_species_pages(inputs: RunInputs) -> ParseRun:
     """Parse the pinned species pages and build the 4 batches of each.
 
-    Raises `ParseRunError` for a title that is not pinned, `OverrideError` for an override
-    that matches nothing and `EncounterTableError` for an encounter table version the
-    A-Box lacks, all before any page is read. The caller writes the outputs with
-    `write_outputs`.
+    Raises `ParseRunError` for a title that is not pinned or item parse outputs that are
+    missing or unreadable, `OverrideError` for an override that matches nothing and
+    `EncounterTableError` for an encounter table version the A-Box lacks, all before any
+    page is parsed. The caller writes the outputs with `write_outputs`.
     """
     pins = inputs.store.read_manifest().list_pins(PAGE_TYPE)
     check_request(inputs.request, pins)
@@ -582,16 +632,18 @@ def parse_species_pages(inputs: RunInputs) -> ParseRun:
     seed = read_abox(model, inputs.ontology_dir)
     versions = frozenset(node.name for node in seed.nodes if node.class_iri == VERSION)
     check_version_rows(versions)
+    abox = build_abox_index(seed)
+    item_debuts = read_item_debuts(inputs.item_dir, abox)
     requested = set(inputs.request.titles) or {pin.title for pin in pins}
     pages = {pin.title: inputs.store.read_page(PAGE_TYPE, pin) for pin in pins}
     parsed = parse_pages(pages.values())
-    abox = build_abox_index(seed)
     locations = read_location_index(inputs.store)
-    species_batches, failures = build_species_batches(parsed.extracts, abox)
+    species_batches, failures = build_species_batches(parsed.extracts, abox, item_debuts)
     extracts = {title: parsed.extracts[title] for title in species_batches}
-    index = build_species_index(extracts.values())
+    index = build_species_index(extracts.values(), abox)
     builds = {
-        title: build_evolution_batch(extract, abox, index) for title, extract in extracts.items()
+        title: build_evolution_batch(extract, abox, index, item_debuts)
+        for title, extract in extracts.items()
     }
     chunk_builds, chunk_failures = build_chunk_batches(extracts, pages, (abox, index))
     results = {**parsed.results}

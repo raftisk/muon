@@ -105,25 +105,25 @@ def abox(model: OntologyModel) -> AboxIndex:
 
 
 @pytest.fixture(scope="module")
-def species_index(extracts: dict[str, SpeciesPageExtract]) -> SpeciesIndex:
-    return build_species_index(extracts.values())
+def species_index(extracts: dict[str, SpeciesPageExtract], abox: AboxIndex) -> SpeciesIndex:
+    return build_species_index(extracts.values(), abox)
 
 
 @pytest.fixture(scope="module")
 def diglett_species(extracts: dict[str, SpeciesPageExtract], abox: AboxIndex) -> GraphBatch:
-    return build_species_batch(extracts[DIGLETT], abox)
+    return build_species_batch(extracts[DIGLETT], abox, {})
 
 
 @pytest.fixture(scope="module")
 def charizard_species(extracts: dict[str, SpeciesPageExtract], abox: AboxIndex) -> GraphBatch:
-    return build_species_batch(extracts[CHARIZARD], abox)
+    return build_species_batch(extracts[CHARIZARD], abox, {})
 
 
 @pytest.fixture(scope="module")
 def diglett_evolutions(
     extracts: dict[str, SpeciesPageExtract], abox: AboxIndex, species_index: SpeciesIndex
 ) -> GraphBatch:
-    batch = build_evolution_batch(extracts[DIGLETT], abox, species_index).batch
+    batch = build_evolution_batch(extracts[DIGLETT], abox, species_index, {}).batch
     assert batch is not None
     return batch
 

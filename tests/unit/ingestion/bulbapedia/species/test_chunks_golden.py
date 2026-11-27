@@ -91,7 +91,7 @@ def chunk_batches(
     all_extracts: Extracts, model: OntologyModel, read_pinned_page: Callable[[str], Page]
 ) -> dict[str, GraphBatch]:
     abox: AboxIndex = build_abox_index(read_abox(model, ONTOLOGY_DIR))
-    index: SpeciesIndex = build_species_index(all_extracts.values())
+    index: SpeciesIndex = build_species_index(all_extracts.values(), abox)
     batches: dict[str, GraphBatch] = {}
     for title in CHUNK_TITLES:
         inputs = ChunkInputs(abox, index, read_pinned_page(title).permalink)

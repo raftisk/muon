@@ -40,7 +40,12 @@ SPECIES_CLAIM_PATTERNS: set[ClaimPattern] = {
     ("fromSpecies", "in", "FormChange", True),
 }
 ENTRY_CLAIM_PATTERNS: set[ClaimPattern] = {("viaMachine", "out", "Machine", False)}
-REQUIRES_CLAIM_PATTERNS: set[ClaimPattern] = {("requires", "out", None, False)}
+# At each Evolution and FormChange.
+CHANGE_CLAIM_PATTERNS: set[ClaimPattern] = {
+    ("requires", "out", None, False),
+    ("introducedIn", "out", "Generation", False),
+    ("lastValidIn", "out", "Generation", False),
+}
 EVOLUTION_ANCHOR_PATTERNS: set[ClaimPattern] = {
     ("evolvesTo", "out", "PokemonSpecies", False),
     ("fromSpecies", "in", "Evolution", True),

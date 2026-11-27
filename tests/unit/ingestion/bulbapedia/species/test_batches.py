@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from dataclasses import replace
 from itertools import chain
 from pathlib import Path
 
@@ -7,6 +8,7 @@ import pytest
 from muon.ingestion.batch import ClaimDirection, GraphBatch, NodeRecord
 from muon.ingestion.bulbapedia import batching
 from muon.ingestion.bulbapedia.batching import (
+    GENERATION,
     INTRODUCED_IN,
     MACHINE,
     MOVE,
@@ -83,9 +85,9 @@ from muon.ingestion.seed import read_abox
 from muon.ontology.materializer import LabelMaterializer
 from muon.ontology.model import OntologyModel, load_ontology_model
 from tests.unit.ingestion.bulbapedia.species.claim_summary import (
+    CHANGE_CLAIM_PATTERNS,
     ENTRY_CLAIM_PATTERNS,
     EVOLUTION_ANCHOR_PATTERNS,
-    REQUIRES_CLAIM_PATTERNS,
     SPECIES_CLAIM_PATTERNS,
     claims_by_anchor,
 )
@@ -296,7 +298,7 @@ def test_entry_and_machine_ids_and_names() -> None:
 
 
 def test_species_batch_scope_owners_and_stubs(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
 
     assert batch.universe == "pkmn"
     assert batch.scope == SPECIES_SCOPE
@@ -325,7 +327,7 @@ def test_species_batch_scope_owners_and_stubs(abox: AboxIndex) -> None:
 
 
 def test_species_records_carry_the_page_values(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
     records = {node.id: node for node in batch.owner_nodes}
 
     diglett = records["diglett"]
@@ -345,7 +347,7 @@ def test_species_records_carry_the_page_values(abox: AboxIndex) -> None:
 
 
 def test_every_form_carries_the_page_permalink_and_stubs_do_not(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
 
     species = [node for node in batch.nodes if node.class_iri == POKEMON_SPECIES]
     assert len(species) == 2
@@ -362,7 +364,7 @@ def test_a_genderless_species_has_no_female_rate_and_unknown_values_are_left_out
         "magnemite", "Magnemite", female_rate=None, is_genderless=True, genus=None, color=None
     )
 
-    batch = build_species_batch(build_extract("Magnemite (Pokémon)", (magnemite,)), abox)
+    batch = build_species_batch(build_extract("Magnemite (Pokémon)", (magnemite,)), abox, {})
 
     properties = batch.owner_nodes[0].properties
     assert PKMN + "femaleRate" not in properties
@@ -374,7 +376,7 @@ def test_a_genderless_species_has_no_female_rate_and_unknown_values_are_left_out
 def test_aliases_are_a_list_property(abox: AboxIndex) -> None:
     diglett = build_facts("diglett", "Diglett", aliases=("ディグダ", "Digda"))
 
-    batch = build_species_batch(build_extract("Diglett (Pokémon)", (diglett,)), abox)
+    batch = build_species_batch(build_extract("Diglett (Pokémon)", (diglett,)), abox, {})
 
     assert batch.owner_nodes[0].properties["https://muon.dev/ns/core#aliases"] == (
         "ディグダ",
@@ -383,7 +385,7 @@ def test_aliases_are_a_list_property(abox: AboxIndex) -> None:
 
 
 def test_species_edges_and_their_properties(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
 
     assert edge_properties(batch, PKMN + "hasType", "diglett-alola", "steel") == {"slot": 2}
     assert edge_properties(batch, PKMN + "hasType", "diglett", "ground") == {"slot": 1}
@@ -399,7 +401,7 @@ def test_species_edges_and_their_properties(abox: AboxIndex) -> None:
 
 
 def test_introduced_in_follows_the_base_generation_and_the_region(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
 
     introduced = {(e.start.id, e.end.id) for e in batch.edges if e.property_iri == INTRODUCED_IN}
     assert introduced == {("diglett", "generation-i"), ("diglett-alola", "generation-vii")}
@@ -413,14 +415,14 @@ def test_a_form_that_is_not_regional_gets_a_bare_has_form_and_no_generation(
     )
     extract = build_extract("Darmanitan (Pokémon)", (build_facts("darmanitan", "Darmanitan"), zen))
 
-    batch = build_species_batch(extract, abox)
+    batch = build_species_batch(extract, abox, {})
 
     assert edge_properties(batch, HAS_FORM, "darmanitan", "darmanitan-zen") == {}
     assert [e.start.id for e in batch.edges if e.property_iri == INTRODUCED_IN] == ["darmanitan"]
 
 
 def test_learnset_entries_and_can_learn(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
     entries = {n.id: n for n in batch.owner_nodes if n.class_iri == LEARNSET_ENTRY}
 
     level = entries["diglett:earthquake:level:40:scarlet-violet"]
@@ -452,14 +454,14 @@ def test_repeated_learnset_rows_collapse(abox: AboxIndex) -> None:
     repeated = (*LEARNSET, LEARNSET[0])
 
     batch = build_species_batch(
-        build_extract("Diglett (Pokémon)", (DIGLETT, ALOLAN_DIGLETT), learnset=repeated), abox
+        build_extract("Diglett (Pokémon)", (DIGLETT, ALOLAN_DIGLETT), learnset=repeated), abox, {}
     )
 
     assert len([n for n in batch.owner_nodes if n.class_iri == LEARNSET_ENTRY]) == 4
 
 
 def test_a_page_without_a_learnset_has_no_version_group_stub(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_extract("Diglett (Pokémon)", (DIGLETT,)), abox)
+    batch = build_species_batch(build_extract("Diglett (Pokémon)", (DIGLETT,)), abox, {})
 
     assert VERSION_GROUP not in {n.class_iri for n in batch.nodes}
     assert CAN_LEARN not in {e.property_iri for e in batch.edges}
@@ -487,7 +489,7 @@ def build_mega_extract() -> SpeciesPageExtract:
 
 
 def test_mega_form_change_sits_in_the_species_batch(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_mega_extract(), abox)
+    batch = build_species_batch(build_mega_extract(), abox, {})
 
     record = next(n for n in batch.owner_nodes if n.class_iri == FORM_CHANGE)
     assert (record.id, record.name) == (
@@ -517,7 +519,7 @@ def test_a_primal_form_change_carries_its_trigger(abox: AboxIndex) -> None:
     )
 
     record = next(
-        n for n in build_species_batch(extract, abox).owner_nodes if n.class_iri == FORM_CHANGE
+        n for n in build_species_batch(extract, abox, {}).owner_nodes if n.class_iri == FORM_CHANGE
     )
 
     assert record.properties[PKMN + "trigger"] == "switch_in"
@@ -540,7 +542,7 @@ def test_a_name_the_abox_lacks_fails_the_page(
     )
 
     with pytest.raises(BatchBuildError) as error:
-        build_species_batch(extract, broken)
+        build_species_batch(extract, broken, {})
 
     assert error.value.page_title == "Diglett (Pokémon)"
     assert error.value.field == field
@@ -552,21 +554,18 @@ def test_a_region_without_a_generation_fails_the_page(abox: AboxIndex) -> None:
     no_regions = AboxIndex(ids=abox.ids, region_generations={})
 
     with pytest.raises(BatchBuildError, match="Alola"):
-        build_species_batch(build_diglett_extract(), no_regions)
+        build_species_batch(build_diglett_extract(), no_regions, {})
 
 
 def test_a_missing_version_group_fails_the_page(abox: AboxIndex) -> None:
-    broken = AboxIndex(
-        ids={k: v for k, v in abox.ids.items() if k[1] != "Scarlet-Violet"},
-        region_generations=abox.region_generations,
-    )
+    broken = replace(abox, ids={k: v for k, v in abox.ids.items() if k[1] != "Scarlet-Violet"})
 
     with pytest.raises(BatchBuildError, match="Scarlet-Violet"):
-        build_species_batch(build_diglett_extract(), broken)
+        build_species_batch(build_diglett_extract(), broken, {})
 
 
 def test_nodes_and_edges_are_sorted(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
 
     node_order = [(n.class_iri, n.id) for n in batch.nodes]
     edge_order = [
@@ -578,8 +577,8 @@ def test_nodes_and_edges_are_sorted(abox: AboxIndex) -> None:
 
 
 def test_the_species_batch_is_the_same_on_every_build(abox: AboxIndex) -> None:
-    first = build_species_batch(build_diglett_extract(), abox)
-    second = build_species_batch(build_diglett_extract(), abox)
+    first = build_species_batch(build_diglett_extract(), abox, {})
+    second = build_species_batch(build_diglett_extract(), abox, {})
 
     assert first == second
 
@@ -587,7 +586,7 @@ def test_the_species_batch_is_the_same_on_every_build(abox: AboxIndex) -> None:
 def test_the_species_batch_compiles_into_upsert_statements(
     abox: AboxIndex, model: OntologyModel
 ) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
 
     statements = build_statements(batch, WriteMode.UPSERT, LabelMaterializer(model))
 
@@ -600,14 +599,15 @@ def test_the_species_batch_compiles_into_upsert_statements(
     ]
 
 
-def test_species_index_and_reference_resolution() -> None:
+def test_species_index_and_reference_resolution(abox: AboxIndex) -> None:
     wormadam = build_facts("wormadam", "Wormadam")
     sandy = build_facts("wormadam-sandy", "Wormadam (Sandy Cloak)", form_index=2, is_default=False)
     index = build_species_index(
         [
             build_extract("Wormadam (Pokémon)", (wormadam, sandy)),
             build_extract("Nidoran♀ (Pokémon)", (build_facts("nidoran-f", "Nidoran♀"),)),
-        ]
+        ],
+        abox,
     )
 
     assert index.names["wormadam-sandy"] == "Wormadam (Sandy Cloak)"
@@ -622,12 +622,12 @@ def test_species_index_and_reference_resolution() -> None:
     assert resolve_species(index, SpeciesRef(name="Missingno", code="")) is None
 
 
-def build_index() -> SpeciesIndex:
-    return build_species_index([build_diglett_extract(), build_dugtrio_extract()])
+def build_index(abox: AboxIndex) -> SpeciesIndex:
+    return build_species_index([build_diglett_extract(), build_dugtrio_extract()], abox)
 
 
 def test_evolution_batch_owns_the_evolutions_of_the_page(abox: AboxIndex) -> None:
-    build = build_evolution_batch(build_diglett_extract(), abox, build_index())
+    build = build_evolution_batch(build_diglett_extract(), abox, build_index(abox), {})
 
     assert build.batch.scope == EVOLUTION_SCOPE
     assert (build.structured, build.total, build.notes) == (1, 1, ())
@@ -642,6 +642,7 @@ def test_evolution_batch_owns_the_evolutions_of_the_page(abox: AboxIndex) -> Non
         (POKEMON_SPECIES, "diglett", "Diglett"),
         (POKEMON_SPECIES, "diglett-alola", "Alolan Diglett"),
         (POKEMON_SPECIES, "dugtrio", "Dugtrio"),
+        (GENERATION, "generation-i", "Generation I"),
     }
     assert {
         (e.property_iri.removeprefix(PKMN), e.start.id, e.end.id) for e in build.batch.edges
@@ -649,11 +650,12 @@ def test_evolution_batch_owns_the_evolutions_of_the_page(abox: AboxIndex) -> Non
         ("fromSpecies", "diglett:dugtrio", "diglett"),
         ("toSpecies", "diglett:dugtrio", "dugtrio"),
         ("evolvesTo", "diglett", "dugtrio"),
+        ("introducedIn", "diglett:dugtrio", "generation-i"),
     }
 
 
 def test_evolution_batch_compiles(abox: AboxIndex, model: OntologyModel) -> None:
-    build = build_evolution_batch(build_diglett_extract(), abox, build_index())
+    build = build_evolution_batch(build_diglett_extract(), abox, build_index(abox), {})
 
     statements = build_statements(build.batch, WriteMode.UPSERT, LabelMaterializer(model))
 
@@ -682,7 +684,7 @@ def test_evolutions_of_other_pages_are_cross_checks_and_skipped(abox: AboxIndex)
         "Dugtrio (Pokémon)", build_dugtrio_extract().forms, evolutions=(level_26(),)
     )
 
-    build = build_evolution_batch(extract, abox, build_index())
+    build = build_evolution_batch(extract, abox, build_index(abox), {})
 
     assert (build.notes, build.total) == ((), 0)
     assert_batch_of_anchors_only(build.batch, {"dugtrio"})
@@ -692,7 +694,7 @@ def test_an_unknown_target_drops_the_evolution_and_creates_no_stub(abox: AboxInd
     unknown = level_26().model_copy(update={"target": SpeciesRef(name="Missingno", code="")})
     extract = build_extract("Diglett (Pokémon)", (DIGLETT,), evolutions=(unknown,))
 
-    build = build_evolution_batch(extract, abox, build_index())
+    build = build_evolution_batch(extract, abox, build_index(abox), {})
 
     assert_batch_of_anchors_only(build.batch, {"diglett"})
     assert [n.kind for n in build.notes] == [NoteKind.DROPPED_VALUE]
@@ -705,7 +707,7 @@ def test_a_cosmetic_form_reference_falls_back_to_the_base_id_and_is_noted(
     sandy = level_26().model_copy(update={"source": SpeciesRef(name="Diglett", code="Sandy")})
     extract = build_extract("Diglett (Pokémon)", (DIGLETT,), evolutions=(sandy,))
 
-    build = build_evolution_batch(extract, abox, build_index())
+    build = build_evolution_batch(extract, abox, build_index(abox), {})
 
     assert build.batch.owner_nodes[0].id == "diglett:dugtrio"
     assert [n.kind for n in build.notes] == [NoteKind.REFERENCE_FALLBACK]
@@ -718,8 +720,8 @@ def test_repeated_evolutions_are_kept_once_and_a_conflict_is_noted(abox: AboxInd
     same = build_extract("Diglett (Pokémon)", (DIGLETT,), evolutions=(level_26(), copy))
     conflict = build_extract("Diglett (Pokémon)", (DIGLETT,), evolutions=(level_26(), different))
 
-    assert build_evolution_batch(same, abox, build_index()).notes == ()
-    conflicting = build_evolution_batch(conflict, abox, build_index())
+    assert build_evolution_batch(same, abox, build_index(abox), {}).notes == ()
+    conflicting = build_evolution_batch(conflict, abox, build_index(abox), {})
     assert [n.kind for n in conflicting.notes] == [NoteKind.DROPPED_VALUE]
     assert conflicting.total == 1
 
@@ -734,7 +736,7 @@ def test_an_unstructured_evolution_keeps_its_condition(abox: AboxIndex) -> None:
     )
     extract = build_extract("Diglett (Pokémon)", (DIGLETT,), evolutions=(tyrogue,))
 
-    build = build_evolution_batch(extract, abox, build_index())
+    build = build_evolution_batch(extract, abox, build_index(abox), {})
 
     assert build.batch.owner_nodes[0].properties == {
         PKMN + "condition": "Level 20 (Attack > Defense)"
@@ -762,7 +764,7 @@ def test_requirement_stubs_follow_their_role(
     evolution = requirement_evolution(Requirement(role=role, name=name, species=None))
     extract = build_extract("Diglett (Pokémon)", (DIGLETT,), evolutions=(evolution,))
 
-    build = build_evolution_batch(extract, abox, build_index())
+    build = build_evolution_batch(extract, abox, build_index(abox), {})
 
     assert (stub_class, stub_id) in node_keys(build.batch)
     assert edge_properties(build.batch, REQUIRES, "diglett:dugtrio", stub_id) == {
@@ -780,7 +782,7 @@ def test_a_required_species_resolves_through_the_index(abox: AboxIndex) -> None:
         "Diglett (Pokémon)", (DIGLETT,), evolutions=(requirement_evolution(party),)
     )
 
-    build = build_evolution_batch(extract, abox, build_index())
+    build = build_evolution_batch(extract, abox, build_index(abox), {})
 
     assert edge_properties(build.batch, REQUIRES, "diglett:dugtrio", "dugtrio") == {
         "role": "partySpecies"
@@ -797,7 +799,7 @@ def test_an_unknown_required_species_drops_the_evolution(abox: AboxIndex) -> Non
         "Diglett (Pokémon)", (DIGLETT,), evolutions=(requirement_evolution(traded),)
     )
 
-    build = build_evolution_batch(extract, abox, build_index())
+    build = build_evolution_batch(extract, abox, build_index(abox), {})
 
     assert_batch_of_anchors_only(build.batch, {"diglett"})
     assert [n.kind for n in build.notes] == [NoteKind.DROPPED_VALUE]
@@ -810,13 +812,13 @@ def test_a_requirement_type_the_abox_lacks_fails_the_page(abox: AboxIndex) -> No
     )
 
     with pytest.raises(BatchBuildError, match="Cosmic"):
-        build_evolution_batch(extract, abox, build_index())
+        build_evolution_batch(extract, abox, build_index(abox), {})
 
 
 def test_the_species_batch_claims_9_patterns_at_each_species_and_1_at_each_entry(
     abox: AboxIndex,
 ) -> None:
-    batch = build_species_batch(build_diglett_extract(), abox)
+    batch = build_species_batch(build_diglett_extract(), abox, {})
     entry_ids = {n.id for n in batch.owner_nodes if n.class_iri == LEARNSET_ENTRY}
 
     claims = claims_by_anchor(batch)
@@ -828,19 +830,19 @@ def test_the_species_batch_claims_9_patterns_at_each_species_and_1_at_each_entry
     assert len(batch.claims) == 2 * len(SPECIES_CLAIM_PATTERNS) + len(entry_ids)
 
 
-def test_the_species_batch_claims_requires_at_each_form_change(abox: AboxIndex) -> None:
-    batch = build_species_batch(build_mega_extract(), abox)
+def test_the_species_batch_claims_3_patterns_at_each_form_change(abox: AboxIndex) -> None:
+    batch = build_species_batch(build_mega_extract(), abox, {})
 
     claims = claims_by_anchor(batch)
 
-    assert claims["charizard:charizard-mega-x"] == REQUIRES_CLAIM_PATTERNS
+    assert claims["charizard:charizard-mega-x"] == CHANGE_CLAIM_PATTERNS
     assert claims["charizard"] == claims["charizard-mega-x"] == SPECIES_CLAIM_PATTERNS
 
 
 def test_a_species_with_no_learnset_still_claims_its_patterns(abox: AboxIndex) -> None:
     extract = build_extract("Dugtrio (Pokémon)", (build_facts("dugtrio", "Dugtrio"),))
 
-    batch = build_species_batch(extract, abox)
+    batch = build_species_batch(extract, abox, {})
 
     assert claims_by_anchor(batch) == {"dugtrio": SPECIES_CLAIM_PATTERNS}
 
@@ -848,18 +850,18 @@ def test_a_species_with_no_learnset_still_claims_its_patterns(abox: AboxIndex) -
 def test_the_evolution_batch_claims_every_species_of_the_page_and_every_evolution(
     abox: AboxIndex,
 ) -> None:
-    build = build_evolution_batch(build_diglett_extract(), abox, build_index())
+    build = build_evolution_batch(build_diglett_extract(), abox, build_index(abox), {})
 
     assert claims_by_anchor(build.batch) == {
         "diglett": EVOLUTION_ANCHOR_PATTERNS,
         "diglett-alola": EVOLUTION_ANCHOR_PATTERNS,
-        "diglett:dugtrio": REQUIRES_CLAIM_PATTERNS,
+        "diglett:dugtrio": CHANGE_CLAIM_PATTERNS,
     }
 
 
 def test_the_batch_claims_are_sorted_and_repeat_on_every_build(abox: AboxIndex) -> None:
-    first = build_species_batch(build_diglett_extract(), abox)
-    second = build_species_batch(build_diglett_extract(), abox)
+    first = build_species_batch(build_diglett_extract(), abox, {})
+    second = build_species_batch(build_diglett_extract(), abox, {})
 
     keys = [claim.sort_key for claim in first.claims]
     assert keys == sorted(keys)
@@ -875,7 +877,7 @@ def test_every_claim_rule_names_declared_iris(model: OntologyModel) -> None:
         *CHUNK_ANCHOR_CLAIMS,
     ]
 
-    assert len(rules) == 9 + 1 + 1 + 2 + 1 + 1 + 2
+    assert len(rules) == 9 + 1 + 3 + 3 + 2 + 2 + 1
     for rule in rules:
         assert rule.property_iri in model.object_properties, rule
         assert rule.other_class_iri is None or rule.other_class_iri in model.classes, rule
@@ -914,3 +916,162 @@ def test_assemble_batch_keeps_a_repeated_claim_once_and_sorts_claims() -> None:
     batch = assemble_batch(SPECIES_SCOPE, Parts(nodes=(second, first)), claims)
 
     assert [claim.anchor.id for claim in batch.claims] == ["a", "b"]
+
+
+def build_stone_extract(
+    base: FormFacts, form: FormFacts, form_kind: str, held_item: str
+) -> SpeciesPageExtract:
+    change = FormChangeFact(
+        from_id=base.id,
+        to_id=form.id,
+        form_kind=form_kind,
+        is_battle_only=True,
+        trigger=None,
+        held_item=held_item,
+    )
+    return build_extract(f"{base.name} (Pokémon)", (base, form), form_changes=(change,))
+
+
+def build_alternate_form(form_id: str, name: str, **fields: object) -> FormFacts:
+    values = {"form_index": 2, "is_default": False, "generation": None, **fields}
+    return build_facts(form_id, name, **values)
+
+
+def read_debut(batch: GraphBatch, change_id: str) -> str:
+    (generation,) = (
+        e.end.id for e in batch.edges if e.property_iri == INTRODUCED_IN and e.start.id == change_id
+    )
+    return generation
+
+
+@pytest.mark.parametrize(
+    ("stone_debut", "generation"),
+    [(6, "generation-vi"), (9, "generation-ix")],
+)
+def test_a_mega_form_change_dates_from_its_latest_link(
+    abox: AboxIndex, stone_debut: int, generation: str
+) -> None:
+    batch = build_species_batch(build_mega_extract(), abox, {"charizardite-x": stone_debut})
+
+    assert read_debut(batch, "charizard:charizard-mega-x") == generation
+
+
+def test_a_primal_form_change_dates_from_its_mechanic(abox: AboxIndex) -> None:
+    groudon = build_facts("groudon", "Groudon", generation=3)
+    primal = build_alternate_form("groudon-primal", "Primal Groudon")
+    extract = build_stone_extract(groudon, primal, "primal", "Red Orb")
+
+    batch = build_species_batch(extract, abox, {"red-orb": 3})
+
+    assert read_debut(batch, "groudon:groudon-primal") == "generation-vi"
+
+
+def test_a_kind_without_a_mechanic_dates_from_its_species_and_item(abox: AboxIndex) -> None:
+    rotom = build_facts("rotom", "Rotom", generation=4)
+    heat = build_alternate_form("rotom-heat", "Heat Rotom")
+    extract = build_stone_extract(rotom, heat, "alternate", "Rotom Catalog")
+
+    batch = build_species_batch(extract, abox, {"rotom-catalog": 7})
+
+    assert read_debut(batch, "rotom:rotom-heat") == "generation-vii"
+
+
+def test_a_form_change_with_no_known_debut_fails_the_page(abox: AboxIndex) -> None:
+    base = build_facts("unown", "Unown", generation=None)
+    form = build_alternate_form("unown-b", "Unown B")
+    extract = build_stone_extract(base, form, "alternate", "Odd Stone")
+
+    with pytest.raises(BatchBuildError, match="unown:unown-b"):
+        build_species_batch(extract, abox, {})
+
+
+def build_evolution_of(
+    source: SpeciesRef, target: SpeciesRef, requirements: tuple[Requirement, ...] = ()
+) -> EvolutionFact:
+    return level_26().model_copy(
+        update={"source": source, "target": target, "requirements": requirements}
+    )
+
+
+def test_an_evolution_into_a_regional_form_dates_from_its_region(abox: AboxIndex) -> None:
+    pikachu = build_extract("Pikachu (Pokémon)", (build_facts("pikachu", "Pikachu"),))
+    raichu = build_extract(
+        "Raichu (Pokémon)",
+        (
+            build_facts("raichu", "Raichu"),
+            build_alternate_form("raichu-alola", "Alolan Raichu", region="Alola"),
+        ),
+    )
+    fact = build_evolution_of(
+        SpeciesRef(name="Pikachu", code=""), SpeciesRef(name="Raichu", code="Alola")
+    )
+    extract = pikachu.model_copy(update={"evolutions": (fact,)})
+    index = build_species_index([pikachu, raichu], abox)
+
+    batch = build_evolution_batch(extract, abox, index, {}).batch
+
+    assert read_debut(batch, "pikachu:raichu-alola") == "generation-vii"
+
+
+def test_an_evolution_between_first_species_dates_from_them(abox: AboxIndex) -> None:
+    bulbasaur = build_extract("Bulbasaur (Pokémon)", (build_facts("bulbasaur", "Bulbasaur"),))
+    ivysaur = build_extract("Ivysaur (Pokémon)", (build_facts("ivysaur", "Ivysaur"),))
+    fact = build_evolution_of(
+        SpeciesRef(name="Bulbasaur", code=""), SpeciesRef(name="Ivysaur", code="")
+    )
+    extract = bulbasaur.model_copy(update={"evolutions": (fact,)})
+    index = build_species_index([bulbasaur, ivysaur], abox)
+
+    batch = build_evolution_batch(extract, abox, index, {}).batch
+
+    assert read_debut(batch, "bulbasaur:ivysaur") == "generation-i"
+
+
+def test_a_form_without_a_debut_takes_the_base_debut(abox: AboxIndex) -> None:
+    rockruff = build_extract("Rockruff (Pokémon)", (build_facts("rockruff", "Rockruff"),))
+    lycanroc = build_extract(
+        "Lycanroc (Pokémon)",
+        (
+            build_facts("lycanroc", "Lycanroc", generation=7),
+            build_alternate_form("lycanroc-midnight", "Midnight Lycanroc"),
+        ),
+    )
+    fact = build_evolution_of(
+        SpeciesRef(name="Rockruff", code=""), SpeciesRef(name="Lycanroc", code="Midnight")
+    )
+    extract = rockruff.model_copy(update={"evolutions": (fact,)})
+    index = build_species_index([rockruff, lycanroc], abox)
+
+    batch = build_evolution_batch(extract, abox, index, {}).batch
+
+    assert read_debut(batch, "rockruff:lycanroc-midnight") == "generation-vii"
+
+
+@pytest.mark.parametrize(
+    ("role", "name", "item_id"),
+    [
+        (RequirementRole.USE, "Fire Stone", "fire-stone"),
+        (RequirementRole.HOLD, "Metal Coat", "metal-coat"),
+    ],
+)
+def test_an_evolution_dates_from_a_later_required_item(
+    abox: AboxIndex, role: RequirementRole, name: str, item_id: str
+) -> None:
+    requirement = Requirement(role=role, name=name, species=None)
+    extract = build_extract(
+        "Diglett (Pokémon)", (DIGLETT,), evolutions=(requirement_evolution(requirement),)
+    )
+
+    batch = build_evolution_batch(extract, abox, build_index(abox), {item_id: 2}).batch
+
+    assert read_debut(batch, "diglett:dugtrio") == "generation-ii"
+
+
+def test_an_evolution_with_no_known_debut_fails_the_page(abox: AboxIndex) -> None:
+    index = SpeciesIndex(
+        names={"diglett": "Diglett", "dugtrio": "Dugtrio"},
+        ids_by_name={"Diglett": "diglett", "Dugtrio": "dugtrio"},
+    )
+
+    with pytest.raises(BatchBuildError, match="diglett:dugtrio"):
+        build_evolution_batch(build_diglett_extract(), abox, index, {})

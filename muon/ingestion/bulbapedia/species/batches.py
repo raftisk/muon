@@ -8,6 +8,10 @@ A-Box owns resolve through `AboxIndex`, and a miss fails the page. Evolution ref
 resolve through `SpeciesIndex`, and a miss drops the evolution; neither creates a stub for
 an id nothing owns.
 
+Every form change and evolution gets `introducedIn` the latest debut among the species
+nodes, items and generation mechanic it links, which is the earliest generation the method
+can apply in. Item debuts come from the item parse outputs.
+
 Pass 3 (`build_chunk_batch`) owns the text chunks of the page. A chunk describes a species
 node of the page and is mentioned by the entities its typed templates name, so the batch
 holds species, move, ability, type and version stubs. A mention that resolves to nothing is
@@ -31,7 +35,7 @@ This module knows the pkmn universe, as every ingestion module of a source does.
 """
 
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from muon.ingestion.batch import (
     EdgeRecord,
@@ -47,13 +51,13 @@ from muon.ingestion.bulbapedia.batching import (
     FOUND_IN,
     FROM_WORK,
     GENERATION,
-    GENERATION_LABEL,
     HAS_TYPE,
     HELD_ITEM,
     IN,
     IN_VERSION_GROUP,
     INTRODUCED_IN,
     ITEM,
+    LAST_VALID_IN,
     LOCATION,
     MACHINE,
     MENTIONED_IN,
@@ -83,16 +87,20 @@ from muon.ingestion.bulbapedia.batching import (
     build_work_parts,
     describe_unresolved,
     drop_none,
+    format_generation_label,
     join_parts,
     list_owner_records,
     number_chunks,
     require_abox,
     resolve_abox,
-    to_roman,
 )
 from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
 from muon.ingestion.bulbapedia.pages import build_permalink
-from muon.ingestion.bulbapedia.species.evolution import EVOLUTION_PATH
+from muon.ingestion.bulbapedia.species.evolution import (
+    EVOLUTION_PATH,
+    MEGA_KIND,
+    PRIMAL_KIND,
+)
 from muon.ingestion.bulbapedia.species.extract import (
     BaseStats,
     EncounterFact,
@@ -204,6 +212,18 @@ REQUIREMENT_CLASSES: Mapping[RequirementRole, str] = {
 }
 A_BOX_REQUIREMENT_CLASSES = frozenset({TYPE})
 HOLD_ROLE = RequirementRole.HOLD.value
+ITEM_REQUIREMENT_CLASSES = frozenset({ITEM, HELD_ITEM})
+GIGANTAMAX_KIND = "gigantamax"
+TERASTAL_KIND = "terastal"
+# The A-Box label of the mechanic behind a form kind; the other kinds have none.
+FORM_KIND_MECHANICS: Mapping[str, str] = {
+    MEGA_KIND: "Mega Evolution",
+    PRIMAL_KIND: "Primal Reversion",
+    GIGANTAMAX_KIND: "Gigantamax",
+    TERASTAL_KIND: "Terastallization",
+}
+DEBUT_FIELD = "debut generation"
+MECHANIC_FIELD = "generation mechanic"
 INFOBOX_SECTION = INFOBOX_LABEL
 LEARNSET_SECTION = PATH_SEPARATOR.join(LEARNSET_PATH)
 EVOLUTION_SECTION = PATH_SEPARATOR.join(EVOLUTION_PATH)
@@ -222,14 +242,22 @@ SPECIES_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
         ClaimRule(FROM_SPECIES, IN, FORM_CHANGE, True),
     ),
     LEARNSET_ENTRY: (ClaimRule(VIA_MACHINE, OUT, MACHINE, False),),
-    FORM_CHANGE: (ClaimRule(REQUIRES, OUT, None, False),),
+    FORM_CHANGE: (
+        ClaimRule(REQUIRES, OUT, None, False),
+        ClaimRule(INTRODUCED_IN, OUT, GENERATION, False),
+        ClaimRule(LAST_VALID_IN, OUT, GENERATION, False),
+    ),
 }
 EVOLUTION_ANCHOR_CLAIMS: tuple[ClaimRule, ...] = (
     ClaimRule(EVOLVES_TO, OUT, POKEMON_SPECIES, False),
     ClaimRule(FROM_SPECIES, IN, EVOLUTION, True),
 )
 EVOLUTION_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
-    EVOLUTION: (ClaimRule(REQUIRES, OUT, None, False),),
+    EVOLUTION: (
+        ClaimRule(REQUIRES, OUT, None, False),
+        ClaimRule(INTRODUCED_IN, OUT, GENERATION, False),
+        ClaimRule(LAST_VALID_IN, OUT, GENERATION, False),
+    ),
 }
 CHUNK_ANCHOR_CLAIMS: tuple[ClaimRule, ...] = (ClaimRule(DESCRIBES, IN, TEXT_CHUNK, True),)
 # `atLocation` and `inVersion` are not claimed: the Encounter id fixes both ends. The
@@ -249,19 +277,23 @@ CHUNK_OWNER_CLAIMS: Mapping[str, tuple[ClaimRule, ...]] = {
 
 @dataclass(frozen=True)
 class SpeciesIndex:
-    """Every species node id of a run with its name, and each base species' id by name."""
+    """Every species node id of a run with its name, each base species' id by name and the
+    debut generation number of every node that has one."""
 
     names: Mapping[str, str]
     ids_by_name: Mapping[str, str]
+    debuts: Mapping[str, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
 class PageContext:
-    """What a builder looks names up in: the A-Box and, for pass 2, every species of the run."""
+    """What a builder looks names up in: the A-Box, the debut generation number of every
+    item and, for pass 2, every species of the run."""
 
     page_title: str
     abox: AboxIndex
-    species: SpeciesIndex = SpeciesIndex(names={}, ids_by_name={})
+    species: SpeciesIndex = SpeciesIndex(names={}, ids_by_name={}, debuts={})
+    item_debuts: Mapping[str, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -275,15 +307,42 @@ class EvolutionBuild:
     total: int
 
 
-def build_species_index(extracts: Iterable[SpeciesPageExtract]) -> SpeciesIndex:
+def read_generation_number(form: FormFacts, context: PageContext) -> int | None:
+    """Return the number of the generation a node was introduced in: the base node's own, or
+    the generation of a regional form's region."""
+    if form.generation is not None:
+        return form.generation
+    if form.region is not None:
+        label = context.abox.region_generations.get(form.region)
+        if label is None:
+            raise BatchBuildError(context.page_title, INFOBOX_SECTION, REGION_PROPERTY, form.region)
+        return context.abox.generation_numbers[label]
+    return None
+
+
+def read_page_debuts(extract: SpeciesPageExtract, context: PageContext) -> dict[str, int]:
+    """Map every form id of a page to its debut generation number. A form with none takes
+    the base form's."""
+    base_number = read_generation_number(extract.forms[0], context)
+    debuts: dict[str, int] = {}
+    for form in extract.forms:
+        number = read_generation_number(form, context) or base_number
+        if number is not None:
+            debuts[form.id] = number
+    return debuts
+
+
+def build_species_index(extracts: Iterable[SpeciesPageExtract], abox: AboxIndex) -> SpeciesIndex:
     names: dict[str, str] = {}
     ids_by_name: dict[str, str] = {}
+    debuts: dict[str, int] = {}
     for extract in extracts:
         for form in extract.forms:
             names[form.id] = form.name
         base = extract.forms[0]
         ids_by_name[base.name] = base.id
-    return SpeciesIndex(names=names, ids_by_name=ids_by_name)
+        debuts.update(read_page_debuts(extract, PageContext(extract.title, abox)))
+    return SpeciesIndex(names=names, ids_by_name=ids_by_name, debuts=debuts)
 
 
 def resolve_species(index: SpeciesIndex, ref: SpeciesRef) -> tuple[str, bool] | None:
@@ -398,16 +457,8 @@ def build_species_edges(form: FormFacts, species: NodeRecord, context: PageConte
 
 
 def read_generation_label(form: FormFacts, context: PageContext) -> str | None:
-    """Return the label of the generation a node was introduced in: the base node's own, or
-    the generation of a regional form's region."""
-    if form.generation is not None:
-        return GENERATION_LABEL.format(numeral=to_roman(form.generation))
-    if form.region is not None:
-        label = context.abox.region_generations.get(form.region)
-        if label is None:
-            raise BatchBuildError(context.page_title, INFOBOX_SECTION, REGION_PROPERTY, form.region)
-        return label
-    return None
+    number = read_generation_number(form, context)
+    return None if number is None else format_generation_label(number)
 
 
 def build_generation_parts(form: FormFacts, species: NodeRecord, context: PageContext) -> Parts:
@@ -468,7 +519,43 @@ def build_entry_record(row: LearnsetRow, species_name: str, move: NodeRecord) ->
     )
 
 
-def build_form_change_parts(change: FormChangeFact, records: Mapping[str, NodeRecord]) -> Parts:
+def build_debut_parts(
+    change: NodeRecord,
+    numbers: Iterable[int | None],
+    context: PageContext,
+    location: tuple[str, str],
+) -> Parts:
+    """Date a method from the latest known debut among the nodes it links.
+
+    Raises `BatchBuildError` when no debut is known.
+    """
+    known = [number for number in numbers if number is not None]
+    if not known:
+        section_path, field_name = location
+        raise BatchBuildError(context.page_title, section_path, field_name, change.id)
+    label = format_generation_label(max(known))
+    generation = require_abox(context, GENERATION, label, location)
+    return Parts((generation,), (build_edge(INTRODUCED_IN, change, generation),))
+
+
+def read_mechanic_debut(form_kind: str, context: PageContext) -> int | None:
+    """Return the debut of the generation mechanic behind a form kind, or `None` for a kind
+    with no mechanic."""
+    mechanic = FORM_KIND_MECHANICS.get(form_kind)
+    if mechanic is None:
+        return None
+    label = context.abox.mechanic_generations.get(mechanic)
+    if label is None:
+        raise BatchBuildError(context.page_title, EVOLUTION_SECTION, MECHANIC_FIELD, mechanic)
+    return context.abox.generation_numbers[label]
+
+
+def build_form_change_parts(
+    change: FormChangeFact,
+    records: Mapping[str, NodeRecord],
+    debuts: Mapping[str, int],
+    context: PageContext,
+) -> Parts:
     source = records[change.from_id]
     target = records[change.to_id]
     properties = drop_none(
@@ -485,7 +572,7 @@ def build_form_change_parts(change: FormChangeFact, records: Mapping[str, NodeRe
         properties=properties,
     )
     item = build_stub(HELD_ITEM, change.held_item)
-    return Parts(
+    links = Parts(
         nodes=(record, item),
         edges=(
             build_edge(FROM_SPECIES, record, source),
@@ -493,11 +580,23 @@ def build_form_change_parts(change: FormChangeFact, records: Mapping[str, NodeRe
             build_edge(REQUIRES, record, item, {ROLE: HOLD_ROLE}),
         ),
     )
+    linked_debuts = (
+        debuts.get(change.from_id),
+        debuts.get(change.to_id),
+        context.item_debuts.get(item.id),
+        read_mechanic_debut(change.form_kind, context),
+    )
+    location = (EVOLUTION_SECTION, DEBUT_FIELD)
+    return join_parts([links, build_debut_parts(record, linked_debuts, context, location)])
 
 
-def build_species_batch(extract: SpeciesPageExtract, abox: AboxIndex) -> GraphBatch:
-    """Build the pass-1 batch of a page. Raises `BatchBuildError` for a name the A-Box lacks."""
-    context = PageContext(extract.title, abox)
+def build_species_batch(
+    extract: SpeciesPageExtract, abox: AboxIndex, item_debuts: Mapping[str, int]
+) -> GraphBatch:
+    """Build the pass-1 batch of a page. Raises `BatchBuildError` for a name the A-Box lacks
+    and for a form change with no known debut."""
+    context = PageContext(extract.title, abox, item_debuts=item_debuts)
+    debuts = read_page_debuts(extract, context)
     source_url = build_permalink(extract.title, extract.revision_id)
     records = {form.id: build_species_record(form, source_url) for form in extract.forms}
     base = records[extract.forms[0].id]
@@ -509,7 +608,9 @@ def build_species_batch(extract: SpeciesPageExtract, abox: AboxIndex) -> GraphBa
         if not form.is_default:
             parts.append(build_form_edge(base, form, species))
     parts.append(build_learnset_parts(extract, records, context))
-    parts.extend(build_form_change_parts(change, records) for change in extract.form_changes)
+    parts.extend(
+        build_form_change_parts(change, records, debuts, context) for change in extract.form_changes
+    )
     joined = join_parts(parts)
     owner_claims = build_owner_claims(
         list_owner_records(joined, SPECIES_SCOPE), SPECIES_OWNER_CLAIMS
@@ -586,8 +687,8 @@ def build_requirement_parts(
 def build_evolution_parts(
     fact: EvolutionFact, ends: tuple[str, str], context: PageContext
 ) -> Parts | None:
-    """Build the evolution node with its species and requirement edges, or `None` when a
-    required species is unknown."""
+    """Build the evolution node with its species, requirement and generation edges, or
+    `None` when a required species is unknown."""
     source_id, target_id = ends
     source = build_species_stub(context, source_id)
     target = build_species_stub(context, target_id)
@@ -611,6 +712,17 @@ def build_evolution_parts(
     ]
     if any(part is None for part in requirement_parts):
         return None
+    requirements = join_parts(part for part in requirement_parts if part is not None)
+    linked_debuts = (
+        context.species.debuts.get(source_id),
+        context.species.debuts.get(target_id),
+        *(
+            context.item_debuts.get(stub.id)
+            for stub in requirements.nodes
+            if stub.class_iri in ITEM_REQUIREMENT_CLASSES
+        ),
+    )
+    location = (EVOLUTION_SECTION, DEBUT_FIELD)
     return join_parts(
         [
             Parts(
@@ -621,7 +733,8 @@ def build_evolution_parts(
                     build_edge(EVOLVES_TO, source, target),
                 ),
             ),
-            *(part for part in requirement_parts if part is not None),
+            requirements,
+            build_debut_parts(evolution, linked_debuts, context, location),
         ]
     )
 
@@ -647,7 +760,10 @@ def is_same_evolution(first: EvolutionFact, second: EvolutionFact) -> bool:
 
 
 def build_evolution_batch(
-    extract: SpeciesPageExtract, abox: AboxIndex, index: SpeciesIndex
+    extract: SpeciesPageExtract,
+    abox: AboxIndex,
+    index: SpeciesIndex,
+    item_debuts: Mapping[str, int],
 ) -> EvolutionBuild:
     """Build the pass-2 batch of the evolutions a page owns.
 
@@ -655,7 +771,7 @@ def build_evolution_batch(
     other pages' species are cross-checks and are skipped here. An evolution with an
     unknown species is dropped and noted.
     """
-    context = PageContext(extract.title, abox, index)
+    context = PageContext(extract.title, abox, index, item_debuts)
     own_ids = {form.id for form in extract.forms}
     parts: list[Parts] = []
     notes: list[PageNote] = []
@@ -833,7 +949,7 @@ def build_encounter_batch(
     claims only. Every fact version is an A-Box Version: the run checks the table rows
     before any page is read. A fact at a place and version that `coverage` holds gives its
     Location stub and `foundIn` only, no Encounter."""
-    context = PageContext(extract.title, abox, build_species_index([extract]))
+    context = PageContext(extract.title, abox, build_species_index([extract], abox))
     anchors = build_page_anchors(extract, context)
     species = {anchor.id: anchor for anchor in anchors.nodes}
     joined = join_parts(
