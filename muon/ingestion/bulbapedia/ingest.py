@@ -25,7 +25,6 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Protocol
 
 from muon.files import write_text_atomically
 from muon.graph import GraphClient, GraphError
@@ -33,12 +32,13 @@ from muon.ingestion.batch import GraphBatch, NodeRef
 from muon.ingestion.bulbapedia.batching import UNIVERSE
 from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT
 from muon.ingestion.bulbapedia.runs import PageResult, PageStatus, ReportModel, dump_json
+from muon.ingestion.plan import BatchValidator
 from muon.ingestion.runner import Runner, RunReport, UniverseCensus, WriteMode
 from muon.ingestion.seed import find_missing_nodes, read_abox
 from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
 from muon.ontology.model import extract_local_name, load_ontology_model
 from muon.plugins import discover_universes
-from muon.validation import ValidationReport, Violation, build_validator
+from muon.validation import Violation, build_validator
 
 INGEST_OUTPUT_ROOT = DEFAULT_ROOT / "ingested"
 PROGRESS_EVERY = 100
@@ -143,10 +143,6 @@ class StubIngestReport(IngestReport):
     """`stub_ids` maps a class label to the ids of its nodes with only `id` and `name`."""
 
     stub_ids: Mapping[str, tuple[str, ...]] | None
-
-
-class BatchValidator(Protocol):
-    async def validate(self, batch: GraphBatch) -> ValidationReport: ...
 
 
 @dataclass(frozen=True)

@@ -1,11 +1,14 @@
-"""Atomic writes for files that readers may open while a run writes them."""
+"""Atomic writes for files that readers may open while a run writes them, and the JSON
+text of the files a person reads."""
 
+import json
 import os
 import tempfile
 from pathlib import Path
 
 TEMP_FILE_SUFFIX = ".tmp"
 TEXT_ENCODING = "utf-8"
+JSON_INDENT = 2
 
 
 def write_bytes_atomically(path: Path, content: bytes) -> None:
@@ -26,3 +29,8 @@ def write_bytes_atomically(path: Path, content: bytes) -> None:
 def write_text_atomically(path: Path, text: str) -> None:
     """Write `text` to `path` as UTF-8, with the guarantee of `write_bytes_atomically`."""
     write_bytes_atomically(path, text.encode(TEXT_ENCODING))
+
+
+def dump_json(data: object) -> str:
+    """Return `data` as indented JSON with sorted keys, so equal data gives equal bytes."""
+    return json.dumps(data, sort_keys=True, ensure_ascii=False, indent=JSON_INDENT) + "\n"

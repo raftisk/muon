@@ -13,4 +13,5 @@ data/pokeapi/csv/
 data/schema/
 data/evals/
 data/validation/
+data/plans/
 /Bulbapedia-*.xml
