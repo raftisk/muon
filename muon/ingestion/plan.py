@@ -1,7 +1,9 @@
-"""Plan: what a sequence of batches would write, as JSON files a person reads first.
+"""Plan and apply: what a sequence of batches would write, as JSON files a person reads
+first, and the write of exactly that.
 
 Planning reads the graph and writes no data. A plan is 1 folder,
-`<root>/<universe>/<run id>/`, with `plan.json` and 1 file per batch under `batches/`.
+`<root>/<universe>/<run id>/`, with `plan.json`, 1 file per batch under `batches/` and,
+after an apply, the log `applied.jsonl`.
 
 Map:
 - Models: `ItemState`, the diff models (`BatchDiff` and its changes), `StoredStatement`,
@@ -13,6 +15,10 @@ Map:
   the Validator, the delete preview and the diff, and stops at the 1st one that rejects.
   `finish` writes `plan.json`, so a folder without it is an incomplete plan.
   `plan_batches` does all of it for a sequence of batches.
+- Applying: `apply_plan` takes the batches in order. It checks each planned one again,
+  rebuilds its statements, runs them in 1 transaction when they equal the stored ones and
+  logs them. A batch in the log is never run again, so a 2nd apply resumes after a stop.
+  Apply does not look at the graph for changes made since the plan.
 """
 
 import hashlib
@@ -24,17 +30,18 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, LiteralString, Protocol
 
-from pydantic import BaseModel, ConfigDict, field_serializer
+from pydantic import BaseModel, ConfigDict, ValidationError, field_serializer
 
 from muon.config import PROJECT_ROOT
 from muon.files import dump_json, write_text_atomically
-from muon.graph import GraphClient
-from muon.ingestion.batch import GraphBatch, NodeRef, serialize_batch
+from muon.graph import GraphClient, WriteSummary
+from muon.ingestion.batch import GraphBatch, NodeRef, list_batch_classes, serialize_batch
 from muon.ingestion.policy import WritePolicy, check_policy
 from muon.ingestion.runner import (
     DeletePreview,
     Runner,
     WriteMode,
+    add_summaries,
     build_edge_rows,
     build_node_rows,
     build_statements,
@@ -48,6 +55,7 @@ from muon.validation.shapes import SHAPES_DIR_NAME, SHAPES_SUFFIX
 PLAN_ROOT = PROJECT_ROOT / "data" / "plans"
 PLAN_FILE_NAME = "plan.json"
 BATCHES_DIR_NAME = "batches"
+APPLIED_LOG_NAME = "applied.jsonl"
 BATCH_FILE_DIGITS = 5
 RUN_ID_TIME_FORMAT = "%Y%m%d-%H%M%S"
 RULE_DELETE_SCOPE = "D1"
@@ -76,6 +84,14 @@ EdgeKey = tuple[str, str, str, str, str]
 
 class PlanError(Exception):
     """A plan folder cannot be written or read. The message names the path."""
+
+
+class ApplyError(Exception):
+    """A batch of a plan cannot be applied. Earlier batches stay written and logged."""
+
+    def __init__(self, number: int, reason: str) -> None:
+        self.number = number
+        super().__init__(f"Apply stopped at batch {number}: {reason}")
 
 
 class ItemState(StrEnum):
@@ -193,6 +209,39 @@ class PlanHeader(PlanModel):
     totals: DiffTotals
 
 
+class LoggedStatement(PlanModel):
+    """A log line for 1 statement apply ran, with the counters it returned."""
+
+    batch: int
+    cypher: str
+    parameters: Mapping[str, Any]
+    summary: WriteSummary
+    time: datetime
+
+
+class LoggedSkip(PlanModel):
+    """A log line for a batch apply left alone because of its state."""
+
+    batch: int
+    state: ItemState
+    time: datetime
+
+
+class LoggedBatch(BaseModel):
+    """What a resume reads from any log line."""
+
+    batch: int
+
+
+class ApplyReport(PlanModel):
+    """What 1 apply did. `counters` sums the statements it ran."""
+
+    batches_written: int
+    batches_skipped: Mapping[ItemState, int]
+    batches_already_applied: int
+    counters: WriteSummary
+
+
 class BatchValidator(Protocol):
     async def validate(self, batch: GraphBatch) -> ValidationReport: ...
 
@@ -209,6 +258,17 @@ class PlanContext:
     universe: str
     run_label: str
     root: Path = PLAN_ROOT
+
+
+@dataclass(frozen=True)
+class ApplyContext:
+    """What applying the plan in `plan_dir` reads and writes."""
+
+    client: GraphClient
+    runner: Runner
+    validator: BatchValidator
+    materializer: LabelMaterializer
+    plan_dir: Path
 
 
 class PlanWriter:
@@ -463,3 +523,145 @@ def hash_files(paths: Iterable[Path]) -> str:
         digest.update(path.name.encode())
         digest.update(path.read_bytes())
     return digest.hexdigest()
+
+
+def read_plan_header(plan_dir: Path) -> PlanHeader:
+    path = plan_dir / PLAN_FILE_NAME
+    try:
+        return PlanHeader.model_validate_json(read_plan_file(path))
+    except ValidationError as error:
+        raise PlanError(f"Invalid plan file {path}: {error}") from error
+
+
+def read_plan(plan_dir: Path) -> tuple[PlanHeader, tuple[PlannedItem, ...]]:
+    """Read `plan.json` and every batch file it counts, in plan order."""
+    header = read_plan_header(plan_dir)
+    numbers = range(1, sum(header.counts.values()) + 1)
+    return header, tuple(read_planned_item(plan_dir, number) for number in numbers)
+
+
+def read_planned_item(plan_dir: Path, number: int) -> PlannedItem:
+    path = build_batch_path(plan_dir, number)
+    try:
+        item = PlannedItem.model_validate_json(read_plan_file(path))
+    except ValidationError as error:
+        raise PlanError(f"Invalid batch file {path}: {error}") from error
+    if item.number != number:
+        raise PlanError(f"Invalid batch file {path}: it holds batch {item.number}")
+    return item
+
+
+def read_plan_file(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise PlanError(f"Cannot read plan file {path}: {error}") from error
+
+
+def read_applied_numbers(plan_dir: Path) -> frozenset[int]:
+    """Return the numbers of the batches the log of the plan holds, or none without a log."""
+    path = plan_dir / APPLIED_LOG_NAME
+    if not path.exists():
+        return frozenset()
+    numbers: set[int] = set()
+    for line_number, line in enumerate(read_plan_file(path).splitlines(), start=1):
+        try:
+            numbers.add(LoggedBatch.model_validate_json(line).batch)
+        except ValidationError as error:
+            raise PlanError(f"Invalid line {line_number} of {path}: {error}") from error
+    return frozenset(numbers)
+
+
+async def apply_plan(context: ApplyContext) -> ApplyReport:
+    """Write the planned batches that the log lacks, in order, and log each one.
+
+    The `id` constraints of their classes are ensured once, up front. Raises `ApplyError`
+    at the 1st batch that fails a check, and lets a `GraphError` of a write through.
+    """
+    _, items = read_plan(context.plan_dir)
+    applied = read_applied_numbers(context.plan_dir)
+    pending = [item for item in items if item.number not in applied]
+    # A rejected batch is never written, and may name a class the ontology lacks.
+    writable = (item.batch for item in pending if item.state is ItemState.PLANNED)
+    await context.runner.ensure_constraints(list_batch_classes(writable))
+    skipped: Counter[ItemState] = Counter()
+    summaries: list[WriteSummary] = []
+    written = 0
+    for item in pending:
+        if item.state is not ItemState.PLANNED:
+            skip = LoggedSkip(batch=item.number, state=item.state, time=datetime.now(UTC))
+            append_log(context.plan_dir, [skip])
+            skipped[item.state] += 1
+            continue
+        summaries.extend(await apply_item(context, item))
+        written += 1
+    return ApplyReport(
+        batches_written=written,
+        batches_skipped=dict(skipped),
+        batches_already_applied=len(items) - len(pending),
+        counters=add_summaries(summaries),
+    )
+
+
+async def apply_item(context: ApplyContext, item: PlannedItem) -> list[WriteSummary]:
+    """Check 1 planned batch again, write it in 1 transaction and log its statements.
+
+    The statements that run are rebuilt from the batch, so no Cypher of a file reaches the
+    graph. The log is written after the commit: a stop between the 2 makes the next apply
+    run the batch again, which an upsert allows.
+    """
+    await check_item(context, item)
+    statements = build_statements(item.batch, WriteMode.UPSERT, context.materializer)
+    rebuilt = store_statements(item.batch, context.materializer)
+    if dump_statements(rebuilt) != dump_statements(item.statements):
+        reason = "the stored statements differ from the ones the batch builds now"
+        raise ApplyError(item.number, reason)
+    summaries = await context.client.execute_write_batch(statements)
+    now = datetime.now(UTC)
+    lines = [
+        LoggedStatement(
+            batch=item.number,
+            cypher=statement.cypher,
+            parameters=statement.parameters,
+            summary=summary,
+            time=now,
+        )
+        for statement, summary in zip(item.statements, summaries, strict=True)
+    ]
+    append_log(context.plan_dir, lines)
+    return summaries
+
+
+async def check_item(context: ApplyContext, item: PlannedItem) -> None:
+    """Raise `ApplyError` unless the batch still passes its policy and the Validator."""
+    try:
+        context.runner.check_universe(item.batch)
+    except ValueError as error:
+        raise ApplyError(item.number, str(error)) from error
+    if item.policy is not None:
+        violations = check_policy(item.batch, item.policy)
+        if violations:
+            raise ApplyError(item.number, describe_violations(violations))
+    validation = await context.validator.validate(item.batch)
+    if not validation.is_valid:
+        raise ApplyError(item.number, describe_violations(validation.violations))
+
+
+def describe_violations(violations: Iterable[Violation]) -> str:
+    return "; ".join(f"{violation.rule_id}: {violation.message}" for violation in violations)
+
+
+def dump_statements(statements: Iterable[StoredStatement]) -> str:
+    """Return the JSON text of the statements, which tells 1 from 1.0 and from true."""
+    return dump_json([statement.model_dump(mode="json") for statement in statements])
+
+
+def append_log(plan_dir: Path, lines: Sequence[LoggedStatement | LoggedSkip]) -> None:
+    path = plan_dir / APPLIED_LOG_NAME
+    text = "".join(f"{line.model_dump_json()}\n" for line in lines)
+    try:
+        with path.open("a", encoding="utf-8") as log:
+            log.write(text)
+    except OSError as error:
+        numbers = sorted({line.batch for line in lines})
+        raise PlanError(f"Cannot log batches {numbers} to {path}: {error}") from error

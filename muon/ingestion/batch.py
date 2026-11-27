@@ -9,7 +9,7 @@ derives from the English name.
 
 import re
 import unicodedata
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from enum import StrEnum
 from typing import Final, Self
 
@@ -226,3 +226,12 @@ def serialize_batch(batch: GraphBatch) -> dict[str, object]:
         if claim.get(ID_PREFIX_KEY, "") is None:
             del claim[ID_PREFIX_KEY]
     return data
+
+
+def list_batch_classes(batches: Iterable[GraphBatch]) -> frozenset[str]:
+    """Return the scope classes and the stub classes of the batches."""
+    classes: set[str] = set()
+    for batch in batches:
+        classes |= batch.scope
+        classes.update(stub.class_iri for stub in batch.stub_nodes)
+    return frozenset(classes)

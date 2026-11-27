@@ -1,7 +1,8 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
 `muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability|item`,
-`muon ingest bulbapedia species|move|ability|item`, `muon schema <prefix> [--refresh] [--json]` and
+`muon ingest bulbapedia species|move|ability|item`, `muon apply PLAN_DIR`,
+`muon schema <prefix> [--refresh] [--json]`,
 `muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]` and
 `muon eval PREFIX [--set NAME ...] [--question ID ...] [--output-dir DIR]`."""
 
@@ -158,6 +159,14 @@ from muon.ingestion.bulbapedia.species.run import (
 from muon.ingestion.bulbapedia.species.run import (
     PAGE_TYPE as PARSE_PAGE_TYPE,
 )
+from muon.ingestion.plan import (
+    ApplyContext,
+    ApplyError,
+    ApplyReport,
+    PlanError,
+    apply_plan,
+    read_plan_header,
+)
 from muon.ingestion.pokeapi.snapshot import (
     SnapshotError,
     SnapshotFetchReport,
@@ -191,6 +200,7 @@ from muon.retrieval.evidence import (
 )
 from muon.retrieval.resolve import NameIndexError
 from muon.retrieval.schema import SchemaIntrospectionError
+from muon.validation import build_validator
 from muon.validation.report import SweepReport
 from muon.validation.sweep import run_sweep, write_sweep_report
 
@@ -207,6 +217,7 @@ SCHEMA_COMMAND = "schema"
 ASK_COMMAND = "ask"
 EVAL_COMMAND = "eval"
 START_COMMAND = "start"
+APPLY_COMMAND = "apply"
 START_TARGET = "server"
 ASK_TARGET = "question"
 BULBAPEDIA_SOURCE = "bulbapedia"
@@ -369,6 +380,10 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="TITLE",
         help="ingest only this page (repeatable)",
     )
+    apply_parser = commands.add_parser(
+        APPLY_COMMAND, help="write the batches of a plan and log every statement"
+    )
+    apply_parser.add_argument("plan_dir", type=Path, help="folder of the plan, with plan.json")
     schema = commands.add_parser(
         SCHEMA_COMMAND, help="print the schema context of a universe, built from the live graph"
     )
@@ -446,6 +461,8 @@ def describe_target(arguments: argparse.Namespace) -> str:
         return str(arguments.universe or ASK_TARGET)
     if arguments.command == START_COMMAND:
         return START_TARGET
+    if arguments.command == APPLY_COMMAND:
+        return str(arguments.plan_dir)
     return str(arguments.prefix)
 
 
@@ -473,6 +490,53 @@ async def run_seed(settings: Settings, prefix: str) -> RunReport:
         return await seed_universe(
             client, settings.ontology.ontology_dir, prefix, plugin.manifest.key_classes
         )
+
+
+async def run_apply(settings: Settings, plan_dir: Path) -> ApplyReport:
+    """Apply a plan with the plugin and Validator of the universe its `plan.json` names."""
+    universe = read_plan_header(plan_dir).universe
+    ontology_dir = settings.ontology.ontology_dir
+    model = load_ontology_model(ontology_dir, universe)
+    plugin = load_plugin(settings, universe)
+    materializer = build_plugin_materializer(model, plugin.manifest)
+    async with Neo4jGraphClient(settings.neo4j) as client:
+        context = ApplyContext(
+            client=client,
+            runner=Runner(client, materializer),
+            validator=build_validator(client, ontology_dir, plugin),
+            materializer=materializer,
+            plan_dir=plan_dir,
+        )
+        return await apply_plan(context)
+
+
+def format_apply_report(plan_dir: Path, report: ApplyReport) -> str:
+    lines = [
+        f"{APPLY_COMMAND} {plan_dir}: done",
+        f"batches written: {report.batches_written}",
+    ]
+    lines.extend(
+        f"batches skipped {state.value}: {count}"
+        for state, count in sorted(report.batches_skipped.items())
+    )
+    lines.append(f"batches already applied: {report.batches_already_applied}")
+    lines.extend(
+        f"{field.name.replace('_', ' ')}: {getattr(report.counters, field.name)}"
+        for field in fields(WriteSummary)
+    )
+    return "\n".join(lines)
+
+
+def execute_apply(settings: Settings, arguments: argparse.Namespace) -> int:
+    plan_dir: Path = arguments.plan_dir
+    try:
+        report = asyncio.run(run_apply(settings, plan_dir))
+    except (PlanError, ApplyError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        print(f"{build_failure_prefix(APPLY_COMMAND, str(plan_dir))} {error}", file=sys.stderr)
+        return EXIT_FAILURE
+
+    print(format_apply_report(plan_dir, report))
+    return EXIT_SUCCESS
 
 
 def format_purge_report(prefix: str, summary: WriteSummary) -> str:
@@ -1546,4 +1610,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return execute_eval(settings, arguments)
     if arguments.command == START_COMMAND:
         return execute_start(settings, arguments)
+    if arguments.command == APPLY_COMMAND:
+        return execute_apply(settings, arguments)
     return execute_seed(settings, arguments.prefix)

@@ -87,6 +87,7 @@ from muon.ingestion.bulbapedia.species.run import (
     ParseRunError,
     ResidueItem,
 )
+from muon.ingestion.plan import ApplyReport, ItemState
 from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotFetchReport
 from muon.ingestion.runner import RunReport
 from muon.ingestion.seed import ABoxError
@@ -191,6 +192,58 @@ def test_seed_failure_prints_error(
     assert f"seed {PREFIX} failed: {error}" in captured.err
     assert SECRET not in captured.err
     assert captured.out == ""
+
+
+def test_apply_parses_the_plan_folder() -> None:
+    arguments = cli.build_parser().parse_args(["apply", "data/plans/muontoy/run"])
+
+    assert arguments.plan_dir == Path("data/plans/muontoy/run")
+    assert cli.describe_target(arguments) == "data/plans/muontoy/run"
+
+
+@pytest.mark.usefixtures("settings")
+def test_apply_of_a_folder_without_a_plan_prints_the_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    def fail_on_client(*_: object) -> None:
+        raise AssertionError("apply reached the graph without a plan")
+
+    monkeypatch.setattr(cli, "Neo4jGraphClient", fail_on_client)
+
+    exit_code = cli.main(["apply", str(tmp_path)])
+
+    captured = capsys.readouterr()
+    assert exit_code == cli.EXIT_FAILURE
+    assert f"apply {tmp_path} failed:" in captured.err
+    assert "plan.json" in captured.err
+    assert captured.out == ""
+
+
+@pytest.mark.usefixtures("settings")
+def test_apply_prints_the_report(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    report = ApplyReport(
+        batches_written=2,
+        batches_skipped={ItemState.NO_CHANGE: 3},
+        batches_already_applied=1,
+        counters=EMPTY_PURGE_SUMMARY,
+    )
+
+    async def run(settings: Settings, plan_dir: Path) -> ApplyReport:
+        return report
+
+    monkeypatch.setattr(cli, "run_apply", run)
+
+    exit_code = cli.main(["apply", "plan-folder"])
+
+    output = capsys.readouterr().out
+    assert exit_code == cli.EXIT_SUCCESS
+    assert "apply plan-folder: done" in output
+    assert "batches written: 2" in output
+    assert "batches skipped no_change: 3" in output
+    assert "batches already applied: 1" in output
+    assert "nodes created: 0" in output
 
 
 def test_invalid_settings_print_error(

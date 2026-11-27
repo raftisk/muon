@@ -29,6 +29,7 @@ from pathlib import Path
 from muon.files import write_text_atomically
 from muon.graph import GraphClient, GraphError
 from muon.ingestion.batch import GraphBatch, NodeRef
+from muon.ingestion.batch import list_batch_classes as list_batch_classes
 from muon.ingestion.bulbapedia.batching import UNIVERSE
 from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT
 from muon.ingestion.bulbapedia.runs import PageResult, PageStatus, ReportModel, dump_json
@@ -188,15 +189,6 @@ async def check_seed(
     missing = await find_missing_nodes(client, materializer, abox.nodes)
     if missing:
         raise MissingSeedError(missing)
-
-
-def list_batch_classes(batches: Iterable[GraphBatch]) -> frozenset[str]:
-    """Return the scope classes and the stub classes of the batches."""
-    classes: set[str] = set()
-    for batch in batches:
-        classes |= batch.scope
-        classes.update(stub.class_iri for stub in batch.stub_nodes)
-    return frozenset(classes)
 
 
 async def prepare_target(

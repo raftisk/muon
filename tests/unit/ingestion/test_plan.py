@@ -9,7 +9,16 @@ import pytest
 
 from muon.ingestion import plan, runner, seed
 from muon.ingestion.batch import ClaimDirection, EdgeClaim, EdgeRecord, GraphBatch, NodeRecord
-from muon.ingestion.plan import ItemState, PlanContext, PlanError, open_plan, plan_batches
+from muon.ingestion.plan import (
+    ApplyContext,
+    ApplyError,
+    ItemState,
+    PlanContext,
+    PlanError,
+    apply_plan,
+    open_plan,
+    plan_batches,
+)
 from muon.ingestion.policy import WritePolicy
 from muon.ingestion.runner import Runner
 from muon.ontology.materializer import LabelMaterializer
@@ -267,3 +276,144 @@ async def test_opening_the_same_plan_twice_fails(build_context, monkeypatch) -> 
 
     with pytest.raises(PlanError, match="exists"):
         open_plan(context)
+
+
+def build_apply_context(context: PlanContext, plan_dir: Path) -> ApplyContext:
+    return ApplyContext(
+        client=context.client,
+        runner=context.runner,
+        validator=context.validator,
+        materializer=context.materializer,
+        plan_dir=plan_dir,
+    )
+
+
+async def build_plan(context: PlanContext, *policies: WritePolicy | None) -> Path:
+    """Plan `BATCH` once per policy and return the plan folder."""
+    items = [(f"source {number}", BATCH, policy) for number, policy in enumerate(policies)]
+    header = await plan_batches(context, items)
+    return context.root / context.universe / header.run_id
+
+
+def read_log(plan_dir: Path) -> list[dict[str, Any]]:
+    text = (plan_dir / plan.APPLIED_LOG_NAME).read_text(encoding="utf-8")
+    return [json.loads(line) for line in text.splitlines()]
+
+
+async def test_apply_runs_the_planned_statements_and_logs_each_one(build_context) -> None:
+    client = GraphFake()
+    context = build_context(client, ValidatorFake())
+    plan_dir = await build_plan(context, None)
+
+    report = await apply_plan(build_apply_context(context, plan_dir))
+
+    [statements] = client.batches
+    log = read_log(plan_dir)
+    assert report.batches_written == 1
+    assert [line["cypher"] for line in log] == [statement.query for statement in statements]
+    assert all(line["batch"] == 1 and "nodes_created" in line["summary"] for line in log)
+    assert log[0]["parameters"]["universe"] == TOY_UNIVERSE
+
+
+async def test_apply_logs_no_change_and_rejected_batches_as_skips(build_context) -> None:
+    client = build_converged_client()
+    context = build_context(client, ValidatorFake())
+    plan_dir = await build_plan(context, None, EMPTY_POLICY)
+
+    report = await apply_plan(build_apply_context(context, plan_dir))
+
+    assert client.batches == []
+    assert report.batches_written == 0
+    assert report.batches_skipped == {ItemState.NO_CHANGE: 1, ItemState.REJECTED: 1}
+    assert [(line["batch"], line["state"]) for line in read_log(plan_dir)] == [
+        (1, "no_change"),
+        (2, "rejected"),
+    ]
+
+
+async def test_apply_skips_the_batches_in_the_log(build_context) -> None:
+    client = GraphFake()
+    context = build_context(client, ValidatorFake())
+    plan_dir = await build_plan(context, None, None)
+    (plan_dir / plan.APPLIED_LOG_NAME).write_text('{"batch": 1}\n', encoding="utf-8")
+
+    report = await apply_plan(build_apply_context(context, plan_dir))
+
+    assert (report.batches_written, report.batches_already_applied) == (1, 1)
+    assert len(client.batches) == 1
+    assert {line["batch"] for line in read_log(plan_dir)} == {1, 2}
+
+
+async def test_2nd_apply_runs_nothing(build_context) -> None:
+    client = GraphFake()
+    context = build_context(client, ValidatorFake())
+    plan_dir = await build_plan(context, None)
+    await apply_plan(build_apply_context(context, plan_dir))
+    log = read_log(plan_dir)
+
+    report = await apply_plan(build_apply_context(context, plan_dir))
+
+    assert (report.batches_written, report.batches_already_applied) == (0, 1)
+    assert len(client.batches) == 1
+    assert read_log(plan_dir) == log
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [('"serial": 7', '"serial": 7.0'), ("SET n += row.properties", "DETACH DELETE n")],
+    ids=["parameter-type", "cypher"],
+)
+async def test_stored_statement_that_differs_stops_the_apply(
+    build_context, old: str, new: str
+) -> None:
+    client = GraphFake()
+    context = build_context(client, ValidatorFake())
+    plan_dir = await build_plan(context, None)
+    path = plan_dir / plan.BATCHES_DIR_NAME / "00001.json"
+    stored = json.loads(path.read_text(encoding="utf-8"))
+    statements = json.dumps(stored["statements"])
+    assert old in statements
+    stored["statements"] = json.loads(statements.replace(old, new))
+    path.write_text(json.dumps(stored), encoding="utf-8")
+
+    with pytest.raises(ApplyError, match="batch 1: the stored statements differ"):
+        await apply_plan(build_apply_context(context, plan_dir))
+
+    assert client.batches == []
+    assert not (plan_dir / plan.APPLIED_LOG_NAME).exists()
+
+
+async def test_batch_that_no_longer_validates_stops_the_apply_after_the_log_of_earlier_ones(
+    build_context,
+) -> None:
+    client, validator = GraphFake(), ValidatorFake()
+    context = build_context(client, validator)
+    plan_dir = await build_plan(context, None, None)
+
+    async def validate_first_only(batch: GraphBatch) -> ValidationReport:
+        violations = (Violation(rule_id="S1", message="broken"),) if client.batches else ()
+        return ValidationReport(violations=violations)
+
+    validator.validate = validate_first_only  # type: ignore[method-assign]
+
+    with pytest.raises(ApplyError, match="batch 2: S1: broken"):
+        await apply_plan(build_apply_context(context, plan_dir))
+
+    assert len(client.batches) == 1
+    assert {line["batch"] for line in read_log(plan_dir)} == {1}
+
+
+async def test_folder_without_plan_json_is_a_plan_error(build_context, tmp_path: Path) -> None:
+    context = build_context(GraphFake(), ValidatorFake())
+
+    with pytest.raises(PlanError, match="plan.json"):
+        await apply_plan(build_apply_context(context, tmp_path))
+
+
+async def test_missing_batch_file_is_a_plan_error(build_context) -> None:
+    context = build_context(GraphFake(), ValidatorFake())
+    plan_dir = await build_plan(context, None)
+    (plan_dir / plan.BATCHES_DIR_NAME / "00001.json").unlink()
+
+    with pytest.raises(PlanError, match="00001.json"):
+        await apply_plan(build_apply_context(context, plan_dir))
