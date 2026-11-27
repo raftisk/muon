@@ -16,7 +16,7 @@
 
 <https://muon.dev/ns/pkmn-shapes> a owl:Ontology ;
     dcterms:title   "muon: Pokémon SHACL shapes"@en ;
-    owl:versionInfo "0.2.0" ;
+    owl:versionInfo "0.3.0" ;
     owl:imports     <https://muon.dev/ns/pkmn> ;
     sh:declare [ sh:prefix "pkmn" ; sh:namespace "https://muon.dev/ns/pkmn#"^^xsd:anyURI ] ,
                [ sh:prefix "mo" ; sh:namespace "https://muon.dev/ns/core#"^^xsd:anyURI ] ,
@@ -649,6 +649,24 @@ pkmn-shape:G2_VersionGroupPartOf a sh:NodeShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:class pkmn:Generation
+    ] .
+
+# Generations are compared through sequenceNumber.
+pkmn-shape:G4_GenerationSequence a sh:NodeShape ;
+    sh:name "G4" ;
+    sh:message "A generation has exactly 1 sequenceNumber, an integer of at least 1."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Generation ;
+    sh:targetClass pkmn:Generation ;
+    sh:property [
+        sh:path mo:sequenceNumber ;
+        sh:name "G4" ;
+        sh:message "A generation needs exactly 1 sequenceNumber, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
     ] .
 
 # Text chunks. `aspect` takes the core values plus `pokedex`, which only a

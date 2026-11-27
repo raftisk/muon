@@ -243,15 +243,15 @@ pkmn:snatchable  a pkmn:MoveFlag ; rdfs:label "snatchable"@en .
 pkmn:explosive   a pkmn:MoveFlag ; rdfs:label "explosive"@en .
 
 ## Generations ##
-pkmn:gen1 a pkmn:Generation ; rdfs:label "Generation I"@en .
-pkmn:gen2 a pkmn:Generation ; rdfs:label "Generation II"@en .
-pkmn:gen3 a pkmn:Generation ; rdfs:label "Generation III"@en .
-pkmn:gen4 a pkmn:Generation ; rdfs:label "Generation IV"@en .
-pkmn:gen5 a pkmn:Generation ; rdfs:label "Generation V"@en .
-pkmn:gen6 a pkmn:Generation ; rdfs:label "Generation VI"@en .
-pkmn:gen7 a pkmn:Generation ; rdfs:label "Generation VII"@en .
-pkmn:gen8 a pkmn:Generation ; rdfs:label "Generation VIII"@en .
-pkmn:gen9 a pkmn:Generation ; rdfs:label "Generation IX"@en .
+pkmn:gen1 a pkmn:Generation ; rdfs:label "Generation I"@en ; mo:sequenceNumber 1 .
+pkmn:gen2 a pkmn:Generation ; rdfs:label "Generation II"@en ; mo:sequenceNumber 2 .
+pkmn:gen3 a pkmn:Generation ; rdfs:label "Generation III"@en ; mo:sequenceNumber 3 .
+pkmn:gen4 a pkmn:Generation ; rdfs:label "Generation IV"@en ; mo:sequenceNumber 4 .
+pkmn:gen5 a pkmn:Generation ; rdfs:label "Generation V"@en ; mo:sequenceNumber 5 .
+pkmn:gen6 a pkmn:Generation ; rdfs:label "Generation VI"@en ; mo:sequenceNumber 6 .
+pkmn:gen7 a pkmn:Generation ; rdfs:label "Generation VII"@en ; mo:sequenceNumber 7 .
+pkmn:gen8 a pkmn:Generation ; rdfs:label "Generation VIII"@en ; mo:sequenceNumber 8 .
+pkmn:gen9 a pkmn:Generation ; rdfs:label "Generation IX"@en ; mo:sequenceNumber 9 .
 
 ## Regions ##
 pkmn:kanto  a mo:Region ; rdfs:label "Kanto"@en  ; pkmn:introducedIn pkmn:gen1 .

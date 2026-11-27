@@ -1,7 +1,9 @@
 """Seed path: a universe's hand-written A-Box, loaded into the graph.
 
 `seed_universe` reads the T-Box and `individuals/<prefix>.ttl`, then writes the
-batch in sync mode, so the graph mirrors the file after every run.
+batch in sync mode, so the graph mirrors the file after every run. Hazard: sync mode
+replaces the properties of every A-Box node, so a property that another producer puts
+on such a node is dropped by the next seed.
 `find_missing_nodes` tells a later run which of a set of nodes the graph lacks, with
 1 read and no write.
 

@@ -4,7 +4,7 @@ Shape tests that need a version or a version group build it here, so each one ca
 `partOf` edges the games shapes require. The snippets use the prefixes of `validate_fixture`.
 """
 
-GENERATION_NODE = 'ex:gen1 a pkmn:Generation ; pkmn:id "gen1" .'
+GENERATION_NODE = 'ex:gen1 a pkmn:Generation ; pkmn:id "gen1" ; mo:sequenceNumber 1 .'
 
 
 def build_version_group(local_name: str, node_id: str) -> str:
