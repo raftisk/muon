@@ -7,7 +7,7 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 | `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, version 0.7.0, shared by every universe. 34 classes, 21 object properties, 8 datatype properties |
 | `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.9.0. Imports the core. 39 classes, 52 object properties, 69 datatype properties |
 | `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 250 enumerable individuals in 20 classes |
-| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes, version 0.3.0. Imports the pkmn T-Box. 32 rules, listed in [Shapes](#shapes) |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes, version 0.3.0. Imports the pkmn T-Box. 38 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -208,7 +208,7 @@ A location page of the core series games gives 3 passes of batches. A page whose
 | Battle conditions | B1 `minTurns` and `maxTurns` together, at least 1, in order |
 | Items | I1 item values (at most 1 `category`, prices at or above 0, `flingPower` above 0, 1 `introducedIn` except for machines), I2 `HAS_FLAVOR` potency, C2 machine links, kind (TM, HM, TR) and number |
 | Meta and text | G1 version part of a version group, G2 version group part of a generation, G3 generation scope of an effect, `Evolution` or `FormChange` node (1 `introducedIn`, at most 1 `lastValidIn` that is not earlier), G4 1 `sequenceNumber` per generation, X1 text chunk completeness, X2 `fromWork` by aspect, X5 `extractedBy` format (at most 1 value on an effect, `Evolution` or `FormChange` node) |
-| Moves: flags, effects, learnset | C2 learnset entry, E1 effect values and booleans (`isOverworld`, `isProtectable`), X3 `effectText` owner |
+| Moves: flags, effects, learnset | C2 learnset entry, E1 effect values and booleans (`isOverworld`, `isProtectable`), E2 1 action property per effect node, E3 no `triggeredBy` to an Ability from an effect node, E4 at most 1 multiplier above 0 (`statMultiplier` with `affectsStat`, `powerMultiplier` and `damageMultiplier` without it, no HP target and no Critical Hit Ratio drop), E5 `hpChange` in -1 to 1 and not 0 with `hpBasis`, and `restoresStat` HP with `amount` or a positive `hpChange`, E6 `target` `move` with `setsType` or a power or damage multiplier, E7 `immuneTo` from an ability or item effect to a Type or MoveFlag with `trigger` `passive`, X3 `effectText` owner |
 | Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role (a location adds `fieldMove` to a Move and `fieldItem` to an Item) |
 | Encounters and locations | C1 encounter links, kind, level order and chance, C3 encounter method, C4 item find links, C5 `ADJACENT_TO` direction, C6 item find method (`rock-smash`, `fishing`, `berry-tree`, `gift`), C7 `LocationArea` parent |
 
