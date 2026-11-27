@@ -20,7 +20,7 @@ CLASS_COUNTS: dict[str, int] = {
     "pkmn:MoveFlag": 20,
     "pkmn:Generation": 9,
     "mo:Region": 11,
-    "pkmn:GenerationMechanic": 5,
+    "pkmn:GenerationMechanic": 6,
     "pkmn:VersionGroup": 24,
     "pkmn:Version": 40,
 }

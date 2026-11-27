@@ -5,7 +5,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <https://muon.dev/ns/core> a owl:Ontology ;
-    owl:versionInfo "0.5.0" ;
+    owl:versionInfo "0.6.0" ;
     skos:definition "Universe-agnostic shared vocabulary (mo:) for the muon multi-universe knowledge graph."@en .
 
 #################################################################
@@ -375,6 +375,13 @@ mo:sourceUrl a owl:DatatypeProperty ;
     rdfs:range  xsd:string ;
     rdfs:label "source URL"@en ;
     skos:definition "Permalink to the revision of the source page a node was parsed from."@en .
+
+mo:extractedBy a owl:DatatypeProperty ;
+    rdfs:domain mo:Entity ;
+    rdfs:range  xsd:string ;
+    rdfs:label "extractedBy"@en ;
+    skos:definition "The extraction run that produced a node: its job, prompt version and model."@en ;
+    rdfs:comment "The value has the format {job}:{prompt version}:{model}."@en .
 
 ## Entity names ##
 

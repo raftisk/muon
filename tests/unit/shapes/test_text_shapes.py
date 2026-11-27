@@ -97,3 +97,34 @@ def test_geography_chunk_conforms(validate_fixture):
         'mo:aspect "geography" ; mo:describes ex:fire ; mo:source "bulbapedia"'
     )
     assert validate_fixture(data).conforms
+
+
+def evolution(extracted_by: str) -> str:
+    ivysaur = SPECIES.replace("charmander", "charmeleon").replace("Number 4", "Number 5")
+    return (
+        REFERENCES
+        + ivysaur
+        + 'ex:change a pkmn:Evolution ; pkmn:id "charmander:charmeleon" ; '
+        + "pkmn:fromSpecies ex:charmander ; pkmn:toSpecies ex:charmeleon ; "
+        + f"mo:extractedBy {extracted_by} ."
+    )
+
+
+def test_extracted_by_with_job_version_and_model_conforms(validate_fixture):
+    data = evolution('"species_residue:v1:gpt-5-mini"')
+    assert validate_fixture(data).conforms
+
+
+def test_extracted_by_with_colon_in_model_conforms(validate_fixture):
+    data = evolution('"job:v1:qwen:latest"')
+    assert validate_fixture(data).conforms
+
+
+def test_two_extracted_by_values_fail(validate_fixture):
+    data = evolution('"job:v1:gpt-5-mini" , "job:v2:gpt-5-mini"')
+    assert validate_fixture(data).rule_ids == {"X5"}
+
+
+def test_extracted_by_without_colons_fails(validate_fixture):
+    data = evolution('"no-colons"')
+    assert validate_fixture(data).rule_ids == {"X5"}

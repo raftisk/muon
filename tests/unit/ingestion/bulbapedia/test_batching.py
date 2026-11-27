@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from muon.ingestion.batch import NodeRecord
@@ -14,6 +16,7 @@ from muon.ingestion.bulbapedia.batching import (
     ChunkBuildError,
     ClaimRule,
     MentionContext,
+    build_abox_index,
     build_chunk_record,
     build_claims,
     build_machine_id,
@@ -27,7 +30,10 @@ from muon.ingestion.bulbapedia.batching import (
 )
 from muon.ingestion.bulbapedia.chunking import ChunkAspect, ChunkFact, MentionRef
 from muon.ingestion.bulbapedia.species.batches import build_machine_stub
+from muon.ingestion.seed import read_abox
+from muon.ontology.model import load_ontology_model
 
+ONTOLOGY_DIR = Path(__file__).resolve().parents[4] / "ontology"
 SHADOW_BALL = build_stub(MOVE, "Shadow Ball")
 ABOX = AboxIndex(
     ids={(TYPE, "Ghost"): "ghost", (VERSION_GROUP, "Scarlet-Violet"): "scarlet-violet"},
@@ -177,3 +183,14 @@ def test_a_prefixed_claim_rule_gives_each_anchor_its_own_id_prefix() -> None:
         ("tackle", MENTIONED_IN, "tackle:"),
         ("tackle", FROM_WORK, None),
     ]
+
+
+def test_abox_index_numbers_the_generations_and_dates_the_mechanics() -> None:
+    model = load_ontology_model(ONTOLOGY_DIR, "pkmn")
+
+    index = build_abox_index(read_abox(model, ONTOLOGY_DIR))
+
+    assert index.mechanic_generations["Primal Reversion"] == "Generation VI"
+    assert index.mechanic_generations["Terastallization"] == "Generation IX"
+    assert index.generation_numbers["Generation IX"] == 9
+    assert sorted(index.generation_numbers.values()) == list(range(1, 10))

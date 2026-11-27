@@ -85,6 +85,7 @@ from muon.ingestion.bulbapedia.items.ingest import (
     ingest_items,
     write_item_ingest_report,
 )
+from muon.ingestion.bulbapedia.items.run import PAGE_OUTPUT_DIR as ITEM_PAGE_OUTPUT_DIR
 from muon.ingestion.bulbapedia.items.run import PAGE_TYPE as ITEM_PAGE_TYPE
 from muon.ingestion.bulbapedia.items.run import (
     ItemParseReport,
@@ -579,6 +580,7 @@ def run_parse(request: ParseRequest) -> ParseRun:
         request,
         PageStore(),
         OntologySettings().ontology_dir,
+        DEFAULT_OUTPUT_ROOT / ITEM_PAGE_OUTPUT_DIR,
         DEFAULT_OUTPUT_ROOT / LOCATION_COVERAGE_FILE_NAME,
     )
     run = parse_species_pages(inputs)

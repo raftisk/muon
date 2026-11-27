@@ -268,6 +268,7 @@ pkmn:paldea a mo:Region ; rdfs:label "Paldea"@en ; pkmn:introducedIn pkmn:gen9 .
 
 ## Generation mechanics ##
 pkmn:megaEvolution    a pkmn:GenerationMechanic ; rdfs:label "Mega Evolution"@en   ; pkmn:introducedIn pkmn:gen6 .
+pkmn:primalReversion  a pkmn:GenerationMechanic ; rdfs:label "Primal Reversion"@en ; pkmn:introducedIn pkmn:gen6 .
 pkmn:zMove            a pkmn:GenerationMechanic ; rdfs:label "Z-Move"@en           ; pkmn:introducedIn pkmn:gen7 .
 pkmn:dynamax          a pkmn:GenerationMechanic ; rdfs:label "Dynamax"@en          ; pkmn:introducedIn pkmn:gen8 .
 pkmn:gigantamax       a pkmn:GenerationMechanic ; rdfs:label "Gigantamax"@en       ; pkmn:introducedIn pkmn:gen8 .
