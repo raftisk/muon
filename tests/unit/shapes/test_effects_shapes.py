@@ -1,12 +1,19 @@
 import pytest
 
-from tests.unit.shapes.games_fixtures import GENERATION_NODE
+from tests.unit.shapes.games_fixtures import (
+    GENERATION_NODE,
+    IN_FIRST_GENERATION,
+    build_generation,
+)
 
 EFFECT_CLASSES = ["MoveEffect", "AbilityEffect", "ItemEffect"]
 
 
-def effect(properties: str, effect_class: str = "MoveEffect") -> str:
-    return f'ex:effect a pkmn:{effect_class} ; pkmn:id "effect" ; {properties} .'
+def effect(
+    properties: str, effect_class: str = "MoveEffect", scope: str = IN_FIRST_GENERATION
+) -> str:
+    pairs = " ; ".join(pair for pair in (properties, scope) if pair)
+    return GENERATION_NODE + f'ex:effect a pkmn:{effect_class} ; pkmn:id "effect" ; {pairs} .'
 
 
 @pytest.mark.parametrize("effect_class", EFFECT_CLASSES)
@@ -82,6 +89,40 @@ def test_unseen_fist_effect_conforms(validate_fixture):
     contact = 'ex:contact a pkmn:MoveFlag ; pkmn:id "contact" .'
     properties = 'pkmn:isProtectable false ; pkmn:trigger "on_attack" ; pkmn:triggeredBy ex:contact'
     assert validate_fixture(contact + effect(properties, "AbilityEffect")).conforms
+
+
+@pytest.mark.parametrize("effect_class", EFFECT_CLASSES)
+@pytest.mark.parametrize(
+    "scope",
+    ["", "pkmn:introducedIn ex:gen1 , ex:gen3"],
+    ids=["no-start", "two-starts"],
+)
+def test_effect_without_exactly_one_start_fails(validate_fixture, effect_class, scope):
+    data = build_generation(3) + effect("pkmn:statStages 1", effect_class, scope)
+    assert validate_fixture(data).rule_ids == {"G3"}
+
+
+def test_effect_with_two_ends_fails(validate_fixture):
+    scope = IN_FIRST_GENERATION + " ; pkmn:lastValidIn ex:gen3 , ex:gen4"
+    data = build_generation(3) + build_generation(4) + effect("", scope=scope)
+    assert validate_fixture(data).rule_ids == {"G3"}
+
+
+def test_effect_that_ends_before_it_starts_fails_and_names_both(validate_fixture):
+    scope = "pkmn:introducedIn ex:gen4 ; pkmn:lastValidIn ex:gen3"
+    data = build_generation(3) + build_generation(4) + effect("", "ItemEffect", scope)
+
+    report = validate_fixture(data)
+
+    assert report.rule_ids == {"G3"}
+    assert any("gen3" in message and "gen4" in message for message in report.messages)
+
+
+def test_effect_that_starts_and_ends_in_1_generation_conforms(validate_fixture):
+    # Sitrus Berry restored 30 HP in Generation III only.
+    scope = "pkmn:introducedIn ex:gen3 ; pkmn:lastValidIn ex:gen3"
+    data = build_generation(3) + effect('pkmn:trigger "low_hp"', "ItemEffect", scope)
+    assert validate_fixture(data).conforms
 
 
 @pytest.mark.parametrize(

@@ -1,6 +1,6 @@
 import pytest
 
-from tests.unit.shapes.games_fixtures import GENERATION_NODE
+from tests.unit.shapes.games_fixtures import GENERATION_NODE, IN_FIRST_GENERATION
 from tests.unit.shapes.move_fixtures import build_move
 
 FIRE = 'ex:fire a pkmn:Type ; pkmn:id "fire" .'
@@ -13,7 +13,7 @@ def species(name: str, dex: int) -> str:
     )
 
 
-BASE = FIRE + species("charmander", 4) + species("charmeleon", 5)
+BASE = FIRE + GENERATION_NODE + species("charmander", 4) + species("charmeleon", 5)
 
 TARGETS = {
     "Item": GENERATION_NODE
@@ -46,7 +46,7 @@ def form_change(kind: str, battle_only: str) -> str:
     return (
         'ex:change a pkmn:FormChange ; pkmn:id "charmander:charmeleon" ; '
         "pkmn:fromSpecies ex:charmander ; pkmn:toSpecies ex:charmeleon ; "
-        f'pkmn:formKind "{kind}" ; pkmn:isBattleOnly {battle_only} .'
+        f'pkmn:formKind "{kind}" ; pkmn:isBattleOnly {battle_only} ; {IN_FIRST_GENERATION} .'
     )
 
 
@@ -60,7 +60,7 @@ def requires_edge(role: str, target: str) -> str:
 def test_evolution_with_both_species_conforms(validate_fixture):
     data = BASE + (
         'ex:evolution a pkmn:Evolution ; pkmn:id "charmander:charmeleon" ; '
-        "pkmn:fromSpecies ex:charmander ; pkmn:toSpecies ex:charmeleon ."
+        f"pkmn:fromSpecies ex:charmander ; pkmn:toSpecies ex:charmeleon ; {IN_FIRST_GENERATION} ."
     )
     assert validate_fixture(data).conforms
 
@@ -68,7 +68,7 @@ def test_evolution_with_both_species_conforms(validate_fixture):
 def test_evolution_without_target_species_fails(validate_fixture):
     data = BASE + (
         'ex:evolution a pkmn:Evolution ; pkmn:id "charmander:charmeleon" ; '
-        "pkmn:fromSpecies ex:charmander ."
+        f"pkmn:fromSpecies ex:charmander ; {IN_FIRST_GENERATION} ."
     )
     assert validate_fixture(data).rule_ids == {"V1"}
 
@@ -76,7 +76,8 @@ def test_evolution_without_target_species_fails(validate_fixture):
 def test_evolution_with_two_source_species_fails(validate_fixture):
     data = BASE + (
         'ex:evolution a pkmn:Evolution ; pkmn:id "charmander:charmeleon" ; '
-        "pkmn:fromSpecies ex:charmander , ex:charmeleon ; pkmn:toSpecies ex:charmeleon ."
+        "pkmn:fromSpecies ex:charmander , ex:charmeleon ; pkmn:toSpecies ex:charmeleon ; "
+        f"{IN_FIRST_GENERATION} ."
     )
     assert validate_fixture(data).rule_ids == {"V1"}
 
@@ -102,9 +103,9 @@ def test_unknown_form_kind_fails(validate_fixture):
 
 
 def test_form_change_without_species_fails(validate_fixture):
-    data = FIRE + (
+    data = GENERATION_NODE + (
         'ex:change a pkmn:FormChange ; pkmn:id "x" ; '
-        'pkmn:formKind "mega" ; pkmn:isBattleOnly true .'
+        f'pkmn:formKind "mega" ; pkmn:isBattleOnly true ; {IN_FIRST_GENERATION} .'
     )
     assert validate_fixture(data).rule_ids == {"V1"}
 

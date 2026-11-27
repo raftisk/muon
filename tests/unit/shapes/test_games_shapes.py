@@ -58,12 +58,12 @@ def test_group_part_of_a_version_fails(validate_fixture):
     assert validate_fixture(data).rule_ids == {"G2"}
 
 
-def build_generation(properties: str) -> str:
+def third_generation(properties: str) -> str:
     return f'ex:gen3 a pkmn:Generation ; pkmn:id "gen3" {properties} .'
 
 
 def test_generation_with_one_sequence_number_conforms(validate_fixture):
-    assert validate_fixture(build_generation("; mo:sequenceNumber 3")).conforms
+    assert validate_fixture(third_generation("; mo:sequenceNumber 3")).conforms
 
 
 @pytest.mark.parametrize(
@@ -72,4 +72,4 @@ def test_generation_with_one_sequence_number_conforms(validate_fixture):
     ids=["missing", "repeated", "zero"],
 )
 def test_generation_with_wrong_sequence_number_fails(validate_fixture, properties):
-    assert validate_fixture(build_generation(properties)).rule_ids == {"G4"}
+    assert validate_fixture(third_generation(properties)).rule_ids == {"G4"}

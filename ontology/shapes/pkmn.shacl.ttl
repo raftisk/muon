@@ -669,6 +669,47 @@ pkmn-shape:G4_GenerationSequence a sh:NodeShape ;
         sh:minInclusive 1
     ] .
 
+# The scope of a fact that changes between generations. Both ends are inclusive.
+pkmn-shape:G3_GenerationScope a sh:NodeShape ;
+    sh:name "G3" ;
+    sh:message "A fact starts in exactly 1 generation and ends in at most 1, not before its start."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect , pkmn:Evolution , pkmn:FormChange ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect , pkmn:Evolution , pkmn:FormChange ;
+    sh:property [
+        sh:path pkmn:introducedIn ;
+        sh:name "G3" ;
+        sh:message "A fact needs exactly 1 introducedIn, a Generation."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Generation
+    ] ;
+    sh:property [
+        sh:path pkmn:lastValidIn ;
+        sh:name "G3" ;
+        sh:message "A fact has at most 1 lastValidIn, a Generation."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Generation
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} ends in {?endId}, before it starts in {?startId}."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?startId ?endId WHERE {
+                $this pkmn:introducedIn ?start .
+                $this pkmn:lastValidIn ?end .
+                ?start pkmn:id ?startId ;
+                    mo:sequenceNumber ?startNumber .
+                ?end pkmn:id ?endId ;
+                    mo:sequenceNumber ?endNumber .
+                FILTER (?endNumber < ?startNumber)
+            }
+        """
+    ] .
+
 # Text chunks. `aspect` takes the core values plus `pokedex`, which only a
 # universe can describe. A canon chunk names its work with fromWork; every other
 # chunk names its origin with source.

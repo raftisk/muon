@@ -73,13 +73,14 @@ def build_validator(client: GraphClient, ontology_dir: Path, plugin: UniversePlu
     universe = plugin.prefix
     tbox = load_tbox(ontology_dir, universe)
     model = build_ontology_model(tbox, universe)
+    abox = read_abox(model, ontology_dir)
     inputs = ValidatorInputs(
         model=model,
         materializer=build_plugin_materializer(model, plugin.manifest),
         tbox=tbox,
         shapes=load_shapes(ontology_dir, universe),
-        abox=read_abox(model, ontology_dir),
-        rules=build_projection_rules(plugin.manifest),
+        abox=abox,
+        rules=build_projection_rules(plugin.manifest, abox),
         shapes_namespace=plugin.manifest.shapes_namespace,
     )
     return Validator(inputs=inputs, client=client)
