@@ -4,10 +4,10 @@ This directory holds the schema of the muon knowledge graph as RDF/OWL Turtle. T
 
 | File | Namespace | Content |
 | --- | --- | --- |
-| `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, shared by every universe. 34 classes, 21 object properties, 6 datatype properties |
-| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.8.0. Imports the core. 39 classes, 51 object properties, 69 datatype properties |
-| `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 249 enumerable individuals in 20 classes |
-| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 29 rules, listed in [Shapes](#shapes) |
+| `core/muon.ttl` | `mo:` `https://muon.dev/ns/core#` | Core T-Box, version 0.6.0, shared by every universe. 34 classes, 21 object properties, 7 datatype properties |
+| `universes/pkmn.ttl` | `pkmn:` `https://muon.dev/ns/pkmn#` | Pokemon T-Box, version 0.9.0. Imports the core. 39 classes, 52 object properties, 69 datatype properties |
+| `individuals/pkmn.ttl` | `pkmn:` | Pokemon A-Box: 250 enumerable individuals in 20 classes |
+| `shapes/pkmn.shacl.ttl` | `pkmn-shape:` `https://muon.dev/ns/pkmn-shapes#` | Pokemon SHACL shapes. Imports the pkmn T-Box. 30 rules, listed in [Shapes](#shapes) |
 
 A universe gets a short lowercase prefix (`pkmn`). Its T-Box goes in `universes/<prefix>.ttl` and declares `owl:imports <https://muon.dev/ns/core>`. Its closed vocabularies go in `individuals/<prefix>.ttl` under the same namespace.
 
@@ -89,6 +89,7 @@ Meta
 - `source` (TextChunk): the non-canon origin of a chunk. Canon origins use `fromWork`.
 - `section` (TextChunk): the heading path inside the source page, e.g. `Biology > Forms`.
 - `sourceUrl` (TextChunk, Entity): permalink to the revision of the source page a node was parsed from.
+- `extractedBy` (Entity): the extraction run that produced a node, `{job}:{prompt version}:{model}`.
 
 ## Pokemon ontology (pkmn:)
 
@@ -112,7 +113,7 @@ The pkmn ontology models species and game mechanics. It holds no individual Poke
 
 ### Individuals
 
-`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 15 EggGroups, 25 Natures, 5 Flavors, 8 StatusConditions, 28 VolatileConditions, 9 Weathers, 4 Terrains, 5 EntryHazards, 10 FieldEffects, 20 MoveFlags, 9 Generations, 11 Regions, 5 GenerationMechanics, 24 VersionGroups, 40 Versions and the `pkmn:pokemon` Universe, 249 individuals in all. `introducedIn` sits on Types, Natures, Flavors, Terrains, Regions, GenerationMechanics, EggGroups, EntryHazards, StatusConditions and Weathers (105 edges). The A-Box also holds reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 40 nature flavor edges, 10 weather and terrain type edges, 64 `partOf` edges and 27 condition edges. A condition enters the A-Box when at least 2 distinct entities (moves, abilities, items, types, terrains) inflict, cure, block, ignore or react to it, or when PokeAPI lists it as a move ailment (Nightmare, Embargo, Landed); the others stay in text. A condition carries `aliases` for the move-derived name (Taunted: Taunt). A condition that lasts a fixed number of turns carries `minTurns` and `maxTurns` (Sleep 2 to 4, Bound 4 to 5, the 5 regular weathers and 4 terrains 5); 31 conditions do. A condition without them lasts until something removes it. Every other instance is created by ingestion.
+`individuals/pkmn.ttl` enumerates the closed vocabularies that edges point at: 18 Types, 6 Stats, 3 BattleStats (Accuracy, Evasion, Critical Hit Ratio), 3 MoveDamageClasses, 15 EggGroups, 25 Natures, 5 Flavors, 8 StatusConditions, 28 VolatileConditions, 9 Weathers, 4 Terrains, 5 EntryHazards, 10 FieldEffects, 20 MoveFlags, 9 Generations, 11 Regions, 6 GenerationMechanics, 24 VersionGroups, 40 Versions and the `pkmn:pokemon` Universe, 250 individuals in all. `introducedIn` sits on Types, Natures, Flavors, Terrains, Regions, GenerationMechanics, EggGroups, EntryHazards, StatusConditions and Weathers (106 edges). The A-Box also holds reference facts between these individuals: 120 type chart edges, 40 nature stat edges, 40 nature flavor edges, 10 weather and terrain type edges, 64 `partOf` edges and 27 condition edges. A condition enters the A-Box when at least 2 distinct entities (moves, abilities, items, types, terrains) inflict, cure, block, ignore or react to it, or when PokeAPI lists it as a move ailment (Nightmare, Embargo, Landed); the others stay in text. A condition carries `aliases` for the move-derived name (Taunted: Taunt). A condition that lasts a fixed number of turns carries `minTurns` and `maxTurns` (Sleep 2 to 4, Bound 4 to 5, the 5 regular weathers and 4 terrains 5); 31 conditions do. A condition without them lasts until something removes it. Every other instance is created by ingestion.
 
 ### Species, types and natures
 
@@ -163,10 +164,12 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 
 ### Evolution and forms
 
-- `Evolution` reifies 1 evolution with `fromSpecies`, `toSpecies`, `requires` and the properties `evoTrigger`, `minLevel`, `timeOfDay`, `gender`, `condition`. `evolvesTo` is the species-to-species shortcut.
+- `Evolution` reifies 1 method by which a species evolves into another, with `fromSpecies`, `toSpecies`, `requires` and the properties `evoTrigger`, `minLevel`, `timeOfDay`, `gender`, `condition`. `evolvesTo` is the species-to-species shortcut.
 - `hasForm` links a species to a form node that differs in battle (stats, type, ability or learnset).
-- `FormChange` reifies how a species reaches a form: `fromSpecies`, `toSpecies`, `requires`, `triggeredBy`, `trigger`, `formKind` (alternate, battle, mega, primal, ultra_burst, gigantamax, terastal) and `isBattleOnly`.
+- `FormChange` reifies 1 method by which a species reaches a form: `fromSpecies`, `toSpecies`, `requires`, `triggeredBy`, `trigger`, `formKind` (alternate, battle, mega, primal, ultra_burst, gigantamax, terastal) and `isBattleOnly`.
 - `requires` points at an Item, Move, Location, PokemonSpecies or Type.
+- A species pair holds 1 node per method. The earliest method is keyed `{from id}:{to id}`, and a method that starts in a later generation is keyed `{from id}:{to id}:gen{n}`, with `n` that generation.
+- Every method has `introducedIn`, the first generation in which it applied. A method that ended also has `lastValidIn` (`LAST_VALID_IN`), the last generation, inclusive. `MoveEffect`, `AbilityEffect` and `ItemEffect` nodes take the same 2 edges. A query for current facts filters on `WHERE NOT (e)-[:LAST_VALID_IN]->()`.
 
 ### Items
 
@@ -178,7 +181,7 @@ The A-Box holds 27 condition edges: 9 `immuneTo` (Fire to Burn, Ice to Freeze an
 ### Generations, versions and encounters
 
 - `Version` is part of a `VersionGroup`, which is part of a `Generation`, through `mo:partOf`. The A-Box holds the 24 groups and 40 versions of the main series games, Colosseum and XD included, with 64 `partOf` edges. Downloadable content belongs to its base game.
-- `GenerationMechanic` records a battle mechanic (Mega Evolution, Z-Move, Dynamax, Gigantamax, Terastallization) and its generation.
+- `GenerationMechanic` records a battle mechanic (Mega Evolution, Primal Reversion, Z-Move, Dynamax, Gigantamax, Terastallization) and its generation.
 - `Encounter` reifies 1 encounter of any kind: a species caught or received at a location in a version. It links `atLocation` (a `LocationArea` or a location) and `inVersion`, and carries exactly 1 `encounterKind` (`wild`, `raid`, `static`, `gift`, `snag`, `migration`) and at most 1 `method` from the encounter methods of the `method` definition. `conditions`, `minLevel`, `maxLevel` and `chance` are optional, so a coarse encounter has none of them. A species links to it with `hasEncounter`, and `mo:foundIn` is the shortcut from the species to the location. No `locatedIn` edge connects a location to its region yet.
 - `LocationArea` is a subdivision of a location (a floor, a sector) and chains to it with `mo:locatedIn`.
 
@@ -203,7 +206,7 @@ A location page of the core series games gives 3 passes of batches. A page whose
 | Moves and types | M1 one type and one damage class, M2 move values (required `pp`, `priority`, `target` and `introducedIn`, value ranges, hit and turn counts in pairs, hit counts with the `multihit` flag), K1 one effectiveness per type pair |
 | Battle conditions | B1 `minTurns` and `maxTurns` together, at least 1, in order |
 | Items | I1 item values (at most 1 `category`, prices at or above 0, `flingPower` above 0, 1 `introducedIn` except for machines), I2 `HAS_FLAVOR` potency, C2 machine links, kind (TM, HM, TR) and number |
-| Meta and text | G1 version part of a version group, G2 version group part of a generation, X1 text chunk completeness, X2 `fromWork` by aspect |
+| Meta and text | G1 version part of a version group, G2 version group part of a generation, X1 text chunk completeness, X2 `fromWork` by aspect, X5 `extractedBy` format (at most 1 value on an effect, `Evolution` or `FormChange` node) |
 | Moves: flags, effects, learnset | C2 learnset entry, E1 effect values and booleans (`isOverworld`, `isProtectable`), X3 `effectText` owner |
 | Evolution and forms | V1 species links, V2 form kind, R1 `REQUIRES` role (a location adds `fieldMove` to a Move and `fieldItem` to an Item) |
 | Encounters and locations | C1 encounter links, kind, level order and chance, C3 encounter method, C4 item find links, C5 `ADJACENT_TO` direction, C6 item find method (`rock-smash`, `fishing`, `berry-tree`, `gift`), C7 `LocationArea` parent |

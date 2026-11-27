@@ -16,7 +16,7 @@
 
 <https://muon.dev/ns/pkmn-shapes> a owl:Ontology ;
     dcterms:title   "muon: Pokémon SHACL shapes"@en ;
-    owl:versionInfo "0.1.0" ;
+    owl:versionInfo "0.2.0" ;
     owl:imports     <https://muon.dev/ns/pkmn> ;
     sh:declare [ sh:prefix "pkmn" ; sh:namespace "https://muon.dev/ns/pkmn#"^^xsd:anyURI ] ,
                [ sh:prefix "mo" ; sh:namespace "https://muon.dev/ns/core#"^^xsd:anyURI ] ,
@@ -703,6 +703,23 @@ pkmn-shape:X2_FromWorkByAspect a sh:NodeShape ;
             sh:property [ sh:path mo:fromWork ; sh:maxCount 0 ]
         ]
     ) .
+
+# The write policy decides which nodes must carry the value, so no minCount.
+pkmn-shape:X5_ExtractedBy a sh:NodeShape ;
+    sh:name "X5" ;
+    sh:message "extractedBy has the format {job}:{prompt version}:{model}."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect , pkmn:Evolution , pkmn:FormChange ;
+    sh:targetSubjectsOf mo:extractedBy ;
+    sh:property [
+        sh:path mo:extractedBy ;
+        sh:name "X5" ;
+        sh:message "A node has at most 1 extractedBy, a string {job}:{prompt version}:{model}."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^[^:]+:[^:]+:.+$"
+    ] .
 
 #################################################################
 #  Moves: flags, effects, learnset

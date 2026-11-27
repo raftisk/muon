@@ -8,7 +8,7 @@
 
 <https://muon.dev/ns/pkmn> a owl:Ontology ;
     dcterms:title   "muon: Pokémon extension"@en ;
-    owl:versionInfo "0.8.0" ;
+    owl:versionInfo "0.9.0" ;
     owl:imports     <https://muon.dev/ns/core> ;
     skos:definition    "Pokémon-universe extension of the muon core ontology."@en .
 
@@ -436,7 +436,14 @@ pkmn:GenerationMechanic a owl:Class ; rdfs:subClassOf mo:Meta ; rdfs:label "Gene
 pkmn:introducedIn a owl:ObjectProperty ;
     rdfs:range pkmn:Generation ;
     rdfs:label "introducedIn"@en ;
-    skos:definition "The generation a species, move, ability, item, location, flavor, mechanic, region, type, nature, terrain, egg group, entry hazard, status condition or weather debuted in."@en .
+    skos:definition "The generation a species, move, ability, item, location, flavor, mechanic, region, type, nature, terrain, egg group, entry hazard, status condition or weather debuted in, or the first generation in which an effect, an evolution method or a form change method applied."@en .
+
+pkmn:lastValidIn a owl:ObjectProperty ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:MoveEffect pkmn:AbilityEffect pkmn:ItemEffect pkmn:Evolution pkmn:FormChange ) ] ;
+    rdfs:range pkmn:Generation ;
+    rdfs:label "lastValidIn"@en ;
+    skos:definition "The last generation in which an effect, an evolution method or a form change method applied, inclusive. A fact that still applies has none."@en ;
+    rdfs:comment "In Neo4j LAST_VALID_IN. A query for current facts keeps the nodes without it: WHERE NOT (e)-[:LAST_VALID_IN]->()."@en .
 
 #################################################################
 #  Moves: flags, effects, learnset
@@ -557,10 +564,12 @@ pkmn:isOverworld a owl:DatatypeProperty ;
 #################################################################
 
 pkmn:Evolution a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "Evolution"@en ;
-    skos:definition "A reified evolution: from-species, to-species, and its conditions."@en .
+    skos:definition "A reified evolution: 1 method of a species pair, with the from-species, the to-species and its conditions."@en ;
+    rdfs:comment "Node key: {from}:{to} for the earliest method of a pair, {from}:{to}:gen{n} for a later one, where n is the generation the method starts in."@en .
 
 pkmn:FormChange a owl:Class ; rdfs:subClassOf mo:Concept ; rdfs:label "FormChange"@en ;
-    skos:definition "A reified change from a species to one of its form nodes: its kind, whether the form lasts only for a battle, its trigger, and the ability that causes it or the items, moves or species it requires."@en .
+    skos:definition "A reified change from a species to one of its form nodes, 1 method of a species pair: its kind, whether the form lasts only for a battle, its trigger, and the ability that causes it or the items, moves or species it requires."@en ;
+    rdfs:comment "Node key: {from}:{to} for the earliest method of a pair, {from}:{to}:gen{n} for a later one, where n is the generation the method starts in."@en .
 
 pkmn:fromSpecies a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Evolution pkmn:FormChange ) ] ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "fromSpecies"@en .
 pkmn:toSpecies   a owl:ObjectProperty ; rdfs:domain [ a owl:Class ; owl:unionOf ( pkmn:Evolution pkmn:FormChange ) ] ; rdfs:range pkmn:PokemonSpecies ; rdfs:label "toSpecies"@en .
