@@ -42,6 +42,10 @@ ROLE_TARGETS = [
 ]
 
 
+ZEN_MODE = 'ex:zen a pkmn:Ability ; pkmn:id "zen-mode" .'
+SECOND_ABILITY = 'ex:schooling a pkmn:Ability ; pkmn:id "schooling" .'
+
+
 def form_change(kind: str, battle_only: str) -> str:
     return (
         'ex:change a pkmn:FormChange ; pkmn:id "charmander:charmeleon" ; '
@@ -55,6 +59,28 @@ def requires_edge(role: str, target: str) -> str:
         "[] rdf:subject ex:change ; rdf:predicate pkmn:requires ; "
         f'rdf:object {target} ; pkmn:role "{role}" .'
     )
+
+
+def requirement(role: str, target: str = "ex:thing") -> str:
+    """A REQUIRES edge as the projection writes it: the direct triple and the reified one."""
+    return f"ex:change pkmn:requires {target} ." + requires_edge(role, target)
+
+
+def change_data(kind: str, *parts: str) -> str:
+    """A battle-only form change, except for `alternate`, with its targets and `parts`."""
+    battle_only = "false" if kind == "alternate" else "true"
+    return (
+        BASE
+        + TARGETS["Item"]
+        + ZEN_MODE
+        + SECOND_ABILITY
+        + form_change(kind, battle_only)
+        + ("".join(parts))
+    )
+
+
+def change_facts(facts: str) -> str:
+    return f"ex:change {facts} ."
 
 
 def test_evolution_with_both_species_conforms(validate_fixture):
@@ -83,19 +109,103 @@ def test_evolution_with_two_source_species_fails(validate_fixture):
 
 
 def test_mega_form_change_battle_only_conforms(validate_fixture):
-    assert validate_fixture(BASE + form_change("mega", "true")).conforms
+    # Charizard to Mega Charizard X holds Charizardite X.
+    assert validate_fixture(change_data("mega", requirement("hold"))).conforms
 
 
 def test_alternate_form_change_not_battle_only_conforms(validate_fixture):
-    assert validate_fixture(BASE + form_change("alternate", "false")).conforms
+    assert validate_fixture(change_data("alternate", requirement("use"))).conforms
 
 
 def test_alternate_form_change_battle_only_fails(validate_fixture):
-    assert validate_fixture(BASE + form_change("alternate", "true")).rule_ids == {"V2"}
+    data = BASE + TARGETS["Item"] + form_change("alternate", "true") + requirement("use")
+    assert validate_fixture(data).rule_ids == {"V2"}
 
 
 def test_mega_form_change_not_battle_only_fails(validate_fixture):
-    assert validate_fixture(BASE + form_change("mega", "false")).rule_ids == {"V2"}
+    data = BASE + TARGETS["Item"] + form_change("mega", "false") + requirement("hold")
+    assert validate_fixture(data).rule_ids == {"V2"}
+
+
+@pytest.mark.parametrize(
+    ("kind", "parts"),
+    [
+        ("alternate", [requirement("hold"), change_facts('pkmn:trigger "passive"')]),
+        (
+            "alternate",
+            [requirement("use"), requirement("fusesWith", "ex:charmeleon")],
+        ),
+        ("battle", [change_facts('pkmn:triggeredBy ex:zen ; pkmn:trigger "end_of_turn"')]),
+        ("primal", [requirement("hold"), change_facts('pkmn:trigger "switch_in"')]),
+        ("ultra_burst", [requirement("hold")]),
+        ("gigantamax", []),
+        ("terastal", []),
+        ("terastal", [change_facts('pkmn:triggeredBy ex:zen ; pkmn:trigger "switch_in"')]),
+    ],
+    ids=[
+        "held-item",
+        "fusion",
+        "zen-mode",
+        "primal",
+        "ultra-burst",
+        "gigantamax",
+        "terastallization",
+        "terastal-by-ability",
+    ],
+)
+def test_form_change_that_follows_its_kind_conforms(validate_fixture, kind, parts):
+    assert validate_fixture(change_data(kind, *parts)).conforms
+
+
+@pytest.mark.parametrize(
+    ("kind", "parts"),
+    [
+        ("alternate", []),
+        ("alternate", [requirement("hold")]),
+        ("alternate", [requirement("use"), change_facts('pkmn:trigger "passive"')]),
+        (
+            "alternate",
+            [
+                requirement("hold"),
+                requirement("fusesWith", "ex:charmeleon"),
+                change_facts('pkmn:trigger "passive"'),
+            ],
+        ),
+        ("battle", [change_facts('pkmn:trigger "end_of_turn"')]),
+        ("battle", [change_facts("pkmn:triggeredBy ex:zen")]),
+        ("mega", []),
+        ("mega", [requirement("hold"), change_facts('pkmn:trigger "passive"')]),
+        ("ultra_burst", []),
+        ("primal", [change_facts('pkmn:trigger "switch_in"')]),
+        ("primal", [requirement("hold")]),
+        ("gigantamax", [requirement("hold")]),
+        ("gigantamax", [change_facts('pkmn:trigger "passive"')]),
+        ("terastal", [change_facts('pkmn:trigger "switch_in"')]),
+    ],
+    ids=[
+        "alternate-without-item",
+        "held-item-without-trigger",
+        "used-item-with-trigger",
+        "fusion-without-use",
+        "battle-without-ability",
+        "battle-without-trigger",
+        "mega-without-stone",
+        "mega-with-trigger",
+        "ultra-burst-without-item",
+        "primal-without-orb",
+        "primal-without-trigger",
+        "gigantamax-with-item",
+        "gigantamax-with-trigger",
+        "terastal-trigger-without-ability",
+    ],
+)
+def test_form_change_that_breaks_its_kind_fails(validate_fixture, kind, parts):
+    assert validate_fixture(change_data(kind, *parts)).rule_ids == {"E8"}
+
+
+def test_form_change_with_2_abilities_fails(validate_fixture):
+    facts = 'pkmn:triggeredBy ex:zen , ex:schooling ; pkmn:trigger "end_of_turn"'
+    assert validate_fixture(change_data("battle", change_facts(facts))).rule_ids == {"E3"}
 
 
 def test_unknown_form_kind_fails(validate_fixture):
@@ -105,7 +215,7 @@ def test_unknown_form_kind_fails(validate_fixture):
 def test_form_change_without_species_fails(validate_fixture):
     data = GENERATION_NODE + (
         'ex:change a pkmn:FormChange ; pkmn:id "x" ; '
-        f'pkmn:formKind "mega" ; pkmn:isBattleOnly true ; {IN_FIRST_GENERATION} .'
+        f'pkmn:formKind "gigantamax" ; pkmn:isBattleOnly true ; {IN_FIRST_GENERATION} .'
     )
     assert validate_fixture(data).rule_ids == {"V1"}
 

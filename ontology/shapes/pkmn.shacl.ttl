@@ -914,6 +914,23 @@ pkmn-shape:E3_TriggerFilters a sh:NodeShape ;
         sh:not [ sh:class pkmn:Ability ]
     ] .
 
+# R2 for form changes: 1 ability at most causes a change. This is a 2nd node shape
+# because the targets of E3_TriggerFilters must have no ability at all.
+pkmn-shape:E3_FormChangeAbility a sh:NodeShape ;
+    sh:name "E3" ;
+    sh:message "A form change is triggered by at most 1 ability."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:FormChange ;
+    sh:targetClass pkmn:FormChange ;
+    sh:property [
+        sh:path pkmn:triggeredBy ;
+        sh:name "E3" ;
+        sh:message "A form change has at most 1 triggeredBy edge to an Ability."@en ;
+        sh:severity sh:Violation ;
+        sh:qualifiedValueShape [ sh:class pkmn:Ability ] ;
+        sh:qualifiedMaxCount 1
+    ] .
+
 # R3. Each multiplier names what it scales. The stat targets are stubs, so the
 # constraint reads their id.
 pkmn-shape:E4_Multipliers a sh:NodeShape ;
@@ -1168,6 +1185,117 @@ pkmn-shape:V2_FormKind a sh:NodeShape ;
             sh:property [ sh:path pkmn:isBattleOnly ; sh:hasValue true ]
         ]
     ) .
+
+# R7. Each formKind fixes the trigger, the causing ability and the REQUIRES roles.
+# The roles arrive on reified edge nodes, so SPARQL constraints check them. E3
+# caps the abilities of a change at 1.
+pkmn-shape:E8_FormChangeKind a sh:NodeShape ;
+    sh:name "E8" ;
+    sh:message "The trigger and the ability of a form change must match its formKind: battle needs a trigger and an ability, primal needs trigger switch_in, mega, ultra_burst and gigantamax have no trigger, and terastal has no trigger or has both a trigger and an ability."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:FormChange ;
+    sh:targetClass pkmn:FormChange ;
+    sh:or (
+        [ sh:property [ sh:path pkmn:formKind ; sh:hasValue "alternate" ] ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "battle" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:minCount 1 ] ;
+            sh:property [
+                sh:path pkmn:triggeredBy ;
+                sh:qualifiedValueShape [ sh:class pkmn:Ability ] ;
+                sh:qualifiedMinCount 1
+            ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "mega" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "ultra_burst" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "primal" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:hasValue "switch_in" ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "gigantamax" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "terastal" ] ;
+            sh:or (
+                [ sh:property [ sh:path pkmn:trigger ; sh:maxCount 0 ] ]
+                [
+                    sh:property [ sh:path pkmn:trigger ; sh:minCount 1 ] ;
+                    sh:property [
+                        sh:path pkmn:triggeredBy ;
+                        sh:qualifiedValueShape [ sh:class pkmn:Ability ] ;
+                        sh:qualifiedMinCount 1
+                    ]
+                ]
+            )
+        ]
+    ) ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} is an alternate form change and needs REQUIRES use with no trigger, or REQUIRES hold with trigger passive."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                $this pkmn:formKind "alternate" .
+                OPTIONAL {
+                    ?use rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "use" .
+                }
+                OPTIONAL {
+                    ?hold rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "hold" .
+                }
+                OPTIONAL { $this pkmn:trigger ?trigger }
+                FILTER (!(
+                    (BOUND(?use) && !BOUND(?trigger))
+                    || (BOUND(?hold) && COALESCE(?trigger = "passive", false))
+                ))
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} has REQUIRES fusesWith and needs a REQUIRES use edge too."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT DISTINCT $this WHERE {
+                ?fusion rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "fusesWith" .
+                FILTER NOT EXISTS {
+                    ?use rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "use" .
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} is a {?kind} form change and needs a REQUIRES hold edge."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?kind WHERE {
+                $this pkmn:formKind ?kind .
+                FILTER (?kind IN ("mega", "ultra_burst", "primal"))
+                FILTER NOT EXISTS {
+                    ?hold rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "hold" .
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} is a gigantamax form change and requires nothing, but requires {?required}."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?required WHERE {
+                $this pkmn:formKind "gigantamax" ;
+                    pkmn:requires ?required .
+            }
+        """
+    ] .
 
 # A REQUIRES edge carries its role in Neo4j, so it arrives as a reified edge
 # node. Each role pairs with the class its target must have.
