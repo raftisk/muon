@@ -2,7 +2,7 @@ import argparse
 import os
 import re
 from collections.abc import Callable
-from dataclasses import fields
+from dataclasses import fields, replace
 from pathlib import Path
 from types import TracebackType
 from typing import Any
@@ -45,6 +45,7 @@ from muon.ingestion.bulbapedia.ingest import (
     PageFailure,
     PassProgress,
     PassTotals,
+    PlanSummary,
     StubIngestReport,
 )
 from muon.ingestion.bulbapedia.items.ingest import ItemIngestRun, ItemPass
@@ -87,7 +88,7 @@ from muon.ingestion.bulbapedia.species.run import (
     ParseRunError,
     ResidueItem,
 )
-from muon.ingestion.plan import ApplyReport, ItemState
+from muon.ingestion.plan import ApplyReport, DiffTotals, ItemState, PlanHeader
 from muon.ingestion.pokeapi.snapshot import SnapshotError, SnapshotFetchReport
 from muon.ingestion.runner import RunReport
 from muon.ingestion.seed import ABoxError
@@ -192,6 +193,66 @@ def test_seed_failure_prints_error(
     assert f"seed {PREFIX} failed: {error}" in captured.err
     assert SECRET not in captured.err
     assert captured.out == ""
+
+
+@pytest.mark.parametrize("page_type", ["species", "move", "ability", "item", "location"])
+def test_ingest_takes_the_plan_flag_for_every_page_type(page_type: str) -> None:
+    parser = cli.build_parser()
+
+    planned = parser.parse_args(["ingest", "bulbapedia", page_type, "--plan"])
+    written = parser.parse_args(["ingest", "bulbapedia", page_type])
+
+    assert (planned.should_plan, written.should_plan) == (True, False)
+
+
+@pytest.mark.usefixtures("settings")
+def test_planned_ingest_passes_the_label_writes_no_report_and_prints_the_plan(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    summary = PlanSummary(
+        header=PlanHeader(
+            universe="pkmn",
+            run_id="20260101-000000-bulbapedia-species",
+            run_label="bulbapedia-species",
+            tbox_hash="t",
+            shapes_hash="s",
+            counts={ItemState.PLANNED: 1, ItemState.NO_CHANGE: 2, ItemState.REJECTED: 0},
+            totals=DiffTotals(edges_deleted=4),
+        ),
+        plan_dir=Path("data/plans/pkmn/run"),
+        has_unapplied_earlier_pass=True,
+    )
+    ingest_run = replace(build_ingest_run(), plan=summary)
+    _, ingest = arrange_ingest(monkeypatch, ingest_run)
+
+    exit_code = cli.main([*INGEST_ARGV, "--plan"])
+
+    output = capsys.readouterr().out
+    assert exit_code == cli.EXIT_SUCCESS
+    assert ingest.plan_labels == ["bulbapedia-species"]
+    assert ingest.reports == []
+    assert "plan folder: data/plans/pkmn/run" in output
+    assert "batches no_change: 2" in output
+    assert "plan edges deleted: 4" in output
+    assert "note: each later pass was planned" in output
+
+
+async def test_run_ingest_puts_the_plan_label_on_the_request(
+    monkeypatch: pytest.MonkeyPatch, settings: Settings
+) -> None:
+    requests: list[IngestRequest] = []
+
+    async def fake_ingest_species(client: Any, run: ParseRun, request: IngestRequest) -> IngestRun:
+        requests.append(request)
+        return build_ingest_run()
+
+    monkeypatch.setattr(cli, "Neo4jGraphClient", FakeClient)
+    monkeypatch.setattr(cli, "ingest_species", fake_ingest_species)
+    run = ParseRun(outputs=(), report=build_parse_report())
+
+    await cli.run_ingest(settings, run, (), "bulbapedia-species")
+
+    assert requests[0].plan_label == "bulbapedia-species"
 
 
 def test_apply_parses_the_plan_folder() -> None:
@@ -1213,10 +1274,18 @@ class RecordingIngest:
     def __init__(self, outcome: IngestRun | Exception) -> None:
         self.outcome = outcome
         self.titles: list[tuple[str, ...]] = []
+        self.plan_labels: list[str | None] = []
         self.reports: list[IngestReport] = []
 
-    async def run(self, settings: Settings, run: ParseRun, titles: tuple[str, ...]) -> IngestRun:
+    async def run(
+        self,
+        settings: Settings,
+        run: ParseRun,
+        titles: tuple[str, ...],
+        plan_label: str | None = None,
+    ) -> IngestRun:
         self.titles.append(titles)
+        self.plan_labels.append(plan_label)
         if isinstance(self.outcome, Exception):
             raise self.outcome
         return self.outcome
@@ -1513,7 +1582,11 @@ class RecordingMoveIngest:
         self.reports: list[StubIngestReport] = []
 
     async def run(
-        self, settings: Settings, run: MoveParseRun, titles: tuple[str, ...]
+        self,
+        settings: Settings,
+        run: MoveParseRun,
+        titles: tuple[str, ...],
+        plan_label: str | None = None,
     ) -> MoveIngestRun:
         self.titles.append(titles)
         if isinstance(self.outcome, Exception):
@@ -1661,7 +1734,11 @@ class RecordingAbilityIngest:
         self.reports: list[StubIngestReport] = []
 
     async def run(
-        self, settings: Settings, run: AbilityParseRun, titles: tuple[str, ...]
+        self,
+        settings: Settings,
+        run: AbilityParseRun,
+        titles: tuple[str, ...],
+        plan_label: str | None = None,
     ) -> AbilityIngestRun:
         self.titles.append(titles)
         return self.outcome
@@ -1722,7 +1799,11 @@ class RecordingItemIngest:
         self.reports: list[StubIngestReport] = []
 
     async def run(
-        self, settings: Settings, run: ItemParseRun, titles: tuple[str, ...]
+        self,
+        settings: Settings,
+        run: ItemParseRun,
+        titles: tuple[str, ...],
+        plan_label: str | None = None,
     ) -> ItemIngestRun:
         self.titles.append(titles)
         return self.outcome
@@ -2149,7 +2230,11 @@ class RecordingLocationIngest:
         self.reports: list[StubIngestReport] = []
 
     async def run(
-        self, settings: Settings, run: LocationParseRun, titles: tuple[str, ...]
+        self,
+        settings: Settings,
+        run: LocationParseRun,
+        titles: tuple[str, ...],
+        plan_label: str | None = None,
     ) -> LocationIngestRun:
         self.titles.append(titles)
         return self.outcome

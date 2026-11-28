@@ -1,7 +1,7 @@
 """Command line entry point: `muon seed <prefix>`, `muon purge <prefix>`,
 `muon fetch bulbapedia <page-type> [--update] [--title TITLE ...] [--from-export FILE]`,
 `muon fetch pokeapi [--update]`, `muon parse bulbapedia species|move|ability|item`,
-`muon ingest bulbapedia species|move|ability|item`, `muon apply PLAN_DIR`,
+`muon ingest bulbapedia species|move|ability|item|location [--plan]`, `muon apply PLAN_DIR`,
 `muon schema <prefix> [--refresh] [--json]`,
 `muon ask QUESTION [--universe PREFIX] [--json] [--show-cypher]` and
 `muon eval PREFIX [--set NAME ...] [--question ID ...] [--output-dir DIR]`."""
@@ -79,6 +79,7 @@ from muon.ingestion.bulbapedia.ingest import (
     IngestRequest,
     MissingSeedError,
     PassProgress,
+    PlanSummary,
     StubIngestReport,
 )
 from muon.ingestion.bulbapedia.items.ingest import (
@@ -206,6 +207,14 @@ from muon.validation.sweep import run_sweep, write_sweep_report
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
+INGEST_RUN_ERRORS = (
+    MissingSeedError,
+    GraphError,
+    OntologyError,
+    ABoxError,
+    UniverseError,
+    PlanError,
+)
 PROGRAM_NAME = "muon"
 SEED_COMMAND = "seed"
 PURGE_COMMAND = "purge"
@@ -379,6 +388,12 @@ def build_parser() -> argparse.ArgumentParser:
         dest="titles",
         metavar="TITLE",
         help="ingest only this page (repeatable)",
+    )
+    ingest.add_argument(
+        "--plan",
+        action="store_true",
+        dest="should_plan",
+        help="write a plan for muon apply instead of writing data",
     )
     apply_parser = commands.add_parser(
         APPLY_COMMAND, help="write the batches of a plan and log every statement"
@@ -965,12 +980,15 @@ def print_progress(progress: PassProgress) -> None:
     print(format_progress(progress), flush=True)
 
 
-async def run_ingest(settings: Settings, run: ParseRun, titles: tuple[str, ...]) -> IngestRun:
+async def run_ingest(
+    settings: Settings, run: ParseRun, titles: tuple[str, ...], plan_label: str | None = None
+) -> IngestRun:
     request = IngestRequest(
         ontology_dir=settings.ontology.ontology_dir,
         universes_dir=settings.universes.universes_dir,
         titles=titles,
         on_progress=print_progress,
+        plan_label=plan_label,
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_species(client, run, request)
@@ -1033,7 +1051,33 @@ def format_ingest_report(
     return "\n".join(lines)
 
 
-def execute_ingest(settings: Settings, request: ParseRequest) -> int:
+def build_plan_label(page_type: str, should_plan: bool) -> str | None:
+    return f"{BULBAPEDIA_SOURCE}-{page_type}" if should_plan else None
+
+
+def format_plan_header(summary: PlanSummary) -> str:
+    """The plan folder, the batches per state, the totals of the changes and the pass note."""
+    header = summary.header
+    lines = [f"plan folder: {summary.plan_dir}"]
+    lines.extend(f"batches {state.value}: {count}" for state, count in header.counts.items())
+    lines.extend(
+        f"plan {name.replace('_', ' ')}: {count}"
+        for name, count in header.totals.model_dump().items()
+    )
+    if summary.has_unapplied_earlier_pass:
+        lines.append(
+            "note: each later pass was planned against the graph without the changes of the "
+            "earlier passes"
+        )
+    return "\n".join(lines)
+
+
+def print_plan(summary: PlanSummary | None) -> None:
+    if summary is not None:
+        print(format_plan_header(summary))
+
+
+def execute_ingest(settings: Settings, request: ParseRequest, should_plan: bool) -> int:
     failure_prefix = build_failure_prefix(INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {PARSE_PAGE_TYPE}")
     started = time.monotonic()
     try:
@@ -1044,32 +1088,39 @@ def execute_ingest(settings: Settings, request: ParseRequest) -> int:
     parse_seconds = time.monotonic() - started
 
     try:
-        ingest_run = asyncio.run(run_ingest(settings, run, request.titles))
-    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        plan_label = build_plan_label(PARSE_PAGE_TYPE, should_plan)
+        ingest_run = asyncio.run(run_ingest(settings, run, request.titles, plan_label))
+    except INGEST_RUN_ERRORS as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
-    write_ingest_report(ingest_run.report)
+    if not should_plan:
+        write_ingest_report(ingest_run.report)
     print(format_parse_report(run.report, parse_seconds))
     print(format_ingest_report(PARSE_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    print_plan(ingest_run.plan)
     is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
 async def run_move_ingest(
-    settings: Settings, run: MoveParseRun, titles: tuple[str, ...]
+    settings: Settings,
+    run: MoveParseRun,
+    titles: tuple[str, ...],
+    plan_label: str | None = None,
 ) -> MoveIngestRun:
     request = IngestRequest(
         ontology_dir=settings.ontology.ontology_dir,
         universes_dir=settings.universes.universes_dir,
         titles=titles,
         on_progress=print_progress,
+        plan_label=plan_label,
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_moves(client, run, request)
 
 
-def execute_move_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+def execute_move_ingest(settings: Settings, titles: tuple[str, ...], should_plan: bool) -> int:
     failure_prefix = build_failure_prefix(INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {MOVE_PAGE_TYPE}")
     started = time.monotonic()
     try:
@@ -1080,32 +1131,39 @@ def execute_move_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
     parse_seconds = time.monotonic() - started
 
     try:
-        ingest_run = asyncio.run(run_move_ingest(settings, run, titles))
-    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        plan_label = build_plan_label(MOVE_PAGE_TYPE, should_plan)
+        ingest_run = asyncio.run(run_move_ingest(settings, run, titles, plan_label))
+    except INGEST_RUN_ERRORS as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
-    write_move_ingest_report(ingest_run.report)
+    if not should_plan:
+        write_move_ingest_report(ingest_run.report)
     print(format_move_parse_report(run.report, parse_seconds))
     print(format_ingest_report(MOVE_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    print_plan(ingest_run.plan)
     is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
 async def run_ability_ingest(
-    settings: Settings, run: AbilityParseRun, titles: tuple[str, ...]
+    settings: Settings,
+    run: AbilityParseRun,
+    titles: tuple[str, ...],
+    plan_label: str | None = None,
 ) -> AbilityIngestRun:
     request = IngestRequest(
         ontology_dir=settings.ontology.ontology_dir,
         universes_dir=settings.universes.universes_dir,
         titles=titles,
         on_progress=print_progress,
+        plan_label=plan_label,
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_abilities(client, run, request)
 
 
-def execute_ability_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+def execute_ability_ingest(settings: Settings, titles: tuple[str, ...], should_plan: bool) -> int:
     failure_prefix = build_failure_prefix(
         INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {ABILITY_PAGE_TYPE}"
     )
@@ -1118,32 +1176,39 @@ def execute_ability_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
     parse_seconds = time.monotonic() - started
 
     try:
-        ingest_run = asyncio.run(run_ability_ingest(settings, run, titles))
-    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        plan_label = build_plan_label(ABILITY_PAGE_TYPE, should_plan)
+        ingest_run = asyncio.run(run_ability_ingest(settings, run, titles, plan_label))
+    except INGEST_RUN_ERRORS as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
-    write_ability_ingest_report(ingest_run.report)
+    if not should_plan:
+        write_ability_ingest_report(ingest_run.report)
     print(format_ability_parse_report(run.report, parse_seconds))
     print(format_ingest_report(ABILITY_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    print_plan(ingest_run.plan)
     is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
 async def run_item_ingest(
-    settings: Settings, run: ItemParseRun, titles: tuple[str, ...]
+    settings: Settings,
+    run: ItemParseRun,
+    titles: tuple[str, ...],
+    plan_label: str | None = None,
 ) -> ItemIngestRun:
     request = IngestRequest(
         ontology_dir=settings.ontology.ontology_dir,
         universes_dir=settings.universes.universes_dir,
         titles=titles,
         on_progress=print_progress,
+        plan_label=plan_label,
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_items(client, run, request)
 
 
-def execute_item_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+def execute_item_ingest(settings: Settings, titles: tuple[str, ...], should_plan: bool) -> int:
     failure_prefix = build_failure_prefix(INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {ITEM_PAGE_TYPE}")
     started = time.monotonic()
     try:
@@ -1154,32 +1219,39 @@ def execute_item_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
     parse_seconds = time.monotonic() - started
 
     try:
-        ingest_run = asyncio.run(run_item_ingest(settings, run, titles))
-    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        plan_label = build_plan_label(ITEM_PAGE_TYPE, should_plan)
+        ingest_run = asyncio.run(run_item_ingest(settings, run, titles, plan_label))
+    except INGEST_RUN_ERRORS as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
-    write_item_ingest_report(ingest_run.report)
+    if not should_plan:
+        write_item_ingest_report(ingest_run.report)
     print(format_item_parse_report(run.report, parse_seconds))
     print(format_ingest_report(ITEM_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    print_plan(ingest_run.plan)
     is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
 
 async def run_location_ingest(
-    settings: Settings, run: LocationParseRun, titles: tuple[str, ...]
+    settings: Settings,
+    run: LocationParseRun,
+    titles: tuple[str, ...],
+    plan_label: str | None = None,
 ) -> LocationIngestRun:
     request = IngestRequest(
         ontology_dir=settings.ontology.ontology_dir,
         universes_dir=settings.universes.universes_dir,
         titles=titles,
         on_progress=print_progress,
+        plan_label=plan_label,
     )
     async with Neo4jGraphClient(settings.neo4j) as client:
         return await ingest_locations(client, run, request)
 
 
-def execute_location_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
+def execute_location_ingest(settings: Settings, titles: tuple[str, ...], should_plan: bool) -> int:
     failure_prefix = build_failure_prefix(
         INGEST_COMMAND, f"{BULBAPEDIA_SOURCE} {LOCATION_PAGE_TYPE}"
     )
@@ -1192,14 +1264,17 @@ def execute_location_ingest(settings: Settings, titles: tuple[str, ...]) -> int:
     parse_seconds = time.monotonic() - started
 
     try:
-        ingest_run = asyncio.run(run_location_ingest(settings, run, titles))
-    except (MissingSeedError, GraphError, OntologyError, ABoxError, UniverseError) as error:
+        plan_label = build_plan_label(LOCATION_PAGE_TYPE, should_plan)
+        ingest_run = asyncio.run(run_location_ingest(settings, run, titles, plan_label))
+    except INGEST_RUN_ERRORS as error:
         print(f"{failure_prefix} {error}", file=sys.stderr)
         return EXIT_FAILURE
 
-    write_location_ingest_report(ingest_run.report)
+    if not should_plan:
+        write_location_ingest_report(ingest_run.report)
     print(format_location_parse_report(run.report, parse_seconds))
     print(format_ingest_report(LOCATION_PAGE_TYPE, ingest_run.report, ingest_run.elapsed_seconds))
+    print_plan(ingest_run.plan)
     is_clean = is_clean_ingest(run.report.pages_failed, ingest_run.report)
     return EXIT_SUCCESS if is_clean else EXIT_FAILURE
 
@@ -1589,15 +1664,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         return EXIT_FAILURE
 
     if arguments.command == INGEST_COMMAND and arguments.page_type == MOVE_PAGE_TYPE:
-        return execute_move_ingest(settings, tuple(arguments.titles))
+        return execute_move_ingest(settings, tuple(arguments.titles), arguments.should_plan)
     if arguments.command == INGEST_COMMAND and arguments.page_type == ABILITY_PAGE_TYPE:
-        return execute_ability_ingest(settings, tuple(arguments.titles))
+        return execute_ability_ingest(settings, tuple(arguments.titles), arguments.should_plan)
     if arguments.command == INGEST_COMMAND and arguments.page_type == ITEM_PAGE_TYPE:
-        return execute_item_ingest(settings, tuple(arguments.titles))
+        return execute_item_ingest(settings, tuple(arguments.titles), arguments.should_plan)
     if arguments.command == INGEST_COMMAND and arguments.page_type == LOCATION_PAGE_TYPE:
-        return execute_location_ingest(settings, tuple(arguments.titles))
+        return execute_location_ingest(settings, tuple(arguments.titles), arguments.should_plan)
     if arguments.command == INGEST_COMMAND:
-        return execute_ingest(settings, ParseRequest(titles=tuple(arguments.titles)))
+        parse_request = ParseRequest(titles=tuple(arguments.titles))
+        return execute_ingest(settings, parse_request, arguments.should_plan)
     if arguments.command == PURGE_COMMAND:
         return execute_purge(settings, arguments.prefix)
     if arguments.command == VALIDATE_COMMAND:

@@ -7,6 +7,9 @@ Map:
 - `write_passes` writes the passes in order through `write_pass`: the Validator checks each
   batch, then `Runner.write` in upsert mode, 1 transaction per batch, with the claim prune
   of each batch inside its transaction.
+- A run with a plan label writes no data and ensures no constraint: `write_pass` hands each
+  batch to a `PlanWriter` instead, and `write_passes` finishes the plan after the last
+  pass. A stopped run leaves the plan unfinished, so nothing can apply it.
 - A batch the Validator rejects is not written. The report records its violations and the
   pass continues with the next batch.
 - The first batch that raises a `GraphError` or a `ValueError` stops the run: no later batch
@@ -22,7 +25,7 @@ as its string value, which dumps to the same JSON.
 import time
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from enum import StrEnum
 from pathlib import Path
 
@@ -33,7 +36,14 @@ from muon.ingestion.batch import list_batch_classes as list_batch_classes
 from muon.ingestion.bulbapedia.batching import UNIVERSE
 from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT
 from muon.ingestion.bulbapedia.runs import PageResult, PageStatus, ReportModel, dump_json
-from muon.ingestion.plan import BatchValidator
+from muon.ingestion.plan import (
+    BatchValidator,
+    ItemState,
+    PlanContext,
+    PlanHeader,
+    PlanWriter,
+    open_plan,
+)
 from muon.ingestion.runner import Runner, RunReport, UniverseCensus, WriteMode
 from muon.ingestion.seed import find_missing_nodes, read_abox
 from muon.ontology.materializer import LabelMaterializer, build_plugin_materializer
@@ -82,10 +92,13 @@ class PassProgress:
 
 @dataclass(frozen=True)
 class IngestRequest:
+    """`plan_label` set means the run plans its batches under that label and writes none."""
+
     ontology_dir: Path
     universes_dir: Path
     titles: tuple[str, ...]
     on_progress: Callable[[PassProgress], None]
+    plan_label: str | None = None
 
 
 class PassTotals(ReportModel):
@@ -148,10 +161,14 @@ class StubIngestReport(IngestReport):
 
 @dataclass(frozen=True)
 class IngestTarget:
-    """Where a run writes: the Runner, behind the Validator that gates every batch."""
+    """Where a run writes: the Runner, behind the Validator that gates every batch.
+
+    With a `planner`, batches go to the plan and the Runner writes nothing.
+    """
 
     runner: Runner
     validator: BatchValidator
+    planner: PlanWriter | None = None
 
 
 @dataclass(frozen=True)
@@ -163,11 +180,39 @@ class PassItem:
 
 
 @dataclass(frozen=True)
+class ItemOutcome:
+    """What happened to 1 batch. `report` is set when the batch was written.
+
+    `violations` are those of a rejected batch, and `has_changes_planned` is true for a
+    batch that a plan would write.
+    """
+
+    is_rejected: bool = False
+    violations: tuple[Violation, ...] = ()
+    report: RunReport | None = None
+    has_changes_planned: bool = False
+
+
+@dataclass(frozen=True)
 class PassResult:
     totals: PassTotals
     changes: tuple[PageChange, ...]
     stop: IngestStop | None
     rejections: tuple[BatchRejection, ...] = ()
+    has_changes_planned: bool = False
+
+
+@dataclass(frozen=True)
+class PlanSummary:
+    """The finished plan of a run and its folder.
+
+    `has_unapplied_earlier_pass` is true when a pass before the last one has batches to
+    write: the later passes were planned against the graph without them.
+    """
+
+    header: PlanHeader
+    plan_dir: Path
+    has_unapplied_earlier_pass: bool
 
 
 @dataclass(frozen=True)
@@ -176,6 +221,7 @@ class PassRun:
 
     results: tuple[PassResult, ...]
     elapsed_seconds: Mapping[str, float]
+    plan: PlanSummary | None = None
 
     @property
     def stop(self) -> IngestStop | None:
@@ -194,8 +240,8 @@ async def check_seed(
 async def prepare_target(
     client: GraphClient, request: IngestRequest, constraint_classes: frozenset[str]
 ) -> IngestTarget:
-    """Check the seed, ensure the `id` constraints of `constraint_classes` once and build the
-    Validator.
+    """Check the seed and build the Validator, then ensure the `id` constraints of
+    `constraint_classes` once, or open the plan of a run with a plan label.
 
     Raises `MissingSeedError` before any write when the A-Box is not in the graph.
     """
@@ -205,8 +251,20 @@ async def prepare_target(
     materializer = build_plugin_materializer(model, plugin.manifest)
     await check_seed(client, materializer, read_abox(model, ontology_dir))
     runner = Runner(client, materializer)
-    await runner.ensure_constraints(constraint_classes)
-    return IngestTarget(runner=runner, validator=build_validator(client, ontology_dir, plugin))
+    validator = build_validator(client, ontology_dir, plugin)
+    if request.plan_label is None:
+        await runner.ensure_constraints(constraint_classes)
+        return IngestTarget(runner=runner, validator=validator)
+    context = PlanContext(
+        client=client,
+        runner=runner,
+        validator=validator,
+        materializer=materializer,
+        ontology_dir=ontology_dir,
+        universe=UNIVERSE,
+        run_label=request.plan_label,
+    )
+    return IngestTarget(runner=runner, validator=validator, planner=open_plan(context))
 
 
 def is_change(report: RunReport) -> bool:
@@ -225,6 +283,24 @@ def build_totals(
     )
 
 
+async def write_item(target: IngestTarget, item: PassItem) -> ItemOutcome:
+    """Plan the batch when the run has a planner, else validate and write it."""
+    if target.planner is not None:
+        planned = await target.planner.plan_item(item.page_title, item.batch, None)
+        return ItemOutcome(
+            is_rejected=planned.state is ItemState.REJECTED,
+            violations=planned.violations,
+            has_changes_planned=planned.state is ItemState.PLANNED,
+        )
+    validation = await target.validator.validate(item.batch)
+    if not validation.is_valid:
+        return ItemOutcome(is_rejected=True, violations=validation.violations)
+    report = await target.runner.write(
+        item.batch, WriteMode.UPSERT, should_ensure_constraints=False
+    )
+    return ItemOutcome(report=report)
+
+
 async def write_pass(
     target: IngestTarget,
     items: Sequence[PassItem],
@@ -233,50 +309,49 @@ async def write_pass(
 ) -> PassResult:
     """Validate and write the batches of 1 pass, in order, and stop at a failure.
 
-    A rejected batch is recorded and skipped. Progress goes to `on_progress` every
-    `PROGRESS_EVERY` batches, written or rejected, and after the last one.
+    A rejected batch is recorded and skipped. A planned batch counts as written, with no
+    counters. Progress goes to `on_progress` every `PROGRESS_EVERY` batches, written or
+    rejected, and after the last one.
     """
     started = time.monotonic()
     counters: Counter[str] = Counter()
     changes: list[PageChange] = []
     rejections: list[BatchRejection] = []
     written = 0
+    has_changes_planned = False
     for position, item in enumerate(items, start=1):
         try:
-            validation = await target.validator.validate(item.batch)
-            report = (
-                await target.runner.write(
-                    item.batch, WriteMode.UPSERT, should_ensure_constraints=False
-                )
-                if validation.is_valid
-                else None
-            )
+            outcome = await write_item(target, item)
         except (GraphError, ValueError) as error:
             stop = IngestStop(page_title=item.page_title, ingest_pass=ingest_pass, error=str(error))
             totals = build_totals(ingest_pass, written, len(rejections), counters)
             return PassResult(totals, tuple(changes), stop, tuple(rejections))
-        if report is None:
+        has_changes_planned = has_changes_planned or outcome.has_changes_planned
+        if outcome.is_rejected:
             rejections.append(
                 BatchRejection(
                     page_title=item.page_title,
                     ingest_pass=ingest_pass,
-                    violations=validation.violations,
+                    violations=outcome.violations,
                 )
             )
         else:
             written += 1
-            counters.update(asdict(report))
-            if is_change(report):
-                changes.append(
-                    PageChange(
-                        page_title=item.page_title, ingest_pass=ingest_pass, counters=asdict(report)
-                    )
+        if outcome.report is not None:
+            counters.update(asdict(outcome.report))
+        if outcome.report is not None and is_change(outcome.report):
+            changes.append(
+                PageChange(
+                    page_title=item.page_title,
+                    ingest_pass=ingest_pass,
+                    counters=asdict(outcome.report),
                 )
+            )
         if position % PROGRESS_EVERY == 0 or position == len(items):
             elapsed = time.monotonic() - started
             on_progress(PassProgress(ingest_pass, position, len(items), elapsed))
     totals = build_totals(ingest_pass, written, len(rejections), counters)
-    return PassResult(totals, tuple(changes), None, tuple(rejections))
+    return PassResult(totals, tuple(changes), None, tuple(rejections), has_changes_planned)
 
 
 async def write_passes(
@@ -284,7 +359,10 @@ async def write_passes(
     passes: Sequence[tuple[StrEnum, Sequence[PassItem]]],
     on_progress: Callable[[PassProgress], None],
 ) -> PassRun:
-    """Write the passes in order and stop after the 1st pass that stops."""
+    """Write the passes in order and stop after the 1st pass that stops.
+
+    A run with a planner finishes its plan when no pass stopped.
+    """
     results: list[PassResult] = []
     seconds: dict[str, float] = {}
     for ingest_pass, items in passes:
@@ -294,7 +372,20 @@ async def write_passes(
         results.append(result)
         if result.stop is not None:
             break
-    return PassRun(results=tuple(results), elapsed_seconds=seconds)
+    pass_run = PassRun(results=tuple(results), elapsed_seconds=seconds)
+    if target.planner is None or pass_run.stop is not None:
+        return pass_run
+    summary = PlanSummary(
+        header=target.planner.finish(),
+        plan_dir=target.planner.plan_dir,
+        has_unapplied_earlier_pass=any(result.has_changes_planned for result in results[:-1]),
+    )
+    return replace(pass_run, plan=summary)
+
+
+def should_count(pass_run: PassRun) -> bool:
+    """Whether the run wrote every pass, so the census and the stub reads say something new."""
+    return pass_run.stop is None and pass_run.plan is None
 
 
 def build_census_report(census: UniverseCensus | None) -> CensusReport | None:
