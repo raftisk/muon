@@ -68,12 +68,14 @@ RETURN row.key_labels[0] AS key_label, row.id AS id, labels(n) AS labels,
   [key IN keys(row.properties) WHERE n[key] IS NOT NULL | [key, n[key]]] AS properties
 """
 
-# Row keys must match `build_edge_rows`.
+# Row keys must match `build_edge_rows`. The match expands from the start node and filters
+# the end: with both ends bound first, Neo4j reads the relationships of end nodes that hold
+# tens of thousands of them, seconds per batch.
 READ_LISTED_EDGES: LiteralString = """
 UNWIND $edges AS row
 MATCH (a:$([row.start_label, $universe]) {id: row.start_id})
-MATCH (b:$([row.end_label, $universe]) {id: row.end_id})
 MATCH (a)-[r:$(row.type)]->(b)
+WHERE b.id = row.end_id AND row.end_label IN labels(b) AND $universe IN labels(b)
 RETURN row.type AS type, row.start_label AS start_label, row.start_id AS start_id,
   row.end_label AS end_label, row.end_id AS end_id,
   [key IN keys(row.properties) WHERE r[key] IS NOT NULL | [key, r[key]]] AS properties
