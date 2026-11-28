@@ -237,6 +237,8 @@ The label hierarchy check (L1), `id` uniqueness and edge typing (T1) are not SHA
 
 A rejected batch is skipped whole and listed in `rejected_batches` of the ingest report.
 
+A planned run (`muon ingest ... --plan`) writes no data. Each batch goes through the job's write policy when it has one, the Validator and a read-only preview of what its claims would delete, and lands in a plan file with its changes and statements. `muon apply PLAN_DIR` runs the policy check and the Validator again and writes the planned batches.
+
 ### Sweep
 
 `muon validate PREFIX` runs read-only checks on the graph that no single batch can see, and writes `data/validation/<prefix>-sweep-report.json`. It exits 1 on a finding in the first 3 checks.
