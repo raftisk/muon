@@ -9,6 +9,8 @@ TYPE = PKMN + "Type"
 ABILITY = PKMN + "Ability"
 HAS_TYPE = PKMN + "hasType"
 HAS_ABILITY = PKMN + "hasAbility"
+MOVE_EFFECT = PKMN + "MoveEffect"
+GENERATION = PKMN + "Generation"
 
 
 def build_species_batch(
@@ -90,3 +92,27 @@ async def test_shapes_are_selected_once_per_scope(pkmn_validator_inputs: Validat
     await validator.validate(build_species_batch(True))
 
     assert list(validator.selected_shapes) == [frozenset({SPECIES})]
+
+
+async def test_generation_scope_is_checked_on_abox_stubs(
+    pkmn_validator_inputs: ValidatorInputs,
+) -> None:
+    effect = build_node(MOVE_EFFECT, "bite:1", {PKMN + "isOverworld": True})
+    first = build_node(GENERATION, "generation-iv")
+    last = build_node(GENERATION, "generation-iii")
+    batch = GraphBatch(
+        universe=UNIVERSE,
+        scope=frozenset({MOVE_EFFECT}),
+        nodes=(effect, first, last),
+        edges=(
+            build_edge(PKMN + "introducedIn", effect, first),
+            build_edge(PKMN + "lastValidIn", effect, last),
+        ),
+        can_create_stubs=True,
+    )
+
+    report = await Validator(pkmn_validator_inputs, RecordingGraphClient()).validate(batch)
+
+    assert [violation.rule_id for violation in report.violations] == ["G3"]
+    assert "generation-iii" in report.violations[0].message
+    assert "generation-iv" in report.violations[0].message

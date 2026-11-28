@@ -23,10 +23,12 @@ from muon.ingestion.bulbapedia.ingest import (
     INGEST_OUTPUT_ROOT,
     IngestRequest,
     PassItem,
+    PlanSummary,
     StubIngestReport,
     build_ingest_report,
     list_batch_classes,
     prepare_target,
+    should_count,
     write_passes,
     write_report_file,
 )
@@ -46,6 +48,7 @@ class AbilityPass(StrEnum):
 class AbilityIngestRun:
     report: StubIngestReport
     elapsed_seconds: Mapping[str, float]
+    plan: PlanSummary | None = None
 
 
 def select_ability_batch(output: AbilityPageOutput, ingest_pass: AbilityPass) -> GraphBatch:
@@ -84,13 +87,14 @@ async def ingest_abilities(
         for ingest_pass in AbilityPass
     ]
     pass_run = await write_passes(target, passes, request.on_progress)
-    is_stopped = pass_run.stop is not None
-    census = None if is_stopped else await target.runner.count_universe()
-    stub_ids = None if is_stopped else await target.runner.list_stub_ids(STUB_CLASSES)
+    is_counted = should_count(pass_run)
+    census = await target.runner.count_universe() if is_counted else None
+    stub_ids = await target.runner.list_stub_ids(STUB_CLASSES) if is_counted else None
     report = build_ingest_report(request, pass_run, run.report.pages, census)
     return AbilityIngestRun(
         report=StubIngestReport(**dict(report), stub_ids=stub_ids),
         elapsed_seconds=pass_run.elapsed_seconds,
+        plan=pass_run.plan,
     )
 
 

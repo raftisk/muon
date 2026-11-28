@@ -9,7 +9,7 @@ derives from the English name.
 
 import re
 import unicodedata
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from enum import StrEnum
 from typing import Final, Self
 
@@ -19,6 +19,7 @@ NODE_ID_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*(:[a-z0-9]+(-[a-z0-9]+)*)*
 APOSTROPHES: Final = re.compile("['’]")
 NON_ID_CHARACTERS = re.compile(r"[^a-z0-9]+")
 ID_SEPARATOR = "-"
+ID_PREFIX_KEY = "other_end_id_prefix"
 UNICODE_DECOMPOSITION: Final = "NFKD"
 
 PropertyValue = str | int | float | bool | tuple[str, ...]
@@ -211,3 +212,26 @@ class GraphBatch(BaseModel):
                     f"scope; got {claim.other_class_iri}"
                 )
         return self
+
+
+def serialize_batch(batch: GraphBatch) -> dict[str, object]:
+    """Dump a batch with its scope sorted: pydantic dumps a frozenset in hash order.
+
+    A claim with no `other_end_id_prefix` leaves the key out, so the outputs of the page
+    types that never set a prefix keep the bytes they had before the field existed.
+    """
+    data = batch.model_dump(mode="json")
+    data["scope"] = sorted(batch.scope)
+    for claim in data["claims"]:
+        if claim.get(ID_PREFIX_KEY, "") is None:
+            del claim[ID_PREFIX_KEY]
+    return data
+
+
+def list_batch_classes(batches: Iterable[GraphBatch]) -> frozenset[str]:
+    """Return the scope classes and the stub classes of the batches."""
+    classes: set[str] = set()
+    for batch in batches:
+        classes |= batch.scope
+        classes.update(stub.class_iri for stub in batch.stub_nodes)
+    return frozenset(classes)

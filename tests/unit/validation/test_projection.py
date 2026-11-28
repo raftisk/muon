@@ -3,7 +3,7 @@ from rdflib.namespace import RDF, RDFS, XSD
 
 from muon.ontology.model import OntologyModel
 from muon.validation.projection import ProjectionRules, project_batch, project_literal
-from tests.unit.validation.conftest import PKMN, build_edge, build_node, build_test_batch
+from tests.unit.validation.conftest import MO, PKMN, build_edge, build_node, build_test_batch
 
 SPECIES = PKMN + "PokemonSpecies"
 TYPE = PKMN + "Type"
@@ -11,6 +11,9 @@ EVOLUTION = PKMN + "Evolution"
 ITEM = PKMN + "Item"
 HAS_TYPE = PKMN + "hasType"
 REQUIRES = PKMN + "requires"
+GENERATION = PKMN + "Generation"
+MOVE_EFFECT = PKMN + "MoveEffect"
+SEQUENCE_NUMBER = URIRef(MO + "sequenceNumber")
 NODE_BASE = PKMN + "node/"
 
 
@@ -118,3 +121,37 @@ def test_stub_is_projected_like_a_node(
     term = URIRef(NODE_BASE + "Type/electric")
     assert (term, RDF.type, URIRef(TYPE)) in projected.graph
     assert projected.nodes_by_term[term] == electric.node_ref
+
+
+def test_abox_stub_gets_its_abox_properties_and_the_batch_stub_keeps_name_only(
+    pkmn_model: OntologyModel, pkmn_rules: ProjectionRules
+) -> None:
+    generation = build_node(GENERATION, "generation-iv")
+    batch = build_test_batch([MOVE_EFFECT], [generation])
+
+    projected = project_batch(batch, pkmn_model, pkmn_rules)
+
+    term = URIRef(NODE_BASE + "Generation/generation-iv")
+    assert (term, SEQUENCE_NUMBER, Literal("4", datatype=XSD.integer)) in projected.graph
+    assert batch.stub_nodes == (generation,)
+    assert not batch.stub_nodes[0].properties
+
+
+def test_owner_record_gets_no_abox_properties(
+    pkmn_model: OntologyModel, pkmn_rules: ProjectionRules
+) -> None:
+    generation = build_node(GENERATION, "generation-iv")
+
+    projected = project_batch(build_test_batch([GENERATION], [generation]), pkmn_model, pkmn_rules)
+
+    assert list(projected.graph.subject_objects(SEQUENCE_NUMBER)) == []
+
+
+def test_stub_without_an_abox_match_gets_no_properties(
+    pkmn_model: OntologyModel, pkmn_rules: ProjectionRules
+) -> None:
+    generation = build_node(GENERATION, "generation-x")
+
+    projected = project_batch(build_test_batch([MOVE_EFFECT], [generation]), pkmn_model, pkmn_rules)
+
+    assert list(projected.graph.subject_objects(SEQUENCE_NUMBER)) == []

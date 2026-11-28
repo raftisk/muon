@@ -2,7 +2,8 @@
 
 A node becomes the IRI `<namespace>node/<class local name>/<id>`. An edge becomes 1
 triple, plus a reified node when it carries edge properties the projection table does
-not consume.
+not consume. A stub that names an A-Box individual also gets that individual's datatype
+properties, so a shape can read them; the batch itself keeps the stub with `name` only.
 """
 
 from collections.abc import Mapping
@@ -27,14 +28,16 @@ Triple = tuple[Node, URIRef, Node]
 
 @dataclass(frozen=True)
 class ProjectionRules:
-    """The universe namespace and the edge property to sub-property table.
+    """The universe namespace, the edge property to sub-property table and the A-Box facts.
 
     `sub_properties` is keyed by (property IRI, edge property name) and maps the edge
-    property value as a string to a sub-property IRI.
+    property value as a string to a sub-property IRI. `abox_properties` holds the
+    datatype properties of each A-Box individual.
     """
 
     namespace: str
     sub_properties: Mapping[tuple[str, str], Mapping[str, str]]
+    abox_properties: Mapping[NodeRef, Mapping[str, PropertyValue]]
 
 
 @dataclass(frozen=True)
@@ -54,8 +57,8 @@ class EdgeProjection:
     reified_node: BNode | None
 
 
-def build_projection_rules(manifest: UniverseManifest) -> ProjectionRules:
-    """Resolve the manifest's projection table against its namespace."""
+def build_projection_rules(manifest: UniverseManifest, abox: GraphBatch) -> ProjectionRules:
+    """Resolve the manifest's projection table and index the A-Box properties by node."""
     namespace = manifest.namespace
     return ProjectionRules(
         namespace=namespace,
@@ -65,6 +68,7 @@ def build_projection_rules(manifest: UniverseManifest) -> ProjectionRules:
             }
             for entry in manifest.projection
         },
+        abox_properties={node.node_ref: node.properties for node in abox.nodes},
     )
 
 
@@ -77,6 +81,10 @@ def project_batch(
     for node in batch.nodes:
         nodes_by_term[build_node_term(node.node_ref, rules)] = node.node_ref
         for triple in project_node(node, model, rules):
+            graph.add(triple)
+    for stub in batch.stub_nodes:
+        facts = rules.abox_properties.get(stub.node_ref, {})
+        for triple in project_properties(build_node_term(stub.node_ref, rules), facts, model):
             graph.add(triple)
     for edge in batch.edges:
         projection = project_edge(edge, model, rules)
@@ -99,13 +107,17 @@ def project_node(node: NodeRecord, model: OntologyModel, rules: ProjectionRules)
         (term, URIRef(rules.namespace + ID_PROPERTY_NAME), Literal(node.id)),
         (term, RDFS.label, Literal(node.name)),
     ]
-    for property_iri, value in node.properties.items():
-        datatype_iri = model.datatype_ranges.get(property_iri)
-        triples.extend(
-            (term, URIRef(property_iri), literal)
-            for literal in project_literal(value, datatype_iri)
-        )
-    return triples
+    return triples + project_properties(term, node.properties, model)
+
+
+def project_properties(
+    term: URIRef, properties: Mapping[str, PropertyValue], model: OntologyModel
+) -> list[Triple]:
+    return [
+        (term, URIRef(property_iri), literal)
+        for property_iri, value in properties.items()
+        for literal in project_literal(value, model.datatype_ranges.get(property_iri))
+    ]
 
 
 def project_literal(value: PropertyValue, datatype_iri: str | None) -> list[Literal]:

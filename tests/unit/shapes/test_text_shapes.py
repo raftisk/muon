@@ -1,5 +1,6 @@
 from tests.unit.shapes.games_fixtures import (
     GENERATION_NODE,
+    IN_FIRST_GENERATION,
     build_version,
     build_version_group,
 )
@@ -106,7 +107,7 @@ def evolution(extracted_by: str) -> str:
         + ivysaur
         + 'ex:change a pkmn:Evolution ; pkmn:id "charmander:charmeleon" ; '
         + "pkmn:fromSpecies ex:charmander ; pkmn:toSpecies ex:charmeleon ; "
-        + f"mo:extractedBy {extracted_by} ."
+        + f"mo:extractedBy {extracted_by} ; {IN_FIRST_GENERATION} ."
     )
 
 

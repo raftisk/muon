@@ -41,6 +41,8 @@ RETURN e.id, e.evoTrigger, g.id
 
 A `Version` is 1 game, a `VersionGroup` is the group of games that share data (`scarlet-violet`), and a `Generation` holds the groups of 1 generation. `PART_OF` links `Version` to `VersionGroup` and `VersionGroup` to `Generation`. A filter by generation goes through that chain, for example `(:Encounter)-[:IN_VERSION]->(:Version)-[:PART_OF*]->(:Generation)`. `INTRODUCED_IN` points at the `Generation` where an entity first appeared.
 
+A `Generation` has `sequenceNumber`, 1 to 9. Compare generations with it, for example `WHERE g.sequenceNumber > 5` for "after Generation V".
+
 ### Learnsets
 
 `CAN_LEARN` runs from a species to a move. The detail sits on `LearnsetEntry` nodes, reached through `HAS_LEARNSET_ENTRY`. An entry gives the `method`, the `level` when it has one, the move (`TEACHES_MOVE`), the game (`IN_VERSION_GROUP`) and the machine (`VIA_MACHINE`).

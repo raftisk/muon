@@ -14,6 +14,8 @@ from muon.ingestion.runner import (
     build_edge_rows,
     build_ids_by_label,
     build_node_rows,
+    build_preview_statements,
+    build_prune_statements,
     build_statements,
 )
 from muon.ingestion.seed import read_abox
@@ -32,6 +34,26 @@ TOY_SUMMARY = WriteSummary(
     properties_set=7,
 )
 SYNC_STATEMENT_COUNT = 4
+# The literal text of the claim prune, so a change to the shared pieces is deliberate.
+EXPECTED_PRUNE_HEAD = """
+UNWIND $claims AS claim
+
+MATCH (anchor:$([claim.anchor_label, $universe]) {id: claim.anchor_id})
+"""
+EXPECTED_PRUNE_TAIL = """
+
+WHERE (claim.other_label IS NULL OR claim.other_label IN labels(other))
+  AND (claim.other_id_prefix IS NULL OR other.id STARTS WITH claim.other_id_prefix)
+  AND NOT any(kept IN claim.kept WHERE kept.label IN labels(other) AND kept.id = other.id)
+WITH collect(DISTINCT r) AS stale_edges,
+  collect(DISTINCT CASE
+    WHEN claim.owns_other_end
+      AND NOT any(label IN labels(other) WHERE other.id IN coalesce($owner_ids_by_label[label], []))
+    THEN other
+  END) AS orphans
+FOREACH (stale_edge IN stale_edges | DELETE stale_edge)
+FOREACH (orphan IN orphans | DETACH DELETE orphan)
+"""
 TOY = "https://muon.dev/ns/muontoy#"
 TOY_GADGET = TOY + "ToyGadget"
 TOY_WIDGET = TOY + "ToyWidget"
@@ -481,8 +503,79 @@ def test_claim_row_without_matching_edges_keeps_nothing(materializer: LabelMater
 def test_prune_statements_differ_only_in_the_arrow() -> None:
     assert "]->(other" in runner.PRUNE_CLAIMED_OUT
     assert "<-[r" in runner.PRUNE_CLAIMED_IN
-    assert runner.PRUNE_CLAIMED_OUT.endswith(runner.PRUNE_CLAIMED_TAIL)
-    assert runner.PRUNE_CLAIMED_IN.endswith(runner.PRUNE_CLAIMED_TAIL)
+    assert runner.PRUNE_CLAIMED_OUT.endswith(runner.PRUNE_CLAIMED_DELETE)
+    assert runner.PRUNE_CLAIMED_IN.endswith(runner.PRUNE_CLAIMED_DELETE)
+
+
+def test_composed_prune_text_is_unchanged() -> None:
+    assert runner.PRUNE_CLAIMED_OUT == EXPECTED_PRUNE_HEAD + "  -[r:$(claim.type)]->" + (
+        "(other:$($universe))" + EXPECTED_PRUNE_TAIL
+    )
+    assert runner.PRUNE_CLAIMED_IN == EXPECTED_PRUNE_HEAD + "  <-[r:$(claim.type)]-" + (
+        "(other:$($universe))" + EXPECTED_PRUNE_TAIL
+    )
+
+
+def test_preview_and_prune_share_the_filter_and_the_parameters(
+    materializer: LabelMaterializer,
+) -> None:
+    claims = (
+        COLOR_CLAIM,
+        EdgeClaim(
+            anchor=NodeRecord(class_iri=TOY_COLOR, id="red", name="Red").node_ref,
+            property_iri=TOY_HAS_COLOR,
+            direction=ClaimDirection.IN,
+            other_class_iri=TOY_GADGET,
+        ),
+    )
+    batch = build_claim_batch(*claims)
+
+    prunes = build_prune_statements(batch, materializer)
+    previews = build_preview_statements(batch, materializer)
+
+    assert [statement.query for statement in previews] == [
+        runner.PREVIEW_CLAIMED_OUT,
+        runner.PREVIEW_CLAIMED_IN,
+    ]
+    assert [statement.parameters for statement in previews] == [
+        statement.parameters for statement in prunes
+    ]
+    for statement in previews:
+        assert runner.PRUNE_CLAIMED_FILTER in statement.query
+        assert "DELETE" not in statement.query
+
+
+async def test_preview_merges_the_edges_and_nodes_that_2_claims_reach(
+    materializer: LabelMaterializer,
+) -> None:
+    record = {
+        "type": "HAS_COLOR",
+        "start_labels": ["muontoy", "ToyGadget"],
+        "start_id": "alpha",
+        "end_labels": ["ToyColor", "muontoy"],
+        "end_id": "blue",
+        "orphan": {"labels": ["muontoy", "ToyColor"], "id": "blue"},
+    }
+    claims = (
+        COLOR_CLAIM,
+        EdgeClaim(
+            anchor=NodeRecord(class_iri=TOY_COLOR, id="red", name="Red").node_ref,
+            property_iri=TOY_HAS_COLOR,
+            direction=ClaimDirection.IN,
+            other_class_iri=TOY_GADGET,
+        ),
+    )
+    client = RecordingGraphClient(read_records=[[record], [record]])
+
+    preview = await Runner(client, materializer).preview_deletes(build_claim_batch(*claims))
+
+    assert [(edge.type, edge.start_id, edge.end_id) for edge in preview.edges] == [
+        ("HAS_COLOR", "alpha", "blue")
+    ]
+    assert preview.edges[0].start_labels == ("ToyGadget", "muontoy")
+    assert [(node.labels, node.id) for node in preview.nodes] == [(("ToyColor", "muontoy"), "blue")]
+    assert not preview.is_empty
+    assert client.calls == []
 
 
 async def test_sync_write_with_claims_raises_before_any_call(

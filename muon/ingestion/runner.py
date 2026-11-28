@@ -17,12 +17,17 @@ deleted edge, unless the batch lists that node as an owner record. Matching coll
 the stale edges and nodes before any delete, so a node that 2 claims reach is tested
 before it goes and deleted once. There is 1 statement per direction because Cypher
 takes no relationship direction as a parameter.
+
+`preview_deletes` reads what that prune would delete, with the same match and filter,
+and writes nothing.
 """
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, fields
 from enum import StrEnum
 from typing import Any, Final, LiteralString
+
+from pydantic import BaseModel, ConfigDict
 
 from muon.graph import GraphClient, Statement, WriteSummary
 from muon.ingestion.batch import ClaimDirection, GraphBatch, NodeRecord, NodeRef
@@ -105,27 +110,70 @@ MATCH (anchor:$([claim.anchor_label, $universe]) {id: claim.anchor_id})
   <-[r:$(claim.type)]-(other:$($universe))
 """
 
-PRUNE_CLAIMED_TAIL: LiteralString = """
+PRUNE_CLAIMED_FILTER: LiteralString = """
 WHERE (claim.other_label IS NULL OR claim.other_label IN labels(other))
   AND (claim.other_id_prefix IS NULL OR other.id STARTS WITH claim.other_id_prefix)
   AND NOT any(kept IN claim.kept WHERE kept.label IN labels(other) AND kept.id = other.id)
-WITH collect(DISTINCT r) AS stale_edges,
+"""
+
+# Whether the other end of a stale edge goes with it.
+ORPHAN_CONDITION: LiteralString = (
+    "claim.owns_other_end\n"
+    "      AND NOT any(label IN labels(other)"
+    " WHERE other.id IN coalesce($owner_ids_by_label[label], []))"
+)
+
+# The prune and the preview share the filter and the orphan condition; change them in 1 place.
+PRUNE_CLAIMED_DELETE: LiteralString = (
+    """WITH collect(DISTINCT r) AS stale_edges,
   collect(DISTINCT CASE
-    WHEN claim.owns_other_end
-      AND NOT any(label IN labels(other) WHERE other.id IN coalesce($owner_ids_by_label[label], []))
+    WHEN """
+    + ORPHAN_CONDITION
+    + """
     THEN other
   END) AS orphans
 FOREACH (stale_edge IN stale_edges | DELETE stale_edge)
 FOREACH (orphan IN orphans | DETACH DELETE orphan)
 """
+)
 
-PRUNE_CLAIMED_OUT: LiteralString = PRUNE_CLAIMED_HEAD + PRUNE_CLAIMED_OUT_MATCH + PRUNE_CLAIMED_TAIL
+PREVIEW_CLAIMED_RETURN: LiteralString = (
+    """RETURN type(r) AS type,
+  labels(startNode(r)) AS start_labels, startNode(r).id AS start_id,
+  labels(endNode(r)) AS end_labels, endNode(r).id AS end_id,
+  CASE
+    WHEN """
+    + ORPHAN_CONDITION
+    + """
+    THEN {labels: labels(other), id: other.id}
+  END AS orphan
+"""
+)
 
-PRUNE_CLAIMED_IN: LiteralString = PRUNE_CLAIMED_HEAD + PRUNE_CLAIMED_IN_MATCH + PRUNE_CLAIMED_TAIL
+PRUNE_CLAIMED_OUT: LiteralString = (
+    PRUNE_CLAIMED_HEAD + PRUNE_CLAIMED_OUT_MATCH + PRUNE_CLAIMED_FILTER + PRUNE_CLAIMED_DELETE
+)
+
+PRUNE_CLAIMED_IN: LiteralString = (
+    PRUNE_CLAIMED_HEAD + PRUNE_CLAIMED_IN_MATCH + PRUNE_CLAIMED_FILTER + PRUNE_CLAIMED_DELETE
+)
+
+PREVIEW_CLAIMED_OUT: LiteralString = (
+    PRUNE_CLAIMED_HEAD + PRUNE_CLAIMED_OUT_MATCH + PRUNE_CLAIMED_FILTER + PREVIEW_CLAIMED_RETURN
+)
+
+PREVIEW_CLAIMED_IN: LiteralString = (
+    PRUNE_CLAIMED_HEAD + PRUNE_CLAIMED_IN_MATCH + PRUNE_CLAIMED_FILTER + PREVIEW_CLAIMED_RETURN
+)
 
 PRUNE_CLAIMED_BY_DIRECTION: Final[Mapping[ClaimDirection, LiteralString]] = {
     ClaimDirection.OUT: PRUNE_CLAIMED_OUT,
     ClaimDirection.IN: PRUNE_CLAIMED_IN,
+}
+
+PREVIEW_CLAIMED_BY_DIRECTION: Final[Mapping[ClaimDirection, LiteralString]] = {
+    ClaimDirection.OUT: PREVIEW_CLAIMED_OUT,
+    ClaimDirection.IN: PREVIEW_CLAIMED_IN,
 }
 
 MERGE_NODES_HEAD: LiteralString = """
@@ -183,6 +231,45 @@ ORDER BY id
 """
 
 
+class PreviewNode(BaseModel):
+    """A node a claim prune would delete. `labels` is sorted."""
+
+    model_config = ConfigDict(frozen=True)
+
+    labels: tuple[str, ...]
+    id: str
+
+
+class PreviewEdge(BaseModel):
+    """A relationship a claim prune would delete. Each tuple of labels is sorted."""
+
+    model_config = ConfigDict(frozen=True)
+
+    type: str
+    start_labels: tuple[str, ...]
+    start_id: str
+    end_labels: tuple[str, ...]
+    end_id: str
+
+
+class DeletePreview(BaseModel):
+    """What the claims of 1 batch would delete, each tuple sorted.
+
+    `edges` are the claimed edges the batch no longer lists and `nodes` the other ends
+    that go with them. A node is detach-deleted, so its remaining relationships go too
+    and are not listed in `edges`.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    edges: tuple[PreviewEdge, ...] = ()
+    nodes: tuple[PreviewNode, ...] = ()
+
+    @property
+    def is_empty(self) -> bool:
+        return not (self.edges or self.nodes)
+
+
 class Runner:
     """Writes batches of one universe through a `GraphClient` and purges that universe."""
 
@@ -198,11 +285,7 @@ class Runner:
         A caller that ensured the constraints of every batch up front passes
         `should_ensure_constraints=False`; the report then counts 0 constraints.
         """
-        if batch.universe != self.materializer.universe_label:
-            raise ValueError(
-                f"Batch universe {batch.universe!r} does not match the ontology universe "
-                f"{self.materializer.universe_label!r}"
-            )
+        self.check_universe(batch)
         if mode is WriteMode.SYNC and batch.stub_nodes:
             stub = batch.stub_nodes[0]
             raise ValueError(
@@ -221,6 +304,22 @@ class Runner:
         statements = build_statements(batch, mode, self.materializer)
         summaries = await self.client.execute_write_batch(statements)
         return summarize_run(summaries, constraints_ensured)
+
+    def check_universe(self, batch: GraphBatch) -> None:
+        """Raise `ValueError` for a batch of another universe."""
+        if batch.universe != self.materializer.universe_label:
+            raise ValueError(
+                f"Batch universe {batch.universe!r} does not match the ontology universe "
+                f"{self.materializer.universe_label!r}"
+            )
+
+    async def preview_deletes(self, batch: GraphBatch) -> DeletePreview:
+        """Return what an upsert write of `batch` would delete, with reads only."""
+        self.check_universe(batch)
+        records: list[dict[str, Any]] = []
+        for statement in build_preview_statements(batch, self.materializer):
+            records.extend(await self.client.execute_read(statement.query, statement.parameters))
+        return build_delete_preview(records)
 
     async def ensure_constraints(self, class_iris: Iterable[str]) -> int:
         """Ensure the `id` constraint of each class, then the name index.
@@ -324,12 +423,26 @@ def build_statements(
 
 def build_prune_statements(batch: GraphBatch, materializer: LabelMaterializer) -> list[Statement]:
     """Return the claim prune of each direction that has claims, `out` first."""
+    return build_claim_statements(batch, materializer, PRUNE_CLAIMED_BY_DIRECTION)
+
+
+def build_preview_statements(batch: GraphBatch, materializer: LabelMaterializer) -> list[Statement]:
+    """Return the reads that list what `build_prune_statements` would delete."""
+    return build_claim_statements(batch, materializer, PREVIEW_CLAIMED_BY_DIRECTION)
+
+
+def build_claim_statements(
+    batch: GraphBatch,
+    materializer: LabelMaterializer,
+    queries: Mapping[ClaimDirection, LiteralString],
+) -> list[Statement]:
+    """Pair the query of each direction that has claims with its parameters, `out` first."""
     parameters = {
         "universe": materializer.universe_label,
         "owner_ids_by_label": build_ids_by_label(batch, materializer),
     }
     statements: list[Statement] = []
-    for direction, query in PRUNE_CLAIMED_BY_DIRECTION.items():
+    for direction, query in queries.items():
         claim_rows = build_claim_rows(batch, materializer, direction)
         if claim_rows:
             statements.append(Statement(query, {**parameters, "claims": claim_rows}))
@@ -391,6 +504,30 @@ def index_other_ends(
         )
         other_ends.setdefault((edge.property_iri, anchor), []).append(other)
     return other_ends
+
+
+def build_delete_preview(records: Iterable[Mapping[str, Any]]) -> DeletePreview:
+    """Merge preview records, so an edge or node that 2 claims reach is listed once."""
+    edges: dict[tuple[str, tuple[str, ...], str, tuple[str, ...], str], PreviewEdge] = {}
+    nodes: dict[tuple[tuple[str, ...], str], PreviewNode] = {}
+    for record in records:
+        edge = PreviewEdge(
+            type=record["type"],
+            start_labels=tuple(sorted(record["start_labels"])),
+            start_id=record["start_id"],
+            end_labels=tuple(sorted(record["end_labels"])),
+            end_id=record["end_id"],
+        )
+        edge_key = (edge.type, edge.start_labels, edge.start_id, edge.end_labels, edge.end_id)
+        edges[edge_key] = edge
+        orphan = record["orphan"]
+        if orphan is not None:
+            node = PreviewNode(labels=tuple(sorted(orphan["labels"])), id=orphan["id"])
+            nodes[(node.labels, node.id)] = node
+    return DeletePreview(
+        edges=tuple(edges[key] for key in sorted(edges)),
+        nodes=tuple(nodes[key] for key in sorted(nodes)),
+    )
 
 
 def build_node_rows(

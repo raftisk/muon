@@ -16,7 +16,7 @@
 
 <https://muon.dev/ns/pkmn-shapes> a owl:Ontology ;
     dcterms:title   "muon: Pokémon SHACL shapes"@en ;
-    owl:versionInfo "0.2.0" ;
+    owl:versionInfo "0.3.0" ;
     owl:imports     <https://muon.dev/ns/pkmn> ;
     sh:declare [ sh:prefix "pkmn" ; sh:namespace "https://muon.dev/ns/pkmn#"^^xsd:anyURI ] ,
                [ sh:prefix "mo" ; sh:namespace "https://muon.dev/ns/core#"^^xsd:anyURI ] ,
@@ -651,6 +651,65 @@ pkmn-shape:G2_VersionGroupPartOf a sh:NodeShape ;
         sh:class pkmn:Generation
     ] .
 
+# Generations are compared through sequenceNumber.
+pkmn-shape:G4_GenerationSequence a sh:NodeShape ;
+    sh:name "G4" ;
+    sh:message "A generation has exactly 1 sequenceNumber, an integer of at least 1."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:Generation ;
+    sh:targetClass pkmn:Generation ;
+    sh:property [
+        sh:path mo:sequenceNumber ;
+        sh:name "G4" ;
+        sh:message "A generation needs exactly 1 sequenceNumber, an integer of at least 1."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1
+    ] .
+
+# The scope of a fact that changes between generations. Both ends are inclusive.
+pkmn-shape:G3_GenerationScope a sh:NodeShape ;
+    sh:name "G3" ;
+    sh:message "A fact starts in exactly 1 generation and ends in at most 1, not before its start."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect , pkmn:Evolution , pkmn:FormChange ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect , pkmn:Evolution , pkmn:FormChange ;
+    sh:property [
+        sh:path pkmn:introducedIn ;
+        sh:name "G3" ;
+        sh:message "A fact needs exactly 1 introducedIn, a Generation."@en ;
+        sh:severity sh:Violation ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Generation
+    ] ;
+    sh:property [
+        sh:path pkmn:lastValidIn ;
+        sh:name "G3" ;
+        sh:message "A fact has at most 1 lastValidIn, a Generation."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:class pkmn:Generation
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} ends in {?endId}, before it starts in {?startId}."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?startId ?endId WHERE {
+                $this pkmn:introducedIn ?start .
+                $this pkmn:lastValidIn ?end .
+                ?start pkmn:id ?startId ;
+                    mo:sequenceNumber ?startNumber .
+                ?end pkmn:id ?endId ;
+                    mo:sequenceNumber ?endNumber .
+                FILTER (?endNumber < ?startNumber)
+            }
+        """
+    ] .
+
 # Text chunks. `aspect` takes the core values plus `pokedex`, which only a
 # universe can describe. A canon chunk names its work with fromWork; every other
 # chunk names its origin with source.
@@ -814,6 +873,236 @@ pkmn-shape:E1_EffectValues a sh:NodeShape ;
         sh:datatype xsd:boolean
     ] .
 
+# R1. Several action edges of 1 property apply together. A node may have none.
+pkmn-shape:E2_ActionKind a sh:NodeShape ;
+    sh:name "E2" ;
+    sh:message "An effect node has edges of at most 1 action property."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} has action edges of both {?first} and {?second}."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT DISTINCT $this ?first ?second WHERE {
+                $this ?first ?firstTarget .
+                $this ?second ?secondTarget .
+                FILTER (?first IN (pkmn:inflictsCondition, pkmn:curesCondition, pkmn:blocksCondition,
+                    pkmn:immuneTo, pkmn:setsField, pkmn:removesField, pkmn:setsType,
+                    pkmn:affectsStat, pkmn:blocksStatDrop, pkmn:restoresStat))
+                FILTER (?second IN (pkmn:inflictsCondition, pkmn:curesCondition, pkmn:blocksCondition,
+                    pkmn:immuneTo, pkmn:setsField, pkmn:removesField, pkmn:setsType,
+                    pkmn:affectsStat, pkmn:blocksStatDrop, pkmn:restoresStat))
+                FILTER (STR(?first) < STR(?second))
+            }
+        """
+    ] .
+
+# R2. An ability is a filter of a form change only.
+pkmn-shape:E3_TriggerFilters a sh:NodeShape ;
+    sh:name "E3" ;
+    sh:message "An effect node is not triggered by an ability."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:property [
+        sh:path pkmn:triggeredBy ;
+        sh:name "E3" ;
+        sh:message "An effect node has no triggeredBy edge to an Ability; only a form change does."@en ;
+        sh:severity sh:Violation ;
+        sh:not [ sh:class pkmn:Ability ]
+    ] .
+
+# R2 for form changes: 1 ability at most causes a change. This is a 2nd node shape
+# because the targets of E3_TriggerFilters must have no ability at all.
+pkmn-shape:E3_FormChangeAbility a sh:NodeShape ;
+    sh:name "E3" ;
+    sh:message "A form change is triggered by at most 1 ability."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:FormChange ;
+    sh:targetClass pkmn:FormChange ;
+    sh:property [
+        sh:path pkmn:triggeredBy ;
+        sh:name "E3" ;
+        sh:message "A form change has at most 1 triggeredBy edge to an Ability."@en ;
+        sh:severity sh:Violation ;
+        sh:qualifiedValueShape [ sh:class pkmn:Ability ] ;
+        sh:qualifiedMaxCount 1
+    ] .
+
+# R3. Each multiplier names what it scales. The stat targets are stubs, so the
+# constraint reads their id.
+pkmn-shape:E4_Multipliers a sh:NodeShape ;
+    sh:name "E4" ;
+    sh:message "statMultiplier needs affectsStat, and powerMultiplier and damageMultiplier exclude it."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:property [
+        sh:path pkmn:statMultiplier ;
+        sh:name "E4" ;
+        sh:message "An effect has at most 1 statMultiplier, above 0."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:minExclusive 0
+    ] ;
+    sh:property [
+        sh:path pkmn:powerMultiplier ;
+        sh:name "E4" ;
+        sh:message "An effect has at most 1 powerMultiplier, above 0."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:minExclusive 0
+    ] ;
+    sh:property [
+        sh:path pkmn:damageMultiplier ;
+        sh:name "E4" ;
+        sh:message "An effect has at most 1 damageMultiplier, above 0."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:minExclusive 0
+    ] ;
+    sh:or (
+        [ sh:property [ sh:path pkmn:statMultiplier ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path pkmn:affectsStat ; sh:minCount 1 ] ]
+    ) ;
+    sh:or (
+        [
+            sh:property [ sh:path pkmn:powerMultiplier ; sh:maxCount 0 ] ;
+            sh:property [ sh:path pkmn:damageMultiplier ; sh:maxCount 0 ]
+        ]
+        [ sh:property [ sh:path pkmn:affectsStat ; sh:maxCount 0 ] ]
+    ) ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} has both {?first} and {?second}; an effect has at most 1 multiplier."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT DISTINCT $this ?first ?second WHERE {
+                $this ?first ?firstFactor .
+                $this ?second ?secondFactor .
+                FILTER (?first IN (pkmn:statMultiplier, pkmn:powerMultiplier, pkmn:damageMultiplier))
+                FILTER (?second IN (pkmn:statMultiplier, pkmn:powerMultiplier, pkmn:damageMultiplier))
+                FILTER (STR(?first) < STR(?second))
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} has {?property} to the stat {?statId}, which it cannot target."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?property ?statId WHERE {
+                $this ?property ?stat .
+                ?stat pkmn:id ?statId .
+                FILTER (
+                    (?property IN (pkmn:affectsStat, pkmn:blocksStatDrop) && ?statId = "hp")
+                    || (?property = pkmn:blocksStatDrop && ?statId = "critical-hit-ratio")
+                )
+            }
+        """
+    ] .
+
+# R4. hpChange is a signed share of hpBasis. A heal restores HP, a loss restores
+# nothing.
+pkmn-shape:E5_HP a sh:NodeShape ;
+    sh:name "E5" ;
+    sh:message "hpChange and hpBasis come together."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:property [
+        sh:path pkmn:hpChange ;
+        sh:name "E5" ;
+        sh:message "An effect has at most 1 hpChange, from -1 to 1 and not 0."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:minInclusive -1 ;
+        sh:maxInclusive 1 ;
+        sh:or ( [ sh:maxExclusive 0 ] [ sh:minExclusive 0 ] )
+    ] ;
+    sh:property [
+        sh:path pkmn:hpBasis ;
+        sh:name "E5" ;
+        sh:message "An effect has at most 1 hpBasis, one of max_hp, current_hp, damage_dealt."@en ;
+        sh:severity sh:Violation ;
+        sh:maxCount 1 ;
+        sh:in ( "max_hp" "current_hp" "damage_dealt" )
+    ] ;
+    sh:or (
+        [
+            sh:property [ sh:path pkmn:hpChange ; sh:maxCount 0 ] ;
+            sh:property [ sh:path pkmn:hpBasis ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:hpChange ; sh:minCount 1 ] ;
+            sh:property [ sh:path pkmn:hpBasis ; sh:minCount 1 ]
+        ]
+    ) ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} restores {?statId} and needs exactly 1 of amount or a positive hpChange."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT DISTINCT $this ?statId WHERE {
+                $this pkmn:restoresStat ?stat .
+                ?stat pkmn:id ?statId .
+                FILTER (?statId = "hp")
+                OPTIONAL { $this pkmn:amount ?amount }
+                OPTIONAL { $this pkmn:hpChange ?gain . FILTER (?gain > 0) }
+                FILTER (BOUND(?amount) = BOUND(?gain))
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} has hpChange {?loss} and restores {?statId}; a loss restores nothing."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?loss ?statId WHERE {
+                $this pkmn:hpChange ?loss .
+                $this pkmn:restoresStat ?stat .
+                ?stat pkmn:id ?statId .
+                FILTER (?loss < 0)
+            }
+        """
+    ] .
+
+# R5. An effect on the move itself changes its type, power or damage.
+pkmn-shape:E6_MoveTarget a sh:NodeShape ;
+    sh:name "E6" ;
+    sh:message "An effect with target move needs setsType, powerMultiplier or damageMultiplier."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:targetClass pkmn:MoveEffect , pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:or (
+        [ sh:property [ sh:path pkmn:target ; sh:not [ sh:hasValue "move" ] ] ]
+        [ sh:property [ sh:path pkmn:setsType ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path pkmn:powerMultiplier ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path pkmn:damageMultiplier ; sh:minCount 1 ] ]
+    ) .
+
+# R6. An ability or item grants immunity to a type or a flag. A condition is
+# blocked with blocksCondition.
+pkmn-shape:E7_Immunity a sh:NodeShape ;
+    sh:name "E7" ;
+    sh:message "A node with immuneTo has trigger passive."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:targetClass pkmn:AbilityEffect , pkmn:ItemEffect ;
+    sh:property [
+        sh:path pkmn:immuneTo ;
+        sh:name "E7" ;
+        sh:message "immuneTo from an ability or item effect targets a Type or a MoveFlag."@en ;
+        sh:severity sh:Violation ;
+        sh:or ( [ sh:class pkmn:Type ] [ sh:class pkmn:MoveFlag ] )
+    ] ;
+    sh:or (
+        [ sh:property [ sh:path pkmn:immuneTo ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path pkmn:trigger ; sh:hasValue "passive" ] ]
+    ) .
+
 # `embedding` is not in the ttl, so the Validator checks that only a TextChunk
 # carries one.
 pkmn-shape:X3_EffectTextOwner a sh:NodeShape ;
@@ -896,6 +1185,117 @@ pkmn-shape:V2_FormKind a sh:NodeShape ;
             sh:property [ sh:path pkmn:isBattleOnly ; sh:hasValue true ]
         ]
     ) .
+
+# R7. Each formKind fixes the trigger, the causing ability and the REQUIRES roles.
+# The roles arrive on reified edge nodes, so SPARQL constraints check them. E3
+# caps the abilities of a change at 1.
+pkmn-shape:E8_FormChangeKind a sh:NodeShape ;
+    sh:name "E8" ;
+    sh:message "The trigger and the ability of a form change must match its formKind: battle needs a trigger and an ability, primal needs trigger switch_in, mega, ultra_burst and gigantamax have no trigger, and terastal has no trigger or has both a trigger and an ability."@en ;
+    sh:severity sh:Violation ;
+    pkmn-shape:scope pkmn:FormChange ;
+    sh:targetClass pkmn:FormChange ;
+    sh:or (
+        [ sh:property [ sh:path pkmn:formKind ; sh:hasValue "alternate" ] ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "battle" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:minCount 1 ] ;
+            sh:property [
+                sh:path pkmn:triggeredBy ;
+                sh:qualifiedValueShape [ sh:class pkmn:Ability ] ;
+                sh:qualifiedMinCount 1
+            ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "mega" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "ultra_burst" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "primal" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:hasValue "switch_in" ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "gigantamax" ] ;
+            sh:property [ sh:path pkmn:trigger ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path pkmn:formKind ; sh:hasValue "terastal" ] ;
+            sh:or (
+                [ sh:property [ sh:path pkmn:trigger ; sh:maxCount 0 ] ]
+                [
+                    sh:property [ sh:path pkmn:trigger ; sh:minCount 1 ] ;
+                    sh:property [
+                        sh:path pkmn:triggeredBy ;
+                        sh:qualifiedValueShape [ sh:class pkmn:Ability ] ;
+                        sh:qualifiedMinCount 1
+                    ]
+                ]
+            )
+        ]
+    ) ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} is an alternate form change and needs REQUIRES use with no trigger, or REQUIRES hold with trigger passive."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this WHERE {
+                $this pkmn:formKind "alternate" .
+                OPTIONAL {
+                    ?use rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "use" .
+                }
+                OPTIONAL {
+                    ?hold rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "hold" .
+                }
+                OPTIONAL { $this pkmn:trigger ?trigger }
+                FILTER (!(
+                    (BOUND(?use) && !BOUND(?trigger))
+                    || (BOUND(?hold) && COALESCE(?trigger = "passive", false))
+                ))
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} has REQUIRES fusesWith and needs a REQUIRES use edge too."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT DISTINCT $this WHERE {
+                ?fusion rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "fusesWith" .
+                FILTER NOT EXISTS {
+                    ?use rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "use" .
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} is a {?kind} form change and needs a REQUIRES hold edge."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?kind WHERE {
+                $this pkmn:formKind ?kind .
+                FILTER (?kind IN ("mega", "ultra_burst", "primal"))
+                FILTER NOT EXISTS {
+                    ?hold rdf:subject $this ; rdf:predicate pkmn:requires ; pkmn:role "hold" .
+                }
+            }
+        """
+    ] ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "{$this} is a gigantamax form change and requires nothing, but requires {?required}."@en ;
+        sh:prefixes <https://muon.dev/ns/pkmn-shapes> ;
+        sh:select """
+            SELECT $this ?required WHERE {
+                $this pkmn:formKind "gigantamax" ;
+                    pkmn:requires ?required .
+            }
+        """
+    ] .
 
 # A REQUIRES edge carries its role in Neo4j, so it arrives as a reified edge
 # node. Each role pairs with the class its target must have.

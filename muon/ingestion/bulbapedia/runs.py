@@ -9,13 +9,13 @@ Map:
 - Mentions: `build_species_resolver` resolves a `{{p}}` target through the species pins.
   The pinned title without its suffix is the species name, so a mention names the base
   species of a page.
-- Files: `dump_json` and `serialize_batch` give the same bytes for the same run, and
-  `write_page_files` writes the page outputs of a run and, on a full run, deletes the rest.
+- Files: `dump_json` and `serialize_batch`, imported from the shared modules, give the
+  same bytes for the same run, and `write_page_files` writes the page outputs of a run
+  and, on a full run, deletes the rest.
 
 Each page type keeps its own report model, notes and output layout.
 """
 
-import json
 from collections import Counter
 from collections.abc import Iterable, Mapping
 from enum import StrEnum
@@ -23,8 +23,10 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from muon.files import dump_json as dump_json
 from muon.files import write_text_atomically
 from muon.ingestion.batch import GraphBatch, NodeRecord
+from muon.ingestion.batch import serialize_batch as serialize_batch
 from muon.ingestion.bulbapedia.batching import SpeciesResolver
 from muon.ingestion.bulbapedia.fetch import PAGE_TYPES
 from muon.ingestion.bulbapedia.pages import DEFAULT_ROOT, Page, PagePin
@@ -34,8 +36,6 @@ from muon.ontology.model import extract_local_name
 
 DEFAULT_OUTPUT_ROOT = DEFAULT_ROOT / "parsed"
 OUTPUT_SUFFIX = ".json"
-JSON_INDENT = 2
-ID_PREFIX_KEY = "other_end_id_prefix"
 SPECIES_PAGE_TYPE = "species"
 SPECIES_TITLE_SUFFIX = PAGE_TYPES[SPECIES_PAGE_TYPE].title_suffix
 
@@ -129,24 +129,6 @@ def rank_templates(counts: Mapping[str, int]) -> tuple[TemplateCount, ...]:
 def count_nonzero(counts: Iterable[tuple[str, int]]) -> dict[str, int]:
     """Map each title with a nonzero count to that count, sorted by title."""
     return {title: count for title, count in sorted(counts) if count}
-
-
-def dump_json(data: object) -> str:
-    return json.dumps(data, sort_keys=True, ensure_ascii=False, indent=JSON_INDENT) + "\n"
-
-
-def serialize_batch(batch: GraphBatch) -> dict[str, object]:
-    """Dump a batch with its scope sorted: pydantic dumps a frozenset in hash order.
-
-    A claim with no `other_end_id_prefix` leaves the key out, so the outputs of the page
-    types that never set a prefix keep the bytes they had before the field existed.
-    """
-    data = batch.model_dump(mode="json")
-    data["scope"] = sorted(batch.scope)
-    for claim in data["claims"]:
-        if claim.get(ID_PREFIX_KEY, "") is None:
-            del claim[ID_PREFIX_KEY]
-    return data
 
 
 def write_page_files(output_dir: Path, files: Iterable[tuple[str, str]], is_full_run: bool) -> None:

@@ -1,4 +1,4 @@
-"""The agent, retrieval, generation, evaluation and validation layers name no universe."""
+"""The agent, retrieval, generation, evaluation, validation and write gate code name no universe."""
 
 import re
 from pathlib import Path
@@ -13,7 +13,7 @@ UNIVERSE_PREFIX = "pkmn"
 UNIVERSE_NAMESPACE = f"https://muon.dev/ns/{UNIVERSE_PREFIX}#"
 UNIVERSE_TBOX = PROJECT_ROOT / "ontology" / "universes" / f"{UNIVERSE_PREFIX}.ttl"
 UNIVERSE_FREE_PACKAGES = ("agent", "retrieval", "generation", "evaluation", "validation", "api")
-UNIVERSE_FREE_MODULES = ("plugins.py",)
+UNIVERSE_FREE_MODULES = ("plugins.py", "ingestion/policy.py", "ingestion/plan.py")
 SOURCE_PATTERNS = ("*.py", "prompts/*.md")
 READ_ONLY_PACKAGES = ("retrieval", "generation", "evaluation")
 WRITE_METHOD_PATTERN = re.compile(r"\bexecute_write(_batch)?\b")

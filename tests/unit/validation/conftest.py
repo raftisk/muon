@@ -76,9 +76,9 @@ def pkmn_shapes() -> Graph:
 
 
 @pytest.fixture(scope="session")
-def pkmn_rules() -> ProjectionRules:
+def pkmn_rules(pkmn_abox: GraphBatch) -> ProjectionRules:
     plugin = discover_universes(DEFAULT_UNIVERSES_DIR, ONTOLOGY_DIR).get(UNIVERSE)
-    return build_projection_rules(plugin.manifest)
+    return build_projection_rules(plugin.manifest, pkmn_abox)
 
 
 @pytest.fixture(scope="session")
