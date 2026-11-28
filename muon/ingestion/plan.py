@@ -577,15 +577,17 @@ def read_applied_numbers(plan_dir: Path) -> frozenset[int]:
 async def apply_plan(context: ApplyContext) -> ApplyReport:
     """Write the planned batches that the log lacks, in order, and log each one.
 
-    The `id` constraints of their classes are ensured once, up front. Raises `ApplyError`
+    The `id` constraints of their classes are ensured once, up front, so an apply with
+    nothing to write sends the graph no statement. Raises `ApplyError`
     at the 1st batch that fails a check, and lets a `GraphError` of a write through.
     """
     _, items = read_plan(context.plan_dir)
     applied = read_applied_numbers(context.plan_dir)
     pending = [item for item in items if item.number not in applied]
     # A rejected batch is never written, and may name a class the ontology lacks.
-    writable = (item.batch for item in pending if item.state is ItemState.PLANNED)
-    await context.runner.ensure_constraints(list_batch_classes(writable))
+    writable = [item.batch for item in pending if item.state is ItemState.PLANNED]
+    if writable:
+        await context.runner.ensure_constraints(list_batch_classes(writable))
     skipped: Counter[ItemState] = Counter()
     summaries: list[WriteSummary] = []
     written = 0

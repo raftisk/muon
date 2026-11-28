@@ -322,7 +322,7 @@ async def test_apply_logs_no_change_and_rejected_batches_as_skips(build_context)
 
     report = await apply_plan(build_apply_context(context, plan_dir))
 
-    assert client.batches == []
+    assert client.calls == []
     assert report.batches_written == 0
     assert report.batches_skipped == {ItemState.NO_CHANGE: 1, ItemState.REJECTED: 1}
     assert [(line["batch"], line["state"]) for line in read_log(plan_dir)] == [
